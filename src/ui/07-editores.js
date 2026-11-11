@@ -1375,7 +1375,7 @@ VC.editorRamais = VC.editorRamais || {
  h += '<div class="tabela-wrap" style="margin-top:10px; border:none"><table class="tabela densa"><thead><tr>' +  
  '<th style="width:30px">#</th><th>Nome</th><th style="width:55px">Nivel</th><th style="width:60px">L (m)</th>' +  
  '<th style="width:60px">zeta</th>' +  
- '<th style="width:80px">D (mm)</th>' +  
+ '<th style="width:150px" title="Forma escolhida pelo utilizador; a app só avisa se não couber na altura disponível">Secção</th>' +  
  '<th style="width:90px">Q</th>' +  
  '<th style="width:60px">v</th>' +  
  '<th style="width:80px">Re</th>' +  
@@ -1398,7 +1398,11 @@ VC.editorRamais = VC.editorRamais || {
  '<td><span class="badge nivel-r' + nivelNum + '" title="' + VC.utils.nivelRotulo(nivelNum, true) + '">' + VC.utils.nivelRotulo(nivelNum) + '</span></td>' +  
  '<td><input type="number" step="0.5" value="' + (r.L || 0) + '" onchange="VC.editorRamais.editar(' + i + ', \'L\', this.value)" ' + dis + '></td>' +  
  '<td><input type="number" step="0.1" value="' + VC.utils.fmt(r.zeta || 0, 1) + '" onchange="VC.editorRamais.editar(' + i + ', \'zeta\', this.value)" ' + dis + '></td>' +  
- '<td><b>' + (r.Dcom || '-') + '</b></td>' +  
+ '<td><select onchange="VC.editorRamais.editar(' + i + ', \'forma\', this.value)" ' + dis + ' style="font-size:11px">' +  
+   '<option value="circular"' + (r.secaoAdotada !== 'retangular' ? ' selected' : '') + '>Circular</option>' +  
+   '<option value="retangular"' + (r.secaoAdotada === 'retangular' ? ' selected' : '') + '>Retangular</option></select> ' +  
+   '<b>' + VC.utils.esc(r.secaoCalc || (r.Dcom ? 'Ø' + r.Dcom : '-')) + '</b>' +  
+   (r.avisoSecao ? ' <span title="' + VC.utils.esc(r.avisoSecao) + '" style="cursor:help;color:var(--ambar-esc)">⚠</span>' : '') + '</td>' +  
  '<td><span class="valor-derivado">' + VC.utils.fmt(r.Q, 0) + '</span></td>' +  
  '<td>' + VC.utils.fmt(r.v, 2) + '</td>' +  
  '<td>' + VC.utils.fmt(r.Re, 0) + '</td>' +  
@@ -1416,6 +1420,7 @@ VC.editorRamais = VC.editorRamais || {
  const r = VC.dados.ramais[idx];  
  if (!r) return;  
  if (['L', 'zeta', 'Q'].indexOf(campo) >= 0) r[campo] = VC.utils.num(valor);  
+ else if (campo === 'forma') r.geometriaInput = Object.assign({}, r.geometriaInput || {}, { forma: valor === 'retangular' ? 'retangular' : 'circular' });   // v11.1: escolha do utilizador  
  else r[campo] = valor;  
  VC.estado.sincronizar();  
  }  

@@ -43,8 +43,8 @@ VC.calculo = {
   dimensionarConduta(Qmh, opts) {
     opts = opts || {};
     const Q = VC.utils.num(Qmh) / 3600;
-    const Vmax = 6, Ralvo = 1;
-    const eps = (VC.utils.num(VC.dados.params.rugosidade) || 0.15) / 1000;
+    const Vmax = Number(opts.vMax) || 6, Ralvo = 1;
+    const eps = opts.eps || (VC.utils.num(VC.dados.params.rugosidade) || 0.15) / 1000;
     const rho = opts.rho || 1.2;
     const nu = opts.nu || 1.5e-5;
     const metodo = (VC.dados.metodoCalculo && VC.dados.metodoCalculo.metodo) || 'loss';
@@ -66,9 +66,16 @@ VC.calculo = {
     } else {
       ideal = evalD(Math.max(Math.sqrt(4 * Q / (Math.PI * Vmax)), 0.03));
     }
-    const Dc = this.diametroComercial(ideal.D * 1000);
-    const final = evalD(Dc / 1000);
-    return Object.assign({}, final, { Qmh, idealD: ideal.D * 1000, Dc, metodo });
+    let Dc = this.diametroComercial(ideal.D * 1000);
+    let final = evalD(Dc / 1000);
+    // v11.1: o método 'perda constante' não limitava a velocidade (Q ≥ 10 000 m³/h → 7–9 m/s, que a
+    // própria auditoria marcava como ERRO). Sobe na série comercial até v ≤ vMax do nível.
+    for (let i = 0; i < 40 && Q && final.v > Vmax; i++) {
+      const prox = this.diametroComercial(Dc + 1);
+      if (prox <= Dc) break;
+      Dc = prox; final = evalD(Dc / 1000);
+    }
+    return Object.assign({}, final, { Qmh, idealD: ideal.D * 1000, Dc, metodo, vMax: Vmax });
   },
 
   retangular(hmax, ratioMin, vMax, Qmh) {
@@ -391,21 +398,46 @@ VC.calculo = {
   calcularCondutas(rho, nu) {
     VC.dados.ramais.forEach(r => {
       const Qef = Number(r.Q) || 0;
+      const eps = this.rugosidadeDe(r) / 1000;     // v11.1: uma só fonte de rugosidade (3.7)
+      const vMax = this.vMaxDe(r);                 // v11.1: limite por nível (3.5)
+      const hMax = this.hMaxDe(r);
+      r.vMax = vMax; r.avisoSecao = '';
       if (r.lock && r.lock.D && r.Dcom) {
         const D = r.Dcom / 1000;
         const A = Math.PI * D * D / 4;
         const v = A > 0 ? Qef / 3600 / A : 0;
         const Re = v > 0 ? v * D / nu : 0;
-        const eps = (Number(r.geometriaInput && r.geometriaInput.rugosidade) || 0.15) / 1000;
         r.v = v; r.Re = Re;
         r.f = VC.fisica.fatorAtrito(Re, eps / D);
         r.R = D > 0 ? r.f / D * (0.5 * rho * v * v) : 0;
       } else {
-        const z = this.dimensionarConduta(Qef, { rho, nu });
+        const z = this.dimensionarConduta(Qef, { rho, nu, vMax, eps });
         r.v = z.v; r.Re = z.Re; r.f = z.f; r.R = z.R; r.Dcom = z.Dc;
       }
-      const rect = this.retangular(VC.dados.restricaoH || 250, 0.5, r.v, Qef);
-      r.secaoCalc = rect ? rect.b + '×' + rect.h : (r.Dcom ? 'Ø' + r.Dcom : '');
+      // v11.1 (3.6): a forma da secção é escolha do utilizador (geometriaInput.forma).
+      // A app calcula a secção escolhida e só AVISA quando não cabe na altura disponível.
+      const rect = this.retangular(hMax, 0.5, vMax, Qef);
+      r.secaoAdotada = this.formaDe(r);
+      if (r.secaoAdotada === 'retangular') {
+        if (rect) {
+          const a = rect.b / 1000, b = rect.h / 1000;
+          const De = 1.30 * Math.pow(a * b, 0.625) / Math.pow(a + b, 0.25);      // diâmetro equivalente (Huebscher)
+          const vDe = Qef / 3600 / (Math.PI * De * De / 4);
+          r.v = Qef / 3600 / (a * b);                                             // velocidade real na secção
+          r.Re = vDe * De / nu;
+          r.f = VC.fisica.fatorAtrito(r.Re, eps / De);
+          r.R = De > 0 ? r.f / De * (0.5 * rho * vDe * vDe) : 0;
+          r.De = Math.round(De * 1000);
+          r.secaoCalc = rect.b + '×' + rect.h;
+        } else {
+          r.secaoCalc = r.Dcom ? 'Ø' + r.Dcom : '';
+          r.avisoSecao = 'Sem secção retangular com h ≤ ' + hMax + ' mm e v ≤ ' + vMax + ' m/s — calculado como circular Ø' + r.Dcom;
+        }
+      } else {
+        r.secaoCalc = r.Dcom ? 'Ø' + r.Dcom : '';
+        r.De = r.Dcom;
+        if (r.Dcom && r.Dcom > hMax) r.avisoSecao = 'Ø' + r.Dcom + ' mm não cabe na altura disponível (' + hMax + ' mm)' + (rect ? ' — sugestão retangular ' + rect.b + '×' + rect.h : '');
+      }
       r.deltaPlin = (Number(r.R) || 0) * (Number(r.L) || 0);
       r.deltaPsing = (Number(r.zeta) || 0) * 0.5 * rho * (Number(r.v) || 0) * (Number(r.v) || 0);
       r.deltaPTroco = r.deltaPlin + r.deltaPsing;
@@ -434,6 +466,22 @@ VC.calculo = {
     VC.dados.ramais.forEach(r => { r.deltaPCritico = r.deltaPtotal || 0; });
     const ordem = VC.dados.ramais.slice().sort((a, b) => this._profundidade(b, byName) - this._profundidade(a, byName));
     ordem.forEach(r => { const pai = byName[r.parente]; if (pai && pai !== r) pai.deltaPCritico = Math.max(pai.deltaPCritico || 0, r.deltaPCritico || 0); });
+  },
+
+  /* v11.1: parâmetros de cada ramal (forma, rugosidade, altura disponível, velocidade máxima) */
+  formaDe(r) { return (r && r.geometriaInput && r.geometriaInput.forma === 'retangular') ? 'retangular' : 'circular'; },
+  rugosidadeDe(r) {
+    const g = r && r.geometriaInput && Number(r.geometriaInput.rugosidade);
+    return g > 0 ? g : (VC.utils.num(VC.dados.params && VC.dados.params.rugosidade) || 0.15);
+  },
+  hMaxDe(r) {
+    const g = r && r.geometriaInput && Number(r.geometriaInput.H_max);
+    return g > 0 ? g : (Number(VC.dados.restricaoH) || 250);
+  },
+  vMaxDe(r) {
+    const n = (r && (r.nivelNumero || VC.utils.nivelTextoParaNumero(r.nivel))) || 2;
+    const t = (VC.constantes && VC.constantes.VMAX_NIVEL) || {};
+    return Number(t[n]) || 6;
   },
 
   _profundidade(r, byName) {
@@ -560,7 +608,9 @@ VC.calculo = {
 
       VC.dados.ramais.forEach(r => {
         if (r.Re >= 2300 && r.Re < 4000) findings.push({ severidade: 'ATENÇÃO', tipo: 'Reynolds crítico', elemento: r.nome, msg: 'Re=' + VC.utils.fmt(r.Re, 0) });
-        if (r.v > 6) findings.push({ severidade: 'ERRO', tipo: 'Velocidade excessiva', elemento: r.nome, msg: 'v=' + VC.utils.fmt(r.v, 2) + ' m/s' });
+        const vMax = this.vMaxDe(r);   // v11.1: mesmo limite por nível que o dimensionamento
+        if (r.v > vMax + 1e-6) findings.push({ severidade: 'ERRO', tipo: 'Velocidade excessiva', elemento: r.nome, msg: 'v=' + VC.utils.fmt(r.v, 2) + ' m/s > ' + vMax + ' m/s (' + VC.utils.nivelRotulo(r.nivelNumero, true) + ')' });
+        if (r.avisoSecao) findings.push({ severidade: 'ATENÇÃO', tipo: 'Secção da conduta', elemento: r.nome, msg: r.avisoSecao });
       });
 
       // v11.1: um 'parente' que não corresponde a nenhum ramal faz o filho ser ignorado em silêncio
