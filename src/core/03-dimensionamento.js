@@ -437,9 +437,13 @@ VC.calculo = {
     const porRede = { insuflacao: null, extracao: null };
     VC.dados.utas.forEach(uta => {
       if (uta.ativo === false) return;
+      // v11.1: o caudal da UTA é a soma dos ramais RAIZ da sua rede. Cada ramal já inclui o
+      // caudal dos filhos (propagarCaudal), por isso somar todos os níveis contava o ar várias vezes.
       let ramaisServidos = VC.dados.ramais.filter(r => r.utaRef === uta.id);
       if (!ramaisServidos.length) ramaisServidos = VC.dados.ramais.filter(r => r.tipo === 'Principal' && (r.rede || 'insuflacao') === uta.rede);
-      const Qms = ramaisServidos.reduce((s, r) => s + (Number(r.Q) || 0), 0) / 3600;
+      const nomesServidos = new Set(ramaisServidos.map(r => r.nome));
+      const raizes = ramaisServidos.filter(r => !r.parente || !nomesServidos.has(r.parente));
+      const Qms = raizes.reduce((s, r) => s + (Number(r.Q) || 0), 0) / 3600;
       const dpExt = ramaisServidos.reduce((m, r) => Math.max(m, Number(r.deltaPtotal) || 0), 0);
       const comps = uta.componentes || [];
       let dpInt = 0;
