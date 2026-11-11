@@ -579,7 +579,9 @@ VC.perf.ordenacaoTopologica = (function () {
     ordenar() {
       const ramais = VC.dados && VC.dados.ramais || [];
       const k = ramais.map(r => r.nome + '|' + (r.parente || '')).join('#');
-      if (k === chave && cacheR) return cacheR;
+      // v11.1: a cache guarda só a ORDEM dos nomes e devolve sempre os objetos atuais
+      // (antes devolvia objetos de uma lista de ramais entretanto substituída).
+      if (k === chave && cacheR) { const atual = {}; ramais.forEach(r => { atual[r.nome] = r; }); return cacheR.map(n => atual[n]).filter(Boolean); }
       const byName = {};
       ramais.forEach(r => { byName[r.nome] = r; });
       const profundidade = (nome, guard) => {
@@ -589,9 +591,10 @@ VC.perf.ordenacaoTopologica = (function () {
         if (!r || !r.parente || !byName[r.parente]) return 0;
         return 1 + profundidade(r.parente, guard + 1);
       };
-      cacheR = ramais.slice().sort((a, b) => profundidade(b.nome) - profundidade(a.nome));
+      const ordenados = ramais.slice().sort((a, b) => profundidade(b.nome) - profundidade(a.nome));
+      cacheR = ordenados.map(r => r.nome);
       chave = k;
-      return cacheR;
+      return ordenados;
     },
     invalidar() { chave = null; cacheR = null; }
   };

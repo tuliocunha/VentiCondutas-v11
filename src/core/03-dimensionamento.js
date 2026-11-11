@@ -383,7 +383,8 @@ VC.calculo = {
       if (!t.ramalRef) return;
       const r = byName[t.ramalRef];
       if (!r) return;
-      r.deltaP_terminal += Number(t.dPCalc) || 0;
+      // v11.1: terminais do mesmo ramal estão em paralelo → conta o mais desfavorável, não a soma
+      r.deltaP_terminal = Math.max(r.deltaP_terminal, Number(t.dPCalc) || 0);
     });
   },
 
@@ -491,6 +492,7 @@ VC.calculo = {
       const props = VC.perf.cacheFisica.rhoNu();
       const rho = props.rho;
       const nu = props.nu;
+      this._normalizarReferencias();
 
       if (VC.flags && VC.flags.confortoTermico !== false && VC.rph && VC.rph.aplicarATodos) {
         VC.rph.aplicarATodos();
@@ -561,6 +563,13 @@ VC.calculo = {
         if (r.v > 6) findings.push({ severidade: 'ERRO', tipo: 'Velocidade excessiva', elemento: r.nome, msg: 'v=' + VC.utils.fmt(r.v, 2) + ' m/s' });
       });
 
+      // v11.1: um 'parente' que não corresponde a nenhum ramal faz o filho ser ignorado em silêncio
+      // (o pai perde o caudal e a perda desse filho). Assinalar sempre.
+      const nomesRamais = new Set(VC.dados.ramais.map(r => r.nome));
+      VC.dados.ramais.forEach(r => {
+        if (r.parente && !nomesRamais.has(r.parente)) findings.push({ severidade: 'ERRO', tipo: 'Ramal órfão', elemento: r.nome, msg: 'Pai "' + r.parente + '" não existe — caudal e Δp deste ramal não são somados ao pai' });
+      });
+
       const totalPower = VC.dados.utas.reduce((s, u) => s + (Number(u.P_motor) || 0), 0);
       if (totalPower > 290000) findings.push({ severidade: 'ATENÇÃO', tipo: 'BACS', elemento: 'Sistema', msg: 'P > 290 kW' });
 
@@ -609,6 +618,15 @@ VC.calculo = {
   },
 
   calcularParcial() { return this.calcularTudo(); },
+
+  /* v11.1: as ligações entre ramais, terminais e espaços são feitas pelo NOME. Um espaço a mais
+     (ex.: 'R1.1 ' importado de outro programa) quebrava a ligação sem aviso. */
+  _normalizarReferencias() {
+    const limpa = v => (typeof v === 'string' ? v.trim() : v);
+    (VC.dados.ramais || []).forEach(r => { r.nome = limpa(r.nome); r.parente = limpa(r.parente); });
+    (VC.dados.terminais || []).forEach(t => { t.ramalRef = limpa(t.ramalRef); });
+    (VC.dados.espacos || []).forEach(e => { e.ramalRefInsuflacao = limpa(e.ramalRefInsuflacao); e.ramalRefExtracao = limpa(e.ramalRefExtracao); });
+  },
 
   terminaisQueServem(nomeEspaco) {
     if (!nomeEspaco) return [];
