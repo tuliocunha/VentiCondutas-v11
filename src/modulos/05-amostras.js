@@ -1,5 +1,5 @@
 ﻿/* ============================================================
-   VENTCONDUTAS V9.0 · 05-amostras
+   VENTICONDUTAS · 05-amostras
    Exemplo PoliUne + Gestão de Exemplos + Flags + Helpers RPH/QAI
 
    ALTERAÇÕES V9.0 (Fase 3):
@@ -364,7 +364,7 @@ VC.exemploV6 = function () {
   VC.decompor.limpar();
   VC.decompor.executar(true);
 
-  VC.dados.utas.forEach(u => { if (u.curva && u.curva.length >= 2) u.pontoFunc = VC.uta.calcularPontoFuncionamento(u.rede); });
+  VC.dados.utas.forEach(u => { if (u.curva && u.curva.length >= 2) u.pontoFunc = VC.uta.calcularPontoFuncionamento(u.rede, u); });
 
   const balancos = VC6.balanco.todos();
   const ok = balancos.filter(b => b.estado === 'OK').length;
@@ -671,7 +671,7 @@ VC.exemplos = {
     const cont = document.getElementById('modalExemplosConteudo');
     if (!modal || !cont) return;
     const lista = this.listar();
-    let h = '<div class="modal-cabecalho"><h3><i class="fa-solid fa-clipboard-list"></i> Gestão de Exemplos V9.0</h3><button class="fechar" onclick="VC.ui.fecharModal(\'modalExemplos\')">×</button></div>';
+    let h = '<div class="modal-cabecalho"><h3><i class="fa-solid fa-clipboard-list"></i> Gestão de Exemplos</h3><button class="fechar" onclick="VC.ui.fecharModal(\'modalExemplos\')">×</button></div>';
     h += '<div class="modal-corpo">';
     h += '<div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap">';
     h += '<button class="btn primario" onclick="VC.exemplos.salvarDialogo()"><i class="fa-solid fa-floppy-disk"></i> Guardar atual como exemplo</button>';
@@ -859,6 +859,6 @@ VC.flagAtiva = function (nome) { return VC.flags[nome] === true; };
   };
 })();
 
-console.log('%c[VentCondutas V11.0.0] 05-amostras carregado · F-RPH + QAI_projeto + exemploV9_2 (fetch poliune-v02.json)', 'color:#6d8fb0;font-weight:bold;background:#eaf1f7;padding:3px 6px;border-radius:3px');
+console.log('%c[VentiCondutas] 05-amostras carregado · F-RPH + QAI_projeto + exemploV9_2 (fetch poliune-v02.json)', 'color:#6d8fb0;font-weight:bold;background:#eaf1f7;padding:3px 6px;border-radius:3px');
 
 })();

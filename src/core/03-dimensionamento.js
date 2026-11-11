@@ -1,5 +1,5 @@
 ﻿/* ============================================================
-   VENTCONDUTAS V9.0.0 · 03-dimensionamento
+   VENTICONDUTAS · 03-dimensionamento
    §11 Cálculo 9 fases + §12 Topologia + §13 Decompor + §14 UTAs
    §19 Locks + §19b Optimizar · N4 reexport · N6 reexport
 
@@ -43,7 +43,7 @@ VC.calculo = {
   dimensionarConduta(Qmh, opts) {
     opts = opts || {};
     const Q = VC.utils.num(Qmh) / 3600;
-    const Vmax = Number(opts.vMax) || 6, Ralvo = 1;
+    const Vmax = Number(opts.vMax) || VC.constantes.VMAX_NIVEL[1], Ralvo = VC.constantes.R_ALVO;
     const eps = opts.eps || (VC.utils.num(VC.dados.params.rugosidade) || 0.15) / 1000;
     const rho = opts.rho || 1.2;
     const nu = opts.nu || 1.5e-5;
@@ -352,8 +352,9 @@ VC.calculo = {
     if (Lw === null) Lw = fb.Lw0 + 10 * Math.log10(Math.max(Q, 1) / fb.Q0);
     const v = Number(term.v_saida) || 0;
     let status = 'OK';
-    if (v > 2.5 || Lw > 40) status = 'NÃO CONF.';
-    else if (v > 2.2 || Lw > 35) status = 'ATENÇÃO';
+    const LT = VC.constantes.TERMINAL;
+    if (v > LT.vMax || Lw > LT.LwMax) status = 'NÃO CONF.';
+    else if (v > LT.vAtencao || Lw > LT.LwAtencao) status = 'ATENÇÃO';
     return Object.assign({}, term, { LwCalc: Lw, dPCalc: dP, throwCalc: throw_ || 0, status, origem, fonte, v });
   },
 
@@ -526,7 +527,7 @@ VC.calculo = {
       uta.sfpInt = sfpInt; uta.P_motor = P_motor;
       uta.sfpClass = VC.normas.classificarSFP(VC.normas.tipoUVPadrao(uta), sfpInt, Qms, uta.etaRec);
       uta.status = uta.sfpClass.conforme ? 'OK' : 'NÃO CONF.';
-      if (uta.curva && uta.curva.length >= 2 && VC.uta && VC.uta.calcularPontoFuncionamento) uta.pontoFunc = VC.uta.calcularPontoFuncionamento(uta.rede);
+      if (uta.curva && uta.curva.length >= 2 && VC.uta && VC.uta.calcularPontoFuncionamento) uta.pontoFunc = VC.uta.calcularPontoFuncionamento(uta.rede, uta);
       const chaveRede = (uta.rede === 'insuflacao') ? 'insuflacao' : 'extracao';
       const atual = porRede[chaveRede];
       if (!atual || dpExt > atual.maxPerda) porRede[chaveRede] = { maxPerda: dpExt, Qnom: Qms };
@@ -622,7 +623,12 @@ VC.calculo = {
       });
 
       const totalPower = VC.dados.utas.reduce((s, u) => s + (Number(u.P_motor) || 0), 0);
-      if (totalPower > 290000) findings.push({ severidade: 'ATENÇÃO', tipo: 'BACS', elemento: 'Sistema', msg: 'P > 290 kW' });
+      // v11.1 (E3): ventilador escolhido não chega ao caudal de projeto
+      VC.dados.utas.forEach(u => {
+        const pf = u.pontoFunc;
+        if (u.ativo !== false && pf && pf.foraDaCurva) findings.push({ severidade: 'ATENÇÃO', tipo: 'Ventilador fora da curva', elemento: u.nome, msg: 'Q de projeto ' + VC.utils.fmt(pf.QprojMh, 0) + ' m³/h > fim da curva ' + VC.utils.fmt(pf.QmaxCurva, 0) + ' m³/h' + (u.curvaFabricante ? ' (' + u.curvaFabricante.modelo + ')' : '') + ' — escolher um ventilador maior' });
+      });
+      if (totalPower > VC.constantes.DL101D.SGTC) findings.push({ severidade: 'ATENÇÃO', tipo: 'BACS', elemento: 'Sistema', msg: 'P > ' + VC.constantes.DL101D.SGTC / 1000 + ' kW' });
 
       VC.dados.espacos.forEach(e => {
         const b = this.balancoEspaco(e.nome);
@@ -729,8 +735,8 @@ VC.calculo = {
     else if (nTerminais === 0 && Q_nec > 0) estado = 'ORFAO';
     else if (Q_nec > 0) {
       const ratio = Q_servido / Q_nec;
-      if (ratio < 0.90) estado = 'SUB';
-      else if (ratio > 1.20) estado = 'SOBRE';
+      if (ratio < VC.constantes.BALANCO_ESPACO.sub) estado = 'SUB';
+      else if (ratio > VC.constantes.BALANCO_ESPACO.sobre) estado = 'SOBRE';
       else estado = 'OK';
     }
     return { Q_nec, Q_servido, delta, estado, nTerminais, rede, g: c.g, isento: c.isento, Q_transf_out };
@@ -978,10 +984,12 @@ VC.uta = {
       { id: VC.utils.uid('COMP'), nome: 'Ventilador', tipo: 'Ventilador', deltaP: 0, deltaP_final: 0, zeta: 0, obs: 'IE3' }
     ];
   },
-  calcularPorRede(rede) {
+  // v11.1 (E2): aceita a UTA concreta. Sem ela usa a 1.ª da rede (comportamento antigo,
+  // que dava a todas as UTAs da mesma rede o ponto de funcionamento da primeira).
+  calcularPorRede(rede, utaAlvo) {
     const lista = this.porRede(rede);
-    if (!lista.length) return null;
-    const u = lista[0];
+    if (!lista.length && !utaAlvo) return null;
+    const u = utaAlvo || lista[0];
     return {
       uta: u, Q: u.Q, dpExt: u.dpExt, dpInt: u.dpInt, sfpInt: u.sfpInt,
       sfpExt: u.Q > 0 ? u.dpExt / u.Q : Infinity,
@@ -994,8 +1002,8 @@ VC.uta = {
       componentes: u.componentes || []
     };
   },
-  calcularPontoFuncionamento(rede) {
-    const r = this.calcularPorRede(rede);
+  calcularPontoFuncionamento(rede, utaAlvo) {
+    const r = this.calcularPorRede(rede, utaAlvo);
     if (!r) return null;
     const uta = r.uta;
     const Qms = r.Q, dp = r.dpExt + r.dpInt;
@@ -1029,7 +1037,10 @@ VC.uta = {
     const dpUsar = Math.min(dpVent, dpRede);
     const P_eixo = qSol * dpUsar / Math.max(r.eta, 0.01);
     const P_motor = P_eixo * r.fs / Math.max(r.trans, 0.01);
-    return { modo: 'curva', Q: qSol, Qmh: qmh, dP: dpUsar, dPVent: dpVent, dPRede: dpRede, K, P_eixo, P_motor, fs: r.fs, eta: r.eta, curvaFabricante: uta.curvaFabricante || null };
+    // v11.1 (E3): o caudal de projeto está para lá do fim da curva do ventilador escolhido
+    const QmaxCurva = Qmax * 3600;
+    const foraDaCurva = Qms * 3600 > QmaxCurva;
+    return { modo: 'curva', foraDaCurva, QmaxCurva, QprojMh: Qms * 3600, Q: qSol, Qmh: qmh, dP: dpUsar, dPVent: dpVent, dPRede: dpRede, K, P_eixo, P_motor, fs: r.fs, eta: r.eta, curvaFabricante: uta.curvaFabricante || null };
   },
   atualizar(rede, campo, valor) {
     let u = this.porRede(rede)[0];
@@ -1051,8 +1062,8 @@ VC6.uta = {
   porRede: function (rede) { return VC.uta.porRede(rede); },
   componentesPadrao: function () { return VC.uta.componentesPadrao(); },
   componentesExtracao: function () { return VC.uta.componentesExtracao(); },
-  calcularPorRede: function (rede) { return VC.uta.calcularPorRede(rede); },
-  calcularPontoFuncionamento: function (rede) { return VC.uta.calcularPontoFuncionamento(rede); },
+  calcularPorRede: function (rede, uta) { return VC.uta.calcularPorRede(rede, uta); },
+  calcularPontoFuncionamento: function (rede, uta) { return VC.uta.calcularPontoFuncionamento(rede, uta); },
   aplicarCurvaFabricante: function (utaId, fab, serie, mod) { return VC.uta.aplicarCurvaFabricante(utaId, fab, serie, mod); }
 };
 VC6.curvasFabricantes = VC.curvasFabricantes;
@@ -1082,8 +1093,8 @@ VC.locks = {
    ============================================================ */
 VC.optimizar = {
   MAX_ITER: 10,
-  R_ALVO: 1.0,
-  TOLERANCIA_EQUILIBRIO: 0.20,
+  R_ALVO: VC.constantes.R_ALVO,
+  TOLERANCIA_EQUILIBRIO: VC.constantes.EQUILIBRIO_REDE,
   executar() {
     if (!VC.dados.ramais.length) { VC.ui.toast('Sem ramais para otimizar.'); return; }
     if (!confirm('Executar ciclo de otimização automática?\n\n[1] Ajustar Ø para R = 1 Pa/m\n[2] Corrigir Ø onde v > limite\n[3] Ajustar ζ nos ramais mais curtos\n[4] Máximo ' + this.MAX_ITER + ' iterações\n\nOs ramais com lock de Ø não serão alterados.')) return;
@@ -1178,6 +1189,6 @@ VC.optimizar = {
   }
 };
 
-console.log('%c[VentCondutas V11.0.0] 03-dimensionamento carregado - correcao ACH (so G3 e G4 exceto Sanitorios)', 'color:#6d8fb0;font-weight:bold;background:#eaf1f7;padding:3px 6px;border-radius:3px');
+console.log('%c[VentiCondutas] 03-dimensionamento carregado - correcao ACH (so G3 e G4 exceto Sanitorios)', 'color:#6d8fb0;font-weight:bold;background:#eaf1f7;padding:3px 6px;border-radius:3px');
 
 })();

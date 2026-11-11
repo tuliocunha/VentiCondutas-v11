@@ -1,5 +1,5 @@
 /* ============================================================
-   VENTCONDUTAS V10.0.0 · 08-arranque
+   VENTICONDUTAS · 08-arranque
    ============================================================ */
 (function () {
 'use strict';
@@ -9,14 +9,6 @@ const VC6 = window.VC6;
 VC._boot.partes.push('08-arranque');
 
 VC.ui = VC.ui || {};
-if (typeof VC.ui.renderSidebar !== 'function') {
-  VC.ui.renderSidebar = function () {
-    const sidebar = document.getElementById('sidebar');
-    if (!sidebar) return;
-    sidebar.innerHTML = '<div class="grupo-sidebar" data-fase="contexto"><div class="grupo-titulo">1 · Contexto</div><button class="passo-btn ativo" data-passo="setup" onclick="VC.ui.setPasso(\'setup\')"><div class="passo-icone"><i class="fa-solid fa-gear"></i></div><div class="passo-corpo"><div class="passo-nome">Setup do Projeto</div><div class="passo-sub">Tipologia · QAI · premissas ISA</div></div><div class="passo-estado ok"></div></button></div>';
-  };
-}
-
 VC.grafoEstado = {
   condutas: { rot: { x: -0.30, y: 0.40 }, zoom: 0.55, offset: { x: 0, y: 0 }, arrastando: false, modoDrag: 'rotate', lastX: 0, lastY: 0, selecionado: null, filtro: 'tudo', canais: { volume: true, cor: true, borda: true, satur: true, arcos: true }, animacao: false },
   conceitual: { rot: { x: -0.30, y: 0.40 }, zoom: 0.55, offset: { x: 0, y: 0 }, arrastando: false, modoDrag: 'rotate', lastX: 0, lastY: 0, selecionado: null, filtro: 'tudo', canais: { volume: true, cor: true, borda: true, satur: true, arcos: true }, animacao: false }
@@ -176,7 +168,7 @@ VC.configuracoes = {
     const modal = document.getElementById('modalConfiguracoes'); const cont = document.getElementById('modalConfigConteudo'); if (!modal || !cont) return;
     const cats = [ { nome: '1 · Topologia e rede', itens: [['topologiaReal', 'Topologia real'], ['zetaDinamico', 'ζ dinâmico de Tês'], ['sincronizacao', 'Sincronização automática'], ['mapaTrechos', 'Mapa de trechos'], ['equilibrioTrechos', 'Equilíbrio de trechos']] }, { nome: '2 · UTAs e ventilador', itens: [['utasPorRede', 'UTAs por rede'], ['pontoFuncionamentoAuto', 'Ponto de funcionamento automático'], ['curvasFabricantes', 'Curvas reais de fabricantes']] }, { nome: '3 · Conformidade', itens: [['estanquidade', 'Estanquidade'], ['cortaFogo', 'Corta-Fogo'], ['filtrosCarga', 'Filtros com carga'], ['ruidoUta', 'Ruído de UTA'], ['velocidadeMax', 'Velocidade máxima']] }, { nome: '4 · Balanço de ar (V8.0.1)', itens: [['balancoAr', 'Balanço de ar por espaço'], ['transferencias', 'Transferências entre espaços'], ['validacaoCiclos', 'Deteção de ciclos'], ['pressaoRelativa', 'Cálculo de pressão relativa']] }, { nome: '5 · F-RPH · Conforto térmico', itens: [['confortoTermico', 'Caudal de conforto (RPH × V) por espaço']] }, { nome: '6 · QAI_projeto (V8.0.1)', itens: [['qaiProjeto', 'QAI definido pelo engenheiro (por grupo · com motivo auditável)']] }, { nome: '7 · Interface', itens: [['modoNormalEng', 'Modo Normal / Engenharia'], ['editorDetalhado', 'Editor detalhado'], ['tooltips', 'Tooltips contextuais'], ['painel2x3', 'Painel inferior 2×3']] }, { nome: '8 · Relatórios e PDF', itens: [['graficosModernos', 'Gráficos modernos'], ['pdf10pag', 'PDF profissional 10-15 páginas'], ['cadernoParametrizado', 'Caderno de encargos parametrizado'], ['usoDadosPainel', 'Bloco "Como os dados são usados"'], ['legendaUnificada', 'Legenda unificada'], ['arHumidoPainel', 'Painel ar húmido']] }, { nome: '9 · Diagrama de Rede (N9)', itens: [['diagramaN9', 'Diagrama N9 ativo'], ['diagramaInterativo', 'Interatividade (zoom/pan)'], ['diagramaFiltros', 'Filtros por rede/nível'], ['diagramaExportSVG', 'Exportar SVG'], ['diagramaExportPNG', 'Exportar PNG'], ['diagramaIntegrarPDF', 'Integrar no PDF']] }, { nome: '10 · Extras', itens: [['diagramaSVG', 'Diagrama SVG'], ['importacaoCSV', 'Importação CSV'], ['modoComparacao', 'Modo comparação'], ['modoArvore', 'Modo Árvore visual']] }, { nome: '11 · Gestão de exemplos', itens: [['gestaoExemplos', 'Gestão de exemplos (localStorage + JSON)']] } ];
     let h = '<div class="modal-cabecalho"><h3><i class="fa-solid fa-sliders"></i> Configurações ' + VC.versao + '</h3><button class="fechar" onclick="VC.ui.fecharModal(\'modalConfiguracoes\')">×</button></div><div class="modal-corpo">';
-    h += '<div style="padding:10px 12px;background:var(--primario-soft);border-radius:6px;font-size:11px;color:var(--primario-esc);margin-bottom:14px"><b>VentCondutas V9.2:</b> F-RPH + QAI_projeto + <b>Topologia facetada</b> + <b>Árvore interativa</b> + <b>Layout V2 · 6 Janelas</b> + <b>Lente Hasse</b>.</div>';
+    h += '<div style="padding:10px 12px;background:var(--primario-soft);border-radius:6px;font-size:11px;color:var(--primario-esc);margin-bottom:14px"><b>' + VC.versao + ':</b> F-RPH + QAI_projeto + <b>Topologia facetada</b> + <b>Árvore interativa</b> + <b>Layout V2 · 6 Janelas</b> + <b>Lente Hasse</b>.</div>';
     cats.forEach(cat => {
       h += '<div style="margin-bottom:16px"><div style="font-size:10.5px;font-weight:800;text-transform:uppercase;color:var(--texto-med);margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid var(--borda)">' + cat.nome + '</div>';
       cat.itens.forEach(([k, label]) => { const on = VC.flags[k] === true; h += '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:7px 10px;background:var(--superf2);border-radius:5px;margin-bottom:3px"><span style="font-size:11.5px">' + label + '</span><label style="display:inline-flex;align-items:center;cursor:pointer;gap:8px"><input type="checkbox" ' + (on ? 'checked' : '') + ' onchange="VC.configuracoes.toggle(\'' + k + '\', this.checked)" style="width:16px;height:16px;accent-color:var(--primario)"></label></div>'; });
@@ -272,8 +264,10 @@ VC.ui.sobre = function () { alert(VC.versao + '\n\n' + 'Layout V2 · 6 Janelas +
 
 VC._modoAtivo = VC._modoAtivo || 'condutas';
 VC.modos = VC.modos || {};
-VC.modos.setJanela = function(num) { if (!VC.flags.layoutV2) return; document.querySelectorAll('.janela-btn').forEach(b => b.classList.toggle('ativo', b.dataset.janela === String(num))); try { localStorage.setItem('VC_layoutV2_janela', String(num)); } catch (e) {} if (VC.layoutV2 && typeof VC.layoutV2.setJanelaAtiva === 'function') { VC.layoutV2.setJanelaAtiva(Number(num)); const janela = VC.layoutV2.JANELAS.filter(function (j) { return j.num === Number(num); })[0]; if (janela && janela.passos.length) { const passoAtivo = VC._passoAtivo || 'setup'; if (janela.passos.indexOf(passoAtivo) < 0 && VC.ui && typeof VC.ui.setPasso === 'function') { VC.ui.setPasso(janela.passos[0]); } } } };
-VC.modos.setLente = function(nome) { if (!VC.flags.layoutV2) return; if (nome === 'visual') nome = 'passo'; VC.flags.layoutV2Lente = nome; document.querySelectorAll('.lente-btn').forEach(b => b.classList.toggle('ativo', b.dataset.lente === nome)); try { localStorage.setItem('VC_layoutV2_lente', String(nome)); } catch (e) {} if (VC.layoutV2 && typeof VC.layoutV2.renderLens === 'function') { VC.layoutV2.renderLens(nome); } };
+VC.modos.setJanela = function(num) { try { VC.modos._setJanela(num); } finally { if (VC.eventos) VC.eventos.emit('ui:janela', num); } };
+VC.modos._setJanela = function(num) { if (!VC.flags.layoutV2) return; document.querySelectorAll('.janela-btn').forEach(b => b.classList.toggle('ativo', b.dataset.janela === String(num))); try { localStorage.setItem('VC_layoutV2_janela', String(num)); } catch (e) { /* localStorage indisponível (modo privado) */ } if (VC.layoutV2 && typeof VC.layoutV2.setJanelaAtiva === 'function') { VC.layoutV2.setJanelaAtiva(Number(num)); const janela = VC.layoutV2.JANELAS.filter(function (j) { return j.num === Number(num); })[0]; if (janela && janela.passos.length) { const passoAtivo = VC._passoAtivo || 'setup'; if (janela.passos.indexOf(passoAtivo) < 0 && VC.ui && typeof VC.ui.setPasso === 'function') { VC.ui.setPasso(janela.passos[0]); } } } };
+VC.modos.setLente = function(nome) { try { VC.modos._setLente(nome); } finally { if (VC.eventos) VC.eventos.emit('ui:lente', nome); } };
+VC.modos._setLente = function(nome) { if (!VC.flags.layoutV2) return; if (nome === 'visual') nome = 'passo'; VC.flags.layoutV2Lente = nome; document.querySelectorAll('.lente-btn').forEach(b => b.classList.toggle('ativo', b.dataset.lente === nome)); try { localStorage.setItem('VC_layoutV2_lente', String(nome)); } catch (e) { /* localStorage indisponível (modo privado) */ } if (VC.layoutV2 && typeof VC.layoutV2.renderLens === 'function') { VC.layoutV2.renderLens(nome); } };
 VC.modos.set = function (nome) {
   VC._modoAtivo = nome; document.querySelectorAll('.modo-btn').forEach(b => b.classList.toggle('ativo', b.dataset.modo === nome)); document.querySelectorAll('.modo-painel').forEach(p => p.classList.remove('ativo'));
   const mapa = { 'condutas': 'modo-condutas', 'construtor': 'modo-construtor', 'arvore': 'modo-arvore', 'grafico-condutas': 'modo-grafico-condutas', 'grafico-conceitual': 'modo-grafico-conceitual', 'diagrama-rede': 'modo-diagrama-rede', 'relatorios': 'modo-relatorios' };
@@ -283,7 +277,7 @@ VC.modos.set = function (nome) {
 
 window.renderSetup = function () {
   const p = VC.dados.params;
-  let h = '<div class="cartao-titulo"><i class="fa-solid fa-gear"></i> Setup do Projeto (Engenharia V11)</div>';
+  let h = '<div class="cartao-titulo"><i class="fa-solid fa-gear"></i> Setup do Projeto</div>';
   h += '<p style="font-size:11.5px;color:var(--texto-med);margin-bottom:14px">Definir o contexto do projeto, premissas físicas ISA/Sutherland e critérios normativos de QAI e aeráulica.</p>';
 
   // Grupo 0: Registo do Projeto
@@ -294,6 +288,8 @@ window.renderSetup = function () {
        '<div class="campo-grupo"><label>Cliente</label><input value="' + VC.utils.esc(VC.dados.metadados.cliente || '') + '" onchange="VC.dados.metadados.cliente=this.value"></div>' +
        '<div class="campo-grupo"><label>Local</label><input value="' + VC.utils.esc(VC.dados.metadados.local || '') + '" onchange="VC.dados.metadados.local=this.value"></div>' +
        '<div class="campo-grupo"><label>Autor</label><input value="' + VC.utils.esc(VC.dados.metadados.autor || '') + '" onchange="VC.dados.metadados.autor=this.value"></div>' +
+       // v11.1: a Descrição do projeto voltou (existia no Setup antigo; o dado continuava a ser guardado)
+       '<div class="campo-grupo" style="grid-column:1 / -1"><label>Descrição</label><textarea rows="2" onchange="VC.dados.metadados.descricao=this.value" style="width:100%; resize:vertical; font-family:inherit; font-size:12px; padding:8px; border:1px solid var(--borda-media); border-radius:5px;">' + VC.utils.esc(VC.dados.metadados.descricao || '') + '</textarea></div>' +
        '</div></div>';
 
   // Grelha das 3 Categorias de Engenharia
@@ -344,7 +340,7 @@ window.renderSetup = function () {
   const metSel = (VC.dados.metodoCalculo && VC.dados.metodoCalculo.metodo) || 'loss';
   h += '<div class="campo-grupo" style="margin-bottom:8px"><label>Método de Dimensionamento</label><select onchange="VC.dados.metodoCalculo={metodo:this.value}; VC.estado.sincronizar();">' +
        '<option value="loss"' + (metSel==='loss'?' selected':'') + '>Perda Constante (~1 Pa/m)</option>' +
-       '<option value="velocity"' + (metSel==='velocity'?' selected':'') + '>Velocidade Máxima (≤ 6 m/s)</option>' +
+       '<option value="velocity"' + (metSel==='velocity'?' selected':'') + '>Velocidade máxima por nível (6 / 5 / 4 / 3 m/s)</option>' +
        '</select></div>';
 
   h += '<div class="campo-grupo"><label>Restrição de Altura no Teto (mm)</label><input type="number" step="10" value="' + (VC.dados.restricaoH ?? 250) + '" onchange="VC.dados.restricaoH=VC.utils.num(this.value); VC.estado.sincronizar();"></div>';
@@ -353,43 +349,6 @@ window.renderSetup = function () {
   h += '</div>'; // fim da grelha de 3 colunas
   return h;
 };
-window._old_renderSetup_2 = function () {
-  const p = VC.dados.params;
-  let h = '<div class="cartao-titulo"><i class="fa-solid fa-gear"></i> Setup do Projeto</div>';
-  h += '<p style="font-size:11.5px;color:var(--texto-med);margin-bottom:15px">Definir o contexto do projeto. Estes dados alimentam o cálculo ISA/ar húmido em todas as fases.</p>';
-
-  h += '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">';
-
-  h += '<div style="background: var(--superf2); border: 1px solid var(--borda); border-radius: 8px; padding: 16px; box-shadow: var(--sombra-1);">';
-  h += '<div style="font-size: 11px; font-weight: 800; color: var(--primario-esc); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 12px; border-bottom: 1px solid var(--borda); padding-bottom: 8px;"><i class="fa-solid fa-folder-open"></i> Registo do Projeto</div>';
-  h += '<div class="campo-grupo" style="margin-bottom: 10px;"><label>Nome do projeto</label><input value="' + VC.utils.esc(VC.dados.metadados.nome) + '" onchange="VC.dados.metadados.nome=this.value; VC.ui.renderSidebar();"></div>';
-  h += '<div class="campo-grupo" style="margin-bottom: 10px;"><label>Cliente</label><input value="' + VC.utils.esc(VC.dados.metadados.cliente || '') + '" onchange="VC.dados.metadados.cliente=this.value"></div>';
-  h += '<div class="campo-grupo" style="margin-bottom: 10px;"><label>Local</label><input value="' + VC.utils.esc(VC.dados.metadados.local || '') + '" onchange="VC.dados.metadados.local=this.value"></div>';
-  h += '<div class="campo-grupo" style="margin-bottom: 10px;"><label>Autor</label><input value="' + VC.utils.esc(VC.dados.metadados.autor || '') + '" onchange="VC.dados.metadados.autor=this.value"></div>';
-  h += '<div class="campo-grupo" style="margin-bottom: 0;"><label>Descrição</label><textarea rows="2" onchange="VC.dados.metadados.descricao=this.value" style="width:100%; resize:vertical; font-family:inherit; font-size:12px; padding:8px; border:1px solid var(--borda-media); border-radius:5px;">' + VC.utils.esc(VC.dados.metadados.descricao || '') + '</textarea></div>';
-  h += '</div>';
-
-  h += '<div style="background: var(--superf2); border: 1px solid var(--borda); border-radius: 8px; padding: 16px; box-shadow: var(--sombra-1);">';
-  h += '<div style="font-size: 11px; font-weight: 800; color: var(--primario-esc); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 12px; border-bottom: 1px solid var(--borda); padding-bottom: 8px;"><i class="fa-solid fa-cloud-sun"></i> Condicionantes Ambientais</div>';
-  h += '<div class="campo-grupo" style="margin-bottom: 10px;"><label>Altitude (m)</label><input type="number" style="width:100%" value="' + p.altitude + '" onchange="VC.dados.params.altitude=VC.utils.num(this.value); VC.perf.cacheFisica.invalidar(); VC.estado.sincronizar();" data-tt-simbolo="inputAltitude"></div>';
-  h += '<div class="campo-grupo" style="margin-bottom: 10px;"><label>Temperatura (°C)</label><input type="number" style="width:100%" value="' + p.temperatura + '" onchange="VC.dados.params.temperatura=VC.utils.num(this.value); VC.perf.cacheFisica.invalidar(); VC.estado.sincronizar();" data-tt-simbolo="inputTemperatura"></div>';
-  h += '<div class="campo-grupo" style="margin-bottom: 10px;"><label>Humidade (%)</label><input type="number" style="width:100%" value="' + p.humidade + '" onchange="VC.dados.params.humidade=VC.utils.num(this.value); VC.perf.cacheFisica.invalidar(); VC.estado.sincronizar();" data-tt-simbolo="inputHumidade"></div>';
-  h += '<div class="campo-grupo" style="margin-bottom: 0;"><label>Rugosidade (mm)</label><input type="number" style="width:100%" step="0.01" value="' + p.rugosidade + '" onchange="VC.dados.params.rugosidade=VC.utils.num(this.value); VC.estado.sincronizar();" data-tt-simbolo="inputRugosidade"></div>';
-  h += '</div>';
-
-  h += '</div>';
-
-  return h;
-};
-window._old_renderSetup = function () {
-  const p = VC.dados.params;
-  let h = '<div class="cartao-titulo"><i class="fa-solid fa-gear"></i> Setup do Projeto</div>';
-  h += '<p style="font-size:11.5px;color:var(--texto-med);margin-bottom:10px">Definir o contexto do projeto. Estes dados alimentam o cálculo ISA/ar húmido em todas as fases.</p>';
-  h += '<div class="grade-4" style="margin-bottom:12px">' + '<div class="campo-grupo"><label>Nome do projeto</label><input value="' + VC.utils.esc(VC.dados.metadados.nome) + '" onchange="VC.dados.metadados.nome=this.value; VC.ui.renderSidebar();"></div>' + '<div class="campo-grupo"><label>Cliente</label><input value="' + VC.utils.esc(VC.dados.metadados.cliente) + '" onchange="VC.dados.metadados.cliente=this.value"></div>' + '<div class="campo-grupo"><label>Local</label><input value="' + VC.utils.esc(VC.dados.metadados.local) + '" onchange="VC.dados.metadados.local=this.value"></div>' + '<div class="campo-grupo"><label>Autor</label><input value="' + VC.utils.esc(VC.dados.metadados.autor) + '" onchange="VC.dados.metadados.autor=this.value"></div>' + '</div>';
-  h += '<div class="grade-4">' + '<div class="campo-grupo"><label>Altitude (m)</label><input type="number" value="' + p.altitude + '" onchange="VC.dados.params.altitude=VC.utils.num(this.value); VC.perf.cacheFisica.invalidar(); VC.estado.sincronizar();" data-tt-simbolo="inputAltitude"></div>' + '<div class="campo-grupo"><label>Temperatura (°C)</label><input type="number" value="' + p.temperatura + '" onchange="VC.dados.params.temperatura=VC.utils.num(this.value); VC.perf.cacheFisica.invalidar(); VC.estado.sincronizar();" data-tt-simbolo="inputTemperatura"></div>' + '<div class="campo-grupo"><label>Humidade (%)</label><input type="number" value="' + p.humidade + '" onchange="VC.dados.params.humidade=VC.utils.num(this.value); VC.perf.cacheFisica.invalidar(); VC.estado.sincronizar();" data-tt-simbolo="inputHumidade"></div>' + '<div class="campo-grupo"><label>Rugosidade (mm)</label><input type="number" step="0.01" value="' + p.rugosidade + '" onchange="VC.dados.params.rugosidade=VC.utils.num(this.value); VC.estado.sincronizar();" data-tt-simbolo="inputRugosidade"></div>' + '</div>';
-  return h;
-};
-
 VC.caudalEspacoUI = {
   _filtroTexto: '',
   setFiltro: function(v) { this._filtroTexto = String(v || '').toLowerCase(); if(VC._passoAtivo === 'classificacao') VC.passos.render('classificacao'); },
@@ -625,27 +584,18 @@ function bootstrapFinal() {
     const nComConforto = (VC.dados.espacos || []).filter(e => (Number(e.Q_ConTerm) || 0) > 0).length; const nComQAI = (VC.dados.espacos || []).filter(e => (Number(e.QAI_projeto) || 0) > 0).length; const qaiTotal = (VC.dados.espacos || []).reduce((s, e) => s + (Number(e.QAI_projeto) || 0), 0);
     const contagens = { versao: 'V9.2.0-layout-fase4.1', espacos: VC.dados.espacos.length, comConforto: nComConforto, comQAI: nComQAI, qaiTotal: Math.round(qaiTotal), definicoes: VC.dados.espacos.reduce((s, e) => s + ((e.definicoes || []).length), 0), terminais: VC.dados.terminais.length, ramais: VC.dados.ramais.length, transferencias: (VC.dados.transferencias || []).length, utas: VC.dados.utas.length, tooltips: (VC.conhecimento.tooltips) ? Object.keys(VC.conhecimento.tooltips).length : 0, conceitos: (VC.conhecimento.conceitos) ? Object.keys(VC.conhecimento.conceitos).length : 0, curvas: (VC.conhecimento.curvasFabricantes) ? VC.conhecimento.curvasFabricantes.length : 0, catalogo: (VC.conhecimento.catalogoTerminais) ? VC.conhecimento.catalogoTerminais.length : 0, tiposEspaco: (VC.conhecimento.tiposEspaco) ? Object.keys(VC.conhecimento.tiposEspaco).length : 0 };
     const dur = Math.round((performance.now ? performance.now() : Date.now()) - inicio); console.log('%c╔══════════════════════════════════════════════════════════════╗', 'color:#6d8fb0;font-weight:bold'); console.log('%c║  VentCondutas V9.2.0 · Layout V2 Fase 4.1 (Infra Hasse)     ║', 'color:#6d8fb0;font-weight:bold;font-size:13px'); console.log('%c╚══════════════════════════════════════════════════════════════╝', 'color:#6d8fb0;font-weight:bold'); console.table(contagens); console.log('%c⏱  Bootstrap: ' + dur + ' ms', 'color:#7fa88b;font-weight:bold'); console.log('%c📦 Partes: ' + VC._boot.partes.join(' → '), 'color:#9488b8;font-weight:bold'); if (nComQAI > 0) { console.log('%c👷 QAI_projeto ativo em ' + nComQAI + ' espaço(s) · total ' + Math.round(qaiTotal) + ' m³/h', 'color:#b88a4a;font-weight:bold'); } if (VC.snap) { console.log('%c🔗 Snap V9 ativo · Ctrl+Z desfaz · Ctrl+Y refaz', 'color:#6d8fb0;font-weight:bold'); } console.log('%c🎨 Lente Hasse: placeholder (implementação real em 4.2)', 'color:#7fa88b;font-weight:bold');
-  } catch (e) { console.error('[VentCondutas V11.0.0 · Fase 4.1] Erro no bootstrap:', e); if (VC.debug) VC.debug.erro(e); }
+  } catch (e) { console.error('[VentiCondutas] Erro no bootstrap:', e); if (VC.debug) VC.debug.erro(e); }
 }
 window.bootstrapFinal = bootstrapFinal;
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { setTimeout(bootstrapFinal, 50); }); else setTimeout(bootstrapFinal, 50);
 
 (function installLayoutV2Integrations() {
-  if (typeof VC.ui.renderSidebar === 'function' && !VC.ui._renderSidebarWrapped) {
-    var _renderSidebarOriginal = VC.ui.renderSidebar;
-    VC.ui.renderSidebar = function () { var r = _renderSidebarOriginal.apply(this, arguments); if (VC.flags.layoutV2 && VC.layoutV2 && VC.layoutV2.janelaAtiva) { setTimeout(function () { VC.layoutV2._aplicarFiltroSidebar(); }, 0); } return r; };
-    VC.ui._renderSidebarWrapped = true;
-  }
-  if (VC.passos && typeof VC.passos.render === 'function' && !VC.passos._renderLensWrapped) {
-    var _renderOriginal = VC.passos.render;
-    VC.passos.render = function () { if (VC.flags.layoutV2 && VC.flags.layoutV2Lente !== 'passo') { VC.flags.layoutV2Lente = 'passo'; document.querySelectorAll('.lente-btn').forEach(function (b) { b.classList.toggle('ativo', b.dataset.lente === 'passo'); }); } return _renderOriginal.apply(this, arguments); };
-    VC.passos._renderLensWrapped = true;
-  }
+  // v11.1 (4.4): o filtro do menu e a reposição da lente passaram para VC.ui.renderSidebar (00) e VC.passos.render (06).
   function inicializarLayoutV2(tentativa) {
     tentativa = tentativa || 0; if (!VC.flags.layoutV2) return; if (!VC.layoutV2) return; var sidebar = document.getElementById('sidebar'); if (!sidebar || !sidebar.children.length) { if (tentativa < 20) setTimeout(function () { inicializarLayoutV2(tentativa + 1); }, 100); return; }
     var urlParams = new URLSearchParams(window.location.search); var janelaNum = Number(urlParams.get('janela')) || null; var lente = urlParams.get('lente') || null;
-    if (!janelaNum) { try { var saved = window.localStorage.getItem('VC_layoutV2_janela'); if (saved) janelaNum = Number(saved); } catch (e) {} }
-    if (!lente) { try { var savedL = window.localStorage.getItem('VC_layoutV2_lente'); if (savedL) lente = savedL; } catch (e) {} }
+    if (!janelaNum) { try { var saved = window.localStorage.getItem('VC_layoutV2_janela'); if (saved) janelaNum = Number(saved); } catch (e) { /* localStorage indisponível (modo privado) */ } }
+    if (!lente) { try { var savedL = window.localStorage.getItem('VC_layoutV2_lente'); if (savedL) lente = savedL; } catch (e) { /* localStorage indisponível (modo privado) */ } }
     if (!lente || lente === 'visual') lente = 'passo';
     if (!janelaNum) { var passoAtivo = VC._passoAtivo || 'setup'; var janela = VC.layoutV2.JANELAS.filter(function (j) { return j.passos.indexOf(passoAtivo) >= 0; })[0]; janelaNum = janela ? janela.num : 1; }
     var lensBar = document.querySelector('.lens-bar');
@@ -657,6 +607,6 @@ if (document.readyState === 'loading') document.addEventListener('DOMContentLoad
   if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', function () { setTimeout(function () { inicializarLayoutV2(0); }, 500); }); } else { setTimeout(function () { inicializarLayoutV2(0); }, 500); }
 })();
 
-console.log('%c[VentCondutas V11.0.0] 08-arranque carregado · FIX: proteção defensiva para VC.passos', 'color:#6d8fb0;font-weight:bold;background:#eaf1f7;padding:3px 6px;border-radius:3px');
+console.log('%c[VentiCondutas] 08-arranque carregado · FIX: proteção defensiva para VC.passos', 'color:#6d8fb0;font-weight:bold;background:#eaf1f7;padding:3px 6px;border-radius:3px');
 
 })();

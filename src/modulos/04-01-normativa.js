@@ -1,5 +1,5 @@
 /* ============================================================
-   VENTCONDUTAS V11.0.0 · 04a-normativa
+   VENTICONDUTAS · 04a-normativa
    § Normativa UI · verificações legais (P138, EN 16798-3, DL 101-D,
      balanço, VDI 2081, EN 12599) + verificações de referência (QAI, etc.)
 

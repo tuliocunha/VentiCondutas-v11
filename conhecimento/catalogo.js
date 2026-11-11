@@ -1,5 +1,5 @@
 ﻿/* ============================================================
-   VENTCONDUTAS V10.0.0 · BASE DE CONHECIMENTO · CATALOGO
+   VENTICONDUTAS · BASE DE CONHECIMENTO · CATALOGO
    Ficheiro 5.2 — Catálogo de terminais + curvas de fabricantes
 
    ALTERAÇÕES V10.0.0:

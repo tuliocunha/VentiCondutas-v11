@@ -1,5 +1,5 @@
 ﻿/* ============================================================
-   VENTCONDUTAS V9.2.0 · 12-url-sync
+   VENTICONDUTAS · 12-url-sync
    Fase 5 · Persistência profunda de URL (deep-link bidirecional)
 
    Layout V2: ?layout=2&janela=N&passo=X&lente=Y
@@ -156,26 +156,13 @@ function _aplicarEstadoDaURL() {
 /* ────────────────────────────────────────────────
    WRAPPERS · instalar uma única vez
    ──────────────────────────────────────────────── */
-function _envolverSetJanela() {
-  if (typeof VC.modos.setJanela !== 'function' || VC.modos._setJanelaUrlWrapped) return;
-  const orig = VC.modos.setJanela;
-  VC.modos.setJanela = function () {
-    const r = orig.apply(this, arguments);
-    if (!_aInicializar) _syncUrl({ push: true });
-    return r;
-  };
-  VC.modos._setJanelaUrlWrapped = true;
-}
-
-function _envolverSetLente() {
-  if (typeof VC.modos.setLente !== 'function' || VC.modos._setLenteUrlWrapped) return;
-  const orig = VC.modos.setLente;
-  VC.modos.setLente = function () {
-    const r = orig.apply(this, arguments);
-    if (!_aInicializar) _syncUrl({ push: true });
-    return r;
-  };
-  VC.modos._setLenteUrlWrapped = true;
+// v11.1 (4.4): ouve os eventos de VC.modos.setJanela/setLente em vez de substituir as funções.
+let _eventosLigados = false;
+function _ligarEventosModos() {
+  if (_eventosLigados || !VC.eventos) return;
+  _eventosLigados = true;
+  VC.eventos.on('ui:janela', function () { if (!_aInicializar) _syncUrl({ push: true }); });
+  VC.eventos.on('ui:lente', function () { if (!_aInicializar) _syncUrl({ push: true }); });
 }
 
 /* ────────────────────────────────────────────────
@@ -211,8 +198,7 @@ function _inicializar() {
   if (VC.flags && VC.flags.layoutV2 !== true) return;
   if (!VC.layoutV2) return;
 
-  _envolverSetJanela();
-  _envolverSetLente();
+  _ligarEventosModos();
   _ligarClickPasso();
   _ligarPopstate();
 
@@ -239,7 +225,7 @@ VC.urlSync = {
 };
 
 console.log(
-  '%c[VentCondutas V11.0.0 · Fase 5] 12-url-sync carregado · deep-link bidirecional ativo',
+  '%c[VentiCondutas] 12-url-sync carregado · deep-link bidirecional ativo',
   'color:#6d8fb0;font-weight:bold;background:#eaf1f7;padding:3px 6px;border-radius:3px'
 );
 

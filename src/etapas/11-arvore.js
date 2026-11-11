@@ -1,5 +1,5 @@
 ﻿/* ============================================================
-   VENTCONDUTAS V10.2.9 · 11-arvore
+   VENTICONDUTAS · 11-arvore
    Modo "Arvore de Rede" (menu topo).
    4 vistas facetadas + filtros + drag-drop de ramais + painel.
    Reutiliza VC.topologia.agruparPor / VC.topologia.mover / VC.snap.
@@ -42,7 +42,7 @@ VC.arvore = {
     }
 
     if (VC.flags && VC.flags.topologiaFacetada && VC.topologia && VC.topologia.facetas) {
-      try { VC.topologia.facetas.aplicarATodos(); } catch (e) {}
+      try { VC.topologia.facetas.aplicarATodos(); } catch (e) { VC.debug && VC.debug.erro && VC.debug.erro(e); }
     }
 
     var ramais = VC.dados.ramais || [];
@@ -260,14 +260,14 @@ VC.arvore = {
 
   _dragStart: function (ev, nome) {
     this._arrastando = nome;
-    try { ev.dataTransfer.setData('text/plain', nome); ev.dataTransfer.effectAllowed = 'move'; } catch (e) {}
+    try { ev.dataTransfer.setData('text/plain', nome); ev.dataTransfer.effectAllowed = 'move'; } catch (e) { /* dataTransfer indisponível neste navegador */ }
     ev.currentTarget.style.opacity = '0.4';
   },
 
   _dragOver: function (ev) {
     if (!this._arrastando) return;
     ev.preventDefault();
-    try { ev.dataTransfer.dropEffect = 'move'; } catch (e) {}
+    try { ev.dataTransfer.dropEffect = 'move'; } catch (e) { /* dataTransfer indisponível neste navegador */ }
     ev.currentTarget.style.background = 'var(--primario-soft)';
   },
 
@@ -298,7 +298,7 @@ VC.arvore = {
   }
 };
 
-console.log('%c[VentCondutas V11.0.09] 11-arvore carregado \u00b7 4 vistas facetadas + filtros + drag-drop',
+console.log('%c[VentiCondutas] 11-arvore carregado \u00b7 4 vistas facetadas + filtros + drag-drop',
   'color:#6d8fb0;font-weight:bold;background:#eaf1f7;padding:3px 6px;border-radius:3px');
 
 })();

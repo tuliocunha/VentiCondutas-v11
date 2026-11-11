@@ -1,5 +1,5 @@
 ﻿/* ============================================================
-   VENTCONDUTAS V9.0 · 10-historico-ui
+   VENTICONDUTAS · 10-historico-ui
    Fase 2.5 · Desfazer/Refazer para drag-and-drop + atalhos
 
    ADITIVO. Nada existente e alterado.
@@ -231,6 +231,6 @@ if (document.readyState === 'loading') {
   setTimeout(inicializarSnap, 800);
 }
 
-console.log('[VentCondutas V9 · Fase 2.5] 10-historico-ui carregado');
+console.log('[VentiCondutas] 10-historico-ui carregado');
 
 })();

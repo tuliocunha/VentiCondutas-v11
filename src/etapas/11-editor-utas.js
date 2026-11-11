@@ -1,5 +1,5 @@
 ﻿/* ============================================================
-   VENTCONDUTAS V10.2.5 · 11-editor-utas
+   VENTICONDUTAS · 11-editor-utas
    Passo "Dimensionamento de UTAs".
    Lista de UTAs editavel (parametros, componentes, curva)
    + resultados (Q, dp, SFPint, P, ponto de funcionamento).
@@ -279,7 +279,7 @@ VC.editorUtas = {
   }
 };
 
-console.log('%c[VentCondutas V11.0.05] 11-editor-utas carregado \u00b7 Dimensionamento de UTAs',
+console.log('%c[VentiCondutas] 11-editor-utas carregado \u00b7 Dimensionamento de UTAs',
   'color:#6d8fb0;font-weight:bold;background:#eaf1f7;padding:3px 6px;border-radius:3px');
 
 })();

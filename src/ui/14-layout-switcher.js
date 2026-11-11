@@ -1,5 +1,5 @@
 ﻿/* ============================================================
-   VENTCONDUTAS V10.1.0 · 14-layout-switcher
+   VENTICONDUTAS · 14-layout-switcher
    Força o Layout V2 (6 Passos) e remove o botão de escolha.
    ============================================================ */
 (function () {
@@ -12,7 +12,7 @@ VC._boot.partes.push('14-layout-switcher');
 // Forçar sempre o layout de 6 passos
 VC.flags.layoutV2 = true;
 VC.flags.layoutV2Lente = 'passo';
-try { localStorage.setItem('VC_layoutMode', 'seis'); } catch(e) {}
+try { localStorage.setItem('VC_layoutMode', 'seis'); } catch (e) { /* localStorage indisponível (modo privado) */ }
 
 VC.layoutSwitcher = {
   _modoAtual: 'seis',

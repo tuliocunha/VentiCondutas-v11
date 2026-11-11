@@ -1,5 +1,5 @@
 ﻿/* ============================================================
-   VENTCONDUTAS V10.0.0 · BASE DE CONHECIMENTO · UI
+   VENTICONDUTAS · BASE DE CONHECIMENTO · UI
    Ficheiro 5.4 — Labels + atalhos de teclado
    ALTERAÇÕES V10.0.0: Atalhos corrigidos (P28/P29/P30)
    ============================================================ */

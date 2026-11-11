@@ -1,5 +1,5 @@
 ﻿/* ============================================================
-   VENTCONDUTAS V9.2.0 · 13-fase6
+   VENTICONDUTAS · 13-fase6
    Fase 6 · Responsividade (Mobile/Tablet) + CSS de Impressão
 
    ADITIVO. Não altera 08-arranque.js (R17).
@@ -121,7 +121,7 @@ if (document.readyState === 'loading') {
 }
 
 console.log(
-  '%c[VentCondutas V11.0.0 · Fase 6] 13-fase6 carregado · responsividade e CSS de impressão ativos',
+  '%c[VentiCondutas] 13-fase6 carregado · responsividade e CSS de impressão ativos',
   'color:#6d8fb0;font-weight:bold;background:#eaf1f7;padding:3px 6px;border-radius:3px'
 );
 

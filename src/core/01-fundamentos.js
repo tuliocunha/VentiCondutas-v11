@@ -1,5 +1,5 @@
 ﻿/* ============================================================
-   VENTCONDUTAS V10.0.0 · 01-fundamentos
+   VENTICONDUTAS · 01-fundamentos
    ============================================================ */
 (function () {
 'use strict';
@@ -14,10 +14,10 @@ VC.modos = VC.modos || {};
 VC.calculo = VC.calculo || {};
 VC.exportacoes = VC.exportacoes || {};
 
-VC.versao = 'VentiCondutas v11.0.0';
+VC.versao = 'VentiCondutas v11.1.0';   // única fonte do número de versão
 VC.versaoCurta = (function () {
   const m = String(VC.versao).match(/(\d+\.\d+\.\d+)/);
-  return m ? m[1] : '11.0.0';
+  return m ? m[1] : '0.0.0';
 })();
 VC.atualizarVersaoNaUI = function () {
   var v = VC.versao || '';
@@ -56,7 +56,7 @@ VC.utils = {
   uid(prefixo) { return (prefixo || 'ID') + '-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); },
   clonar(o) {
     if (o === null || typeof o !== 'object') return o;
-    if (typeof structuredClone === 'function') { try { return structuredClone(o); } catch (e) {} }
+    if (typeof structuredClone === 'function') { try { return structuredClone(o); } catch (e) { /* objeto não clonável: segue para a cópia JSON */ } }
     return JSON.parse(JSON.stringify(o));
   },
   soma(arr, campo) { return (arr || []).reduce((s, x) => s + (Number(x[campo]) || 0), 0); },
@@ -681,7 +681,7 @@ window.addEventListener('unhandledrejection', function (ev) { VC.debug.erro(ev.r
 VC.eventos = VC.eventos || {
   _l: {},
   on(e, f) { (this._l[e] = this._l[e] || []).push(f); },
-  emit(e, d) { (this._l[e] || []).forEach(f => { try { f(d); } catch(err) {} }); }
+  emit(e, d) { (this._l[e] || []).forEach(f => { try { f(d); } catch (err) { VC.debug && VC.debug.erro && VC.debug.erro(err); } }); }
 };
 
 VC.estado = VC.estado || {};
@@ -694,6 +694,10 @@ VC.estado._hashEstado = function () {
   partes.push(VC.dados && VC.dados.tipologia || '');
   partes.push(VC.dados && VC.dados.restricaoH || 0);
   partes.push(VC.dados && VC.dados.eficaciaRemocao || 1);
+  // v11.1 (E1): opções que mudam o cálculo e não forçavam o recálculo
+  partes.push((VC.dados && VC.dados.serieDiametros) || 'S1');
+  partes.push((VC.dados && VC.dados.metodoCalculo && VC.dados.metodoCalculo.metodo) || 'loss');
+  partes.push((VC.dados && VC.dados.filtros && VC.dados.filtros.modo) || 'sujo');
   const espacos = (VC.dados && VC.dados.espacos) || [];
   partes.push('E' + espacos.length);
   partes.push(espacos.map(e =>
@@ -708,6 +712,7 @@ VC.estado._hashEstado = function () {
   partes.push(ramais.map(r =>
     r.id + '|' + r.nome + '|' + (r.parente || '') + '|' + (r.L || 0) + '|' + (r.zeta || 0) +
     '|' + (r.utaRef || '') + '|' + ((r.lock && r.lock.D) ? '1' : '0') + '|' + ((r.geometriaInput && r.geometriaInput.forma) || 'circular')   // v11.1: forma da secção
+    + '|' + ((r.geometriaInput && r.geometriaInput.material) || '') + '|' + ((r.geometriaInput && r.geometriaInput.rugosidade) || '') + '|' + ((r.geometriaInput && r.geometriaInput.H_max) || '')   // v11.1 (E1)
   ).join('#'));
   const terminais = (VC.dados && VC.dados.terminais) || [];
   partes.push('Tm' + terminais.length);
@@ -733,6 +738,15 @@ VC.estado._hashEstado = function () {
 };
 
 VC.estado.sincronizar = function (opcoes) {
+  try { return VC.estado._sincronizar(opcoes); }
+  finally {   // v11.1 (4.4): facetas da topologia depois de cada sincronização (antes um invólucro em 09-topologia)
+    if (VC.flags && VC.flags.topologiaFacetada && VC.topologia && VC.topologia.facetas) {
+      try { VC.topologia.facetas.aplicarATodos(); }
+      catch (e) { VC.debug && VC.debug.erro && VC.debug.erro(e); }
+    }
+  }
+};
+VC.estado._sincronizar = function (opcoes) {
   opcoes = opcoes || {};
   if (!opcoes.force) {
     try {
@@ -777,6 +791,13 @@ VC.constantes = {
   // v11.1: velocidade máxima por nível do ramal (m/s): N1 principal · N2 secundário · N3 terciário · N4 terminal.
   // Usada no dimensionamento e na auditoria (antes: 6 m/s fixo só na auditoria).
   VMAX_NIVEL: { 1: 6.0, 2: 5.0, 3: 4.0, 4: 3.0 },
+  // v11.1 (4.7): valores de projeto num só sítio.
+  R_ALVO: 1.0,                 // Pa/m · perda de carga linear alvo no método de perda constante (prática ASHRAE/CIBSE)
+  TERMINAL: { vAtencao: 2.2, vMax: 2.5, LwAtencao: 35, LwMax: 40 },   // m/s no colo · dB(A) · critério de conforto (VDI 2081)
+  BALANCO_ESPACO: { sub: 0.90, sobre: 1.20 },                          // Q servido / Q necessário · tolerância da app
+  BALANCO_RESIDUO: 5,          // m³/h · resíduo aceite no balanço de massa de um espaço (2× = desequilíbrio grave)
+  EQUILIBRIO_REDE: 0.20,       // desvio máximo de Δp entre ramais após otimização (20 %)
+  DL101D: { SGTC: 290000, SGT: 100000, INSPECAO: 70000 },             // W · DL 101-D/2020 (gestão técnica e inspeção)
   COMM_S1: [63, 80, 100, 125, 160, 200, 250, 315, 355, 400, 450, 500, 560, 630, 710, 800, 900, 1000, 1120, 1250, 1400, 1600, 1800, 2000],
   COMM_S2: [100, 125, 160, 200, 250, 315, 400, 500, 630, 800, 1000, 1250, 1600, 2000],
   W1505: [100, 150, 200, 250, 300, 400, 500, 600, 700, 800, 900, 1000, 1200, 1400, 1600, 1800, 2000],
@@ -908,9 +929,9 @@ VC.normas = {
   },
   dl101D(potenciaW) {
     const P = Math.max(0, Number(potenciaW) || 0);
-    const SGTC_LIMIAR = 290000;
-    const SGT_LIMIAR  = 100000;
-    const INSPECAO_LIMIAR = 70000;
+    const SGTC_LIMIAR = VC.constantes.DL101D.SGTC;
+    const SGT_LIMIAR  = VC.constantes.DL101D.SGT;
+    const INSPECAO_LIMIAR = VC.constantes.DL101D.INSPECAO;
     let nivelGestao = null;
     if (P >= SGTC_LIMIAR) nivelGestao = 'SGTC';
     else if (P >= SGT_LIMIAR) nivelGestao = 'SGT';
@@ -982,6 +1003,6 @@ VC6.normas = {
   ETA_REC_MIN: VC.conhecimento.tabelas.ETA_REC_MIN
 };
 
-console.log('%c[VentCondutas V11.0.0] 01-fundamentos carregado · utils + perf + debug + estado (hash) + dirty (partial) + constantes + física + normas + Camadas 1-3', 'color:#6d8fb0;font-weight:bold;background:#eaf1f7;padding:3px 6px;border-radius:3px');
+console.log('%c[VentiCondutas] 01-fundamentos carregado · utils + perf + debug + estado (hash) + dirty (partial) + constantes + física + normas + Camadas 1-3', 'color:#6d8fb0;font-weight:bold;background:#eaf1f7;padding:3px 6px;border-radius:3px');
 
 })();

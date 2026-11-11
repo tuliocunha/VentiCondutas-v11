@@ -1,5 +1,5 @@
 ﻿/* ============================================================
-   VENTCONDUTAS V10.2.8 · 11-transferencias
+   VENTICONDUTAS · 11-transferencias
    UI de criacao de transferencias. Substitui o render
    original (16-bridge) por um que tem "Nova transferencia"
    + sugestao automatica + calculo de area em tempo real.
@@ -170,7 +170,7 @@ VC.transferenciasUI = {
   }
 };
 
-console.log('%c[VentCondutas V11.0.08] 11-transferencias carregado \u00b7 UI de cria\u00e7\u00e3o de transfer\u00eancias',
+console.log('%c[VentiCondutas] 11-transferencias carregado \u00b7 UI de cria\u00e7\u00e3o de transfer\u00eancias',
   'color:#6d8fb0;font-weight:bold;background:#eaf1f7;padding:3px 6px;border-radius:3px');
 
 })();

@@ -1,5 +1,5 @@
 /* ============================================================
-   VENTCONDUTAS V11.0.0 · 04d-exportacoes
+   VENTICONDUTAS · 04d-exportacoes
    §23 · Exportações: VC.exportacoes.{pdf, excel, csv, json, png}
 
    DEPENDE DE:
@@ -439,6 +439,6 @@ VC.exportacoes.png = function (modo) {
   VC.ui.toast('Exportação PNG disponível no modo Diagrama.');
 };
 
-console.log('%c[VentCondutas V11.0.0] 04d-exportacoes carregado · PDF+Excel+CSV+JSON+PNG', 'color:#6d8fb0;font-weight:bold;background:#eaf1f7;padding:3px 6px;border-radius:3px');
+console.log('%c[VentiCondutas] 04d-exportacoes carregado · PDF+Excel+CSV+JSON+PNG', 'color:#6d8fb0;font-weight:bold;background:#eaf1f7;padding:3px 6px;border-radius:3px');
 
 })();

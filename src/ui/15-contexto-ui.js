@@ -1,5 +1,5 @@
 ﻿/* ============================================================
-   VENTCONDUTAS V10.1.0 · 15-contexto-ui
+   VENTICONDUTAS · 15-contexto-ui
    UI de 5 passos desativada. Focado no Layout V2 (6 Passos).
    ============================================================ */
 (function () {

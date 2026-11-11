@@ -1,5 +1,5 @@
 ﻿/* ============================================================
-   VENTCONDUTAS V9.0 · 02-biblioteca
+   VENTICONDUTAS · 02-biblioteca
    §7 Catálogo + §8 Curvas Fabricantes
    N3 Balanço de Ar + N5 Transferências
    §9 Dados V9 + §10 Migrador
@@ -64,7 +64,7 @@ VC.catalogo = {
           return;
         }
       }
-    } catch (e) {}
+    } catch (e) { VC.debug && VC.debug.erro && VC.debug.erro(e); }
     this.hierarquia = catalogoExemplo();
     this.adHoc = [];
     this.save();
@@ -82,7 +82,7 @@ VC.catalogo = {
             hierarquia: this.hierarquia,
             adHoc: this.adHoc
           }));
-        } catch (e) {}
+        } catch (e) { /* localStorage indisponível ou cheio: o catálogo fica só em memória */ }
       }, 500);
     };
   })(),
@@ -419,7 +419,7 @@ VC.curvasFabricantes.init();
    V8.0.1: inclui QAI_projeto (insuflação ou extração)
    ============================================================ */
 VC6.balanco = {
-  TOLERANCIA: 5,
+  TOLERANCIA: VC.constantes.BALANCO_RESIDUO,
 
   _qaiInfo(esp) {
     if (!VC.flags || VC.flags.qaiProjeto === false) return { QAI_aplicado: 0, rede: 'insuflacao' };
@@ -1166,7 +1166,7 @@ VC.migrador = {
 };
 
 console.log(
-    '%c[VentCondutas V11.0.0] 02-biblioteca carregado · catálogo + curvas (indexadas) + N3 balanço (com QAI) + N5 transferências + migrador V3→V9',
+    '%c[VentiCondutas] 02-biblioteca carregado · catálogo + curvas (indexadas) + N3 balanço (com QAI) + N5 transferências + migrador V3→V9',
   'color:#6d8fb0;font-weight:bold;background:#eaf1f7;padding:3px 6px;border-radius:3px'
 );
 

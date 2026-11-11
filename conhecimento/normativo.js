@@ -1,5 +1,5 @@
 ﻿/* ============================================================
-   VENTCONDUTAS V10.0.0 · BASE DE CONHECIMENTO · NORMATIVO
+   VENTICONDUTAS · BASE DE CONHECIMENTO · NORMATIVO
    Ficheiro 5.1 — Conteúdo estático
 
    ALTERAÇÕES V10.0.0:
