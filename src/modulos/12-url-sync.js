@@ -1,5 +1,5 @@
 ﻿/* ============================================================
-   VENTCONDUTAS V9.2.0 · 12-url-sync
+   VENTICONDUTAS · 12-url-sync
    Fase 5 · Persistência profunda de URL (deep-link bidirecional)
 
    Layout V2: ?layout=2&janela=N&passo=X&lente=Y
@@ -239,7 +239,7 @@ VC.urlSync = {
 };
 
 console.log(
-  '%c[VentCondutas V11.0.0 · Fase 5] 12-url-sync carregado · deep-link bidirecional ativo',
+  '%c[VentiCondutas] 12-url-sync carregado · deep-link bidirecional ativo',
   'color:#6d8fb0;font-weight:bold;background:#eaf1f7;padding:3px 6px;border-radius:3px'
 );
 

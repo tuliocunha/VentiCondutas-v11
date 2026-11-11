@@ -1,5 +1,5 @@
 /* ============================================================
-   VENTCONDUTAS V11.0.0 · 04c-relatorios
+   VENTICONDUTAS · 04c-relatorios
    §22 Relatórios (15) + VC.modoRelatorios + VC.listaRelatorios
    Inclui F-RPH, QAI, BOM, TAB, balanço, pressões, rede, caderno, diagnóstico.
    DEPENDE DE: 01 + 02 + 03 + 04a + 04b

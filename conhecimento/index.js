@@ -1,5 +1,5 @@
 ﻿/* ============================================================
-   VENTCONDUTAS V10.0.0 · BASE DE CONHECIMENTO · INDEX
+   VENTICONDUTAS · BASE DE CONHECIMENTO · INDEX
    ALTERAÇÕES V10.0.0: Adicionado qaiProjetoRedeDefault (P35)
    ALTERAÇÕES V10.1.0: Adicionado painelContexto (Fase 1 Plano UI v3)
    ============================================================ */

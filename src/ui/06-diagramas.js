@@ -1,5 +1,5 @@
 /* ============================================================
-   VENTCONDUTAS V10.1.0 · 06-diagramas (Clean + Painel Contextual)
+   VENTICONDUTAS · 06-diagramas (Clean + Painel Contextual)
    ============================================================ */
 (function () {
 'use strict';
@@ -446,7 +446,7 @@ VC6.diagrama = {
 };
 
 /* ============================================================
-   VENTCONDUTAS V11.0.0 · Subgrupos de Auditoria e Relatórios
+   VENTICONDUTAS · Subgrupos de Auditoria e Relatórios
    ============================================================ */
 window.VC6 = window.VC6 || {};
 window.VC6.subgruposAuditoria = {
@@ -800,6 +800,6 @@ VC.ui.renderPainelInferior = function (passo) {
 
 /* v11.1: removida a chamada a VC6.diagrama._renderSeletorUta (função inexistente) */
 
-console.log('%c[VentCondutas V11.0.0] 06-diagramas carregado · Sankey + Painel 2x3 Contextual', 'color:#6d8fb0;font-weight:bold;background:#eaf1f7;padding:3px 6px;border-radius:3px');
+console.log('%c[VentiCondutas] 06-diagramas carregado · Sankey + Painel 2x3 Contextual', 'color:#6d8fb0;font-weight:bold;background:#eaf1f7;padding:3px 6px;border-radius:3px');
 
 })();

@@ -1,5 +1,5 @@
 ﻿/* ============================================================
-   VENTCONDUTAS V10.0.0 · 01-fundamentos
+   VENTICONDUTAS · 01-fundamentos
    ============================================================ */
 (function () {
 'use strict';
@@ -14,10 +14,10 @@ VC.modos = VC.modos || {};
 VC.calculo = VC.calculo || {};
 VC.exportacoes = VC.exportacoes || {};
 
-VC.versao = 'VentiCondutas v11.0.0';
+VC.versao = 'VentiCondutas v11.1.0';   // única fonte do número de versão
 VC.versaoCurta = (function () {
   const m = String(VC.versao).match(/(\d+\.\d+\.\d+)/);
-  return m ? m[1] : '11.0.0';
+  return m ? m[1] : '0.0.0';
 })();
 VC.atualizarVersaoNaUI = function () {
   var v = VC.versao || '';
@@ -982,6 +982,6 @@ VC6.normas = {
   ETA_REC_MIN: VC.conhecimento.tabelas.ETA_REC_MIN
 };
 
-console.log('%c[VentCondutas V11.0.0] 01-fundamentos carregado · utils + perf + debug + estado (hash) + dirty (partial) + constantes + física + normas + Camadas 1-3', 'color:#6d8fb0;font-weight:bold;background:#eaf1f7;padding:3px 6px;border-radius:3px');
+console.log('%c[VentiCondutas] 01-fundamentos carregado · utils + perf + debug + estado (hash) + dirty (partial) + constantes + física + normas + Camadas 1-3', 'color:#6d8fb0;font-weight:bold;background:#eaf1f7;padding:3px 6px;border-radius:3px');
 
 })();

@@ -1,5 +1,5 @@
 ﻿/* ============================================================
-   VENTCONDUTAS V9.3.0 · 14-componentes-ui
+   VENTICONDUTAS · 14-componentes-ui
    Camada de componentes UI · 6 componentes + auditoria
 
    PATCH 1.2 · Correção das variáveis CSS do componente feedback
@@ -399,7 +399,7 @@ VC.componentesUI = {
 };
 
 console.log(
-  '%c[VentCondutas V11.0.0 · Patch 1.2] 14-componentes-ui carregado · 6 componentes · 15 orientações cobertas',
+  '%c[VentiCondutas] 14-componentes-ui carregado · 6 componentes · 15 orientações cobertas',
   'color:#6d8fb0;font-weight:bold;background:#eaf1f7;padding:3px 6px;border-radius:3px'
 );
 

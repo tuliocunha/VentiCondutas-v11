@@ -1,5 +1,5 @@
 /* ============================================================
-   VENTCONDUTAS V11.0.0 · 04e-caderno
+   VENTICONDUTAS · 04e-caderno
    §24 · Caderno de Encargos (14 secções + secção 15 QAI)
    DEPENDE DE:
    - 01 + 02 + 03 (VC.utils, VC.normas, VC6.balanco)
@@ -179,6 +179,6 @@ VC.caderno = {
   exportarPDF() { VC.exportacoes.pdf(); }
 };
 
-console.log('%c[VentCondutas V11.0.0] 04e-caderno carregado · caderno de encargos 15 secções (F-RPH + QAI)', 'color:#6d8fb0;font-weight:bold;background:#eaf1f7;padding:3px 6px;border-radius:3px');
+console.log('%c[VentiCondutas] 04e-caderno carregado · caderno de encargos 15 secções (F-RPH + QAI)', 'color:#6d8fb0;font-weight:bold;background:#eaf1f7;padding:3px 6px;border-radius:3px');
 
 })();

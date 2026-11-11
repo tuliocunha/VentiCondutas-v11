@@ -1,5 +1,5 @@
 /* ============================================================
-   VENTCONDUTAS V11.1.3 · 11-construtor-visual-loader
+   VENTICONDUTAS · 11-construtor-visual-loader
    Monkey-patch em VC.associacao (nao toca no ficheiro original)
    Idempotente: pode correr N vezes sem duplicar
    ============================================================ */
@@ -35,6 +35,6 @@ VC.associacao.renderVisaoGeral = function () {
   return header + html;
 };
 
-console.log('%c[VentCondutas V11.1.3] 11-construtor-visual-loader carregado . vista arvore default',
+console.log('%c[VentiCondutas] 11-construtor-visual-loader carregado . vista arvore default',
   'color:#7fa88b;font-weight:bold;background:#eaf5ec;padding:3px 6px;border-radius:3px');
 })();

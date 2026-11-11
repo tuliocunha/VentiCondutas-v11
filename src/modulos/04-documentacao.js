@@ -1,5 +1,5 @@
 /* ============================================================
-   VENTCONDUTAS V11.0.0 · 04-documentacao (COORDENADOR)
+   VENTICONDUTAS · 04-documentacao (COORDENADOR)
    Ponto de entrada do grupo 04 (documentação).
 
    Este ficheiro NÃO contém lógica de negócio — apenas:
@@ -35,7 +35,7 @@ const faltam = esperados.filter(e => { try { return !e.check(); } catch (_) { re
 
 if (faltam.length > 0) {
   console.warn(
-    '%c[VentCondutas V11.0.0] 04-documentacao · AVISO: sub-módulos em falta → ' +
+    '%c[VentiCondutas] 04-documentacao · AVISO: sub-módulos em falta → ' +
     faltam.map(f => f.id).join(', ') +
     ' (verifique a ordem dos <script>)',
     'color:#c88a8a;font-weight:bold;background:#faeaea;padding:3px 6px;border-radius:3px'
@@ -44,13 +44,13 @@ if (faltam.length > 0) {
 
 /* ─── Console.log de assinatura ─── */
 console.log(
-  '%c[VentCondutas V11.0.0] 04-documentacao carregado · relatórios + PDF + caderno · F-RPH + QAI_projeto completos · P4 (json nomeSugerido)',
+  '%c[VentiCondutas] 04-documentacao carregado · relatórios + PDF + caderno · F-RPH + QAI_projeto completos · P4 (json nomeSugerido)',
   'color:#6d8fb0;font-weight:bold;background:#eaf1f7;padding:3px 6px;border-radius:3px'
 );
 
 if (faltam.length === 0) {
   console.log(
-    '%c[VentCondutas V11.0.0] 04-documentacao · todos os 5 sub-módulos OK (normativa · testes · relatórios · exportações · caderno)',
+    '%c[VentiCondutas] 04-documentacao · todos os 5 sub-módulos OK (normativa · testes · relatórios · exportações · caderno)',
     'color:#7fa88b;font-weight:bold;background:#eaf5ec;padding:3px 6px;border-radius:3px'
   );
 }

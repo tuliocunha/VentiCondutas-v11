@@ -1,5 +1,5 @@
 /* ============================================================
-   VENTCONDUTAS V11.0.0 · 04b-testes
+   VENTICONDUTAS · 04b-testes
    N7 · Suite de testes (N1-N11 + INT + UI) + VC.testes.correr (API pública)
    DEPENDE DE: 01 + 02 + 03 + 04a-normativa
    ============================================================ */

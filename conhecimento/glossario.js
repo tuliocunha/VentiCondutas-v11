@@ -1,5 +1,5 @@
 /* ============================================================
-   VENTCONDUTAS V10.0.0 · BASE DE CONHECIMENTO · GLOSSARIO
+   VENTICONDUTAS · BASE DE CONHECIMENTO · GLOSSARIO
    Ficheiro 5.3 — Tooltips + conceitos + usos + fórmulas
 
    ALTERAÇÕES V10.0.0:

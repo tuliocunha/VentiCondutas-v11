@@ -1,5 +1,5 @@
 /* ============================================================
-   VENTCONDUTAS V11.1.3 · 11-construtor-visual
+   VENTICONDUTAS · 11-construtor-visual
    Vista visual (arvore + drag & drop + filtros padrao V11)
    ============================================================ */
 (function () {
@@ -468,6 +468,6 @@ VC.construtorVisual = {
     document.querySelectorAll('.cv-drag-over').forEach(el => el.classList.remove('cv-drag-over'));
   }
 };
-console.log('%c[VentCondutas V11.1.3] 11-construtor-visual carregado',
+console.log('%c[VentiCondutas] 11-construtor-visual carregado',
   'color:#6d8fb0;font-weight:bold;background:#eaf1f7;padding:3px 6px;border-radius:3px');
 })();

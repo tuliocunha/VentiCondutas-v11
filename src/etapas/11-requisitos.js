@@ -1,5 +1,5 @@
 /* ============================================================
-   VENTCONDUTAS V10.2.4 · 11-requisitos
+   VENTICONDUTAS · 11-requisitos
    UI de Definicao de Terminais · passo onde se associa
    terminal a espaco (via definicoes) e se materializam
    os terminais fisicos. Corrige o passo em falta desde V9.
@@ -373,7 +373,7 @@ var locais = Array.from(new Set(espacos.map(function(e) { return (e.localizacao 
   }
 };
 
-console.log('%c[VentCondutas V11.0.04] 11-requisitos carregado \u00b7 UI de Defini\u00e7\u00e3o de Terminais (Kanban + modal + auto-sugest\u00e3o)',
+console.log('%c[VentiCondutas] 11-requisitos carregado \u00b7 UI de Defini\u00e7\u00e3o de Terminais (Kanban + modal + auto-sugest\u00e3o)',
   'color:#6d8fb0;font-weight:bold;background:#eaf1f7;padding:3px 6px;border-radius:3px');
 
 })();

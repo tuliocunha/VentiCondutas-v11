@@ -1,5 +1,5 @@
 ﻿/* ============================================================
-   VENTCONDUTAS V9.0 · 02-biblioteca
+   VENTICONDUTAS · 02-biblioteca
    §7 Catálogo + §8 Curvas Fabricantes
    N3 Balanço de Ar + N5 Transferências
    §9 Dados V9 + §10 Migrador
@@ -1166,7 +1166,7 @@ VC.migrador = {
 };
 
 console.log(
-    '%c[VentCondutas V11.0.0] 02-biblioteca carregado · catálogo + curvas (indexadas) + N3 balanço (com QAI) + N5 transferências + migrador V3→V9',
+    '%c[VentiCondutas] 02-biblioteca carregado · catálogo + curvas (indexadas) + N3 balanço (com QAI) + N5 transferências + migrador V3→V9',
   'color:#6d8fb0;font-weight:bold;background:#eaf1f7;padding:3px 6px;border-radius:3px'
 );
 

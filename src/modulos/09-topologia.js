@@ -1,5 +1,5 @@
 ﻿/* ============================================================
-   VENTCONDUTAS V9.0 · 09-topologia
+   VENTICONDUTAS · 09-topologia
    Fase 1 · Facetas + Multi-vista + Migrador V9
    Fase 3 · Geração automática de topologia (gerarAutomatica)
 

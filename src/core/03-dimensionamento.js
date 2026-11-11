@@ -1,5 +1,5 @@
 ﻿/* ============================================================
-   VENTCONDUTAS V9.0.0 · 03-dimensionamento
+   VENTICONDUTAS · 03-dimensionamento
    §11 Cálculo 9 fases + §12 Topologia + §13 Decompor + §14 UTAs
    §19 Locks + §19b Optimizar · N4 reexport · N6 reexport
 
@@ -1178,6 +1178,6 @@ VC.optimizar = {
   }
 };
 
-console.log('%c[VentCondutas V11.0.0] 03-dimensionamento carregado - correcao ACH (so G3 e G4 exceto Sanitorios)', 'color:#6d8fb0;font-weight:bold;background:#eaf1f7;padding:3px 6px;border-radius:3px');
+console.log('%c[VentiCondutas] 03-dimensionamento carregado - correcao ACH (so G3 e G4 exceto Sanitorios)', 'color:#6d8fb0;font-weight:bold;background:#eaf1f7;padding:3px 6px;border-radius:3px');
 
 })();

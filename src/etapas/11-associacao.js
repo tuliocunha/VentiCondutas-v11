@@ -1,5 +1,5 @@
 ﻿/* ============================================================
-   VENTCONDUTAS V10.2.5 · 11-associacao
+   VENTICONDUTAS · 11-associacao
    Passo "Topologia dos Ramais".
    Arvore de ramais + atribuicao de terminais/espaços a ramais
    + auto-associacao por piso/ala + gerar topologia automatica.
@@ -328,7 +328,7 @@ VC.associacao = {
   }
 };
 
-console.log('%c[VentCondutas V11.0.05] 11-associacao carregado \u00b7 Topologia dos Ramais',
+console.log('%c[VentiCondutas] 11-associacao carregado \u00b7 Topologia dos Ramais',
   'color:#6d8fb0;font-weight:bold;background:#eaf1f7;padding:3px 6px;border-radius:3px');
 
 })();

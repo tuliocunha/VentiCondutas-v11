@@ -1,5 +1,5 @@
 ﻿/* ============================================================
-   VENTCONDUTAS V10.1.0 · 14-layout-switcher
+   VENTICONDUTAS · 14-layout-switcher
    Força o Layout V2 (6 Passos) e remove o botão de escolha.
    ============================================================ */
 (function () {

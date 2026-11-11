@@ -1,5 +1,5 @@
 ﻿/* ============================================================
-   VENTCONDUTAS V10.2.9 · 11-arvore
+   VENTICONDUTAS · 11-arvore
    Modo "Arvore de Rede" (menu topo).
    4 vistas facetadas + filtros + drag-drop de ramais + painel.
    Reutiliza VC.topologia.agruparPor / VC.topologia.mover / VC.snap.
@@ -298,7 +298,7 @@ VC.arvore = {
   }
 };
 
-console.log('%c[VentCondutas V11.0.09] 11-arvore carregado \u00b7 4 vistas facetadas + filtros + drag-drop',
+console.log('%c[VentiCondutas] 11-arvore carregado \u00b7 4 vistas facetadas + filtros + drag-drop',
   'color:#6d8fb0;font-weight:bold;background:#eaf1f7;padding:3px 6px;border-radius:3px');
 
 })();

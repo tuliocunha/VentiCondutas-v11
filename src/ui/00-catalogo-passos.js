@@ -1,5 +1,5 @@
 ﻿/* ============================================================
-   VENTCONDUTAS V10.0.0 · 00-catalogo-passos
+   VENTICONDUTAS · 00-catalogo-passos
    Define VC.passosCatalogo e VC.ui.renderSidebar
    ============================================================ */
 (function () {
@@ -81,6 +81,6 @@ VC.ui.renderSidebar = function () {
   }
 };
 
-console.log('%c[VentCondutas V11.0.0] 00-catalogo-passos carregado · ' + VC.passosCatalogo.length + ' passos · sidebar com contadores',
+console.log('%c[VentiCondutas] 00-catalogo-passos carregado · ' + VC.passosCatalogo.length + ' passos · sidebar com contadores',
   'color:#6d8fb0;font-weight:bold;background:#eaf1f7;padding:3px 6px;border-radius:3px');
 })();

@@ -1,5 +1,5 @@
 ﻿/* ============================================================
-   VENTCONDUTAS V10.0.0 · BASE DE CONHECIMENTO · LEGENDAS
+   VENTICONDUTAS · BASE DE CONHECIMENTO · LEGENDAS
    ALTERAÇÕES V10.0.0: Separação de contrato.fisicos e contrato.conceitosUI (P33)
    ============================================================ */
 (function () {

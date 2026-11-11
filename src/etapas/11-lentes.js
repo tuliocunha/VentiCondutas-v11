@@ -1,5 +1,5 @@
 ﻿/* ============================================================
-   VENTCONDUTAS V9.2.0 · 11-lentes
+   VENTICONDUTAS · 11-lentes
    Fase 3 · Lentes Tabela e Kanban
    Fase 4.2 · Lente Visual Hasse (hierarquia UTA → Ramais → Espaços)
              · FIX A: SVG com dimensões reais (scroll horizontal, texto legível)
@@ -483,6 +483,6 @@ VC.lentes = {
   }
 };
 
-console.log('%c[VentCondutas V11.0.0 · Fase 4.2] 11-lentes carregado · Tabela + Kanban + Hasse (hierarquia real UTA → Ramais → Espaços)', 'color:#6d8fb0;font-weight:bold;background:#eaf1f7;padding:3px 6px;border-radius:3px');
+console.log('%c[VentiCondutas] 11-lentes carregado · Tabela + Kanban + Hasse (hierarquia real UTA → Ramais → Espaços)', 'color:#6d8fb0;font-weight:bold;background:#eaf1f7;padding:3px 6px;border-radius:3px');
 })();
 /* FIM DO PATCH FASE 4.2 */
