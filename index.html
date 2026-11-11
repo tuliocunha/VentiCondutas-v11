@@ -188,6 +188,18 @@ body{background:var(--fundo);font-family:'Segoe UI',-apple-system,BlinkMacSystem
 .vazio i{font-size:38px;opacity:.3;margin-bottom:12px;display:block;color:var(--primario)}
 .vazio-titulo{font-size:13.5px;font-weight:800;color:var(--texto);margin-bottom:6px}
 </style>
+<link id="vc-css-extra" rel="stylesheet" href="css/venticondutas.css">
+<style id="vc-force-ui">
+/* v11.1 (4.3): vinha do remendo 16-bridge-v10-fixes.js */
+.topo-acoes { display: flex !important; }
+#painelInferior { display: block !important; }
+.janelas-bar { display: flex !important; }
+.lens-bar { display: flex !important; }
+.oculto { display: none !important; }
+.tt-popup.on { background: #f8fafc !important; color: #1e293b !important; border: 1px solid #cbd5e1 !important; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1) !important; }
+.tt-popup.on .tt-titulo { color: #1e293b !important; font-weight: 900 !important; border-bottom: 1px solid #cbd5e1 !important; padding-bottom: 4px !important; margin-bottom: 4px !important; }
+.tt-popup.on .tt-desc { color: #475569 !important; }
+</style>
 </head>
 <body>
 
@@ -474,7 +486,6 @@ body{background:var(--fundo);font-family:'Segoe UI',-apple-system,BlinkMacSystem
 <script src="src/modulos/05-amostras.js"></script>
 <script src="src/ui/06-diagramas.js"></script>
 <script src="src/ui/07-editores.js"></script>
-<script src="src/modulos/16-bridge-v10-fixes.js?v=11.1.0"></script>
 <script src="src/ui/08-arranque.js?v=11.1.0"></script>
 <script src="src/modulos/09-topologia.js"></script>
 <script src="src/modulos/10-historico-ui.js"></script>
@@ -557,7 +568,6 @@ html{
 </style>
 <script src="src/etapas/11-associacao.js"></script>
 <script src="src/etapas/11-construtor-visual.js"></script>
-<script src="src/etapas/11-construtor-visual-loader.js"></script>
 <script src="src/etapas/11-editor-utas.js"></script>
 <script src="src/etapas/11-transferencias.js"></script>
 <script src="src/etapas/11-arvore.js"></script>

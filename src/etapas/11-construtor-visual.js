@@ -470,4 +470,33 @@ VC.construtorVisual = {
 };
 console.log('%c[VentiCondutas] 11-construtor-visual carregado',
   'color:#6d8fb0;font-weight:bold;background:#eaf1f7;padding:3px 6px;border-radius:3px');
+
+/* v11.1 (4.3): vista árvore por omissão na Associação.
+   Vinha de 11-construtor-visual-loader.js (apagado), carregado logo a seguir a este ficheiro. */
+if (VC.associacao) {
+  VC.associacao._vista = 'arvore';
+
+  const _origRender = VC.associacao.renderVisaoGeral;
+
+  VC.associacao.setVista = function (v) {
+    this._vista = v || 'arvore';
+    if (VC.passos && typeof VC.passos.render === 'function') {
+      VC.passos.render('associacao');
+    }
+  };
+
+  VC.associacao.renderVisaoGeral = function () {
+    if (this._vista === 'arvore' && VC.construtorVisual && typeof VC.construtorVisual.render === 'function') {
+      return VC.construtorVisual.render();
+    }
+    if (typeof _origRender !== 'function') return '';
+    var html = _origRender.call(this);
+    var header = '<div style="display:flex;gap:6px;align-items:center;padding:10px 12px;background:var(--superf2,#f8fafc);border:1px solid var(--borda,#e2e8f0);border-radius:6px;margin-bottom:10px">'
+      + '<button class="btn btn-mini primario" onclick="VC.associacao.setVista(\'arvore\')"><i class="fa-solid fa-sitemap"></i> Vista árvore (construtor visual)</button>'
+      + '<span style="flex:1"></span>'
+      + '<span style="font-size:11px;color:var(--texto-med,#475569)">Vista tabela (original)</span>'
+      + '</div>';
+    return header + html;
+  };
+}
 })();
