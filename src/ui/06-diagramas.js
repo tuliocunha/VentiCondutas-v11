@@ -715,6 +715,8 @@ VC.glossarioVivo = {
 
 VC.passos = VC.passos || {};
 VC.passos.render = function (passo) {
+  // v11.1 (4.4): abrir um passo repõe a lente 'passo' (antes um invólucro em 08-arranque)
+  if (VC.flags.layoutV2 && VC.flags.layoutV2Lente !== 'passo') { VC.flags.layoutV2Lente = 'passo'; document.querySelectorAll('.lente-btn').forEach(function (b) { b.classList.toggle('ativo', b.dataset.lente === 'passo'); }); }
   VC._passoAtivo = passo;
   const meta = VC.passosCatalogo.find(p => p.id === passo);
   if (meta) {

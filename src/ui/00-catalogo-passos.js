@@ -30,6 +30,12 @@ VC.passosCatalogo = [
 
 VC.ui = VC.ui || {};
 VC.ui.renderSidebar = function () {
+  try { return VC.ui._renderSidebar.apply(this, arguments); }
+  finally {   // v11.1 (4.4): filtro do menu pela janela ativa (antes um invólucro em 08-arranque)
+    if (VC.flags.layoutV2 && VC.layoutV2 && VC.layoutV2.janelaAtiva) setTimeout(function () { VC.layoutV2._aplicarFiltroSidebar(); }, 0);
+  }
+};
+VC.ui._renderSidebar = function () {
   const sidebar = document.getElementById('sidebar');
   if (!sidebar) return;
   const grupos = {};

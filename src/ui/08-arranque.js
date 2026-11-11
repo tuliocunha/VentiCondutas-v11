@@ -9,14 +9,6 @@ const VC6 = window.VC6;
 VC._boot.partes.push('08-arranque');
 
 VC.ui = VC.ui || {};
-if (typeof VC.ui.renderSidebar !== 'function') {
-  VC.ui.renderSidebar = function () {
-    const sidebar = document.getElementById('sidebar');
-    if (!sidebar) return;
-    sidebar.innerHTML = '<div class="grupo-sidebar" data-fase="contexto"><div class="grupo-titulo">1 · Contexto</div><button class="passo-btn ativo" data-passo="setup" onclick="VC.ui.setPasso(\'setup\')"><div class="passo-icone"><i class="fa-solid fa-gear"></i></div><div class="passo-corpo"><div class="passo-nome">Setup do Projeto</div><div class="passo-sub">Tipologia · QAI · premissas ISA</div></div><div class="passo-estado ok"></div></button></div>';
-  };
-}
-
 VC.grafoEstado = {
   condutas: { rot: { x: -0.30, y: 0.40 }, zoom: 0.55, offset: { x: 0, y: 0 }, arrastando: false, modoDrag: 'rotate', lastX: 0, lastY: 0, selecionado: null, filtro: 'tudo', canais: { volume: true, cor: true, borda: true, satur: true, arcos: true }, animacao: false },
   conceitual: { rot: { x: -0.30, y: 0.40 }, zoom: 0.55, offset: { x: 0, y: 0 }, arrastando: false, modoDrag: 'rotate', lastX: 0, lastY: 0, selecionado: null, filtro: 'tudo', canais: { volume: true, cor: true, borda: true, satur: true, arcos: true }, animacao: false }
@@ -272,8 +264,10 @@ VC.ui.sobre = function () { alert(VC.versao + '\n\n' + 'Layout V2 · 6 Janelas +
 
 VC._modoAtivo = VC._modoAtivo || 'condutas';
 VC.modos = VC.modos || {};
-VC.modos.setJanela = function(num) { if (!VC.flags.layoutV2) return; document.querySelectorAll('.janela-btn').forEach(b => b.classList.toggle('ativo', b.dataset.janela === String(num))); try { localStorage.setItem('VC_layoutV2_janela', String(num)); } catch (e) {} if (VC.layoutV2 && typeof VC.layoutV2.setJanelaAtiva === 'function') { VC.layoutV2.setJanelaAtiva(Number(num)); const janela = VC.layoutV2.JANELAS.filter(function (j) { return j.num === Number(num); })[0]; if (janela && janela.passos.length) { const passoAtivo = VC._passoAtivo || 'setup'; if (janela.passos.indexOf(passoAtivo) < 0 && VC.ui && typeof VC.ui.setPasso === 'function') { VC.ui.setPasso(janela.passos[0]); } } } };
-VC.modos.setLente = function(nome) { if (!VC.flags.layoutV2) return; if (nome === 'visual') nome = 'passo'; VC.flags.layoutV2Lente = nome; document.querySelectorAll('.lente-btn').forEach(b => b.classList.toggle('ativo', b.dataset.lente === nome)); try { localStorage.setItem('VC_layoutV2_lente', String(nome)); } catch (e) {} if (VC.layoutV2 && typeof VC.layoutV2.renderLens === 'function') { VC.layoutV2.renderLens(nome); } };
+VC.modos.setJanela = function(num) { try { VC.modos._setJanela(num); } finally { if (VC.eventos) VC.eventos.emit('ui:janela', num); } };
+VC.modos._setJanela = function(num) { if (!VC.flags.layoutV2) return; document.querySelectorAll('.janela-btn').forEach(b => b.classList.toggle('ativo', b.dataset.janela === String(num))); try { localStorage.setItem('VC_layoutV2_janela', String(num)); } catch (e) {} if (VC.layoutV2 && typeof VC.layoutV2.setJanelaAtiva === 'function') { VC.layoutV2.setJanelaAtiva(Number(num)); const janela = VC.layoutV2.JANELAS.filter(function (j) { return j.num === Number(num); })[0]; if (janela && janela.passos.length) { const passoAtivo = VC._passoAtivo || 'setup'; if (janela.passos.indexOf(passoAtivo) < 0 && VC.ui && typeof VC.ui.setPasso === 'function') { VC.ui.setPasso(janela.passos[0]); } } } };
+VC.modos.setLente = function(nome) { try { VC.modos._setLente(nome); } finally { if (VC.eventos) VC.eventos.emit('ui:lente', nome); } };
+VC.modos._setLente = function(nome) { if (!VC.flags.layoutV2) return; if (nome === 'visual') nome = 'passo'; VC.flags.layoutV2Lente = nome; document.querySelectorAll('.lente-btn').forEach(b => b.classList.toggle('ativo', b.dataset.lente === nome)); try { localStorage.setItem('VC_layoutV2_lente', String(nome)); } catch (e) {} if (VC.layoutV2 && typeof VC.layoutV2.renderLens === 'function') { VC.layoutV2.renderLens(nome); } };
 VC.modos.set = function (nome) {
   VC._modoAtivo = nome; document.querySelectorAll('.modo-btn').forEach(b => b.classList.toggle('ativo', b.dataset.modo === nome)); document.querySelectorAll('.modo-painel').forEach(p => p.classList.remove('ativo'));
   const mapa = { 'condutas': 'modo-condutas', 'construtor': 'modo-construtor', 'arvore': 'modo-arvore', 'grafico-condutas': 'modo-grafico-condutas', 'grafico-conceitual': 'modo-grafico-conceitual', 'diagrama-rede': 'modo-diagrama-rede', 'relatorios': 'modo-relatorios' };
@@ -631,16 +625,7 @@ window.bootstrapFinal = bootstrapFinal;
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { setTimeout(bootstrapFinal, 50); }); else setTimeout(bootstrapFinal, 50);
 
 (function installLayoutV2Integrations() {
-  if (typeof VC.ui.renderSidebar === 'function' && !VC.ui._renderSidebarWrapped) {
-    var _renderSidebarOriginal = VC.ui.renderSidebar;
-    VC.ui.renderSidebar = function () { var r = _renderSidebarOriginal.apply(this, arguments); if (VC.flags.layoutV2 && VC.layoutV2 && VC.layoutV2.janelaAtiva) { setTimeout(function () { VC.layoutV2._aplicarFiltroSidebar(); }, 0); } return r; };
-    VC.ui._renderSidebarWrapped = true;
-  }
-  if (VC.passos && typeof VC.passos.render === 'function' && !VC.passos._renderLensWrapped) {
-    var _renderOriginal = VC.passos.render;
-    VC.passos.render = function () { if (VC.flags.layoutV2 && VC.flags.layoutV2Lente !== 'passo') { VC.flags.layoutV2Lente = 'passo'; document.querySelectorAll('.lente-btn').forEach(function (b) { b.classList.toggle('ativo', b.dataset.lente === 'passo'); }); } return _renderOriginal.apply(this, arguments); };
-    VC.passos._renderLensWrapped = true;
-  }
+  // v11.1 (4.4): o filtro do menu e a reposição da lente passaram para VC.ui.renderSidebar (00) e VC.passos.render (06).
   function inicializarLayoutV2(tentativa) {
     tentativa = tentativa || 0; if (!VC.flags.layoutV2) return; if (!VC.layoutV2) return; var sidebar = document.getElementById('sidebar'); if (!sidebar || !sidebar.children.length) { if (tentativa < 20) setTimeout(function () { inicializarLayoutV2(tentativa + 1); }, 100); return; }
     var urlParams = new URLSearchParams(window.location.search); var janelaNum = Number(urlParams.get('janela')) || null; var lente = urlParams.get('lente') || null;

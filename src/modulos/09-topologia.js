@@ -282,17 +282,7 @@ VC.topologia.mover = {
    ============================================================ */
 
 // 4.1 Aplicar facetas após sincronização de estado
-const _sincOriginal = VC.estado && VC.estado.sincronizar;
-if (_sincOriginal) {
-  VC.estado.sincronizar = function (opcoes) {
-    const r = _sincOriginal.call(this, opcoes);
-    if (VC.flags.topologiaFacetada && VC.topologia?.facetas) {
-      try { VC.topologia.facetas.aplicarATodos(); }
-      catch (e) { VC.debug && VC.debug.erro && VC.debug.erro(e); }
-    }
-    return r;
-  };
-}
+// v11.1 (4.4): passou para VC.estado.sincronizar (01-fundamentos), que já não é substituída aqui.
 
 // 4.2 Aplicar facetas ao arrancar
 const _bootstrapOriginal = window.bootstrapFinal;

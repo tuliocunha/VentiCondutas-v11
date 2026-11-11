@@ -733,6 +733,15 @@ VC.estado._hashEstado = function () {
 };
 
 VC.estado.sincronizar = function (opcoes) {
+  try { return VC.estado._sincronizar(opcoes); }
+  finally {   // v11.1 (4.4): facetas da topologia depois de cada sincronização (antes um invólucro em 09-topologia)
+    if (VC.flags && VC.flags.topologiaFacetada && VC.topologia && VC.topologia.facetas) {
+      try { VC.topologia.facetas.aplicarATodos(); }
+      catch (e) { VC.debug && VC.debug.erro && VC.debug.erro(e); }
+    }
+  }
+};
+VC.estado._sincronizar = function (opcoes) {
   opcoes = opcoes || {};
   if (!opcoes.force) {
     try {
