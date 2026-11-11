@@ -141,6 +141,26 @@ VC6.testes = {
       const R = VC.dados.ramais; if (!R.length) return true;
       return R.every(r => { const filhos = R.filter(f => f.parente === r.nome); const proprio = VC.dados.terminais.filter(t => t.ramalRef === r.nome).reduce((s, t) => s + (Number(t.Q) || 0), 0);
         return Math.abs((Number(r.Q) || 0) - proprio - filhos.reduce((s, f) => s + (Number(f.Q) || 0), 0)) < 1 && filhos.every(f => (Number(r.Q) || 0) >= (Number(f.Q) || 0)); }); } });
+    // v11.2: a altura disponível e a rugosidade do Setup chegam aos ramais (antes cada ramal tinha uma cópia fixa)
+    self.registar({ id: 'N4.T20', nucleo: 'N4', grupo: 'Dimensionamento', nome: 'Altura e rugosidade do Setup valem para todos os ramais', criterio: 'mudar o Setup muda hMaxDe/rugosidadeDe; um valor marcado como próprio prevalece', fn: () => {
+      const d = VC.dados, h0 = d.restricaoH, e0 = d.params.rugosidade, r = { geometriaInput: { H_max: 250, rugosidade: 0.15 } };
+      try {
+        d.restricaoH = 400; d.params.rugosidade = 0.5;
+        const doSetup = VC.calculo.hMaxDe(r) === 400 && VC.calculo.rugosidadeDe(r) === 0.5;
+        r.geometriaInput.proprio = { H_max: true, rugosidade: true };
+        const proprio = VC.calculo.hMaxDe(r) === 250 && VC.calculo.rugosidadeDe(r) === 0.15;
+        return doSetup && proprio;
+      } finally { d.restricaoH = h0; d.params.rugosidade = e0; } } });
+    self.registar({ id: 'N6.T14', nucleo: 'N6', grupo: 'UTAs', nome: 'Estado dos filtros muda o Δp interno', criterio: 'limpo < médio < sujo numa UTA com filtros', fn: () => {
+      const u = VC.dados.utas.find(x => (x.componentes || []).some(c => /filtro/i.test(c.tipo || ''))); if (!u) return true;
+      const m0 = VC.dados.filtros.modo, dp = {};
+      try { ['limpo', 'medio', 'sujo'].forEach(m => { VC.dados.filtros.modo = m; VC.calculo.calcularVentiladores(); dp[m] = u.dpInt; }); }
+      finally { VC.dados.filtros.modo = m0; VC.calculo.calcularVentiladores(); }
+      return dp.limpo < dp.medio && dp.medio < dp.sujo; } });
+    self.registar({ id: 'N2.T17', nucleo: 'N2', grupo: 'Normas', nome: 'Tipologia em implementação gera aviso', criterio: 'Residencial/Saúde/Indústria → ATENÇÃO; Comércio e Serviços → sem aviso', fn: () => {
+      const t0 = VC.dados.tipologia, tem = () => (VC.calculo.calcularTudo().findings || []).some(f => f.tipo === 'Tipologia em implementação');
+      try { VC.dados.tipologia = 'comercio'; const c = tem(); VC.dados.tipologia = 'saude'; const s = tem(); return !c && s; }
+      finally { VC.dados.tipologia = t0; VC.calculo.calcularTudo(); } } });
     self.registar({ id: 'N6.T10', nucleo: 'N6', grupo: 'Balanço', nome: 'Terminal↔espaço compara só a rede certa', criterio: 'insuflação 72 + extração 72 para Q=72 → OK', fn: () => { const esp = VC.dados.espacos.find(e => (e.g || 1) === 1 && VC.calculo.terminaisQueServem(e.nome).length >= 2); if (!esp) return true; const b = VC.calculo.balancoEspaco(esp.nome); return b.rede === 'insuflacao' && b.Q_servido === VC.calculo.QservidoAoEspaco(esp.nome, 'insuflacao'); } });
     self.registar({ id: 'N6.T9', nucleo: 'N6', grupo: 'UTAs', nome: 'P_motor = Q·(Δp_int+Δp_ext)/η·fs/transmissão', criterio: '±1 W', fn: () => VC.dados.utas.filter(u => u.ativo !== false).every(u => { const esperado = (u.Q || 0) * ((u.dpInt || 0) + (u.dpExt || 0)) / Math.max(u.eta || 0.65, 0.01) * (u.fs || 1.15) / Math.max(u.transmissao || 1, 0.01); return Math.abs((u.P_motor || 0) - esperado) <= 1; }) });
     self.registar({ id: 'N6.T2', nucleo: 'N6', grupo: 'UTAs', nome: 'Δp ext = Δp_total crítico', criterio: 'máximo', fn: () => { const u = VC.dados.utas[0]; if (!u) return true; const ramais = VC.dados.ramais.filter(r => r.utaRef === u.id); const max = ramais.reduce((m, r) => Math.max(m, r.deltaPtotal || 0), 0); return Math.abs((u.dpExt || 0) - max) < 1 || ramais.length === 0; } });

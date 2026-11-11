@@ -100,6 +100,20 @@ const CASOS = [
     VC.uta.calcularPontoFuncionamento = function (rede) { return o.call(this, rede); };
     VC.calculo.calcularTudo(); return () => { VC.uta.calcularPontoFuncionamento = o; VC.calculo.calcularTudo(); };
   }],
+  ['v11.2 · ramais ignoram a altura e a rugosidade do Setup', 'N4.T20', () => {
+    const oh = VC.calculo.hMaxDe, orr = VC.calculo.rugosidadeDe;
+    VC.calculo.hMaxDe = () => 250; VC.calculo.rugosidadeDe = () => 0.15;
+    return () => { VC.calculo.hMaxDe = oh; VC.calculo.rugosidadeDe = orr; };
+  }],
+  ['v11.2 · estado dos filtros sem efeito', 'N6.T14', () => {
+    const o = VC.calculo.calcularVentiladores;
+    VC.calculo.calcularVentiladores = function () { const f = VC.dados.filtros.modo; VC.dados.filtros.modo = 'sujo'; try { return o.apply(this, arguments); } finally { VC.dados.filtros.modo = f; } };
+    return () => { VC.calculo.calcularVentiladores = o; };
+  }],
+  ['v11.2 · tipologia em implementação sem aviso', 'N2.T17', () => {
+    const o = VC.normas.tipologiaAtual; VC.normas.tipologiaAtual = () => 'comercio';
+    return () => { VC.normas.tipologiaAtual = o; };
+  }],
   ['E3 · sem aviso de ventilador fora da curva', 'N6.T13', () => {
     const o = VC.uta.calcularPontoFuncionamento;
     VC.uta.calcularPontoFuncionamento = function () { const r = o.apply(this, arguments); if (r) r.foraDaCurva = false; return r; };

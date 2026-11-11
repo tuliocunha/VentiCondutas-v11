@@ -712,7 +712,7 @@ VC.estado._hashEstado = function () {
   partes.push(ramais.map(r =>
     r.id + '|' + r.nome + '|' + (r.parente || '') + '|' + (r.L || 0) + '|' + (r.zeta || 0) +
     '|' + (r.utaRef || '') + '|' + ((r.lock && r.lock.D) ? '1' : '0') + '|' + ((r.geometriaInput && r.geometriaInput.forma) || 'circular')   // v11.1: forma da secção
-    + '|' + ((r.geometriaInput && r.geometriaInput.material) || '') + '|' + ((r.geometriaInput && r.geometriaInput.rugosidade) || '') + '|' + ((r.geometriaInput && r.geometriaInput.H_max) || '')   // v11.1 (E1)
+    + '|' + ((r.geometriaInput && r.geometriaInput.material) || '') + '|' + ((r.geometriaInput && r.geometriaInput.rugosidade) || '') + '|' + ((r.geometriaInput && r.geometriaInput.H_max) || '') + '|' + JSON.stringify((r.geometriaInput && r.geometriaInput.proprio) || {})   // v11.1 (E1) · v11.2: valores próprios
   ).join('#'));
   const terminais = (VC.dados && VC.dados.terminais) || [];
   partes.push('Tm' + terminais.length);
@@ -919,6 +919,13 @@ VC.normas = {
       conforme: (classe == null || classe <= 3) && etaOK
     };
   },
+  // v11.2: tipologia do edifício. Só 'comercio' (Portaria 138-I) está implementada; as outras estão em implementação.
+  TIPOLOGIAS_EM_IMPLEMENTACAO: ['residencial', 'saude', 'industria'],
+  tipologiaAtual() {
+    const t = VC.dados && VC.dados.tipologia;
+    return ['comercio', 'residencial', 'saude', 'industria'].indexOf(t) >= 0 ? t : 'comercio';   // 'publico' e vazio (projetos antigos) = comércio e serviços
+  },
+  rotuloTipologia(t) { return ({ comercio: 'Comércio e Serviços', residencial: 'Residencial', saude: 'Saúde', industria: 'Indústria' })[t] || t; },
   // Tipo Ecodesign por omissão de uma UTA, quando o utilizador não o escolheu.
   tipoUVPadrao(u) {
     if (!u) return 'BVU_HRS';

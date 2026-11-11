@@ -57,7 +57,7 @@ precisa de uma decisão sua: implementar, ou retirar o anúncio.
 ### Normas
 | Item | Situação |
 |---|---|
-| **Tipologia do edifício** (Comércio / Residencial / Saúde / Indústria) | O seletor existe mas **não muda nada**. Na Portaria 138-I a tipologia decide o regime (habitação fica no REH) |
+| **Tipologia do edifício** (Comércio / Residencial / Saúde / Indústria) | **v11.2:** Residencial, Saúde e Indústria aparecem a cinzento, "em implementação", e não se podem escolher. Um projeto antigo marcado com uma delas mostra um aviso no Setup e na auditoria. Falta implementar as regras próprias de cada uma |
 | **Estanquidade** (EN 12237 / EN 1507) | Só um texto no caderno de encargos. Não há classe por conduta nem cálculo de fugas |
 | **Registos corta-fogo** | Só o nome no menu de Configurações |
 | **Classe IE do motor** (IE3/IE4, Reg. (UE) 2019/1781) | Guardada na UTA, mas não entra no rendimento do motor nem na potência |
@@ -66,9 +66,9 @@ precisa de uma decisão sua: implementar, ou retirar o anúncio.
 ### Engenharia
 | Item | Situação |
 |---|---|
-| **Estado dos filtros** (limpo / médio / sujo) | Calculado (`VC.dados.filtros.modo`), mas **não há onde o escolher**. Fica sempre "sujo" |
+| **Estado dos filtros** (limpo / médio / sujo) | **v11.2: implementado.** Seletor no editor de UTAs (por omissão: sujos, Δp final) |
 | **ζ dinâmico de Tês** | A biblioteca de ζ é fixa, escolhida à mão. Não varia com a razão de caudais |
-| **Altura disponível e rugosidade do Setup** | Cada ramal gerado pela topologia grava 250 mm e 0,15 mm. Por isso, mudar o Setup não afeta os ramais existentes |
+| **Altura disponível e rugosidade do Setup** | **v11.2: implementado.** Os valores do Setup valem para todos os ramais; um valor de ramal só conta se for marcado como próprio |
 | **Dilatação térmica, custo energético** | Só dados por omissão. O custo aparece no caderno, mas não há onde editar as horas nem o preço |
 | **Ruído de UTA** | Há ruído dos terminais (VDI 2081), mas não da UTA |
 

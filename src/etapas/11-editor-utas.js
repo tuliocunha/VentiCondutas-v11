@@ -47,6 +47,7 @@ VC.editorUtas = {
     h += '<div style="background:var(--superf2);border:1px solid var(--borda);border-left:3px solid var(--primario);border-radius:5px;padding:8px 10px"><div style="font-size:9.5px;font-weight:800;color:var(--texto-suave);text-transform:uppercase">P total</div><div style="font-size:16px;font-weight:900;color:var(--texto);margin-top:3px">' + VC.utils.fmt(totalP, 0) + ' W</div></div>';
     h += '</div>';
 
+    h += self._selectFiltros();
     h += '<div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap">';
     h += '<button class="btn primario" onclick="VC.editorUtas.criarUta(\'insuflacao\')"><i class="fa-solid fa-plus"></i> UTA insufla\u00e7\u00e3o</button>';
     h += '<button class="btn ambar" onclick="VC.editorUtas.criarUta(\'extracao\')"><i class="fa-solid fa-plus"></i> UTA extra\u00e7\u00e3o</button>';
@@ -137,6 +138,24 @@ VC.editorUtas = {
     });
 
     return h;
+  },
+
+  // v11.2: estado dos filtros usado no Δp interno, no SFPint e na potência (antes fixo em 'sujo', sem onde o mudar)
+  _selectFiltros: function () {
+    if (!VC.dados.filtros) VC.dados.filtros = { modo: 'sujo' };
+    var m = VC.dados.filtros.modo || 'sujo';
+    var op = function (v, t) { return '<option value="' + v + '"' + (m === v ? ' selected' : '') + '>' + t + '</option>'; };
+    return '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;font-size:11.5px">'
+      + '<label style="font-weight:800;color:var(--texto-med)">Filtros no dimensionamento</label>'
+      + '<select class="input" onchange="VC.editorUtas.setFiltros(this.value)">' + op('sujo', 'Sujos · Δp final (recomendado para escolher o ventilador)') + op('medio', 'Médios · média entre Δp inicial e final') + op('limpo', 'Limpos · Δp inicial') + '</select>'
+      + '<span style="color:var(--texto-suave)">Entra no Δp interno, no SFPint e na potência do motor.</span></div>';
+  },
+
+  setFiltros: function (modo) {
+    if (!VC.dados.filtros) VC.dados.filtros = {};
+    VC.dados.filtros.modo = (modo === 'medio' || modo === 'limpo') ? modo : 'sujo';
+    VC.estado.forcarSync();
+    VC.passos.render('utas');
   },
 
   _selectTipoUV: function (u) {
