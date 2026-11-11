@@ -166,7 +166,19 @@ R.requisitos = function () {
 R.associacao = function () {
   let h = R.cabecalho('Associação Terminais ↔ Ramais', 'Derivada dos terminais');
   h += R.secao('1', 'Ramais e terminais');
-  h += R.tabela(['Ramal', 'Nível', 'Rede', 'Q derivado', 'N terminais', 'N espaços'], VC.dados.ramais.map(r => { const nTerm = VC.dados.terminais.filter(t => t.ramalRef === r.nome).length; const espacos = VC.calculo.espacosServidosPorRamal(r.nome); return [VC.utils.esc(r.nome), VC.utils.nivelRotulo(r.nivelNumero || 2), VC.utils.esc(r.rede), VC.utils.fmt(r.Q, 0), nTerm, espacos.length]; }));
+  // v11.1 (3.10): o Q derivado de um ramal inclui os sub-ramais, por isso as contagens também
+  // passam a incluí-los ("total"). "diretos" são os terminais ligados ao próprio ramal.
+  const filhos = {};
+  VC.dados.ramais.forEach(r => { if (r.parente) (filhos[r.parente] = filhos[r.parente] || []).push(r.nome); });
+  const subarvore = nome => { const out = [], pilha = [nome], vistos = new Set(); while (pilha.length) { const n = pilha.pop(); if (vistos.has(n)) continue; vistos.add(n); out.push(n); (filhos[n] || []).forEach(f => pilha.push(f)); } return out; };
+  h += R.tabela(['Ramal', 'Nível', 'Rede', 'Q derivado', 'Terminais (diretos / total)', 'Espaços (diretos / total)'], VC.dados.ramais.map(r => {
+    const nomes = new Set(subarvore(r.nome));
+    const nDir = VC.dados.terminais.filter(t => t.ramalRef === r.nome).length;
+    const nTot = VC.dados.terminais.filter(t => nomes.has(t.ramalRef)).length;
+    const eDir = VC.calculo.espacosServidosPorRamal(r.nome).length;
+    const eTot = new Set(VC.dados.terminais.filter(t => nomes.has(t.ramalRef)).reduce((a, t) => a.concat((t.espacos || []).map(e => e.nome)), [])).size;
+    return [VC.utils.esc(r.nome), VC.utils.nivelRotulo(r.nivelNumero || 2), VC.utils.esc(r.rede), VC.utils.fmt(r.Q, 0), nDir + ' / ' + nTot, eDir + ' / ' + eTot];
+  }));
   return h + R.rodape();
 };
 

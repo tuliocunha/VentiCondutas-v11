@@ -712,10 +712,15 @@ VC.calculo = {
     const esp = (VC.dados.espacos || []).find(e => e.nome === nomeEspaco);
     if (!esp) return { Q_nec: 0, Q_servido: 0, delta: 0, estado: 'NAO_EXISTE', nTerminais: 0 };
     const c = this.calcularQEspaco(esp);
-    const Q_nec = c.Q_espaco;
     // v11.1: compara a necessidade com os terminais da rede que a satisfaz
     // (G4 → extração; restantes → insuflação/renovação)
     const rede = c.tipoCaudal === 'EXTRACAO' ? 'extracao' : 'insuflacao';
+    // v11.1 (3.10): o ar que o espaço transfere para outros (ex.: compensação de sanitários)
+    // também tem de ser insuflado nele.
+    const Q_transf_out = rede === 'insuflacao'
+      ? (VC.dados.transferencias || []).filter(t => t.deId === esp.id).reduce((s, t) => s + (Number(t.Q) || 0), 0)
+      : 0;
+    const Q_nec = c.Q_espaco + Q_transf_out;
     const Q_servido = this.QservidoAoEspaco(nomeEspaco, rede);
     const nTerminais = this.terminaisQueServem(nomeEspaco).filter(t => this._redeBase(t) === rede).length;
     const delta = Q_servido - Q_nec;
@@ -728,7 +733,7 @@ VC.calculo = {
       else if (ratio > 1.20) estado = 'SOBRE';
       else estado = 'OK';
     }
-    return { Q_nec, Q_servido, delta, estado, nTerminais, rede, g: c.g, isento: c.isento };
+    return { Q_nec, Q_servido, delta, estado, nTerminais, rede, g: c.g, isento: c.isento, Q_transf_out };
   },
 
   espacosServidosPorRamal(ramalNome) {

@@ -43,6 +43,11 @@ VC6.testes = {
       const a = VC.calculo.calcularVentiladores(); VC.dados.terminais.push(t);
       try { const d = VC.calculo.calcularVentiladores(); return Math.round(d.ins - a.ins) === 100 && Math.round(d.ext - a.ext) === 0; }
       finally { VC.dados.terminais.splice(VC.dados.terminais.indexOf(t), 1); VC.calculo.calcularVentiladores(); } } });
+    self.registar({ id: 'N3.T20', nucleo: 'N3', grupo: 'Balanço', nome: 'Ar transferido conta na insuflação necessária do espaço de origem', criterio: 'Q_nec = Q_espaco + transferências de saída', fn: () => {
+      const t = (VC.dados.transferencias || [])[0]; if (!t) return true;
+      const de = VC.dados.espacos.find(e => e.id === t.deId); const b = VC.calculo.balancoEspaco(de.nome);
+      const out = VC.dados.transferencias.filter(x => x.deId === de.id).reduce((s, x) => s + (Number(x.Q) || 0), 0);
+      return b.rede !== 'insuflacao' || Math.abs(b.Q_nec - (VC.calculo.calcularQEspaco(de).Q_espaco + out)) < 0.5; } });
     self.registar({ id: 'N2.T16', nucleo: 'N2', grupo: 'Normas', nome: 'Categoria EN 16798-1 muda rp/ra (comparação)', criterio: 'I > II > III > IV', fn: () => { const p = VC.dados.params, ant = p.categoria; const rp = c => { p.categoria = c; return VC.normas.getDef('Fallback-inexistente').rp; }; const r = [rp('I'), rp('II'), rp('III'), rp('IV')]; p.categoria = ant; return r[0] > r[1] && r[1] > r[2] && r[2] > r[3]; } });
     self.registar({ id: 'N2.T10', nucleo: 'N2', grupo: 'Normas', nome: 'F-RPH · rphDefault G2 H=7 → 2', criterio: 'conforme', fn: () => { const r = VC.rph.calcularDefault({ tipo: 'Circulação', H: 7 }); return r.rph === 2 && r.classe === 'E2'; } });
     self.registar({ id: 'N2.T11', nucleo: 'N2', grupo: 'Normas', nome: 'F-RPH · rphDefault G1 H=2.6 → 0', criterio: 'conforme', fn: () => { const r = VC.rph.calcularDefault({ tipo: 'Escritório', H: 2.6 }); return r.rph === 0 && r.classe === 'E0'; } });
