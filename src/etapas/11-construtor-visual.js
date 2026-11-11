@@ -265,7 +265,7 @@ VC.construtorVisual = {
   atribuirSlot(espacoId, rede, ramalNome) {
     const e = (VC.dados.espacos || []).find(x => String(x.id) === String(espacoId));
     if (!e) return;
-    if (VC.snap && VC.snap.capturar) { try { VC.snap.capturar('Associar ' + e.nome + ' (' + rede + ') -> ' + ramalNome); } catch (err) {} }
+    if (VC.snap && VC.snap.capturar) { try { VC.snap.capturar('Associar ' + e.nome + ' (' + rede + ') -> ' + ramalNome); } catch (err) { VC.debug && VC.debug.erro && VC.debug.erro(err); } }
     if (rede === 'insuflacao') e.ramalRefInsuflacao = ramalNome; else e.ramalRefExtracao = ramalNome;
     (VC.dados.terminais || []).forEach(t => {
       const serve = (t.espacos || []).some(x => x.nome === e.nome);
@@ -281,7 +281,7 @@ VC.construtorVisual = {
   desatribuirSlot(espacoId, rede) {
     const e = (VC.dados.espacos || []).find(x => String(x.id) === String(espacoId));
     if (!e) return;
-    if (VC.snap && VC.snap.capturar) { try { VC.snap.capturar('Remover ' + e.nome + ' (' + rede + ')'); } catch (err) {} }
+    if (VC.snap && VC.snap.capturar) { try { VC.snap.capturar('Remover ' + e.nome + ' (' + rede + ')'); } catch (err) { VC.debug && VC.debug.erro && VC.debug.erro(err); } }
     if (rede === 'insuflacao') e.ramalRefInsuflacao = ''; else e.ramalRefExtracao = '';
     (VC.dados.terminais || []).forEach(t => {
       const serve = (t.espacos || []).some(x => x.nome === e.nome);
@@ -295,7 +295,7 @@ VC.construtorVisual = {
   },
   moverRamal(ramalNome, novoPai) {
     if (!VC.topologia || !VC.topologia.mover || !VC.topologia.mover.ramal) { VC.ui.toast('Modulo de topologia indisponivel.'); return; }
-    if (VC.snap && VC.snap.capturar) { try { VC.snap.capturar('Mover ' + ramalNome + ' -> ' + novoPai); } catch (err) {} }
+    if (VC.snap && VC.snap.capturar) { try { VC.snap.capturar('Mover ' + ramalNome + ' -> ' + novoPai); } catch (err) { VC.debug && VC.debug.erro && VC.debug.erro(err); } }
     const r = VC.topologia.mover.ramal(ramalNome, novoPai);
     if (!r.ok) { VC.ui.toast('Nao foi possivel mover: ' + (r.erro || 'erro')); return; }
     VC.estado.forcarSync();
@@ -307,7 +307,7 @@ VC.construtorVisual = {
     const nomeBase = 'R1.' + (raizes.length + 1);
     let nome = nomeBase, guard = 0;
     while ((VC.dados.ramais || []).some(r => r.nome === nome) && guard++ < 50) nome = nomeBase + '_' + (guard + 1);
-    if (VC.snap && VC.snap.capturar) { try { VC.snap.capturar('Novo ramal ' + nome); } catch (err) {} }
+    if (VC.snap && VC.snap.capturar) { try { VC.snap.capturar('Novo ramal ' + nome); } catch (err) { VC.debug && VC.debug.erro && VC.debug.erro(err); } }
     const opts = {
       nome, parente: '', nivelNumero: 1, rede: 'insuflacao',
       utaRef: null, L: 25, zeta: 0.8,
@@ -337,7 +337,7 @@ VC.construtorVisual = {
     const nomeBase = paiNome + '.' + (irmaos.length + 1);
     let nome = nomeBase, guard = 0;
     while ((VC.dados.ramais || []).some(r => r.nome === nome) && guard++ < 50) nome = nomeBase + '_' + (guard + 1);
-    if (VC.snap && VC.snap.capturar) { try { VC.snap.capturar('Novo sub-ramal ' + nome); } catch (err) {} }
+    if (VC.snap && VC.snap.capturar) { try { VC.snap.capturar('Novo sub-ramal ' + nome); } catch (err) { VC.debug && VC.debug.erro && VC.debug.erro(err); } }
     const opts = {
       nome, parente: paiNome, nivelNumero: nivelPai + 1,
       rede: pai.rede || 'insuflacao', utaRef: pai.utaRef || null,
@@ -363,7 +363,7 @@ VC.construtorVisual = {
   alterarTipo(ramalNome, novoTipo) {
     const r = (VC.dados.ramais || []).find(x => x.nome === ramalNome);
     if (!r || r.rede === novoTipo) return;
-    if (VC.snap && VC.snap.capturar) { try { VC.snap.capturar('Alterar tipo ' + ramalNome + ' -> ' + novoTipo); } catch (err) {} }
+    if (VC.snap && VC.snap.capturar) { try { VC.snap.capturar('Alterar tipo ' + ramalNome + ' -> ' + novoTipo); } catch (err) { VC.debug && VC.debug.erro && VC.debug.erro(err); } }
     r.rede = novoTipo;
     const sync = (nome) => { (VC.dados.ramais || []).forEach(x => { if (x.parente === nome) { x.rede = novoTipo; sync(x.nome); } }); };
     sync(ramalNome);
@@ -389,15 +389,15 @@ VC.construtorVisual = {
     } else {
       this._arrastando = { tipo: 'slots', itens: [{ espacoId, rede }] };
     }
-    try { e.dataTransfer.setData('application/vc-slot', JSON.stringify(this._arrastando)); e.dataTransfer.effectAllowed = 'move'; } catch (err) {}
+    try { e.dataTransfer.setData('application/vc-slot', JSON.stringify(this._arrastando)); e.dataTransfer.effectAllowed = 'move'; } catch (err) { /* dataTransfer indisponível neste navegador */ }
     e.currentTarget.style.opacity = '0.4';
   },
   _onDragStartRamal(e, nome) {
     this._arrastando = { tipo: 'ramal', nome };
-    try { e.dataTransfer.setData('application/vc-ramal', JSON.stringify({ nome })); e.dataTransfer.effectAllowed = 'move'; } catch (err) {}
+    try { e.dataTransfer.setData('application/vc-ramal', JSON.stringify({ nome })); e.dataTransfer.effectAllowed = 'move'; } catch (err) { /* dataTransfer indisponível neste navegador */ }
     e.currentTarget.style.opacity = '0.4';
   },
-  _onDragOver(e) { if (!this._arrastando) return; e.preventDefault(); try { e.dataTransfer.dropEffect = 'move'; } catch (err) {} e.currentTarget.classList.add('cv-drag-over'); },
+  _onDragOver(e) { if (!this._arrastando) return; e.preventDefault(); try { e.dataTransfer.dropEffect = 'move'; } catch (err) { /* dataTransfer indisponível neste navegador */ } e.currentTarget.classList.add('cv-drag-over'); },
   _onDragLeave(e) { e.currentTarget.classList.remove('cv-drag-over'); },
   _onDropOnRamal(e, ramalNome) {
     e.preventDefault(); e.stopPropagation();
@@ -425,7 +425,7 @@ VC.construtorVisual = {
         } else rejeitados++;
       });
       if (atribuidos > 0) {
-        if (VC.snap && VC.snap.capturar) { try { VC.snap.capturar(atribuidos + ' slot(s) -> ' + ramalNome); } catch (err) {} }
+        if (VC.snap && VC.snap.capturar) { try { VC.snap.capturar(atribuidos + ' slot(s) -> ' + ramalNome); } catch (err) { VC.debug && VC.debug.erro && VC.debug.erro(err); } }
         this._selecionados.clear();
         VC.estado.forcarSync();
         this.render();
@@ -456,7 +456,7 @@ VC.construtorVisual = {
       removidos++;
     });
     if (removidos > 0) {
-      if (VC.snap && VC.snap.capturar) { try { VC.snap.capturar(removidos + ' slot(s) desassociados'); } catch (err) {} }
+      if (VC.snap && VC.snap.capturar) { try { VC.snap.capturar(removidos + ' slot(s) desassociados'); } catch (err) { VC.debug && VC.debug.erro && VC.debug.erro(err); } }
       this._selecionados.clear();
       VC.estado.forcarSync();
       this.render();

@@ -64,7 +64,7 @@ VC.catalogo = {
           return;
         }
       }
-    } catch (e) {}
+    } catch (e) { VC.debug && VC.debug.erro && VC.debug.erro(e); }
     this.hierarquia = catalogoExemplo();
     this.adHoc = [];
     this.save();
@@ -82,7 +82,7 @@ VC.catalogo = {
             hierarquia: this.hierarquia,
             adHoc: this.adHoc
           }));
-        } catch (e) {}
+        } catch (e) { /* localStorage indisponível ou cheio: o catálogo fica só em memória */ }
       }, 500);
     };
   })(),

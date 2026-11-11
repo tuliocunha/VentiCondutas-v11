@@ -42,7 +42,7 @@ VC.arvore = {
     }
 
     if (VC.flags && VC.flags.topologiaFacetada && VC.topologia && VC.topologia.facetas) {
-      try { VC.topologia.facetas.aplicarATodos(); } catch (e) {}
+      try { VC.topologia.facetas.aplicarATodos(); } catch (e) { VC.debug && VC.debug.erro && VC.debug.erro(e); }
     }
 
     var ramais = VC.dados.ramais || [];
@@ -260,14 +260,14 @@ VC.arvore = {
 
   _dragStart: function (ev, nome) {
     this._arrastando = nome;
-    try { ev.dataTransfer.setData('text/plain', nome); ev.dataTransfer.effectAllowed = 'move'; } catch (e) {}
+    try { ev.dataTransfer.setData('text/plain', nome); ev.dataTransfer.effectAllowed = 'move'; } catch (e) { /* dataTransfer indisponível neste navegador */ }
     ev.currentTarget.style.opacity = '0.4';
   },
 
   _dragOver: function (ev) {
     if (!this._arrastando) return;
     ev.preventDefault();
-    try { ev.dataTransfer.dropEffect = 'move'; } catch (e) {}
+    try { ev.dataTransfer.dropEffect = 'move'; } catch (e) { /* dataTransfer indisponível neste navegador */ }
     ev.currentTarget.style.background = 'var(--primario-soft)';
   },
 

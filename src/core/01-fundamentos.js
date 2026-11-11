@@ -56,7 +56,7 @@ VC.utils = {
   uid(prefixo) { return (prefixo || 'ID') + '-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); },
   clonar(o) {
     if (o === null || typeof o !== 'object') return o;
-    if (typeof structuredClone === 'function') { try { return structuredClone(o); } catch (e) {} }
+    if (typeof structuredClone === 'function') { try { return structuredClone(o); } catch (e) { /* objeto não clonável: segue para a cópia JSON */ } }
     return JSON.parse(JSON.stringify(o));
   },
   soma(arr, campo) { return (arr || []).reduce((s, x) => s + (Number(x[campo]) || 0), 0); },
@@ -681,7 +681,7 @@ window.addEventListener('unhandledrejection', function (ev) { VC.debug.erro(ev.r
 VC.eventos = VC.eventos || {
   _l: {},
   on(e, f) { (this._l[e] = this._l[e] || []).push(f); },
-  emit(e, d) { (this._l[e] || []).forEach(f => { try { f(d); } catch(err) {} }); }
+  emit(e, d) { (this._l[e] || []).forEach(f => { try { f(d); } catch (err) { VC.debug && VC.debug.erro && VC.debug.erro(err); } }); }
 };
 
 VC.estado = VC.estado || {};
