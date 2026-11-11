@@ -403,12 +403,12 @@ VC.exportacoes.excel = function () {
 };
 
 VC.exportacoes.csv = async function () {
-  const linhas = [['Nome', 'Tipo', 'Grupo', 'Piso', 'Ala', 'A', 'H', 'V', 'N', 'RPH', 'RPH_origem', 'Q_normas', 'Q_ConTerm', 'QAI_projeto', 'QAI_rede', 'QAI_origem', 'QAI_motivo', 'Q_total', 'N_Definicoes', 'Q_servido', 'Balanco_term', 'Residuo_ar', 'Status']];
+  const linhas = [['Nome', 'Tipo', 'Grupo', 'Piso', 'Ala', 'A', 'H', 'V', 'N', 'RPH', 'RPH_origem', 'Q_normas', 'Q_ConTerm', 'QAI_projeto', 'QAI_rede', 'QAI_origem', 'QAI_motivo', 'Q_total', 'Q_EN16798_cat' + ((VC.dados.params && VC.dados.params.categoria) || 'II'), 'N_Definicoes', 'Q_servido', 'Balanco_term', 'Residuo_ar', 'Status']];
   VC.dados.espacos.forEach(e => {
     const c = VC.calculo.calcularQEspaco(e);
     const b = VC.calculo.balancoEspaco(e.nome);
     const loc = e.localizacao || {};
-    linhas.push([c.nome, c.tipo, 'G' + c.g, loc.piso || '', loc.ala || '', c.A, c.H, c.V, c.N, e.rphAplicado || 0, e.rphOrigem || 'norma', c.Q_normas || 0, c.Q_ConTerm || 0, c.QAI_projeto || 0, e.QAI_projeto_rede || 'auto', e.QAI_projeto_origem || 'norma', e.QAI_projeto_motivo || '', c.Q_total || 0, (e.definicoes || []).length, b.Q_servido, b.estado, (e.balanco || {}).residuo || 0, c.status]);
+    linhas.push([c.nome, c.tipo, 'G' + c.g, loc.piso || '', loc.ala || '', c.A, c.H, c.V, c.N, e.rphAplicado || 0, e.rphOrigem || 'norma', c.Q_normas || 0, c.Q_ConTerm || 0, c.QAI_projeto || 0, e.QAI_projeto_rede || 'auto', e.QAI_projeto_origem || 'norma', e.QAI_projeto_motivo || '', c.Q_total || 0, Math.round(c.Q_EN16798 || 0), (e.definicoes || []).length, b.Q_servido, b.estado, (e.balanco || {}).residuo || 0, c.status]);
   });
   const csv = '\ufeff' + linhas.map(r => r.map(v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"').join(';')).join('\r\n');
   const nome = 'VentCondutas_v' + VC.versaoCurta + '_espacos.csv';

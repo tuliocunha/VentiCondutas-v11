@@ -803,7 +803,7 @@ Object.assign(VC.dados, {
     nome: 'Degrade Torres Vedras 18out26',
     cliente: '', local: 'Torres Vedras, Portugal', autor: '', revisao: '01'
   },
-  params: VC.dados.params || { altitude: 150, temperatura: 22, humidade: 50, rugosidade: 0.15 },
+  params: VC.dados.params || { altitude: 150, temperatura: 22, humidade: 50, rugosidade: 0.15, categoria: 'II' },
   tipologia: VC.dados.tipologia || 'publico',
   restricaoH: VC.dados.restricaoH || 250,
   eficaciaRemocao: VC.dados.eficaciaRemocao || 1.0,
