@@ -8,27 +8,8 @@ window.VC6 = window.VC6 || {};
 const VC6 = window.VC6;
 VC._boot.partes.push('06-diagramas');
 
-/* ============================================================
-   NOVO MÓDULO V11: VC.graficos (Dashboard de Auditoria)
-   ============================================================ */
-VC.graficos = VC.graficos || {
-    _cores: { 
-        ok: 'var(--verde)', 
-        atencao: 'var(--ambar)', 
-        erro: 'var(--coral)', 
-        grade: '#e3e8ee', 
-        texto: '#5a6b7c',
-        insuflacao: '#6d8fb0',
-        extracao: '#7fa88b'
-    },
-    
-    renderG1_deltaP() {
-        if (!VC.dados || !VC.dados.ramais || VC.dados.ramais.length === 0) {
-            return '<div class="vazio"><div class="vazio-titulo">Sem ramais</div></div>';
-        }
-        return '<svg viewBox="0 0 800 200" xmlns="http://www.w3.org/2000/svg" style="background:#fff; border-radius:8px; border:1px solid #e3e8ee;"><text x="400" y="100" text-anchor="middle" fill="#5a6b7c" font-size="14" font-family="monospace">Teste G1: Infraestrutura vetorial conectada com sucesso</text></svg>';
-    }
-};
+/* v11.1: removido o bloco 'VC.graficos = VC.graficos || {…}' (Dashboard V11). Nunca era usado:
+   VC.graficos já está definido em 01-fundamentos.js, por isso o '||' anulava-o. */
 
 VC6.diagrama = {
   NIVEIS: { atmosfera:0, uta:1, r1:2, r2:3, r3:4, r4:5, espaco:6, retorno:7 },
@@ -438,7 +419,7 @@ VC6.diagrama = {
    ============================================================ */
 window.VC6 = window.VC6 || {};
 window.VC6.subgruposAuditoria = {
-    _subgrupoAtivo: 'graficos',
+    _subgrupoAtivo: 'relatorios',   // v11.1: abre nos relatórios (os gráficos ainda estão a ser implementados)
     _etapaAtiva: 'parametros',
 
     mudarSubgrupo(sub) {
@@ -524,6 +505,12 @@ window.VC6.subgruposAuditoria = {
     },
 
     _cartaoVisualCard(titulo, subtitulo, desc, icone, funcaoClick) {
+        // v11.1: o cartão só fica ativo se a função que chama existir; senão aparece "Em desenvolvimento"
+        const alvo = String(funcaoClick || '').split('(')[0].trim();
+        const existe = typeof alvo.split('.').reduce((o, k) => (o == null ? undefined : o[k]), window) === 'function';
+        const botao = existe
+            ? '<button class="btn primario" style="width:100%; justify-content:center;" onclick="' + funcaoClick + '"><i class="fa-solid fa-eye"></i> Visualizar Gráfico</button>'
+            : '<button class="btn" style="width:100%; justify-content:center; opacity:.6; cursor:not-allowed;" disabled title="Gráfico ainda não implementado"><i class="fa-solid fa-person-digging"></i> Em desenvolvimento</button>';
         return '<div style="background:var(--superf); border:1px solid var(--borda); border-radius:10px; padding:20px; box-shadow:var(--sombra-1); display:flex; flex-direction:column; justify-content:space-between; transition:all 0.2s;">' +
                '<div>' +
                '<div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">' +
@@ -532,7 +519,7 @@ window.VC6.subgruposAuditoria = {
                '</div>' +
                '<p style="font-size:12px; color:var(--texto-med); line-height:1.5; margin-bottom:16px;">' + desc + '</p>' +
                '</div>' +
-               '<button class="btn primario" style="width:100%; justify-content:center;" onclick="' + funcaoClick + '"><i class="fa-solid fa-eye"></i> Visualizar Gráfico</button>' +
+               botao +
                '</div>';
     },
 
