@@ -63,10 +63,11 @@ async function fotografar() {
 
   const foto = await page.evaluate(() => {
     const n = x => (typeof x === 'number' && isFinite(x)) ? Math.round(x * 1000) / 1000 : x;
-    // O texto de um SVG compara-se como conjunto ordenado: a ordem de desenho dos elementos varia entre corridas.
+    // O texto de um SVG compara-se como conjunto ordenado e sem repetições: a ordem de desenho e o número de
+    // rótulos sobrepostos do diagrama variam entre corridas; o que conta é que cada rótulo exista.
     const texto = html => {
       const d = document.createElement('div'); d.innerHTML = String(html || '');
-      d.querySelectorAll('svg').forEach(s => { const t = [...s.querySelectorAll('text')].map(e => e.textContent.trim()).filter(Boolean).sort(); s.replaceWith('[SVG: ' + t.join(' · ') + ']'); });
+      d.querySelectorAll('svg').forEach(s => { const t = [...new Set([...s.querySelectorAll('text')].map(e => e.textContent.trim()).filter(Boolean))].sort(); s.replaceWith('[SVG: ' + t.join(' · ') + ']'); });
       return d.textContent.replace(/\s+/g, ' ').trim();
     };
     const F = {};
@@ -108,7 +109,7 @@ async function fotografar() {
 }
 
 /* versões e datas não contam como diferença */
-const normalizar = s => String(s).replace(/v?\d+\.\d+\.\d+(-[\w.]+)?/gi, 'vX').replace(/\b\d{4}-\d{2}-\d{2}\b/g, 'DATA').replace(/\b\d{1,2}\/\d{1,2}\/\d{4}\b/g, 'DATA');
+const normalizar = s => String(s).replace(/v?\d+\.\d+\.\d+(-[\w.]+)?/gi, 'vX').replace(/\d{4}-\d{2}-\d{2}/g, 'DATA').replace(/\d{1,2}\/\d{1,2}\/\d{4}/g, 'DATA');   // sem \b: a data pode vir colada a outro número ("Revisão: 01" + "11/11/2026")
 
 function comparar(a, b) {
   const dif = [];
