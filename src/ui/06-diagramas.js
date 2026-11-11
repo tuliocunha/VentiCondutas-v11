@@ -304,7 +304,16 @@ VC6.diagrama = {
       svg += '<text x="' + (x + w + 4) + '" y="' + (y + h / 2 + 3) + '" style="font-size:10px;font-weight:700;fill:#2c3e50">' + VC.utils.esc(rotulo) + '</text>'; svg += '<text x="' + (x + w + 4) + '" y="' + (y + h / 2 + 15) + '" style="font-size:9px;font-family:ui-monospace,monospace;fill:#5a6b7c">' + linhaMet + '</text>';
       if (temQAI) { const qaiTxt = 'QAI ' + VC.utils.fmt(n.QAI_aplicado || n.QAI_total || 0, 0) + ' m³/h · ' + (n.QAI_rede || 'insuflacao'); svg += '<text x="' + (x + w + 4) + '" y="' + (y + h / 2 + 26) + '" style="font-size:9px;font-family:ui-monospace,monospace;fill:#b88a4a;font-weight:700">' + qaiTxt + '</text>'; }
       if (temMultiRede) { const redesTxt = (n.redesRecebidas || []).join(' + '); svg += '<text x="' + (x + w + 4) + '" y="' + (y + h / 2 + (temQAI ? 37 : 26)) + '" style="font-size:9px;font-family:ui-monospace,monospace;fill:#9e8256;font-weight:700">⚠ ' + VC.utils.esc(redesTxt) + '</text>'; }
-    } else if (n.tipo === 'transferencia') { svg += '<text x="' + (x + w + 4) + '" y="' + (y + h / 2 + 3) + '" style="font-size:10px;font-weight:700;fill:#7a5c2e">' + VC.utils.esc(rotulo) + '</text>'; svg += '<text x="' + (x + w + 4) + '" y="' + (y + h / 2 + 15) + '" style="font-size:9px;font-family:ui-monospace,monospace;fill:#7a5c2e">' + VC.utils.fmt(n.Q, 0) + ' m³/h · A ' + VC.utils.fmt(n.area_cm2 || 0, 0) + ' cm²</text>'; }
+    }
+    // v11.1: indicar expandir/recolher (UTA) e sub-ramais escondidos (ramal)
+    if (n.tipo === 'uta') {
+      const exp = this._utasExpandidas.has(n.id);
+      svg += '<text x="' + (x + w / 2) + '" y="' + (y + h + 24) + '" text-anchor="middle" style="font-size:9px;font-weight:800;fill:#2563eb">' + (exp ? '▾ recolher' : '▸ expandir') + '</text>';
+    } else if (n.tipo === 'ramal') {
+      const ocultos = this._filhosOcultos(n, grafo);
+      if (ocultos > 0) svg += '<text x="' + (x + w + 3) + '" y="' + (y + h / 2 + 3) + '" style="font-size:9px;font-weight:800;fill:#2563eb">▸ +' + ocultos + '</text>';
+    }
+    if (n.tipo === 'transferencia') { svg += '<text x="' + (x + w + 4) + '" y="' + (y + h / 2 + 3) + '" style="font-size:10px;font-weight:700;fill:#7a5c2e">' + VC.utils.esc(rotulo) + '</text>'; svg += '<text x="' + (x + w + 4) + '" y="' + (y + h / 2 + 15) + '" style="font-size:9px;font-family:ui-monospace,monospace;fill:#7a5c2e">' + VC.utils.fmt(n.Q, 0) + ' m³/h · A ' + VC.utils.fmt(n.area_cm2 || 0, 0) + ' cm²</text>'; }
     svg += '</g>'; return svg;
   },
   _corUta(n) {
@@ -351,10 +360,32 @@ VC6.diagrama = {
     const svgContainer = document.getElementById('diagramaSVG'); if (!svgContainer) return;
     try { this._ligarResize(); this.construirGrafo(); const svgStr = this.renderSVG(); const parser = new DOMParser(); const doc = parser.parseFromString(svgStr, 'image/svg+xml'); const novoSVG = doc.documentElement; novoSVG.setAttribute('id', 'diagramaSVG'); svgContainer.parentNode.replaceChild(novoSVG, svgContainer); this._ligarInteratividade(novoSVG); this._atualizarStatus(); } catch (e) { VC.debug.erro(e); }
   },
+  /* v11.1: nº de sub-ramais (em toda a descendência) que não estão desenhados */
+  _filhosOcultos(n, grafo) {
+    const layout = this._layoutCache || {};
+    const ramais = (grafo || this._grafoCache || { nos: [] }).nos.filter(x => x.tipo === 'ramal');
+    let conta = 0; const fila = [n._dados && n._dados.nome]; let guarda = 0;
+    while (fila.length && guarda++ < 1000) {
+      const pai = fila.shift();
+      ramais.forEach(r => { if (r._dados && r._dados.parente === pai) { if (!layout[r.id]) conta++; fila.push(r._dados.nome); } });
+    }
+    return conta;
+  },
   _ligarInteratividade(svg) {
     const self = this;
     svg.querySelectorAll('g[data-id]').forEach(g => {
-      g.addEventListener('click', (ev) => { ev.stopPropagation(); const id = g.getAttribute('data-id'); self._selecionado = id; self._mostrarDetalhe(id); self.render(); });
+      g.addEventListener('click', (ev) => {
+        ev.stopPropagation(); const id = g.getAttribute('data-id'); self._selecionado = id; self._mostrarDetalhe(id);
+        // v11.1: clicar numa UTA expande/recolhe só essa UTA; num ramal com sub-ramais escondidos, expande a sua UTA
+        const no = (self._grafoCache || { nos: [] }).nos.find(x => x.id === id);
+        if (no && no.tipo === 'uta') return self.toggleUta(id);
+        if (no && no.tipo === 'ramal' && self._filhosOcultos(no) > 0) {
+          let r = no._dados, guarda = 0; const porNome = {}; (VC.dados.ramais || []).forEach(x => { porNome[x.nome] = x; });
+          while (r && !r.utaRef && r.parente && guarda++ < 50) r = porNome[r.parente];
+          if (r && r.utaRef != null) { self._utasExpandidas.add('UTA-' + r.utaRef); }
+        }
+        self.render();
+      });
       g.addEventListener('mouseenter', (ev) => { const id = g.getAttribute('data-id'); const no = (self._grafoCache || { nos: [] }).nos.find(x => x.id === id); if (!no) return; self._mostrarTooltip(ev, no); });
       g.addEventListener('mouseleave', () => { self._esconderTooltip(); });
     });
