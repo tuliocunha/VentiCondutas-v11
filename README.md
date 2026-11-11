@@ -58,16 +58,40 @@ relatórios, as exportações, a procura de funções em falta e um percurso por
 os ecrãs.
 
 ```bash
+npm run regressao
+```
+
+Compara tudo o que a app produz (cálculo, relatórios, ecrãs, funções, botões,
+testes) com `tests/fotografia-referencia.json`. Se uma alteração muda o resultado
+**de propósito**, grava-se a nova referência e faz-se commit dela:
+
+```bash
+npm run referencia
+```
+
+```bash
+npm run mutacoes
+```
+
+Volta a pôr na app, um a um, os 17 erros corrigidos na v11.1 e confirma que o teste
+que vigia cada um passa a falhar. Um teste que não reage ao seu erro não protege nada.
+
+```bash
+npm run testes
+```
+
+Corre os três: verificar, regressão e mutações. É o que o GitHub corre em cada pull
+request (`.github/workflows/verificar.yml`).
+
+Para comparar só durante uma alteração local, sem mexer na referência:
+
+```bash
 npm run fotografia
 ```
 
 ```bash
 npm run comparar
 ```
-
-`fotografia` guarda tudo o que a app produz (cálculo, relatórios, ecrãs, funções,
-botões, testes) em `fotografia.json`. Depois de uma alteração, `comparar` lista o
-que mudou. Numa limpeza ou reorganização, o resultado esperado é "sem diferenças".
 
 ```bash
 npm run lint

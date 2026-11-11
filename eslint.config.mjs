@@ -3,7 +3,7 @@ import globals from "globals";
 import js from "@eslint/js";
 
 export default [
-  { ignores: ["**/*.bak", "node_modules/**", "exemplos/**", "src/ui/08-arranque 31out26.js", "08-arranque.js"] },
+  { ignores: ["**/*.bak", "node_modules/**", "exemplos/**", "tests/**"] },
   js.configs.recommended,
   {
     files: ["src/**/*.js", "conhecimento/**/*.js"],
@@ -24,6 +24,6 @@ export default [
   },
   {
     files: ["tools/**/*.js"],
-    languageOptions: { ecmaVersion: 2022, sourceType: "commonjs", globals: { ...globals.node, ...globals.browser, VC: "readonly", VC6: "readonly" } }
+    languageOptions: { ecmaVersion: 2022, sourceType: "commonjs", globals: { ...globals.node, ...globals.browser, VC: "readonly", VC6: "readonly", XLSX: "readonly" } }
   }
 ];

@@ -1,0 +1,37 @@
+# Verificação automática da VentiCondutas em cada pull request e em cada push para main.
+# Corre no GitHub (Linux, Chromium sem janela). Falha se:
+#   · um teste interno falhar, houver erros JS, um relatório ou exportação falhar (verificar)
+#   · o resultado da app mudar face a tests/fotografia-referencia.json (regressao)
+#   · um teste deixar de apanhar o erro que vigia (mutacoes)
+# Quando uma mudança de resultado é intencional: npm run referencia e fazer commit da nova fotografia.
+name: Verificar
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  verificar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Instalar dependências
+        run: npm install --no-audit --no-fund
+      - name: Instalar o Chromium do Playwright
+        run: npx playwright install --with-deps chromium
+      - name: Lint
+        run: npx eslint .
+      - name: Verificação (testes, relatórios, exportações, percurso pelos ecrãs)
+        run: npm run verificar
+      - name: Regressão (fotografia de referência)
+        run: npm run regressao
+      - name: Testes de mutação
+        run: npm run mutacoes
