@@ -40,7 +40,7 @@ VC._normativo = {
     ],
     nivel2: [
       { codigo: 'EN 16798-1:2019', funcao: 'QAI — referência informativa' },
-      { codigo: 'EN 16798-3:2017', funcao: 'SFPint — referência europeia' },
+      { codigo: 'EN 16798-3:2017', funcao: 'Categorias SFP do sistema (os limites de SFPint vêm do Reg. (UE) 1253/2014)' },
       { codigo: 'EN 12599:2012', funcao: 'TAB e comissionamento' },
       { codigo: 'EN 1506:2007', funcao: 'Dimensões de condutas circulares' },
       { codigo: 'EN 1505:1998', funcao: 'Dimensões de condutas retangulares' },
@@ -174,7 +174,17 @@ VC._normativo = {
         publico_intensivo:     { base: 0,   porAparelho: 125, porArea: 10, min: 45 }
       }
     },
-    SFPint: { UVU_FILTER: 230, BVU_HRS: 1300, DEFAULT: 800 },
+    // Reg. (UE) 1253/2014 (Ecodesign), Anexo III, requisitos desde 01-01-2018.
+    // BVU com recuperador (não run-around): limite = BVU_BASE_PEQ + E − 300·qnom/2 (qnom < 2 m³/s)
+    //                                        limite = BVU_BASE + E              (qnom ≥ 2 m³/s)
+    // E = (η_t − BVU_ETA_REF)·3000 se η_t > BVU_ETA_REF (bónus de eficiência); F = 0 (filtros completos).
+    // UVU com filtro: limite fixo. UVU sem filtro: o regulamento não fixa SFPint.
+    SFPint: { UVU_FILTER: 230, BVU_BASE: 800, BVU_BASE_PEQ: 1100, BVU_ETA_REF: 0.73, BVU_ETA_MIN: 0.73 },
+    SFP_TIPOS: {
+      BVU_HRS:        'UVB com recuperador (bidirecional)',
+      UVU_FILTER:     'UVU com filtro (unidirecional)',
+      UVU_SEM_FILTER: 'UVU sem filtro (unidirecional)'
+    },
     pressaoLimites: {
       'Escadas':    { min: 50, max: 80,  nota: 'Escada pressurizada (incêndio)' },
       'Circulação': { min: -5, max: 5,   nota: 'Zona de transferência' },

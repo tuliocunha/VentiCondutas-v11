@@ -837,6 +837,16 @@ VC.flagAtiva = function (nome) { return VC.flags[nome] === true; };
       }
     });
     VC.dados.transferencias = [];
+    // v11.1 (3.10): cada sanitário recebe o ar de compensação de um escritório do mesmo piso e ala
+    // (fresta da porta). O escritório insufla esse caudal a mais, por isso fica equilibrado.
+    VC.dados.espacos.filter(function (e) { return e.tipo === 'Sanitários'; }).forEach(function (san) {
+      const qExt = san.definicoes.filter(function (d) { return d.rede === 'extracao_suja'; }).reduce(function (s, d) { return s + (Number(d.Q_total) || 0); }, 0);
+      const doador = VC.dados.espacos.find(function (e) { return e.tipo === 'Escritório' && e.localizacao.piso === san.localizacao.piso && e.localizacao.ala === san.localizacao.ala; });
+      if (!doador || qExt <= 0 || !VC6.transferencias) return;
+      VC6.transferencias.criar(doador.id, san.id, qExt, 'fresta_porta');
+      const defIns = doador.definicoes.find(function (d) { return d.rede === 'insuflacao'; });
+      if (defIns) { defIns.Q_total = Math.round((Number(defIns.Q_total) || 0) + qExt); defIns.quantidade = Math.max(1, Math.ceil(defIns.Q_total / 300)); defIns.origem = 'Balanço'; }
+    });
     VC.perf.cacheMaterializacao.invalidar();
     VC.calculo.calcularTudo();
     if (VC.topologia && VC.topologia.gerarAutomatica) {

@@ -139,12 +139,12 @@ R.dimensionamento = function () {
  h += '</div>';
  h += '</div>';
  h += R.secao('3', 'Tabela Detalhada de Ramais');
- h += R.tabela(['Ramal', 'Nível', 'Rede', 'Q (m³/h)', 'L (m)', 'Ø (mm)', 'v (m/s)', 'Re', 'Δp (Pa)'], x.ramais.map(r => {
+ h += R.tabela(['Ramal', 'Nível', 'Rede', 'Q (m³/h)', 'L (m)', 'Ø (mm)', 'v (m/s)', 'Re', 'Δp troço (Pa)', 'Δp acumulado (Pa)', 'Δp crítico (Pa)'], x.ramais.map(r => {
    const nivel = r.nivelNumero || 2;
    const badgeCor = ['#4f6d8c','#6d8fb0','#a7c0d6','#d6e3ef'][nivel-1] || '#6d8fb0';
    const txtCor = nivel === 4 ? '#2c3e50' : '#ffffff';
-   const badgeHtml = `<span style="background:${badgeCor}; color:${txtCor}; padding:3px 6px; border-radius:4px; font-size:9px; font-weight:900">R${nivel}</span>`;
-   return [VC.utils.esc(r.nome), badgeHtml, VC.utils.esc(r.rede), VC.utils.fmt(r.Q, 0), VC.utils.fmt(r.L, 1), r.Dcom || '—', VC.utils.fmt(r.v, 2), VC.utils.fmt(r.Re, 0), `<b>${VC.utils.fmt(r.deltaPtotal, 1)}</b>`];
+   const badgeHtml = `<span style="background:${badgeCor}; color:${txtCor}; padding:3px 6px; border-radius:4px; font-size:9px; font-weight:900">${VC.utils.nivelRotulo(nivel)}</span>`;
+   return [VC.utils.esc(r.nome), badgeHtml, VC.utils.esc(r.rede), VC.utils.fmt(r.Q, 0), VC.utils.fmt(r.L, 1), r.Dcom || '—', VC.utils.fmt(r.v, 2), VC.utils.fmt(r.Re, 0), VC.utils.fmt(r.deltaPTroco, 1), VC.utils.fmt(r.deltaPtotal, 1), `<b>${VC.utils.fmt(r.deltaPCritico, 1)}</b>`];
  }));
  return h + R.rodape();
 };
@@ -166,7 +166,19 @@ R.requisitos = function () {
 R.associacao = function () {
   let h = R.cabecalho('Associação Terminais ↔ Ramais', 'Derivada dos terminais');
   h += R.secao('1', 'Ramais e terminais');
-  h += R.tabela(['Ramal', 'Nível', 'Rede', 'Q derivado', 'N terminais', 'N espaços'], VC.dados.ramais.map(r => { const nTerm = VC.dados.terminais.filter(t => t.ramalRef === r.nome).length; const espacos = VC.calculo.espacosServidosPorRamal(r.nome); return [VC.utils.esc(r.nome), 'R' + (r.nivelNumero || 2), VC.utils.esc(r.rede), VC.utils.fmt(r.Q, 0), nTerm, espacos.length]; }));
+  // v11.1 (3.10): o Q derivado de um ramal inclui os sub-ramais, por isso as contagens também
+  // passam a incluí-los ("total"). "diretos" são os terminais ligados ao próprio ramal.
+  const filhos = {};
+  VC.dados.ramais.forEach(r => { if (r.parente) (filhos[r.parente] = filhos[r.parente] || []).push(r.nome); });
+  const subarvore = nome => { const out = [], pilha = [nome], vistos = new Set(); while (pilha.length) { const n = pilha.pop(); if (vistos.has(n)) continue; vistos.add(n); out.push(n); (filhos[n] || []).forEach(f => pilha.push(f)); } return out; };
+  h += R.tabela(['Ramal', 'Nível', 'Rede', 'Q derivado', 'Terminais (diretos / total)', 'Espaços (diretos / total)'], VC.dados.ramais.map(r => {
+    const nomes = new Set(subarvore(r.nome));
+    const nDir = VC.dados.terminais.filter(t => t.ramalRef === r.nome).length;
+    const nTot = VC.dados.terminais.filter(t => nomes.has(t.ramalRef)).length;
+    const eDir = VC.calculo.espacosServidosPorRamal(r.nome).length;
+    const eTot = new Set(VC.dados.terminais.filter(t => nomes.has(t.ramalRef)).reduce((a, t) => a.concat((t.espacos || []).map(e => e.nome)), [])).size;
+    return [VC.utils.esc(r.nome), VC.utils.nivelRotulo(r.nivelNumero || 2), VC.utils.esc(r.rede), VC.utils.fmt(r.Q, 0), nDir + ' / ' + nTot, eDir + ' / ' + eTot];
+  }));
   return h + R.rodape();
 };
 
@@ -197,7 +209,9 @@ R.arvore = function () {
 
 R.ventilador = function () {
   let h = R.cabecalho('Dimensionamento de Ventiladores', 'Q · Δp · SFPint · P motor');
-  h += R.tabela(['UTA', 'Rede', 'Q derivado', 'Δp externo', 'Δp interno', 'SFPint', 'P motor'], VC.dados.utas.map(u => [VC.utils.esc(u.nome), VC.utils.esc(u.rede), VC.utils.fmt(u.Q * 3600, 0) + ' m³/h', VC.utils.fmt(u.dpExt, 0) + ' Pa', VC.utils.fmt(u.dpInt, 0) + ' Pa', VC.utils.fmt(u.sfpInt, 0), VC.utils.fmt(u.P_motor, 0) + ' W']));
+  const tipos = VC.conhecimento.tabelas.SFP_TIPOS || {};
+  h += R.tabela(['UTA', 'Rede', 'Tipo (Ecodesign)', 'Q derivado', 'Δp externo', 'Δp interno', 'SFPint', 'Limite SFPint', 'P motor', 'Estado'], VC.dados.utas.map(u => { const c = u.sfpClass || {}; return [VC.utils.esc(u.nome), VC.utils.esc(u.rede), VC.utils.esc(tipos[c.tipo] || '—'), VC.utils.fmt(u.Q * 3600, 0) + ' m³/h', VC.utils.fmt(u.dpExt, 0) + ' Pa', VC.utils.fmt(u.dpInt, 0) + ' Pa', VC.utils.fmt(u.sfpInt, 0), c.limite != null ? c.limite + ' W/(m³/s)' : 'sem limite', VC.utils.fmt(u.P_motor, 0) + ' W', (u.status === 'OK' ? '<span class="badge ok">CONFORME</span>' : '<span class="badge erro">NÃO CONFORME</span>')]; }));
+  h += R.callout('Limites de SFPint do Reg. (UE) 1253/2014 (Ecodesign), requisitos desde 2018. UVB com recuperador: 1100 + E − 150·qnom (qnom < 2 m³/s) ou 800 + E (qnom ≥ 2 m³/s), com E = (η − 0,73)·3000 e filtros completos. UVU com filtro: 230. UVU sem filtro: sem limite. O tipo de cada UTA escolhe-se no editor de UTAs.', 'info');
   return h + R.rodape();
 };
 
@@ -286,7 +300,7 @@ R.pressoes = function () {
 };
 
 R.redeAr = function () {
-  let h = R.cabecalho('Diagrama de Rede de Ar', 'UTA → R1 → R2 → R3 → R4 → Espaços');
+  let h = R.cabecalho('Diagrama de Rede de Ar', 'UTA → N1 → N2 → N3 → N4 → Espaços (níveis dos ramais)');
   if (VC6.diagrama && VC6.diagrama.integrarRelatorio) {
     h += R.secao('1', 'Diagrama');
     h += '<div style="height:auto;max-height:720px">' + VC6.diagrama.renderSVG() + '</div>';

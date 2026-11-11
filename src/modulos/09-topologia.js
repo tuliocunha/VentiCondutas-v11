@@ -810,9 +810,9 @@ VC.topologia.gerarAutomatica = function (opcoes) {
   const total = cont.R1 + cont.R2 + cont.R3;
   const partes = [];
   partes.push(total + ' ramais');
-  partes.push(cont.R1 + ' R1');
-  if (cont.R2) partes.push(cont.R2 + ' R2');
-  if (cont.R3) partes.push(cont.R3 + ' R3');
+  partes.push(cont.R1 + ' N1');                       // v11.1: níveis N1–N3 (antes 'R1…R3')
+  if (cont.R2) partes.push(cont.R2 + ' N2');
+  if (cont.R3) partes.push(cont.R3 + ' N3');
   if (cont.ignorados) partes.push(cont.ignorados + ' ignorada(s)');
 
   let msg = 'Topologia gerada · ' + partes.join(' · ');

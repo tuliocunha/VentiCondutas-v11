@@ -218,7 +218,7 @@ VC.lentes = {
         const e = item.espaco;
         no.filhos.push({
           tipo: 'espaco',
-          id: 'ESP-' + e.id + '-' + r.id + '-' + (item.rede === 'extracao' ? 'E' : 'I'),
+          id: 'ESP-' + e.id + '-' + r.id + '-' + (item.rede === 'extracao' || item.rede === 'extracao_suja' ? 'E' : 'I'),
           nome: e.nome,
           rede: item.rede,
           dados: e,

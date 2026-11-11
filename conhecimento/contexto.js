@@ -124,7 +124,7 @@ VC._contexto.painelContexto = {
       { b: 'Componentes', t: '→ Filtros sujos + Baterias = Perda interna (Δp_int).' }
     ],
     formulas: [
-      { t: 'SFPint', e: 'SFPint = Δp_int / η_vent', d: 'Limite EN 16798-3: 1300 W/(m³/s)', u: 'W/(m³/s)' }
+      { t: 'SFPint', e: 'SFPint = Δp_int / η_vent', d: 'Limite Reg. (UE) 1253/2014 (Ecodesign), conforme o tipo de unidade e o caudal', u: 'W/(m³/s)' }
     ],
     legenda: ['Q', 'dP', 'P', 'sfp', 'eta', 'etaRec']
   },
@@ -140,10 +140,10 @@ VC._contexto.painelContexto = {
     legenda: ['Q', 'v', 'dP', 'D', 'zeta']
   },
   normativa: {
-    conceito: '<b>Verificação Normativa:</b> O sistema verifica automaticamente a conformidade do projeto com os limites legais e de referência, como os caudais mínimos da Portaria 138-I/2021 e o SFPint da EN 16798-3.',
+    conceito: '<b>Verificação Normativa:</b> O sistema verifica automaticamente a conformidade do projeto com os limites legais e de referência, como os caudais mínimos da Portaria 138-I/2021 e o SFPint do Reg. (UE) 1253/2014 (Ecodesign).',
     uso: [
       { b: 'Caudais Mínimos', t: '→ Verifica se Q_normas > 0 para espaços G1/G3.' },
-      { b: 'SFPint', t: '→ Compara o SFPint com o limite de 1300 W/(m³/s).' }
+      { b: 'SFPint', t: '→ Compara o SFPint de cada UTA com o limite Ecodesign do seu tipo (UVB com recuperador, UVU com ou sem filtro).' }
     ],
     formulas: [],
     legenda: ['Q', 'sfp', 'v', 'ACH']

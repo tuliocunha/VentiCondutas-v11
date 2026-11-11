@@ -115,6 +115,13 @@ VC.utils = {
     if (subIndice != null) return 'R' + n + '.' + i + '.' + subIndice;
     return 'R' + n + '.' + i;
   },
+  /* v11.1: rótulo do NÍVEL do ramal (N1–N4). Não usar 'R1…R4': nos nomes dos ramais
+     (R1.1, R2.1…) o primeiro número é a REDE/UTA, o que tornava 'R1' ambíguo. */
+  nivelRotulo(n, longo) {
+    n = Number(n) || 2;
+    const nomes = { 1: 'Principal', 2: 'Secundário', 3: 'Terciário', 4: 'Terminal' };
+    return 'N' + n + (longo ? ' · ' + (nomes[n] || '') : '');
+  },
   nivelTextoParaNumero(nivel) {
     const mapa = { 'primario': 1, 'secundario': 2, 'terciario': 3, 'quaternario': 4, 'r1': 1, 'r2': 2, 'r3': 3, 'r4': 4 };
     return mapa[String(nivel || '').toLowerCase()] || 2;
@@ -572,7 +579,9 @@ VC.perf.ordenacaoTopologica = (function () {
     ordenar() {
       const ramais = VC.dados && VC.dados.ramais || [];
       const k = ramais.map(r => r.nome + '|' + (r.parente || '')).join('#');
-      if (k === chave && cacheR) return cacheR;
+      // v11.1: a cache guarda só a ORDEM dos nomes e devolve sempre os objetos atuais
+      // (antes devolvia objetos de uma lista de ramais entretanto substituída).
+      if (k === chave && cacheR) { const atual = {}; ramais.forEach(r => { atual[r.nome] = r; }); return cacheR.map(n => atual[n]).filter(Boolean); }
       const byName = {};
       ramais.forEach(r => { byName[r.nome] = r; });
       const profundidade = (nome, guard) => {
@@ -582,9 +591,10 @@ VC.perf.ordenacaoTopologica = (function () {
         if (!r || !r.parente || !byName[r.parente]) return 0;
         return 1 + profundidade(r.parente, guard + 1);
       };
-      cacheR = ramais.slice().sort((a, b) => profundidade(b.nome) - profundidade(a.nome));
+      const ordenados = ramais.slice().sort((a, b) => profundidade(b.nome) - profundidade(a.nome));
+      cacheR = ordenados.map(r => r.nome);
       chave = k;
-      return cacheR;
+      return ordenados;
     },
     invalidar() { chave = null; cacheR = null; }
   };
@@ -697,7 +707,7 @@ VC.estado._hashEstado = function () {
   partes.push('R' + ramais.length);
   partes.push(ramais.map(r =>
     r.id + '|' + r.nome + '|' + (r.parente || '') + '|' + (r.L || 0) + '|' + (r.zeta || 0) +
-    '|' + (r.utaRef || '') + '|' + ((r.lock && r.lock.D) ? '1' : '0')
+    '|' + (r.utaRef || '') + '|' + ((r.lock && r.lock.D) ? '1' : '0') + '|' + ((r.geometriaInput && r.geometriaInput.forma) || 'circular')   // v11.1: forma da secção
   ).join('#'));
   const terminais = (VC.dados && VC.dados.terminais) || [];
   partes.push('Tm' + terminais.length);
@@ -712,7 +722,8 @@ VC.estado._hashEstado = function () {
   partes.push('U' + utas.length);
   partes.push(utas.map(u =>
     u.id + '|' + u.rede + '|' + (u.eta || 0) + '|' + (u.etaRec || 0) + '|' + (u.fs || 0) +
-    '|' + (u.transmissao || 1) + '|' + (u.ativo === false ? '0' : '1') + '|' + (u.curvaFabricante ? (u.curvaFabricante.fabricante + '/' + u.curvaFabricante.modelo) : '')
+    '|' + (u.transmissao || 1) + '|' + (u.ativo === false ? '0' : '1') + '|' + (u.curvaFabricante ? (u.curvaFabricante.fabricante + '/' + u.curvaFabricante.modelo) : '') +
+    '|' + (u.tipoUV || '') + '|' + (u.recuperadorAtivo === false ? '0' : '1')   // v11.1: tipo Ecodesign
   ).join('#'));
   partes.push((VC.flags && VC.flags.confortoTermico !== false) ? '1' : '0');
   partes.push((VC.flags && VC.flags.qaiProjeto !== false) ? '1' : '0');
@@ -763,6 +774,9 @@ VC.estado.set = function (caminho, valor) {
 };
 
 VC.constantes = {
+  // v11.1: velocidade máxima por nível do ramal (m/s): N1 principal · N2 secundário · N3 terciário · N4 terminal.
+  // Usada no dimensionamento e na auditoria (antes: 6 m/s fixo só na auditoria).
+  VMAX_NIVEL: { 1: 6.0, 2: 5.0, 3: 4.0, 4: 3.0 },
   COMM_S1: [63, 80, 100, 125, 160, 200, 250, 315, 355, 400, 450, 500, 560, 630, 710, 800, 900, 1000, 1120, 1250, 1400, 1600, 1800, 2000],
   COMM_S2: [100, 125, 160, 200, 250, 315, 400, 500, 630, 800, 1000, 1250, 1600, 2000],
   W1505: [100, 150, 200, 250, 300, 400, 500, 600, 700, 800, 900, 1000, 1200, 1400, 1600, 1800, 2000],
@@ -843,26 +857,54 @@ VC.normas = {
     if (d.g === 1) { if (rp === 7) rp = brp; if (ra === 0.7) ra = bra; }
     return { g: d.g, gn: d.gn, rp, ra, t11: d.t11, t12: d.t12, ach: d.ach, desc: d.desc };
   },
+  // v11.1: limites do Reg. (UE) 1253/2014 (Ecodesign) por tipo de unidade de ventilação.
+  // qnom em m³/s; etaRec = eficiência térmica do recuperador (0–1).
+  // classe 1–3 = ≤ 50 % / ≤ 75 % / ≤ 100 % do limite (escala interna da app); 4 = acima do limite.
   classificarSFP(uvType, sfpInt, qnom, etaRec) {
     const lim = VC.conhecimento.tabelas.SFPint;
-    let limite = uvType === 'UVU_FILTER' ? lim.UVU_FILTER :
-                 (uvType === 'BVU_HRS' ? lim.BVU_HRS : lim.DEFAULT);
-    let classe = 4;
-    if (sfpInt <= limite * 0.5) classe = 1;
-    else if (sfpInt <= limite * 0.75) classe = 2;
-    else if (sfpInt <= limite) classe = 3;
-    const QnomNum = Number(qnom) || 0;
-    const qnomMenor2 = QnomNum <= 0 || QnomNum < 2;
+    const tipo = (VC.conhecimento.tabelas.SFP_TIPOS || {})[uvType] ? uvType : 'BVU_HRS';
+    const QnomNum = Math.max(0, Number(qnom) || 0);
+    const eta = Number(etaRec) || 0;
+    const ref = 'Reg. (UE) 1253/2014 (Ecodesign)';
+    let limite = null, nota, bonusE = 0, etaOK = true;
+    if (tipo === 'UVU_FILTER') {
+      limite = lim.UVU_FILTER;
+      nota = ref + ': UVU com filtro, limite fixo.';
+    } else if (tipo === 'UVU_SEM_FILTER') {
+      nota = ref + ': UVU sem filtro não tem limite de SFPint (só requisitos do ventilador).';
+    } else {
+      bonusE = eta > lim.BVU_ETA_REF ? (eta - lim.BVU_ETA_REF) * 3000 : 0;
+      limite = QnomNum < 2 ? lim.BVU_BASE_PEQ + bonusE - 300 * QnomNum / 2 : lim.BVU_BASE + bonusE;
+      etaOK = eta >= lim.BVU_ETA_MIN;
+      nota = ref + ': UVB com recuperador, qnom ' + QnomNum.toFixed(2) + ' m³/s, bónus E ' + Math.round(bonusE) + ', filtros completos (F = 0).'
+        + (etaOK ? '' : ' η recuperador ' + Math.round(eta * 100) + ' % < ' + Math.round(lim.BVU_ETA_MIN * 100) + ' % exigido.');
+    }
+    let classe = null;
+    if (limite != null) {
+      limite = Math.round(limite);
+      classe = 4;
+      if (sfpInt <= limite * 0.5) classe = 1;
+      else if (sfpInt <= limite * 0.75) classe = 2;
+      else if (sfpInt <= limite) classe = 3;
+    }
     return {
-      classe, sfpInt, limite,
+      tipo, classe, sfpInt, limite,
       limiteBase: limite,
       qnom: QnomNum,
-      conservador: qnomMenor2,
-      nota: qnomMenor2
-        ? 'Limite EN 16798-3 aplicado é o conservador (fixo). Para Qnom < 2 m³/s ou desconhecido, ver Annex E.'
-        : 'Limite EN 16798-3 (fixo) — adequado para Qnom ≥ 2 m³/s.',
-      conforme: classe <= 3
+      bonusE: Math.round(bonusE),
+      etaOK,
+      conservador: false,
+      nota,
+      conforme: (classe == null || classe <= 3) && etaOK
     };
+  },
+  // Tipo Ecodesign por omissão de uma UTA, quando o utilizador não o escolheu.
+  tipoUVPadrao(u) {
+    if (!u) return 'BVU_HRS';
+    if (u.tipoUV && (VC.conhecimento.tabelas.SFP_TIPOS || {})[u.tipoUV]) return u.tipoUV;
+    if (u.rede === 'extracao_suja') return 'UVU_SEM_FILTER';
+    if (u.recuperadorAtivo !== false) return 'BVU_HRS';
+    return (u.componentes || []).some(c => /filtro/i.test(c.tipo || '')) ? 'UVU_FILTER' : 'UVU_SEM_FILTER';
   },
   dl101D(potenciaW) {
     const P = Math.max(0, Number(potenciaW) || 0);

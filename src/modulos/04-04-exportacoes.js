@@ -215,7 +215,7 @@ VC.exportacoes.pdf = function () {
     addPagina(true); y = 22;
     titulo('1 · Resumo executivo', 'KPIs principais e estado global');
     kpiLinha([{ l: 'Insuflação', v: VC.utils.fmt(x.ins, 0), u: 'm³/h' }, { l: 'Extração', v: VC.utils.fmt(x.ext, 0), u: 'm³/h' }, { l: 'Balanço', v: (x.bal >= 0 ? '+' : '') + VC.utils.fmt(x.bal, 0), u: 'm³/h' }, { l: 'Perda crítica', v: VC.utils.fmt(x.maxPerda, 0), u: 'Pa' }]);
-    kpiLinha([{ l: 'SFPint', v: VC.utils.fmt(x.sfpInt, 0), u: 'W/(m³/s)' }, { l: 'Classe SFP', v: 'Cl. ' + x.sfpClass.classe, u: '' }, { l: 'Potência', v: VC.utils.fmt(x.power, 0), u: 'W' }, { l: 'Estado', v: x.overall, u: '' }]);
+    kpiLinha([{ l: 'SFPint', v: VC.utils.fmt(x.sfpInt, 0), u: 'W/(m³/s)' }, { l: 'Classe SFP', v: (x.sfpClass && x.sfpClass.classe != null) ? 'Cl. ' + x.sfpClass.classe : '—', u: '' }, { l: 'Potência', v: VC.utils.fmt(x.power, 0), u: 'W' }, { l: 'Estado', v: x.overall, u: '' }]);
     graficoBarras('Q por rede (m³/h)', [{ nome: 'Insuflação', valor: x.ins, cor: COR_PRIM }, { nome: 'Extração', valor: x.ext, cor: COR_VERDE }], 'm³/h', W - 2 * M, 20);
 
     /* 2 · F-RPH */
@@ -281,12 +281,12 @@ VC.exportacoes.pdf = function () {
     titulo('7 · Rede de condutas', 'Q derivado · secções · velocidades · perdas');
     graficoBarras('Δp total por ramal (Pa)', x.ramais.slice(0, 15).map(r => ({ nome: r.nome, valor: r.deltaPtotal || 0, cor: (r.deltaPtotal > 300 ? COR_CORAL : (r.deltaPtotal > 200 ? COR_AMBAR : COR_VERDE)) })), 'Pa', W - 2 * M, 80);
     subtitulo('Detalhe dos ramais');
-    tabelaManual(['Ramal', 'Nível', 'Rede', 'Q', 'Ø', 'v', 'Δp'], x.ramais.map(r => [r.nome, 'R' + (r.nivelNumero || 2), r.rede, VC.utils.fmt(r.Q, 0), r.Dcom || '—', VC.utils.fmt(r.v, 2), VC.utils.fmt(r.deltaPtotal, 1)]), [3, 1, 1, 1, 0.9, 0.9, 1]);
+    tabelaManual(['Ramal', 'Nível', 'Rede', 'Q', 'Ø', 'v', 'Δp troço', 'Δp acum.', 'Δp crít.'], x.ramais.map(r => [r.nome, VC.utils.nivelRotulo(r.nivelNumero || 2), r.rede, VC.utils.fmt(r.Q, 0), r.Dcom || '—', VC.utils.fmt(r.v, 2), VC.utils.fmt(r.deltaPTroco, 1), VC.utils.fmt(r.deltaPtotal, 1), VC.utils.fmt(r.deltaPCritico, 1)]), [2.6, 0.9, 1, 0.9, 0.8, 0.8, 0.9, 0.9, 0.9]);
 
     /* 8 · UTAS */
     addPagina(true); y = 22;
     titulo('8 · UTAs e ventiladores', 'Q · Δp · SFPint · P motor');
-    tabelaManual(['UTA', 'Rede', 'Q (m³/h)', 'Δp ext (Pa)', 'Δp int (Pa)', 'SFPint', 'P motor (W)', 'Estado'], VC.dados.utas.map(u => [u.nome, u.rede, VC.utils.fmt(u.Q * 3600, 0), VC.utils.fmt(u.dpExt, 0), VC.utils.fmt(u.dpInt, 0), VC.utils.fmt(u.sfpInt, 0), VC.utils.fmt(u.P_motor, 0), u.status]), [3, 1.2, 1.4, 1.2, 1.2, 1, 1.3, 1]);
+    tabelaManual(['UTA', 'Rede', 'Q (m³/h)', 'Δp ext (Pa)', 'Δp int (Pa)', 'SFPint', 'Limite', 'P motor (W)', 'Estado'], VC.dados.utas.map(u => [u.nome, u.rede, VC.utils.fmt(u.Q * 3600, 0), VC.utils.fmt(u.dpExt, 0), VC.utils.fmt(u.dpInt, 0), VC.utils.fmt(u.sfpInt, 0), (u.sfpClass && u.sfpClass.limite != null) ? String(u.sfpClass.limite) : '—', VC.utils.fmt(u.P_motor, 0), u.status]), [3, 1.2, 1.3, 1.1, 1.1, 1, 1, 1.2, 1]);
 
     /* 9 · NORMATIVA */
     addPagina(true); y = 22;

@@ -169,7 +169,7 @@ function chamadasNoCodigo() {
           cliques++; await page.waitForTimeout(100);
           if (erros.length > antes) comErro[`J${j}/${l}${ps ? '/' + (ps.match(/'(.+)'/) || [])[1] : ''} · ${a.slice(0, 90)}`] = [...new Set(erros.slice(antes))];
           await page.keyboard.press('Escape').catch(() => {});
-          await page.evaluate(() => { try { VC.ui.fecharModal && VC.ui.fecharModal(); } catch (e) {} });
+          await page.evaluate(() => { try { VC.ui.fecharModal && VC.ui.fecharModal(); } catch { /* sem modal aberto */ } });
           await ir(j, l, ps);
         }
       }

@@ -38,7 +38,7 @@ VC.editorUtas = {
     var h = '<div class="cartao-titulo"><i class="fa-solid fa-fan"></i> Dimensionamento de UTAs</div>';
     h += '<p style="font-size:11.5px;color:var(--texto-med);margin-bottom:10px">'
       + 'Cada UTA agrupa o ventilador + componentes (filtros, baterias, recuperador). '
-      + 'O Q \u00e9 a soma dos caudais dos ramais que serve. O SFPint deve ser &le; 1300 W/(m\u00b3/s).</p>';
+      + 'O Q \u00e9 a soma dos caudais dos ramais que serve. O SFPint de cada UTA \u00e9 comparado com o limite do Reg. (UE) 1253/2014 (Ecodesign) para o seu tipo de unidade.</p>';
 
     h += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px">';
     h += '<div style="background:var(--superf2);border:1px solid var(--borda);border-left:3px solid var(--primario);border-radius:5px;padding:8px 10px"><div style="font-size:9.5px;font-weight:800;color:var(--texto-suave);text-transform:uppercase">UTAs</div><div style="font-size:16px;font-weight:900;color:var(--texto);margin-top:3px">' + utas.length + '</div></div>';
@@ -75,7 +75,7 @@ VC.editorUtas = {
       h += '<span>Q <b>' + VC.utils.fmt((u.Q || 0) * 3600, 0) + '</b> m\u00b3/h</span>';
       h += '<span>\u0394p ext <b>' + VC.utils.fmt(u.dpExt, 0) + '</b> Pa</span>';
       h += '<span>\u0394p int <b>' + VC.utils.fmt(u.dpInt, 0) + '</b> Pa</span>';
-      h += '<span>SFPint <b>' + VC.utils.fmt(u.sfpInt, 0) + '</b></span>';
+      h += '<span>SFPint <b>' + VC.utils.fmt(u.sfpInt, 0) + '</b>' + (u.sfpClass ? ' / ' + (u.sfpClass.limite != null ? u.sfpClass.limite : 'sem limite') : '') + '</span>';
       h += '<span>P <b>' + VC.utils.fmt(u.P_motor, 0) + '</b> W</span>';
       h += '</div>';
 
@@ -93,6 +93,8 @@ VC.editorUtas = {
         h += self._campo('Transmiss\u00e3o', u.transmissao || 1, 'number', 'VC.editorUtas.editar(\'' + u.id + '\', \'transmissao\', Number(this.value))');
         h += self._campo('Ativo', u.ativo ? 'sim' : 'n\u00e3o', 'text', '');
         h += '</div>';
+        h += self._selectTipoUV(u);
+        if (u.sfpClass && u.sfpClass.nota) h += '<div style="font-size:10.5px;color:var(--texto-suave);margin:-4px 0 10px">' + VC.utils.esc(u.sfpClass.nota) + '</div>';
 
         h += '<div style="margin-bottom:10px"><div style="font-size:10.5px;font-weight:800;color:var(--texto-med);text-transform:uppercase;margin-bottom:4px">Curva do ventilador</div>';
         var cf = u.curvaFabricante || {};
@@ -135,6 +137,15 @@ VC.editorUtas = {
     });
 
     return h;
+  },
+
+  _selectTipoUV: function (u) {
+    var tipos = VC.conhecimento.tabelas.SFP_TIPOS || {};
+    var atual = VC.normas.tipoUVPadrao(u);
+    var h = '<div style="margin-bottom:10px"><label style="display:block;font-size:10px;font-weight:800;color:var(--texto-suave);text-transform:uppercase;margin-bottom:3px">Tipo de unidade (Ecodesign)</label>';
+    h += '<select class="input" style="width:100%" onchange="VC.editorUtas.editar(\'' + u.id + '\', \'tipoUV\', this.value)">';
+    Object.keys(tipos).forEach(function (k) { h += '<option value="' + k + '"' + (k === atual ? ' selected' : '') + '>' + VC.utils.esc(tipos[k]) + '</option>'; });
+    return h + '</select></div>';
   },
 
   _campo: function (label, valor, tipo, onchange) {

@@ -43,8 +43,8 @@ VC.calculo = {
   dimensionarConduta(Qmh, opts) {
     opts = opts || {};
     const Q = VC.utils.num(Qmh) / 3600;
-    const Vmax = 6, Ralvo = 1;
-    const eps = (VC.utils.num(VC.dados.params.rugosidade) || 0.15) / 1000;
+    const Vmax = Number(opts.vMax) || 6, Ralvo = 1;
+    const eps = opts.eps || (VC.utils.num(VC.dados.params.rugosidade) || 0.15) / 1000;
     const rho = opts.rho || 1.2;
     const nu = opts.nu || 1.5e-5;
     const metodo = (VC.dados.metodoCalculo && VC.dados.metodoCalculo.metodo) || 'loss';
@@ -66,9 +66,16 @@ VC.calculo = {
     } else {
       ideal = evalD(Math.max(Math.sqrt(4 * Q / (Math.PI * Vmax)), 0.03));
     }
-    const Dc = this.diametroComercial(ideal.D * 1000);
-    const final = evalD(Dc / 1000);
-    return Object.assign({}, final, { Qmh, idealD: ideal.D * 1000, Dc, metodo });
+    let Dc = this.diametroComercial(ideal.D * 1000);
+    let final = evalD(Dc / 1000);
+    // v11.1: o método 'perda constante' não limitava a velocidade (Q ≥ 10 000 m³/h → 7–9 m/s, que a
+    // própria auditoria marcava como ERRO). Sobe na série comercial até v ≤ vMax do nível.
+    for (let i = 0; i < 40 && Q && final.v > Vmax; i++) {
+      const prox = this.diametroComercial(Dc + 1);
+      if (prox <= Dc) break;
+      Dc = prox; final = evalD(Dc / 1000);
+    }
+    return Object.assign({}, final, { Qmh, idealD: ideal.D * 1000, Dc, metodo, vMax: Vmax });
   },
 
   retangular(hmax, ratioMin, vMax, Qmh) {
@@ -383,28 +390,54 @@ VC.calculo = {
       if (!t.ramalRef) return;
       const r = byName[t.ramalRef];
       if (!r) return;
-      r.deltaP_terminal += Number(t.dPCalc) || 0;
+      // v11.1: terminais do mesmo ramal estão em paralelo → conta o mais desfavorável, não a soma
+      r.deltaP_terminal = Math.max(r.deltaP_terminal, Number(t.dPCalc) || 0);
     });
   },
 
   calcularCondutas(rho, nu) {
     VC.dados.ramais.forEach(r => {
       const Qef = Number(r.Q) || 0;
+      const eps = this.rugosidadeDe(r) / 1000;     // v11.1: uma só fonte de rugosidade (3.7)
+      const vMax = this.vMaxDe(r);                 // v11.1: limite por nível (3.5)
+      const hMax = this.hMaxDe(r);
+      r.vMax = vMax; r.avisoSecao = '';
       if (r.lock && r.lock.D && r.Dcom) {
         const D = r.Dcom / 1000;
         const A = Math.PI * D * D / 4;
         const v = A > 0 ? Qef / 3600 / A : 0;
         const Re = v > 0 ? v * D / nu : 0;
-        const eps = (Number(r.geometriaInput && r.geometriaInput.rugosidade) || 0.15) / 1000;
         r.v = v; r.Re = Re;
         r.f = VC.fisica.fatorAtrito(Re, eps / D);
         r.R = D > 0 ? r.f / D * (0.5 * rho * v * v) : 0;
       } else {
-        const z = this.dimensionarConduta(Qef, { rho, nu });
+        const z = this.dimensionarConduta(Qef, { rho, nu, vMax, eps });
         r.v = z.v; r.Re = z.Re; r.f = z.f; r.R = z.R; r.Dcom = z.Dc;
       }
-      const rect = this.retangular(VC.dados.restricaoH || 250, 0.5, r.v, Qef);
-      r.secaoCalc = rect ? rect.b + '×' + rect.h : (r.Dcom ? 'Ø' + r.Dcom : '');
+      // v11.1 (3.6): a forma da secção é escolha do utilizador (geometriaInput.forma).
+      // A app calcula a secção escolhida e só AVISA quando não cabe na altura disponível.
+      const rect = this.retangular(hMax, 0.5, vMax, Qef);
+      r.secaoAdotada = this.formaDe(r);
+      if (r.secaoAdotada === 'retangular') {
+        if (rect) {
+          const a = rect.b / 1000, b = rect.h / 1000;
+          const De = 1.30 * Math.pow(a * b, 0.625) / Math.pow(a + b, 0.25);      // diâmetro equivalente (Huebscher)
+          const vDe = Qef / 3600 / (Math.PI * De * De / 4);
+          r.v = Qef / 3600 / (a * b);                                             // velocidade real na secção
+          r.Re = vDe * De / nu;
+          r.f = VC.fisica.fatorAtrito(r.Re, eps / De);
+          r.R = De > 0 ? r.f / De * (0.5 * rho * vDe * vDe) : 0;
+          r.De = Math.round(De * 1000);
+          r.secaoCalc = rect.b + '×' + rect.h;
+        } else {
+          r.secaoCalc = r.Dcom ? 'Ø' + r.Dcom : '';
+          r.avisoSecao = 'Sem secção retangular com h ≤ ' + hMax + ' mm e v ≤ ' + vMax + ' m/s — calculado como circular Ø' + r.Dcom;
+        }
+      } else {
+        r.secaoCalc = r.Dcom ? 'Ø' + r.Dcom : '';
+        r.De = r.Dcom;
+        if (r.Dcom && r.Dcom > hMax) r.avisoSecao = 'Ø' + r.Dcom + ' mm não cabe na altura disponível (' + hMax + ' mm)' + (rect ? ' — sugestão retangular ' + rect.b + '×' + rect.h : '');
+      }
       r.deltaPlin = (Number(r.R) || 0) * (Number(r.L) || 0);
       r.deltaPsing = (Number(r.zeta) || 0) * 0.5 * rho * (Number(r.v) || 0) * (Number(r.v) || 0);
       r.deltaPTroco = r.deltaPlin + r.deltaPsing;
@@ -427,11 +460,40 @@ VC.calculo = {
         + (Number(r.deltaP_registo) || 0));
       r.status = r.deltaPtotal < 200 ? 'OK' : r.deltaPtotal < 300 ? 'ATENÇÃO' : 'NÃO CONF.';
     });
+    // v11.1: Δp crítico a jusante = maior deltaPtotal na sub-árvore do ramal (incluindo o próprio).
+    // É o valor que o ventilador tem de vencer a partir deste ramal; nunca é menor no pai do que num filho.
+    // (deltaPtotal é a perda ACUMULADA desde a UTA e por isso cresce para jusante.)
+    VC.dados.ramais.forEach(r => { r.deltaPCritico = r.deltaPtotal || 0; });
+    const ordem = VC.dados.ramais.slice().sort((a, b) => this._profundidade(b, byName) - this._profundidade(a, byName));
+    ordem.forEach(r => { const pai = byName[r.parente]; if (pai && pai !== r) pai.deltaPCritico = Math.max(pai.deltaPCritico || 0, r.deltaPCritico || 0); });
+  },
+
+  /* v11.1: parâmetros de cada ramal (forma, rugosidade, altura disponível, velocidade máxima) */
+  formaDe(r) { return (r && r.geometriaInput && r.geometriaInput.forma === 'retangular') ? 'retangular' : 'circular'; },
+  rugosidadeDe(r) {
+    const g = r && r.geometriaInput && Number(r.geometriaInput.rugosidade);
+    return g > 0 ? g : (VC.utils.num(VC.dados.params && VC.dados.params.rugosidade) || 0.15);
+  },
+  hMaxDe(r) {
+    const g = r && r.geometriaInput && Number(r.geometriaInput.H_max);
+    return g > 0 ? g : (Number(VC.dados.restricaoH) || 250);
+  },
+  vMaxDe(r) {
+    const n = (r && (r.nivelNumero || VC.utils.nivelTextoParaNumero(r.nivel))) || 2;
+    const t = (VC.constantes && VC.constantes.VMAX_NIVEL) || {};
+    return Number(t[n]) || 6;
+  },
+
+  _profundidade(r, byName) {
+    let d = 0, p = r.parente, guard = 0;
+    while (p && byName[p] && guard++ < 100) { d++; p = byName[p].parente; }
+    return d;
   },
 
   calcularVentiladores() {
     const rho = VC.fisica.rho(VC.dados.params.temperatura, VC.dados.params.humidade, VC.dados.params.altitude);
-    const isExt = t => /(extra|retorno|exaust)/i.test((t.tipo || '') + ' ' + (t.nome || '')) || t.rede === 'extracao' || t.rede === 'extracao_suja';
+    // v11.1: a rede decide (como no resto da app). O nome/tipo do terminal já não conta.
+    const isExt = t => t.rede === 'extracao' || t.rede === 'extracao_suja';
     const ins = VC.dados.terminais.filter(t => !isExt(t)).reduce((s, t) => s + (Number(t.Q) || 0), 0);
     const ext = VC.dados.terminais.filter(isExt).reduce((s, t) => s + (Number(t.Q) || 0), 0);
     const porRede = { insuflacao: null, extracao: null };
@@ -462,8 +524,8 @@ VC.calculo = {
       const P_motor = P_eixo * fs / Math.max(trans, 0.01);
       uta.Q = Qms; uta.dpInt = dpInt; uta.dpExt = dpExt;
       uta.sfpInt = sfpInt; uta.P_motor = P_motor;
-      uta.sfpClass = VC.normas.classificarSFP('BVU_HRS', sfpInt, Qms, uta.etaRec);
-      uta.status = sfpInt <= 1300 ? 'OK' : 'NÃO CONF.';
+      uta.sfpClass = VC.normas.classificarSFP(VC.normas.tipoUVPadrao(uta), sfpInt, Qms, uta.etaRec);
+      uta.status = uta.sfpClass.conforme ? 'OK' : 'NÃO CONF.';
       if (uta.curva && uta.curva.length >= 2 && VC.uta && VC.uta.calcularPontoFuncionamento) uta.pontoFunc = VC.uta.calcularPontoFuncionamento(uta.rede);
       const chaveRede = (uta.rede === 'insuflacao') ? 'insuflacao' : 'extracao';
       const atual = porRede[chaveRede];
@@ -479,6 +541,7 @@ VC.calculo = {
       const props = VC.perf.cacheFisica.rhoNu();
       const rho = props.rho;
       const nu = props.nu;
+      this._normalizarReferencias();
 
       if (VC.flags && VC.flags.confortoTermico !== false && VC.rph && VC.rph.aplicarATodos) {
         VC.rph.aplicarATodos();
@@ -546,7 +609,16 @@ VC.calculo = {
 
       VC.dados.ramais.forEach(r => {
         if (r.Re >= 2300 && r.Re < 4000) findings.push({ severidade: 'ATENÇÃO', tipo: 'Reynolds crítico', elemento: r.nome, msg: 'Re=' + VC.utils.fmt(r.Re, 0) });
-        if (r.v > 6) findings.push({ severidade: 'ERRO', tipo: 'Velocidade excessiva', elemento: r.nome, msg: 'v=' + VC.utils.fmt(r.v, 2) + ' m/s' });
+        const vMax = this.vMaxDe(r);   // v11.1: mesmo limite por nível que o dimensionamento
+        if (r.v > vMax + 1e-6) findings.push({ severidade: 'ERRO', tipo: 'Velocidade excessiva', elemento: r.nome, msg: 'v=' + VC.utils.fmt(r.v, 2) + ' m/s > ' + vMax + ' m/s (' + VC.utils.nivelRotulo(r.nivelNumero, true) + ')' });
+        if (r.avisoSecao) findings.push({ severidade: 'ATENÇÃO', tipo: 'Secção da conduta', elemento: r.nome, msg: r.avisoSecao });
+      });
+
+      // v11.1: um 'parente' que não corresponde a nenhum ramal faz o filho ser ignorado em silêncio
+      // (o pai perde o caudal e a perda desse filho). Assinalar sempre.
+      const nomesRamais = new Set(VC.dados.ramais.map(r => r.nome));
+      VC.dados.ramais.forEach(r => {
+        if (r.parente && !nomesRamais.has(r.parente)) findings.push({ severidade: 'ERRO', tipo: 'Ramal órfão', elemento: r.nome, msg: 'Pai "' + r.parente + '" não existe — caudal e Δp deste ramal não são somados ao pai' });
       });
 
       const totalPower = VC.dados.utas.reduce((s, u) => s + (Number(u.P_motor) || 0), 0);
@@ -574,7 +646,12 @@ VC.calculo = {
       const max = Math.max.apply(null, [0].concat(VC.dados.ramais.map(r => r.deltaPtotal || 0)));
       const critical = VC.dados.ramais.reduce((a, b) => (b.deltaPtotal || 0) > ((a && a.deltaPtotal) || 0) ? b : a, null);
       const sfpIntGlobal = VC.dados.utas.length > 0 ? Math.max.apply(null, VC.dados.utas.map(u => u.sfpInt || 0)) : 0;
-      const sfpClassGlobal = VC.normas.classificarSFP('BVU_HRS', sfpIntGlobal, 0, 0.75);
+      // v11.1: o resultado global é o da UTA mais desfavorável (maior SFPint face ao seu limite).
+      const _rel = u => (u.sfpClass && u.sfpClass.limite) ? (u.sfpInt || 0) / u.sfpClass.limite : (u.sfpClass && u.sfpClass.conforme === false ? Infinity : -1);
+      const _pior = VC.dados.utas.filter(u => u.ativo !== false && u.sfpClass).reduce((a, u) => (!a || _rel(u) > _rel(a)) ? u : a, null);
+      const sfpClassGlobal = _pior
+        ? Object.assign({}, _pior.sfpClass, { uta: _pior.nome, conforme: VC.dados.utas.every(u => u.ativo === false || !u.sfpClass || u.sfpClass.conforme) })
+        : VC.normas.classificarSFP('BVU_HRS', sfpIntGlobal, 0, 0.75);
 
       const resultado = {
         rho, nu,
@@ -597,6 +674,15 @@ VC.calculo = {
   },
 
   calcularParcial() { return this.calcularTudo(); },
+
+  /* v11.1: as ligações entre ramais, terminais e espaços são feitas pelo NOME. Um espaço a mais
+     (ex.: 'R1.1 ' importado de outro programa) quebrava a ligação sem aviso. */
+  _normalizarReferencias() {
+    const limpa = v => (typeof v === 'string' ? v.trim() : v);
+    (VC.dados.ramais || []).forEach(r => { r.nome = limpa(r.nome); r.parente = limpa(r.parente); });
+    (VC.dados.terminais || []).forEach(t => { t.ramalRef = limpa(t.ramalRef); });
+    (VC.dados.espacos || []).forEach(e => { e.ramalRefInsuflacao = limpa(e.ramalRefInsuflacao); e.ramalRefExtracao = limpa(e.ramalRefExtracao); });
+  },
 
   terminaisQueServem(nomeEspaco) {
     if (!nomeEspaco) return [];
@@ -626,10 +712,15 @@ VC.calculo = {
     const esp = (VC.dados.espacos || []).find(e => e.nome === nomeEspaco);
     if (!esp) return { Q_nec: 0, Q_servido: 0, delta: 0, estado: 'NAO_EXISTE', nTerminais: 0 };
     const c = this.calcularQEspaco(esp);
-    const Q_nec = c.Q_espaco;
     // v11.1: compara a necessidade com os terminais da rede que a satisfaz
     // (G4 → extração; restantes → insuflação/renovação)
     const rede = c.tipoCaudal === 'EXTRACAO' ? 'extracao' : 'insuflacao';
+    // v11.1 (3.10): o ar que o espaço transfere para outros (ex.: compensação de sanitários)
+    // também tem de ser insuflado nele.
+    const Q_transf_out = rede === 'insuflacao'
+      ? (VC.dados.transferencias || []).filter(t => t.deId === esp.id).reduce((s, t) => s + (Number(t.Q) || 0), 0)
+      : 0;
+    const Q_nec = c.Q_espaco + Q_transf_out;
     const Q_servido = this.QservidoAoEspaco(nomeEspaco, rede);
     const nTerminais = this.terminaisQueServem(nomeEspaco).filter(t => this._redeBase(t) === rede).length;
     const delta = Q_servido - Q_nec;
@@ -642,7 +733,7 @@ VC.calculo = {
       else if (ratio > 1.20) estado = 'SOBRE';
       else estado = 'OK';
     }
-    return { Q_nec, Q_servido, delta, estado, nTerminais, rede, g: c.g, isento: c.isento };
+    return { Q_nec, Q_servido, delta, estado, nTerminais, rede, g: c.g, isento: c.isento, Q_transf_out };
   },
 
   espacosServidosPorRamal(ramalNome) {
@@ -856,6 +947,7 @@ VC.uta = {
       transmissao: 1.0,
       classeIE: 'IE3',
       recuperadorAtivo: true,
+      tipoUV: rede === 'extracao_suja' ? 'UVU_SEM_FILTER' : 'BVU_HRS',
       ativo: true,
       Q: 0,
       dpInt: 0,
@@ -991,8 +1083,6 @@ VC.locks = {
 VC.optimizar = {
   MAX_ITER: 10,
   R_ALVO: 1.0,
-  V_MAX_INSUFL: 6.0,
-  V_MAX_EXTRACAO: 5.0,
   TOLERANCIA_EQUILIBRIO: 0.20,
   executar() {
     if (!VC.dados.ramais.length) { VC.ui.toast('Sem ramais para otimizar.'); return; }
@@ -1009,7 +1099,7 @@ VC.optimizar = {
         if (VC.locks.ativo(r)) return;
         const Qef = Number(r.Q || 0);
         if (Qef <= 0) return;
-        const z = VC.calculo.dimensionarConduta(Qef);
+        const z = VC.calculo.dimensionarConduta(Qef, { vMax: VC.calculo.vMaxDe(r) });   // v11.1: limite por nível
         if (z.Dc && z.Dc !== r.Dcom) { r.Dcom = z.Dc; nAjustados++; }
       });
       if (nAjustados) acoes.push('Fase 1: ' + nAjustados + ' Ø ajustados');
@@ -1017,7 +1107,7 @@ VC.optimizar = {
       let nVel = 0;
       VC.dados.ramais.forEach(r => {
         if (VC.locks.ativo(r)) return;
-        const vLim = (r.rede === 'extracao' || r.rede === 'extracao_suja') ? this.V_MAX_EXTRACAO : this.V_MAX_INSUFL;
+        const vLim = VC.calculo.vMaxDe(r);   // v11.1: o mesmo limite por nível do dimensionamento (3.5)
         if ((Number(r.v) || 0) > vLim) {
           const Qef = Number(r.Q || 0);
           let lo = r.Dcom || 100, hi = 3000, Dc = lo;
