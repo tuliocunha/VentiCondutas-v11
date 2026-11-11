@@ -132,6 +132,17 @@ VC6.testes = {
         && c('UVU_FILTER', 200, 1, 0).limite === 230 && c('UVU_FILTER', 250, 1, 0).conforme === false
         && c('UVU_SEM_FILTER', 900, 1, 0).limite === null && c('UVU_SEM_FILTER', 900, 1, 0).conforme === true
         && c('BVU_HRS', 500, 0.5, 0.70).conforme === false; } });
+    self.registar({ id: 'N6.T12', nucleo: 'N6', grupo: 'UTAs', nome: 'Ponto de funcionamento é de cada UTA', criterio: 'duas UTAs da mesma rede com curvas diferentes → pontos diferentes', fn: () => {
+      const us = VC.dados.utas.filter(u => u.rede === 'insuflacao' && u.curva && u.curva.length >= 2); if (us.length < 2) return true;
+      return us.every(u => u.pontoFunc && u.pontoFunc.modo === 'curva') && Math.round(us[0].pontoFunc.Qmh) !== Math.round(us[1].pontoFunc.Qmh); } });
+    self.registar({ id: 'N6.T13', nucleo: 'N6', grupo: 'UTAs', nome: 'Aviso quando o caudal passa o fim da curva', criterio: 'foraDaCurva ⇔ Q projeto > Q máx da curva', fn: () => VC.dados.utas.filter(u => u.pontoFunc && u.pontoFunc.modo === 'curva').every(u => u.pontoFunc.foraDaCurva === (u.Q * 3600 > Math.max.apply(null, u.curva.map(p => p.Q)))) });
+    self.registar({ id: 'N1.T20', nucleo: 'N1', grupo: 'Estado', nome: 'Série, método e filtros entram no estado', criterio: 'mudar cada um muda o hash', fn: () => {
+      const d = VC.dados, h0 = VC.estado._hashEstado(), s = d.serieDiametros, m = d.metodoCalculo, f = d.filtros && d.filtros.modo;
+      try { d.serieDiametros = s === 'S2' ? 'S1' : 'S2'; const h1 = VC.estado._hashEstado(); d.serieDiametros = s;
+            d.metodoCalculo = { metodo: (m && m.metodo) === 'velocity' ? 'loss' : 'velocity' }; const h2 = VC.estado._hashEstado(); d.metodoCalculo = m;
+            d.filtros.modo = f === 'limpo' ? 'sujo' : 'limpo'; const h3 = VC.estado._hashEstado(); d.filtros.modo = f;
+            return h1 !== h0 && h2 !== h0 && h3 !== h0 && VC.estado._hashEstado() === h0; }
+      finally { d.serieDiametros = s; d.metodoCalculo = m; if (d.filtros) d.filtros.modo = f; } } });
     self.registar({ id: 'N6.T6', nucleo: 'N6', grupo: 'UTAs', nome: 'Ponto funcionamento na curva', criterio: 'interseção', fn: () => { const u = VC.dados.utas.find(x => x.curva && x.curva.length >= 2); if (!u) return true; const pf = VC6.uta.calcularPontoFuncionamento(u.rede); return pf && pf.modo === 'curva'; } });
     self.registar({ id: 'N6.T7', nucleo: 'N6', grupo: 'UTAs', nome: 'Sem curva → estimativa', criterio: 'fallback', fn: () => { const u = { id: 'X', rede: 'insuflacao', ativo: true, Q: 0.3, dpExt: 200, dpInt: 150, eta: 0.65, fs: 1.15, transmissao: 1, componentes: [], curva: [] }; const lista = VC.dados.utas.slice(); VC.dados.utas = [u]; const pf = VC6.uta.calcularPontoFuncionamento('insuflacao'); VC.dados.utas = lista; return pf && pf.modo === 'estimativa'; } });
     self.registar({ id: 'N6.T8', nucleo: 'N6', grupo: 'UTAs', nome: 'Curva Sodeca HCT-250', criterio: 'Q=1200, dP=650', fn: () => { const c = VC.curvasFabricantes.get('Sodeca', 'HCT/CHT', 'HCT-250'); return c && c.Q_nom === 1200 && c.dP_nom === 650; } });

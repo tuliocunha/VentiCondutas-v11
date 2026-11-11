@@ -694,6 +694,10 @@ VC.estado._hashEstado = function () {
   partes.push(VC.dados && VC.dados.tipologia || '');
   partes.push(VC.dados && VC.dados.restricaoH || 0);
   partes.push(VC.dados && VC.dados.eficaciaRemocao || 1);
+  // v11.1 (E1): opções que mudam o cálculo e não forçavam o recálculo
+  partes.push((VC.dados && VC.dados.serieDiametros) || 'S1');
+  partes.push((VC.dados && VC.dados.metodoCalculo && VC.dados.metodoCalculo.metodo) || 'loss');
+  partes.push((VC.dados && VC.dados.filtros && VC.dados.filtros.modo) || 'sujo');
   const espacos = (VC.dados && VC.dados.espacos) || [];
   partes.push('E' + espacos.length);
   partes.push(espacos.map(e =>
@@ -708,6 +712,7 @@ VC.estado._hashEstado = function () {
   partes.push(ramais.map(r =>
     r.id + '|' + r.nome + '|' + (r.parente || '') + '|' + (r.L || 0) + '|' + (r.zeta || 0) +
     '|' + (r.utaRef || '') + '|' + ((r.lock && r.lock.D) ? '1' : '0') + '|' + ((r.geometriaInput && r.geometriaInput.forma) || 'circular')   // v11.1: forma da secção
+    + '|' + ((r.geometriaInput && r.geometriaInput.material) || '') + '|' + ((r.geometriaInput && r.geometriaInput.rugosidade) || '') + '|' + ((r.geometriaInput && r.geometriaInput.H_max) || '')   // v11.1 (E1)
   ).join('#'));
   const terminais = (VC.dados && VC.dados.terminais) || [];
   partes.push('Tm' + terminais.length);

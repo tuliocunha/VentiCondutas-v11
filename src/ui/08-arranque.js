@@ -288,6 +288,8 @@ window.renderSetup = function () {
        '<div class="campo-grupo"><label>Cliente</label><input value="' + VC.utils.esc(VC.dados.metadados.cliente || '') + '" onchange="VC.dados.metadados.cliente=this.value"></div>' +
        '<div class="campo-grupo"><label>Local</label><input value="' + VC.utils.esc(VC.dados.metadados.local || '') + '" onchange="VC.dados.metadados.local=this.value"></div>' +
        '<div class="campo-grupo"><label>Autor</label><input value="' + VC.utils.esc(VC.dados.metadados.autor || '') + '" onchange="VC.dados.metadados.autor=this.value"></div>' +
+       // v11.1: a Descrição do projeto voltou (existia no Setup antigo; o dado continuava a ser guardado)
+       '<div class="campo-grupo" style="grid-column:1 / -1"><label>Descrição</label><textarea rows="2" onchange="VC.dados.metadados.descricao=this.value" style="width:100%; resize:vertical; font-family:inherit; font-size:12px; padding:8px; border:1px solid var(--borda-media); border-radius:5px;">' + VC.utils.esc(VC.dados.metadados.descricao || '') + '</textarea></div>' +
        '</div></div>';
 
   // Grelha das 3 Categorias de Engenharia
@@ -347,43 +349,6 @@ window.renderSetup = function () {
   h += '</div>'; // fim da grelha de 3 colunas
   return h;
 };
-window._old_renderSetup_2 = function () {
-  const p = VC.dados.params;
-  let h = '<div class="cartao-titulo"><i class="fa-solid fa-gear"></i> Setup do Projeto</div>';
-  h += '<p style="font-size:11.5px;color:var(--texto-med);margin-bottom:15px">Definir o contexto do projeto. Estes dados alimentam o cálculo ISA/ar húmido em todas as fases.</p>';
-
-  h += '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">';
-
-  h += '<div style="background: var(--superf2); border: 1px solid var(--borda); border-radius: 8px; padding: 16px; box-shadow: var(--sombra-1);">';
-  h += '<div style="font-size: 11px; font-weight: 800; color: var(--primario-esc); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 12px; border-bottom: 1px solid var(--borda); padding-bottom: 8px;"><i class="fa-solid fa-folder-open"></i> Registo do Projeto</div>';
-  h += '<div class="campo-grupo" style="margin-bottom: 10px;"><label>Nome do projeto</label><input value="' + VC.utils.esc(VC.dados.metadados.nome) + '" onchange="VC.dados.metadados.nome=this.value; VC.ui.renderSidebar();"></div>';
-  h += '<div class="campo-grupo" style="margin-bottom: 10px;"><label>Cliente</label><input value="' + VC.utils.esc(VC.dados.metadados.cliente || '') + '" onchange="VC.dados.metadados.cliente=this.value"></div>';
-  h += '<div class="campo-grupo" style="margin-bottom: 10px;"><label>Local</label><input value="' + VC.utils.esc(VC.dados.metadados.local || '') + '" onchange="VC.dados.metadados.local=this.value"></div>';
-  h += '<div class="campo-grupo" style="margin-bottom: 10px;"><label>Autor</label><input value="' + VC.utils.esc(VC.dados.metadados.autor || '') + '" onchange="VC.dados.metadados.autor=this.value"></div>';
-  h += '<div class="campo-grupo" style="margin-bottom: 0;"><label>Descrição</label><textarea rows="2" onchange="VC.dados.metadados.descricao=this.value" style="width:100%; resize:vertical; font-family:inherit; font-size:12px; padding:8px; border:1px solid var(--borda-media); border-radius:5px;">' + VC.utils.esc(VC.dados.metadados.descricao || '') + '</textarea></div>';
-  h += '</div>';
-
-  h += '<div style="background: var(--superf2); border: 1px solid var(--borda); border-radius: 8px; padding: 16px; box-shadow: var(--sombra-1);">';
-  h += '<div style="font-size: 11px; font-weight: 800; color: var(--primario-esc); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 12px; border-bottom: 1px solid var(--borda); padding-bottom: 8px;"><i class="fa-solid fa-cloud-sun"></i> Condicionantes Ambientais</div>';
-  h += '<div class="campo-grupo" style="margin-bottom: 10px;"><label>Altitude (m)</label><input type="number" style="width:100%" value="' + p.altitude + '" onchange="VC.dados.params.altitude=VC.utils.num(this.value); VC.perf.cacheFisica.invalidar(); VC.estado.sincronizar();" data-tt-simbolo="inputAltitude"></div>';
-  h += '<div class="campo-grupo" style="margin-bottom: 10px;"><label>Temperatura (°C)</label><input type="number" style="width:100%" value="' + p.temperatura + '" onchange="VC.dados.params.temperatura=VC.utils.num(this.value); VC.perf.cacheFisica.invalidar(); VC.estado.sincronizar();" data-tt-simbolo="inputTemperatura"></div>';
-  h += '<div class="campo-grupo" style="margin-bottom: 10px;"><label>Humidade (%)</label><input type="number" style="width:100%" value="' + p.humidade + '" onchange="VC.dados.params.humidade=VC.utils.num(this.value); VC.perf.cacheFisica.invalidar(); VC.estado.sincronizar();" data-tt-simbolo="inputHumidade"></div>';
-  h += '<div class="campo-grupo" style="margin-bottom: 0;"><label>Rugosidade (mm)</label><input type="number" style="width:100%" step="0.01" value="' + p.rugosidade + '" onchange="VC.dados.params.rugosidade=VC.utils.num(this.value); VC.estado.sincronizar();" data-tt-simbolo="inputRugosidade"></div>';
-  h += '</div>';
-
-  h += '</div>';
-
-  return h;
-};
-window._old_renderSetup = function () {
-  const p = VC.dados.params;
-  let h = '<div class="cartao-titulo"><i class="fa-solid fa-gear"></i> Setup do Projeto</div>';
-  h += '<p style="font-size:11.5px;color:var(--texto-med);margin-bottom:10px">Definir o contexto do projeto. Estes dados alimentam o cálculo ISA/ar húmido em todas as fases.</p>';
-  h += '<div class="grade-4" style="margin-bottom:12px">' + '<div class="campo-grupo"><label>Nome do projeto</label><input value="' + VC.utils.esc(VC.dados.metadados.nome) + '" onchange="VC.dados.metadados.nome=this.value; VC.ui.renderSidebar();"></div>' + '<div class="campo-grupo"><label>Cliente</label><input value="' + VC.utils.esc(VC.dados.metadados.cliente) + '" onchange="VC.dados.metadados.cliente=this.value"></div>' + '<div class="campo-grupo"><label>Local</label><input value="' + VC.utils.esc(VC.dados.metadados.local) + '" onchange="VC.dados.metadados.local=this.value"></div>' + '<div class="campo-grupo"><label>Autor</label><input value="' + VC.utils.esc(VC.dados.metadados.autor) + '" onchange="VC.dados.metadados.autor=this.value"></div>' + '</div>';
-  h += '<div class="grade-4">' + '<div class="campo-grupo"><label>Altitude (m)</label><input type="number" value="' + p.altitude + '" onchange="VC.dados.params.altitude=VC.utils.num(this.value); VC.perf.cacheFisica.invalidar(); VC.estado.sincronizar();" data-tt-simbolo="inputAltitude"></div>' + '<div class="campo-grupo"><label>Temperatura (°C)</label><input type="number" value="' + p.temperatura + '" onchange="VC.dados.params.temperatura=VC.utils.num(this.value); VC.perf.cacheFisica.invalidar(); VC.estado.sincronizar();" data-tt-simbolo="inputTemperatura"></div>' + '<div class="campo-grupo"><label>Humidade (%)</label><input type="number" value="' + p.humidade + '" onchange="VC.dados.params.humidade=VC.utils.num(this.value); VC.perf.cacheFisica.invalidar(); VC.estado.sincronizar();" data-tt-simbolo="inputHumidade"></div>' + '<div class="campo-grupo"><label>Rugosidade (mm)</label><input type="number" step="0.01" value="' + p.rugosidade + '" onchange="VC.dados.params.rugosidade=VC.utils.num(this.value); VC.estado.sincronizar();" data-tt-simbolo="inputRugosidade"></div>' + '</div>';
-  return h;
-};
-
 VC.caudalEspacoUI = {
   _filtroTexto: '',
   setFiltro: function(v) { this._filtroTexto = String(v || '').toLowerCase(); if(VC._passoAtivo === 'classificacao') VC.passos.render('classificacao'); },

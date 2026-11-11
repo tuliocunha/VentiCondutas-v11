@@ -364,7 +364,7 @@ VC.exemploV6 = function () {
   VC.decompor.limpar();
   VC.decompor.executar(true);
 
-  VC.dados.utas.forEach(u => { if (u.curva && u.curva.length >= 2) u.pontoFunc = VC.uta.calcularPontoFuncionamento(u.rede); });
+  VC.dados.utas.forEach(u => { if (u.curva && u.curva.length >= 2) u.pontoFunc = VC.uta.calcularPontoFuncionamento(u.rede, u); });
 
   const balancos = VC6.balanco.todos();
   const ok = balancos.filter(b => b.estado === 'OK').length;
