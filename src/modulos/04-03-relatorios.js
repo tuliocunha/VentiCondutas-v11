@@ -110,7 +110,7 @@ R.geral = function () {
  h += '<div>';
  h += R.secao('6', 'Estado Global e Findings');
  h += R.tabela(['Indicador', 'Valor'], [['Espaços Totais', VC.dados.espacos.length], ['Terminais', VC.dados.terminais.length], ['Ramais', VC.dados.ramais.length], ['Transferências', (VC.dados.transferencias || []).length], ['UTAs', VC.dados.utas.length]]);
- if ((x.findings || []).length) h += R.tabela(['Sev.', 'Elemento', 'Mensagem'], x.findings.map(f => [f.severidade, (f.elemento || '—').substring(0,15), f.msg]));
+ if ((x.findings || []).length) h += R.tabela(['Sev.', 'Elemento', 'Mensagem'], x.findings.map(f => [f.severidade, VC.utils.esc(String(f.elemento || '—').substring(0,15)), VC.utils.esc(f.msg)]));
  else h += R.callout('Sem não conformidades.', 'ok');
  h += '</div>';
  h += '</div>';
@@ -144,7 +144,7 @@ R.dimensionamento = function () {
    const badgeCor = ['#4f6d8c','#6d8fb0','#a7c0d6','#d6e3ef'][nivel-1] || '#6d8fb0';
    const txtCor = nivel === 4 ? '#2c3e50' : '#ffffff';
    const badgeHtml = `<span style="background:${badgeCor}; color:${txtCor}; padding:3px 6px; border-radius:4px; font-size:9px; font-weight:900">R${nivel}</span>`;
-   return [r.nome, badgeHtml, r.rede, VC.utils.fmt(r.Q, 0), VC.utils.fmt(r.L, 1), r.Dcom || '—', VC.utils.fmt(r.v, 2), VC.utils.fmt(r.Re, 0), `<b>${VC.utils.fmt(r.deltaPtotal, 1)}</b>`];
+   return [VC.utils.esc(r.nome), badgeHtml, VC.utils.esc(r.rede), VC.utils.fmt(r.Q, 0), VC.utils.fmt(r.L, 1), r.Dcom || '—', VC.utils.fmt(r.v, 2), VC.utils.fmt(r.Re, 0), `<b>${VC.utils.fmt(r.deltaPtotal, 1)}</b>`];
  }));
  return h + R.rodape();
 };
@@ -159,27 +159,21 @@ R.requisitos = function () {
   const qEN = nome => { const e = VC.dados.espacos.find(x => x.nome === nome); return e ? (VC.calculo.calcularQ_normas(e).Q_EN16798 || 0) : 0; };
   const abaixoEN = cob.detalhe.filter(v => (v.Q_nec || 0) + 0.5 < qEN(v.espacoNome)).length;
   h += R.callout('Comparação EN 16798-1 · Categoria ' + cat + ': ' + abaixoEN + ' de ' + cob.detalhe.length + ' espaços têm Q_total abaixo do caudal EN (▲). Informativo — o caudal de projeto segue a Portaria 138-I/2021.', abaixoEN ? 'atencao' : 'info');
-  h += R.tabela(['Espaço', 'Nº def.', 'Σ Q_def', 'Q_normas', 'Q_ConTerm', 'QAI', 'Q_total', 'Q EN 16798 (Cat ' + cat + ')', 'Estado'], cob.detalhe.map(v => { const en = qEN(v.espacoNome); return [v.espacoNome, v.nRequisitos, VC.utils.fmt(v.somaQ, 0), VC.utils.fmt(v.Q_reg || 0, 0), VC.utils.fmt(v.Q_conforto || 0, 0), VC.utils.fmt(v.QAI || 0, 0), VC.utils.fmt(v.Q_nec, 0), VC.utils.fmt(en, 0) + ((v.Q_nec || 0) + 0.5 < en ? ' ▲' : ''), v.estado]; }));
+  h += R.tabela(['Espaço', 'Nº def.', 'Σ Q_def', 'Q_normas', 'Q_ConTerm', 'QAI', 'Q_total', 'Q EN 16798 (Cat ' + cat + ')', 'Estado'], cob.detalhe.map(v => { const en = qEN(v.espacoNome); return [VC.utils.esc(v.espacoNome), v.nRequisitos, VC.utils.fmt(v.somaQ, 0), VC.utils.fmt(v.Q_reg || 0, 0), VC.utils.fmt(v.Q_conforto || 0, 0), VC.utils.fmt(v.QAI || 0, 0), VC.utils.fmt(v.Q_nec, 0), VC.utils.fmt(en, 0) + ((v.Q_nec || 0) + 0.5 < en ? ' ▲' : ''), v.estado]; }));
   return h + R.rodape();
 };
 
 R.associacao = function () {
   let h = R.cabecalho('Associação Terminais ↔ Ramais', 'Derivada dos terminais');
   h += R.secao('1', 'Ramais e terminais');
-  h += R.tabela(['Ramal', 'Nível', 'Rede', 'Q derivado', 'N terminais', 'N espaços'], VC.dados.ramais.map(r => { const nTerm = VC.dados.terminais.filter(t => t.ramalRef === r.nome).length; const espacos = VC.calculo.espacosServidosPorRamal(r.nome); return [r.nome, 'R' + (r.nivelNumero || 2), r.rede, VC.utils.fmt(r.Q, 0), nTerm, espacos.length]; }));
+  h += R.tabela(['Ramal', 'Nível', 'Rede', 'Q derivado', 'N terminais', 'N espaços'], VC.dados.ramais.map(r => { const nTerm = VC.dados.terminais.filter(t => t.ramalRef === r.nome).length; const espacos = VC.calculo.espacosServidosPorRamal(r.nome); return [VC.utils.esc(r.nome), 'R' + (r.nivelNumero || 2), VC.utils.esc(r.rede), VC.utils.fmt(r.Q, 0), nTerm, espacos.length]; }));
   return h + R.rodape();
 };
 
 R.arvore = function () {  
  let h = R.cabecalho('Árvore de Condutas e Hierarquia', 'Hierarquia visual UTA → Ramais → Espaços');  
    
- if (typeof VC6 !== 'undefined' && VC6.redeCondutas && VC6.redeCondutas.renderSVG) {  
- h += R.secao('1', 'Árvore Volumétrica dos Ramais de Condutas');  
- h += '<p style="font-size:11.5px;color:var(--texto-med);margin-bottom:10px">Representação gráfica interativa da rede de condutas, com espessura proporcional ao diâmetro e comprimento proporcional à realidade física.</p>';  
- h += '<div style="background:var(--superf2);padding:14px;border-radius:6px;border:1px solid var(--borda);overflow-x:auto;">' + VC6.redeCondutas.renderSVG() + '</div>';  
- return h + R.rodape();  
- }  
-   
+ // v11.1: removido o ramo que dependia de VC6.redeCondutas (módulo que não existe).
  const ramais = VC.dados.ramais || [];  
  const porNome = {};  
  ramais.forEach(r => { porNome[r.nome] = r; });  
@@ -203,14 +197,14 @@ R.arvore = function () {
 
 R.ventilador = function () {
   let h = R.cabecalho('Dimensionamento de Ventiladores', 'Q · Δp · SFPint · P motor');
-  h += R.tabela(['UTA', 'Rede', 'Q derivado', 'Δp externo', 'Δp interno', 'SFPint', 'P motor'], VC.dados.utas.map(u => [u.nome, u.rede, VC.utils.fmt(u.Q * 3600, 0) + ' m³/h', VC.utils.fmt(u.dpExt, 0) + ' Pa', VC.utils.fmt(u.dpInt, 0) + ' Pa', VC.utils.fmt(u.sfpInt, 0), VC.utils.fmt(u.P_motor, 0) + ' W']));
+  h += R.tabela(['UTA', 'Rede', 'Q derivado', 'Δp externo', 'Δp interno', 'SFPint', 'P motor'], VC.dados.utas.map(u => [VC.utils.esc(u.nome), VC.utils.esc(u.rede), VC.utils.fmt(u.Q * 3600, 0) + ' m³/h', VC.utils.fmt(u.dpExt, 0) + ' Pa', VC.utils.fmt(u.dpInt, 0) + ' Pa', VC.utils.fmt(u.sfpInt, 0), VC.utils.fmt(u.P_motor, 0) + ' W']));
   return h + R.rodape();
 };
 
 R.conformidade = function () {
   const x = VC.calculo.calcularTudo();
   let h = R.cabecalho('Conformidade Normativa', 'Verificações legais');
-  h += R.tabela(['Norma', 'Item', 'Resultado', 'Estado'], VC.normativaUI.verificacoesLegais(x).map(v => [v.norma, v.item, v.resultado, v.estado]));
+  h += R.tabela(['Norma', 'Item', 'Resultado', 'Estado'], VC.normativaUI.verificacoesLegais(x).map(v => [VC.utils.esc(v.norma), VC.utils.esc(v.item), VC.utils.esc(v.resultado), VC.utils.esc(v.estado)]));
   return h + R.rodape();
 };
 
@@ -315,7 +309,7 @@ R.diagnostico = function () {
   const r = VC.testes && VC.testes.correr ? VC.testes.correr() : { total: 0, pass: 0, fail: 0, detalhe: [] };
   let h = R.cabecalho('Diagnóstico', 'Testes automáticos');
   h += R.kpis([{ l: 'Total', v: r.total, cor: 'primario' }, { l: 'Passados', v: r.pass, cor: 'verde' }, { l: 'Falhados', v: r.fail, cor: 'coral' }, { l: 'Taxa', v: (r.total ? Math.round(r.pass / r.total * 100) : 0) + ' %', cor: 'violeta' }]);
-  h += R.tabela(['#', 'Grupo', 'Teste', 'Estado'], (r.detalhe || []).map(t => [t.id, t.grupo, t.nome, t.estado === 'pass' ? '✅' : '❌']));
+  h += R.tabela(['#', 'Grupo', 'Teste', 'Estado'], (r.detalhe || []).map(t => [VC.utils.esc(t.id), VC.utils.esc(t.grupo), VC.utils.esc(t.nome), t.estado === 'pass' ? '✅' : '❌']));
   return h + R.rodape();
 };
 

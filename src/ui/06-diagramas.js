@@ -8,27 +8,8 @@ window.VC6 = window.VC6 || {};
 const VC6 = window.VC6;
 VC._boot.partes.push('06-diagramas');
 
-/* ============================================================
-   NOVO MÓDULO V11: VC.graficos (Dashboard de Auditoria)
-   ============================================================ */
-VC.graficos = VC.graficos || {
-    _cores: { 
-        ok: 'var(--verde)', 
-        atencao: 'var(--ambar)', 
-        erro: 'var(--coral)', 
-        grade: '#e3e8ee', 
-        texto: '#5a6b7c',
-        insuflacao: '#6d8fb0',
-        extracao: '#7fa88b'
-    },
-    
-    renderG1_deltaP() {
-        if (!VC.dados || !VC.dados.ramais || VC.dados.ramais.length === 0) {
-            return '<div class="vazio"><div class="vazio-titulo">Sem ramais</div></div>';
-        }
-        return '<svg viewBox="0 0 800 200" xmlns="http://www.w3.org/2000/svg" style="background:#fff; border-radius:8px; border:1px solid #e3e8ee;"><text x="400" y="100" text-anchor="middle" fill="#5a6b7c" font-size="14" font-family="monospace">Teste G1: Infraestrutura vetorial conectada com sucesso</text></svg>';
-    }
-};
+/* v11.1: removido o bloco 'VC.graficos = VC.graficos || {…}' (Dashboard V11). Nunca era usado:
+   VC.graficos já está definido em 01-fundamentos.js, por isso o '||' anulava-o. */
 
 VC6.diagrama = {
   NIVEIS: { atmosfera:0, uta:1, r1:2, r2:3, r3:4, r4:5, espaco:6, retorno:7 },
@@ -323,7 +304,16 @@ VC6.diagrama = {
       svg += '<text x="' + (x + w + 4) + '" y="' + (y + h / 2 + 3) + '" style="font-size:10px;font-weight:700;fill:#2c3e50">' + VC.utils.esc(rotulo) + '</text>'; svg += '<text x="' + (x + w + 4) + '" y="' + (y + h / 2 + 15) + '" style="font-size:9px;font-family:ui-monospace,monospace;fill:#5a6b7c">' + linhaMet + '</text>';
       if (temQAI) { const qaiTxt = 'QAI ' + VC.utils.fmt(n.QAI_aplicado || n.QAI_total || 0, 0) + ' m³/h · ' + (n.QAI_rede || 'insuflacao'); svg += '<text x="' + (x + w + 4) + '" y="' + (y + h / 2 + 26) + '" style="font-size:9px;font-family:ui-monospace,monospace;fill:#b88a4a;font-weight:700">' + qaiTxt + '</text>'; }
       if (temMultiRede) { const redesTxt = (n.redesRecebidas || []).join(' + '); svg += '<text x="' + (x + w + 4) + '" y="' + (y + h / 2 + (temQAI ? 37 : 26)) + '" style="font-size:9px;font-family:ui-monospace,monospace;fill:#9e8256;font-weight:700">⚠ ' + VC.utils.esc(redesTxt) + '</text>'; }
-    } else if (n.tipo === 'transferencia') { svg += '<text x="' + (x + w + 4) + '" y="' + (y + h / 2 + 3) + '" style="font-size:10px;font-weight:700;fill:#7a5c2e">' + VC.utils.esc(rotulo) + '</text>'; svg += '<text x="' + (x + w + 4) + '" y="' + (y + h / 2 + 15) + '" style="font-size:9px;font-family:ui-monospace,monospace;fill:#7a5c2e">' + VC.utils.fmt(n.Q, 0) + ' m³/h · A ' + VC.utils.fmt(n.area_cm2 || 0, 0) + ' cm²</text>'; }
+    }
+    // v11.1: indicar expandir/recolher (UTA) e sub-ramais escondidos (ramal)
+    if (n.tipo === 'uta') {
+      const exp = this._utasExpandidas.has(n.id);
+      svg += '<text x="' + (x + w / 2) + '" y="' + (y + h + 24) + '" text-anchor="middle" style="font-size:9px;font-weight:800;fill:#2563eb">' + (exp ? '▾ recolher' : '▸ expandir') + '</text>';
+    } else if (n.tipo === 'ramal') {
+      const ocultos = this._filhosOcultos(n, grafo);
+      if (ocultos > 0) svg += '<text x="' + (x + w + 3) + '" y="' + (y + h / 2 + 3) + '" style="font-size:9px;font-weight:800;fill:#2563eb">▸ +' + ocultos + '</text>';
+    }
+    if (n.tipo === 'transferencia') { svg += '<text x="' + (x + w + 4) + '" y="' + (y + h / 2 + 3) + '" style="font-size:10px;font-weight:700;fill:#7a5c2e">' + VC.utils.esc(rotulo) + '</text>'; svg += '<text x="' + (x + w + 4) + '" y="' + (y + h / 2 + 15) + '" style="font-size:9px;font-family:ui-monospace,monospace;fill:#7a5c2e">' + VC.utils.fmt(n.Q, 0) + ' m³/h · A ' + VC.utils.fmt(n.area_cm2 || 0, 0) + ' cm²</text>'; }
     svg += '</g>'; return svg;
   },
   _corUta(n) {
@@ -370,10 +360,32 @@ VC6.diagrama = {
     const svgContainer = document.getElementById('diagramaSVG'); if (!svgContainer) return;
     try { this._ligarResize(); this.construirGrafo(); const svgStr = this.renderSVG(); const parser = new DOMParser(); const doc = parser.parseFromString(svgStr, 'image/svg+xml'); const novoSVG = doc.documentElement; novoSVG.setAttribute('id', 'diagramaSVG'); svgContainer.parentNode.replaceChild(novoSVG, svgContainer); this._ligarInteratividade(novoSVG); this._atualizarStatus(); } catch (e) { VC.debug.erro(e); }
   },
+  /* v11.1: nº de sub-ramais (em toda a descendência) que não estão desenhados */
+  _filhosOcultos(n, grafo) {
+    const layout = this._layoutCache || {};
+    const ramais = (grafo || this._grafoCache || { nos: [] }).nos.filter(x => x.tipo === 'ramal');
+    let conta = 0; const fila = [n._dados && n._dados.nome]; let guarda = 0;
+    while (fila.length && guarda++ < 1000) {
+      const pai = fila.shift();
+      ramais.forEach(r => { if (r._dados && r._dados.parente === pai) { if (!layout[r.id]) conta++; fila.push(r._dados.nome); } });
+    }
+    return conta;
+  },
   _ligarInteratividade(svg) {
     const self = this;
     svg.querySelectorAll('g[data-id]').forEach(g => {
-      g.addEventListener('click', (ev) => { ev.stopPropagation(); const id = g.getAttribute('data-id'); self._selecionado = id; self._mostrarDetalhe(id); self.render(); });
+      g.addEventListener('click', (ev) => {
+        ev.stopPropagation(); const id = g.getAttribute('data-id'); self._selecionado = id; self._mostrarDetalhe(id);
+        // v11.1: clicar numa UTA expande/recolhe só essa UTA; num ramal com sub-ramais escondidos, expande a sua UTA
+        const no = (self._grafoCache || { nos: [] }).nos.find(x => x.id === id);
+        if (no && no.tipo === 'uta') return self.toggleUta(id);
+        if (no && no.tipo === 'ramal' && self._filhosOcultos(no) > 0) {
+          let r = no._dados, guarda = 0; const porNome = {}; (VC.dados.ramais || []).forEach(x => { porNome[x.nome] = x; });
+          while (r && !r.utaRef && r.parente && guarda++ < 50) r = porNome[r.parente];
+          if (r && r.utaRef != null) { self._utasExpandidas.add('UTA-' + r.utaRef); }
+        }
+        self.render();
+      });
       g.addEventListener('mouseenter', (ev) => { const id = g.getAttribute('data-id'); const no = (self._grafoCache || { nos: [] }).nos.find(x => x.id === id); if (!no) return; self._mostrarTooltip(ev, no); });
       g.addEventListener('mouseleave', () => { self._esconderTooltip(); });
     });
@@ -438,7 +450,7 @@ VC6.diagrama = {
    ============================================================ */
 window.VC6 = window.VC6 || {};
 window.VC6.subgruposAuditoria = {
-    _subgrupoAtivo: 'graficos',
+    _subgrupoAtivo: 'relatorios',   // v11.1: abre nos relatórios (os gráficos ainda estão a ser implementados)
     _etapaAtiva: 'parametros',
 
     mudarSubgrupo(sub) {
@@ -524,6 +536,12 @@ window.VC6.subgruposAuditoria = {
     },
 
     _cartaoVisualCard(titulo, subtitulo, desc, icone, funcaoClick) {
+        // v11.1: o cartão só fica ativo se a função que chama existir; senão aparece "Em desenvolvimento"
+        const alvo = String(funcaoClick || '').split('(')[0].trim();
+        const existe = typeof alvo.split('.').reduce((o, k) => (o == null ? undefined : o[k]), window) === 'function';
+        const botao = existe
+            ? '<button class="btn primario" style="width:100%; justify-content:center;" onclick="' + funcaoClick + '"><i class="fa-solid fa-eye"></i> Visualizar Gráfico</button>'
+            : '<button class="btn" style="width:100%; justify-content:center; opacity:.6; cursor:not-allowed;" disabled title="Gráfico ainda não implementado"><i class="fa-solid fa-person-digging"></i> Em desenvolvimento</button>';
         return '<div style="background:var(--superf); border:1px solid var(--borda); border-radius:10px; padding:20px; box-shadow:var(--sombra-1); display:flex; flex-direction:column; justify-content:space-between; transition:all 0.2s;">' +
                '<div>' +
                '<div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">' +
@@ -532,7 +550,7 @@ window.VC6.subgruposAuditoria = {
                '</div>' +
                '<p style="font-size:12px; color:var(--texto-med); line-height:1.5; margin-bottom:16px;">' + desc + '</p>' +
                '</div>' +
-               '<button class="btn primario" style="width:100%; justify-content:center;" onclick="' + funcaoClick + '"><i class="fa-solid fa-eye"></i> Visualizar Gráfico</button>' +
+               botao +
                '</div>';
     },
 
@@ -734,7 +752,7 @@ VC.passos.render = function (passo) {
     else el.innerHTML = '<div class="vazio"><i class="fa-solid fa-hourglass-half"></i><div class="vazio-titulo">Passo: ' + VC.utils.esc(passo) + '</div></div>';
   } catch (e) { VC.debug.erro(e); el.innerHTML = '<div class="vazio"><i class="fa-solid fa-triangle-exclamation"></i><div class="vazio-titulo">Erro: ' + VC.utils.esc(passo) + '</div><div>' + VC.utils.esc(e.message) + '</div></div>'; }
   if (VC.ui && typeof VC.ui.renderPainelInferior === 'function') VC.ui.renderPainelInferior(passo);
-  if (VC.ui && typeof VC.ui.atualizarSidebar === 'function') VC.ui.atualizarSidebar();
+  // v11.1: removida a chamada a VC.ui.atualizarSidebar (função inexistente; nunca corria)
   if (VC.tooltips && typeof VC.tooltips.reinstalar === 'function') {
     setTimeout(() => VC.tooltips.reinstalar(), 10);
   }
@@ -780,11 +798,7 @@ VC.ui.renderPainelInferior = function (passo) {
   el.innerHTML = h;
 };
 
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', function () {
-    setTimeout(function () { if (VC6.diagrama && VC6.diagrama._renderSeletorUta) VC6.diagrama._renderSeletorUta(); }, 300);
-  });
-}
+/* v11.1: removida a chamada a VC6.diagrama._renderSeletorUta (função inexistente) */
 
 console.log('%c[VentCondutas V11.0.0] 06-diagramas carregado · Sankey + Painel 2x3 Contextual', 'color:#6d8fb0;font-weight:bold;background:#eaf1f7;padding:3px 6px;border-radius:3px');
 

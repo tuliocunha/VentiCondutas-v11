@@ -68,6 +68,7 @@ function chamadasNoCodigo() {
   ficheiros.forEach(f => {
     fs.readFileSync(path.join(RAIZ, f), 'utf8').split('\n').forEach((linha, i) => {
       if (/^\s*(\/\/|\/\*|\*)/.test(linha)) return;   // ignora comentários
+      if (/_cartaoVisualCard\(/.test(linha)) return;      // cartões de gráficos: protegidos ('Em desenvolvimento' se a função não existir)
       for (const m of linha.matchAll(pat)) (mapa[m[1]] = mapa[m[1]] || []).push(f + ':' + (i + 1));
     });
   });
