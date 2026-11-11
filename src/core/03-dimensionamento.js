@@ -603,11 +603,20 @@ VC.calculo = {
     return (VC.dados.terminais || []).filter(t => Array.isArray(t.espacos) && t.espacos.some(e => e.nome === nomeEspaco));
   },
 
-  QservidoAoEspaco(nomeEspaco) {
+  /* v11.1: rede "base" de um terminal (extração suja conta como extração) */
+  _redeBase(t) {
+    const r = (t && t.rede) || 'insuflacao';
+    return r === 'extracao_suja' ? 'extracao' : r;
+  },
+
+  /* Caudal entregue ao espaço pelos terminais. Com `rede`, conta só os terminais dessa
+     rede (v11.1: antes somava insuflação + extração e comparava com o caudal de uma só rede). */
+  QservidoAoEspaco(nomeEspaco, rede) {
     if (!nomeEspaco) return 0;
     let soma = 0;
     (VC.dados.terminais || []).forEach(t => {
       if (!Array.isArray(t.espacos)) return;
+      if (rede && this._redeBase(t) !== rede) return;
       t.espacos.forEach(e => { if (e.nome === nomeEspaco) soma += Number(e.Q_parcela) || 0; });
     });
     return soma;
@@ -618,8 +627,11 @@ VC.calculo = {
     if (!esp) return { Q_nec: 0, Q_servido: 0, delta: 0, estado: 'NAO_EXISTE', nTerminais: 0 };
     const c = this.calcularQEspaco(esp);
     const Q_nec = c.Q_espaco;
-    const Q_servido = this.QservidoAoEspaco(nomeEspaco);
-    const nTerminais = this.terminaisQueServem(nomeEspaco).length;
+    // v11.1: compara a necessidade com os terminais da rede que a satisfaz
+    // (G4 → extração; restantes → insuflação/renovação)
+    const rede = c.tipoCaudal === 'EXTRACAO' ? 'extracao' : 'insuflacao';
+    const Q_servido = this.QservidoAoEspaco(nomeEspaco, rede);
+    const nTerminais = this.terminaisQueServem(nomeEspaco).filter(t => this._redeBase(t) === rede).length;
     const delta = Q_servido - Q_nec;
     let estado = 'OK';
     if (c.g === 2 || c.g === 3 || c.g === 4) estado = 'ISENTO';
@@ -630,7 +642,7 @@ VC.calculo = {
       else if (ratio > 1.20) estado = 'SOBRE';
       else estado = 'OK';
     }
-    return { Q_nec, Q_servido, delta, estado, nTerminais, g: c.g, isento: c.isento };
+    return { Q_nec, Q_servido, delta, estado, nTerminais, rede, g: c.g, isento: c.isento };
   },
 
   espacosServidosPorRamal(ramalNome) {
