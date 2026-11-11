@@ -343,7 +343,7 @@ VC6.diagrama = {
     const x = W - 215; const y = yMin + 40;
     const ins = VC.dados.terminais.reduce((s, t) => s + (t.rede !== 'extracao' && t.rede !== 'extracao_suja' ? (Number(t.Q) || 0) : 0), 0);
     const ext = VC.dados.terminais.reduce((s, t) => s + (t.rede === 'extracao' || t.rede === 'extracao_suja' ? (Number(t.Q) || 0) : 0), 0);
-    const bal = ins - ext; const xc = VC.calculo.ultimo || {}; const dpMax = xc.maxPerda || 0; const sfp = xc.sfpInt || 0; const sfpClasse = xc.sfpClass ? xc.sfpClass.classe : '—';
+    const bal = ins - ext; const xc = VC.calculo.ultimo || {}; const dpMax = xc.maxPerda || 0; const sfp = xc.sfpInt || 0; const sfpClasse = xc.sfpClass && xc.sfpClass.classe != null ? xc.sfpClass.classe : '—';
     const nComConforto = (VC.dados.espacos || []).filter(e => (Number(e.Q_ConTerm) || 0) > 0).length; const nComQAI = (VC.dados.espacos || []).filter(e => (Number(e.QAI_projeto) || 0) > 0).length; const qaiTotal = (VC.dados.espacos || []).reduce((s, e) => s + (Number(e.QAI_projeto) || 0), 0);
     let svg = ''; const nLinhas = 5 + (nComConforto > 0 ? 1 : 0) + (nComQAI > 0 ? 2 : 0) + 1; const alturaKpi = 22 + nLinhas * 13 + 10;
     svg += '<rect x="' + x + '" y="' + y + '" width="200" height="' + alturaKpi + '" rx="5" fill="#ffffff" fill-opacity="0.95" stroke="#cdd5df" stroke-width="1"/>';
@@ -507,7 +507,7 @@ window.VC6.subgruposAuditoria = {
                 h += this._cartaoVisualCard('Estabilidade / Reynolds', 'Regimes de Escoamento Crítico', 'Validação do número de Reynolds e rugosidade relativa nas tubagens.', 'fa-water', 'VC.graficos.renderG_Reynolds()');
             } else if (this._etapaAtiva === 'verificacao') {
                 h += this._cartaoVisualCard('Velocidade / Ruído', 'Limites VDI 2081 por Ramal', 'Auditoria acústica e dinâmica de velocidades nas secções principais.', 'fa-volume-high', 'VC.graficos.renderG_VelocidadeRuido()');
-                h += this._cartaoVisualCard('Eficiência / SFPint', 'Conformidade Ecodesign / ErP', 'Potência específica global dos ventiladores face aos limites EN 16798-3.', 'fa-bolt', 'VC.graficos.renderG_SFPint()');
+                h += this._cartaoVisualCard('Eficiência / SFPint', 'Conformidade Ecodesign / ErP', 'Potência específica global dos ventiladores face aos limites do Reg. (UE) 1253/2014 (Ecodesign).', 'fa-bolt', 'VC.graficos.renderG_SFPint()');
                 h += this._cartaoVisualCard('Acústica / Terminais', 'Avaliação de Lw vs Curvas NR', 'Dispersão acústica do ruído regenerado nos difusores.', 'fa-headphones', 'VC.graficos.renderG_AcusticaTerminais()');
             } else if (this._etapaAtiva === 'entrega') {
                 h += this._cartaoVisualCard('Consolidação Global', 'Painel Resumo de Auditoria', 'Visão sintética consolidada de todos os indicadores críticos do projeto.', 'fa-clipboard-check', 'VC.graficos.renderG_Consolidado()');

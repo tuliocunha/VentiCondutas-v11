@@ -39,7 +39,7 @@ if (!VC.conhecimento.formulasAnexo) {
     { t: 'Colebrook-White', e: '1/√f = −2 log₁₀(ε/(3,7·D) + 2,51/(Re·√f))', notas: '30 iterações' },
     { t: 'Darcy-Weisbach', e: 'Δp_lin = f · (L/D) · (ρ·v²/2)', notas: '' },
     { t: 'Perdas singulares', e: 'Δp_sing = ζ · (ρ·v²/2)', notas: '' },
-    { t: 'SFPint', e: 'SFPint = Δp_int / η_vent', notas: 'EN 16798-3' },
+    { t: 'SFPint', e: 'SFPint = Δp_int / η_vent', notas: 'Reg. (UE) 1253/2014 (Ecodesign)' },
     { t: 'Massa volúmica ar húmido', e: 'ρ = (p − p_v)/(R_d·T) + p_v/(R_v·T)', notas: 'ASHRAE' },
     { t: 'ISA · pressão', e: 'p = p₀ · (1 − L·z/T₀)^(g/(R·L))', notas: 'ISO 2533' },
     { t: 'F-RPH', e: 'Q_ConTerm = RPH_aplicado × V', notas: 'EN 16798-1 + ASHRAE 55' },

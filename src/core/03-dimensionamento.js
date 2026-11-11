@@ -523,8 +523,8 @@ VC.calculo = {
       const P_motor = P_eixo * fs / Math.max(trans, 0.01);
       uta.Q = Qms; uta.dpInt = dpInt; uta.dpExt = dpExt;
       uta.sfpInt = sfpInt; uta.P_motor = P_motor;
-      uta.sfpClass = VC.normas.classificarSFP('BVU_HRS', sfpInt, Qms, uta.etaRec);
-      uta.status = sfpInt <= 1300 ? 'OK' : 'NÃO CONF.';
+      uta.sfpClass = VC.normas.classificarSFP(VC.normas.tipoUVPadrao(uta), sfpInt, Qms, uta.etaRec);
+      uta.status = uta.sfpClass.conforme ? 'OK' : 'NÃO CONF.';
       if (uta.curva && uta.curva.length >= 2 && VC.uta && VC.uta.calcularPontoFuncionamento) uta.pontoFunc = VC.uta.calcularPontoFuncionamento(uta.rede);
       const chaveRede = (uta.rede === 'insuflacao') ? 'insuflacao' : 'extracao';
       const atual = porRede[chaveRede];
@@ -645,7 +645,12 @@ VC.calculo = {
       const max = Math.max.apply(null, [0].concat(VC.dados.ramais.map(r => r.deltaPtotal || 0)));
       const critical = VC.dados.ramais.reduce((a, b) => (b.deltaPtotal || 0) > ((a && a.deltaPtotal) || 0) ? b : a, null);
       const sfpIntGlobal = VC.dados.utas.length > 0 ? Math.max.apply(null, VC.dados.utas.map(u => u.sfpInt || 0)) : 0;
-      const sfpClassGlobal = VC.normas.classificarSFP('BVU_HRS', sfpIntGlobal, 0, 0.75);
+      // v11.1: o resultado global é o da UTA mais desfavorável (maior SFPint face ao seu limite).
+      const _rel = u => (u.sfpClass && u.sfpClass.limite) ? (u.sfpInt || 0) / u.sfpClass.limite : (u.sfpClass && u.sfpClass.conforme === false ? Infinity : -1);
+      const _pior = VC.dados.utas.filter(u => u.ativo !== false && u.sfpClass).reduce((a, u) => (!a || _rel(u) > _rel(a)) ? u : a, null);
+      const sfpClassGlobal = _pior
+        ? Object.assign({}, _pior.sfpClass, { uta: _pior.nome, conforme: VC.dados.utas.every(u => u.ativo === false || !u.sfpClass || u.sfpClass.conforme) })
+        : VC.normas.classificarSFP('BVU_HRS', sfpIntGlobal, 0, 0.75);
 
       const resultado = {
         rho, nu,
@@ -936,6 +941,7 @@ VC.uta = {
       transmissao: 1.0,
       classeIE: 'IE3',
       recuperadorAtivo: true,
+      tipoUV: rede === 'extracao_suja' ? 'UVU_SEM_FILTER' : 'BVU_HRS',
       ativo: true,
       Q: 0,
       dpInt: 0,

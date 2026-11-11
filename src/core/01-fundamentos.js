@@ -722,7 +722,8 @@ VC.estado._hashEstado = function () {
   partes.push('U' + utas.length);
   partes.push(utas.map(u =>
     u.id + '|' + u.rede + '|' + (u.eta || 0) + '|' + (u.etaRec || 0) + '|' + (u.fs || 0) +
-    '|' + (u.transmissao || 1) + '|' + (u.ativo === false ? '0' : '1') + '|' + (u.curvaFabricante ? (u.curvaFabricante.fabricante + '/' + u.curvaFabricante.modelo) : '')
+    '|' + (u.transmissao || 1) + '|' + (u.ativo === false ? '0' : '1') + '|' + (u.curvaFabricante ? (u.curvaFabricante.fabricante + '/' + u.curvaFabricante.modelo) : '') +
+    '|' + (u.tipoUV || '') + '|' + (u.recuperadorAtivo === false ? '0' : '1')   // v11.1: tipo Ecodesign
   ).join('#'));
   partes.push((VC.flags && VC.flags.confortoTermico !== false) ? '1' : '0');
   partes.push((VC.flags && VC.flags.qaiProjeto !== false) ? '1' : '0');
@@ -856,26 +857,54 @@ VC.normas = {
     if (d.g === 1) { if (rp === 7) rp = brp; if (ra === 0.7) ra = bra; }
     return { g: d.g, gn: d.gn, rp, ra, t11: d.t11, t12: d.t12, ach: d.ach, desc: d.desc };
   },
+  // v11.1: limites do Reg. (UE) 1253/2014 (Ecodesign) por tipo de unidade de ventilação.
+  // qnom em m³/s; etaRec = eficiência térmica do recuperador (0–1).
+  // classe 1–3 = ≤ 50 % / ≤ 75 % / ≤ 100 % do limite (escala interna da app); 4 = acima do limite.
   classificarSFP(uvType, sfpInt, qnom, etaRec) {
     const lim = VC.conhecimento.tabelas.SFPint;
-    let limite = uvType === 'UVU_FILTER' ? lim.UVU_FILTER :
-                 (uvType === 'BVU_HRS' ? lim.BVU_HRS : lim.DEFAULT);
-    let classe = 4;
-    if (sfpInt <= limite * 0.5) classe = 1;
-    else if (sfpInt <= limite * 0.75) classe = 2;
-    else if (sfpInt <= limite) classe = 3;
-    const QnomNum = Number(qnom) || 0;
-    const qnomMenor2 = QnomNum <= 0 || QnomNum < 2;
+    const tipo = (VC.conhecimento.tabelas.SFP_TIPOS || {})[uvType] ? uvType : 'BVU_HRS';
+    const QnomNum = Math.max(0, Number(qnom) || 0);
+    const eta = Number(etaRec) || 0;
+    const ref = 'Reg. (UE) 1253/2014 (Ecodesign)';
+    let limite = null, nota, bonusE = 0, etaOK = true;
+    if (tipo === 'UVU_FILTER') {
+      limite = lim.UVU_FILTER;
+      nota = ref + ': UVU com filtro, limite fixo.';
+    } else if (tipo === 'UVU_SEM_FILTER') {
+      nota = ref + ': UVU sem filtro não tem limite de SFPint (só requisitos do ventilador).';
+    } else {
+      bonusE = eta > lim.BVU_ETA_REF ? (eta - lim.BVU_ETA_REF) * 3000 : 0;
+      limite = QnomNum < 2 ? lim.BVU_BASE_PEQ + bonusE - 300 * QnomNum / 2 : lim.BVU_BASE + bonusE;
+      etaOK = eta >= lim.BVU_ETA_MIN;
+      nota = ref + ': UVB com recuperador, qnom ' + QnomNum.toFixed(2) + ' m³/s, bónus E ' + Math.round(bonusE) + ', filtros completos (F = 0).'
+        + (etaOK ? '' : ' η recuperador ' + Math.round(eta * 100) + ' % < ' + Math.round(lim.BVU_ETA_MIN * 100) + ' % exigido.');
+    }
+    let classe = null;
+    if (limite != null) {
+      limite = Math.round(limite);
+      classe = 4;
+      if (sfpInt <= limite * 0.5) classe = 1;
+      else if (sfpInt <= limite * 0.75) classe = 2;
+      else if (sfpInt <= limite) classe = 3;
+    }
     return {
-      classe, sfpInt, limite,
+      tipo, classe, sfpInt, limite,
       limiteBase: limite,
       qnom: QnomNum,
-      conservador: qnomMenor2,
-      nota: qnomMenor2
-        ? 'Limite EN 16798-3 aplicado é o conservador (fixo). Para Qnom < 2 m³/s ou desconhecido, ver Annex E.'
-        : 'Limite EN 16798-3 (fixo) — adequado para Qnom ≥ 2 m³/s.',
-      conforme: classe <= 3
+      bonusE: Math.round(bonusE),
+      etaOK,
+      conservador: false,
+      nota,
+      conforme: (classe == null || classe <= 3) && etaOK
     };
+  },
+  // Tipo Ecodesign por omissão de uma UTA, quando o utilizador não o escolheu.
+  tipoUVPadrao(u) {
+    if (!u) return 'BVU_HRS';
+    if (u.tipoUV && (VC.conhecimento.tabelas.SFP_TIPOS || {})[u.tipoUV]) return u.tipoUV;
+    if (u.rede === 'extracao_suja') return 'UVU_SEM_FILTER';
+    if (u.recuperadorAtivo !== false) return 'BVU_HRS';
+    return (u.componentes || []).some(c => /filtro/i.test(c.tipo || '')) ? 'UVU_FILTER' : 'UVU_SEM_FILTER';
   },
   dl101D(potenciaW) {
     const P = Math.max(0, Number(potenciaW) || 0);

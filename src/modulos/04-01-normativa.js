@@ -20,7 +20,7 @@ VC.normativaUI = {
     if (!x) x = VC.calculo.calcularTudo();
     const out = [];
     const sfpInt = x.sfpInt || 0;
-    const sfpClasse = x.sfpClass ? x.sfpClass.classe : 4;
+    const sfpClasse = x.sfpClass && x.sfpClass.classe != null ? x.sfpClass.classe : '—';
     const espacosSemQNormas = (VC.dados.espacos || []).filter(e => {
       const c = VC.calculo.calcularQEspaco(e);
       return c.g !== 2 && (Number(c.Q_normas) || 0) <= 0;
@@ -32,13 +32,14 @@ VC.normativaUI = {
     if (espacosComStatusErro > 0) p138Resultado += ' · ' + espacosComStatusErro + ' em não conformidade';
     out.push({ norma: 'Portaria 138-I/2021', item: 'Caudais mínimos P138 (T11/T12/T13)', resultado: p138Resultado, estado: p138OK ? 'CONFORME' : 'NÃO CONFORME' });
 
-    const sfpLim = (x.sfpClass && x.sfpClass.limiteBase) ? x.sfpClass.limiteBase : 1300;
-    const sfpConforme = (x.sfpClass && typeof x.sfpClass.conforme === 'boolean') ? x.sfpClass.conforme : (sfpInt <= sfpLim);
-    const sfpNota = (x.sfpClass && x.sfpClass.nota) ? ' · ' + x.sfpClass.nota : '';
+    // v11.1: cada UTA tem o seu limite (tipo de unidade e caudal); mostra-se a mais desfavorável.
+    const sc = x.sfpClass || {};
+    const sfpConforme = typeof sc.conforme === 'boolean' ? sc.conforme : true;
+    const sfpLim = sc.limite != null ? sc.limite + ' W/(m³/s)' : 'sem limite';
     out.push({
-      norma: 'EN 16798-3:2017',
-      item: 'SFPint ≤ ' + sfpLim + ' W/(m³/s)',
-      resultado: VC.utils.fmt(sfpInt, 0) + ' W/(m³/s) · Classe ' + sfpClasse + sfpNota,
+      norma: 'Reg. (UE) 1253/2014 (Ecodesign)',
+      item: 'SFPint de cada UTA ≤ limite do seu tipo',
+      resultado: (sc.uta ? VC.utils.esc(sc.uta) + ' (mais desfavorável): ' : '') + VC.utils.fmt(sc.sfpInt != null ? sc.sfpInt : sfpInt, 0) + ' W/(m³/s) · limite ' + sfpLim + ' · Classe ' + sfpClasse,
       estado: sfpConforme ? 'CONFORME' : 'NÃO CONFORME'
     });
 

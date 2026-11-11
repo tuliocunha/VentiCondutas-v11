@@ -39,7 +39,7 @@ VC.caderno = {
       projeto: { nome: md.nome || '—', cliente: md.cliente || '—', local: md.local || '—', autor: md.autor || '—', revisao: md.revisao || '01', data: new Date().toLocaleDateString('pt-PT') },
       kpis: {
         nEspacos: espacos.length, nTerminais: terminais.length, nRamais: ramais.length, nUTAs: utas.length, nTransferencias: transferencias.length,
-        Qins: x.ins, Qext: x.ext, Qbal: x.bal, dpMax: x.maxPerda, sfpInt: x.sfpInt, sfpClasse: x.sfpClass.classe, powerW: x.power, estado: x.overall,
+        Qins: x.ins, Qext: x.ext, Qbal: x.bal, dpMax: x.maxPerda, sfpInt: x.sfpInt, sfpClasse: x.sfpClass ? x.sfpClass.classe : null, powerW: x.power, estado: x.overall,
         nComConforto: comConforto.length, somaConforto: comConforto.reduce((s, e) => s + (Number(e.Q_ConTerm) || 0), 0),
         nComQAI: comQAI.length, somaQAI: comQAI.reduce((s, e) => s + (Number(e.QAI_projeto) || 0), 0)
       },
@@ -87,7 +87,7 @@ VC.caderno = {
         h += this._subseccao('4.' + (i + 1) + ' · ' + VC.utils.esc(u.nome));
         h += this._par('Rede: <b>' + (u.rede === 'insuflacao' ? 'Insuflação' : (u.rede === 'extracao_suja' ? 'Extração suja' : 'Extração')) + '</b>. Zona: <b>' + VC.utils.esc(u.zona || '—') + '</b>.');
         h += this._par('Caudal nominal: <b>' + VC.utils.fmt(u.Q, 0) + ' m³/h</b>. Δp ext: <b>' + VC.utils.fmt(u.dpExt, 0) + ' Pa</b>. Δp int: <b>' + VC.utils.fmt(u.dpInt, 0) + ' Pa</b>.');
-        h += this._par('SFPint: <b>' + VC.utils.fmt(u.sfpInt, 0) + ' W/(m³/s)</b> · classe <b>' + (VC.normas.classificarSFP('BVU_HRS', u.sfpInt, 0, u.etaRec).classe) + '</b>.');
+        h += this._par('SFPint: <b>' + VC.utils.fmt(u.sfpInt, 0) + ' W/(m³/s)</b> · classe <b>' + (u.sfpClass && u.sfpClass.classe != null ? u.sfpClass.classe + ' (limite ' + u.sfpClass.limite + ')' : 'sem limite') + '</b>.');
         h += this._par('Potência motor: <b>' + VC.utils.fmt(u.Pmotor, 0) + ' W</b>.');
       });
     } else h += this._par('Sem UTAs configuradas.');
