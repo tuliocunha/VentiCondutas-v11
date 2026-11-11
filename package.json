@@ -6,7 +6,9 @@
   "scripts": {
     "verificar": "node tools/verificar.js",
     "verificar:rapido": "node tools/verificar.js --sem-percurso",
-    "lint": "eslint"
+    "lint": "eslint",
+    "fotografia": "node tools/fotografia.js --gravar fotografia.json",
+    "comparar": "node tools/fotografia.js --comparar fotografia.json"
   },
   "devDependencies": {
     "@eslint/js": "9.15.0",
