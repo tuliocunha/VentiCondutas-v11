@@ -786,6 +786,13 @@ VC.constantes = {
   // v11.1: velocidade máxima por nível do ramal (m/s): N1 principal · N2 secundário · N3 terciário · N4 terminal.
   // Usada no dimensionamento e na auditoria (antes: 6 m/s fixo só na auditoria).
   VMAX_NIVEL: { 1: 6.0, 2: 5.0, 3: 4.0, 4: 3.0 },
+  // v11.1 (4.7): valores de projeto num só sítio.
+  R_ALVO: 1.0,                 // Pa/m · perda de carga linear alvo no método de perda constante (prática ASHRAE/CIBSE)
+  TERMINAL: { vAtencao: 2.2, vMax: 2.5, LwAtencao: 35, LwMax: 40 },   // m/s no colo · dB(A) · critério de conforto (VDI 2081)
+  BALANCO_ESPACO: { sub: 0.90, sobre: 1.20 },                          // Q servido / Q necessário · tolerância da app
+  BALANCO_RESIDUO: 5,          // m³/h · resíduo aceite no balanço de massa de um espaço (2× = desequilíbrio grave)
+  EQUILIBRIO_REDE: 0.20,       // desvio máximo de Δp entre ramais após otimização (20 %)
+  DL101D: { SGTC: 290000, SGT: 100000, INSPECAO: 70000 },             // W · DL 101-D/2020 (gestão técnica e inspeção)
   COMM_S1: [63, 80, 100, 125, 160, 200, 250, 315, 355, 400, 450, 500, 560, 630, 710, 800, 900, 1000, 1120, 1250, 1400, 1600, 1800, 2000],
   COMM_S2: [100, 125, 160, 200, 250, 315, 400, 500, 630, 800, 1000, 1250, 1600, 2000],
   W1505: [100, 150, 200, 250, 300, 400, 500, 600, 700, 800, 900, 1000, 1200, 1400, 1600, 1800, 2000],
@@ -917,9 +924,9 @@ VC.normas = {
   },
   dl101D(potenciaW) {
     const P = Math.max(0, Number(potenciaW) || 0);
-    const SGTC_LIMIAR = 290000;
-    const SGT_LIMIAR  = 100000;
-    const INSPECAO_LIMIAR = 70000;
+    const SGTC_LIMIAR = VC.constantes.DL101D.SGTC;
+    const SGT_LIMIAR  = VC.constantes.DL101D.SGT;
+    const INSPECAO_LIMIAR = VC.constantes.DL101D.INSPECAO;
     let nivelGestao = null;
     if (P >= SGTC_LIMIAR) nivelGestao = 'SGTC';
     else if (P >= SGT_LIMIAR) nivelGestao = 'SGT';

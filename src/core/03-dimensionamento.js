@@ -43,7 +43,7 @@ VC.calculo = {
   dimensionarConduta(Qmh, opts) {
     opts = opts || {};
     const Q = VC.utils.num(Qmh) / 3600;
-    const Vmax = Number(opts.vMax) || 6, Ralvo = 1;
+    const Vmax = Number(opts.vMax) || VC.constantes.VMAX_NIVEL[1], Ralvo = VC.constantes.R_ALVO;
     const eps = opts.eps || (VC.utils.num(VC.dados.params.rugosidade) || 0.15) / 1000;
     const rho = opts.rho || 1.2;
     const nu = opts.nu || 1.5e-5;
@@ -352,8 +352,9 @@ VC.calculo = {
     if (Lw === null) Lw = fb.Lw0 + 10 * Math.log10(Math.max(Q, 1) / fb.Q0);
     const v = Number(term.v_saida) || 0;
     let status = 'OK';
-    if (v > 2.5 || Lw > 40) status = 'NÃO CONF.';
-    else if (v > 2.2 || Lw > 35) status = 'ATENÇÃO';
+    const LT = VC.constantes.TERMINAL;
+    if (v > LT.vMax || Lw > LT.LwMax) status = 'NÃO CONF.';
+    else if (v > LT.vAtencao || Lw > LT.LwAtencao) status = 'ATENÇÃO';
     return Object.assign({}, term, { LwCalc: Lw, dPCalc: dP, throwCalc: throw_ || 0, status, origem, fonte, v });
   },
 
@@ -622,7 +623,7 @@ VC.calculo = {
       });
 
       const totalPower = VC.dados.utas.reduce((s, u) => s + (Number(u.P_motor) || 0), 0);
-      if (totalPower > 290000) findings.push({ severidade: 'ATENÇÃO', tipo: 'BACS', elemento: 'Sistema', msg: 'P > 290 kW' });
+      if (totalPower > VC.constantes.DL101D.SGTC) findings.push({ severidade: 'ATENÇÃO', tipo: 'BACS', elemento: 'Sistema', msg: 'P > ' + VC.constantes.DL101D.SGTC / 1000 + ' kW' });
 
       VC.dados.espacos.forEach(e => {
         const b = this.balancoEspaco(e.nome);
@@ -729,8 +730,8 @@ VC.calculo = {
     else if (nTerminais === 0 && Q_nec > 0) estado = 'ORFAO';
     else if (Q_nec > 0) {
       const ratio = Q_servido / Q_nec;
-      if (ratio < 0.90) estado = 'SUB';
-      else if (ratio > 1.20) estado = 'SOBRE';
+      if (ratio < VC.constantes.BALANCO_ESPACO.sub) estado = 'SUB';
+      else if (ratio > VC.constantes.BALANCO_ESPACO.sobre) estado = 'SOBRE';
       else estado = 'OK';
     }
     return { Q_nec, Q_servido, delta, estado, nTerminais, rede, g: c.g, isento: c.isento, Q_transf_out };
@@ -1082,8 +1083,8 @@ VC.locks = {
    ============================================================ */
 VC.optimizar = {
   MAX_ITER: 10,
-  R_ALVO: 1.0,
-  TOLERANCIA_EQUILIBRIO: 0.20,
+  R_ALVO: VC.constantes.R_ALVO,
+  TOLERANCIA_EQUILIBRIO: VC.constantes.EQUILIBRIO_REDE,
   executar() {
     if (!VC.dados.ramais.length) { VC.ui.toast('Sem ramais para otimizar.'); return; }
     if (!confirm('Executar ciclo de otimização automática?\n\n[1] Ajustar Ø para R = 1 Pa/m\n[2] Corrigir Ø onde v > limite\n[3] Ajustar ζ nos ramais mais curtos\n[4] Máximo ' + this.MAX_ITER + ' iterações\n\nOs ramais com lock de Ø não serão alterados.')) return;

@@ -419,7 +419,7 @@ VC.curvasFabricantes.init();
    V8.0.1: inclui QAI_projeto (insuflação ou extração)
    ============================================================ */
 VC6.balanco = {
-  TOLERANCIA: 5,
+  TOLERANCIA: VC.constantes.BALANCO_RESIDUO,
 
   _qaiInfo(esp) {
     if (!VC.flags || VC.flags.qaiProjeto === false) return { QAI_aplicado: 0, rede: 'insuflacao' };
