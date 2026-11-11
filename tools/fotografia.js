@@ -91,7 +91,7 @@ async function fotografar() {
     const visto = new Set();
     const andar = (o, p, d) => {
       if (!o || d > 3 || visto.has(o)) return; visto.add(o);
-      Object.keys(o).forEach(k => { let v; try { v = o[k]; } catch (e) { return; } if (typeof v === 'function') F.funcoes.push(p + '.' + k); else if (v && typeof v === 'object' && !Array.isArray(v) && !(v instanceof Node) && k !== 'dados') andar(v, p + '.' + k, d + 1); });
+      Object.keys(o).forEach(k => { let v; try { v = o[k]; } catch { return; } if (typeof v === 'function') F.funcoes.push(p + '.' + k); else if (v && typeof v === 'object' && !Array.isArray(v) && !(v instanceof Node) && k !== 'dados') andar(v, p + '.' + k, d + 1); });
     };
     andar(window.VC, 'VC', 0); andar(window.VC6, 'VC6', 0);
     Object.keys(window).filter(k => /^render|^bootstrap/.test(k) && typeof window[k] === 'function').forEach(k => F.funcoes.push('window.' + k));
