@@ -68,7 +68,7 @@ VC6.testes = {
     self.registar({ id: 'N3.T4', nucleo: 'N3', grupo: 'Balanço', nome: 'Sanitário só extrai', criterio: 'Q_transf_in = Q_out_direto', fn: () => { const trf = [{ deId: 2, paraId: 3, Q: 45 }]; return VC6.balanco.residuo(espC, trf) === 0; } });
     self.registar({ id: 'N3.T5', nucleo: 'N3', grupo: 'Balanço', nome: 'Ciclo A→B→A', criterio: 'erro detetado', fn: () => { const trf = [{ deId: 1, paraId: 2, Q: 50 }, { deId: 2, paraId: 1, Q: 50 }]; return VC6.balanco.detetarCiclos(trf).length > 0; } });
     self.registar({ id: 'N3.T6', nucleo: 'N3', grupo: 'Balanço', nome: 'Cascata A→B→C', criterio: 'sem ciclo', fn: () => { const trf = [{ deId: 1, paraId: 2, Q: 50 }, { deId: 2, paraId: 3, Q: 50 }]; return VC6.balanco.detetarCiclos(trf).length === 0; } });
-    self.registar({ id: 'N3.T7', nucleo: 'N3', grupo: 'Balanço', nome: 'Resíduo zero (com transf)', criterio: 'fechado por transferência', fn: () => { const e = { id: 99, nome: 'X', tipo: 'Escritório', g: 1, definicoes: [{ rede: 'insuflacao', Q_total: 100 }] }; return VC6.balanco.residuo(e, []) === 100; } });
+    self.registar({ id: 'N3.T7', nucleo: 'N3', grupo: 'Balanço', nome: 'Resíduo zero (com transf)', criterio: 'insufla 100, transfere 100 → resíduo 0; sem a transferência → 100', fn: () => { const e = { id: 99, nome: 'X', tipo: 'Escritório', g: 1, definicoes: [{ rede: 'insuflacao', Q_total: 100 }] }; const t = [{ deId: 99, paraId: 98, Q: 100 }]; return VC6.balanco.residuo(e, t) === 0 && VC6.balanco.residuo(e, [{ deId: 1, paraId: 2, Q: 5 }]) === 100; } });
     self.registar({ id: 'N3.T8', nucleo: 'N3', grupo: 'Balanço', nome: 'Pressão positiva', criterio: 'espaço com mais in que out', fn: () => { const p = VC6.balanco.pressaoRelativa(espA, 100); return p > 0; } });
     self.registar({ id: 'N3.T9', nucleo: 'N3', grupo: 'Balanço', nome: 'Pressão negativa', criterio: 'espaço com mais out que in', fn: () => { const p = VC6.balanco.pressaoRelativa(espC, -100); return p < 0; } });
     self.registar({ id: 'N3.T10', nucleo: 'N3', grupo: 'Balanço', nome: 'Sistema completo (3 espaços)', criterio: 'todos OK', fn: () => { const trf = [{ deId: 1, paraId: 2, Q: 100 }, { deId: 2, paraId: 3, Q: 100 }]; return Math.abs(VC6.balanco.residuo(espA, trf)) <= 5 && Math.abs(VC6.balanco.residuo(espB, trf)) <= 5; } });
@@ -117,9 +117,30 @@ VC6.testes = {
     self.registar({ id: 'N4.T13', nucleo: 'N4', grupo: 'Dimensionamento', nome: 'Ramal com pai inexistente gera ERRO "Ramal órfão"', criterio: 'finding presente', fn: () => { const r = VC.dados.ramais.find(x => x.parente); if (!r) return true; const ant = r.parente; r.parente = '__nao_existe__'; let ok = false; try { const x = VC.calculo.calcularTudo(); ok = (x.findings || []).some(f => f.tipo === 'Ramal órfão' && f.elemento === r.nome); } finally { r.parente = ant; VC.calculo.calcularTudo(); } return ok; } });
     self.registar({ id: 'N4.T14', nucleo: 'N4', grupo: 'Dimensionamento', nome: 'Pai com espaço a mais no nome continua ligado', criterio: 'sem órfãos', fn: () => { const r = VC.dados.ramais.find(x => x.parente); if (!r) return true; const ant = r.parente; r.parente = ant + ' '; let ok = false; try { const x = VC.calculo.calcularTudo(); ok = !(x.findings || []).some(f => f.tipo === 'Ramal órfão') && r.parente === ant; } finally { r.parente = ant; VC.calculo.calcularTudo(); } return ok; } });
     self.registar({ id: 'N4.T15', nucleo: 'N4', grupo: 'Dimensionamento', nome: 'Δp do terminal = máximo dos terminais do ramal', criterio: 'não a soma', fn: () => { const porRamal = {}; VC.dados.terminais.forEach(t => { if (t.ramalRef) (porRamal[t.ramalRef] = porRamal[t.ramalRef] || []).push(Number(t.dPCalc) || 0); }); return VC.dados.ramais.every(r => { const l = porRamal[r.nome]; return !l || Math.abs((r.deltaP_terminal || 0) - Math.max.apply(null, l)) < 1e-6; }); } });
-    self.registar({ id: 'N4.T16', nucleo: 'N4', grupo: 'Dimensionamento', nome: 'Velocidade ≤ máximo do nível (ramais não travados)', criterio: 'N1 6 · N2 5 · N3 4 · N4 3 m/s', fn: () => VC.dados.ramais.filter(r => !(r.lock && r.lock.D)).every(r => (r.v || 0) <= VC.calculo.vMaxDe(r) + 1e-6) });
+    self.registar({ id: 'N4.T16', nucleo: 'N4', grupo: 'Dimensionamento', nome: 'Velocidade ≤ máximo do nível (ramais não travados)', criterio: 'N1 6 · N2 5 · N3 4 · N4 3 m/s', fn: () => {
+      // v11.1 (fase 5): compara com a tabela VMAX_NIVEL e não com vMaxDe (que é o que se quer vigiar),
+      // e inclui um caso em que o limite decide o diâmetro (o exemplo cumpre mesmo sem limite).
+      const T = VC.constantes.VMAX_NIVEL, nivel = r => r.nivelNumero || VC.utils.nivelTextoParaNumero(r.nivel) || 2;
+      const tabela = [1, 2, 3, 4].every(n => VC.calculo.vMaxDe({ nivelNumero: n }) === T[n]);
+      const decide = VC.calculo.dimensionarConduta(1500, { vMax: VC.calculo.vMaxDe({ nivelNumero: 4 }) }).v <= T[4] + 1e-6;
+      return tabela && decide && VC.dados.ramais.filter(r => !(r.lock && r.lock.D)).every(r => (r.v || 0) <= T[nivel(r)] + 1e-6); } });
     self.registar({ id: 'N4.T17', nucleo: 'N4', grupo: 'Dimensionamento', nome: 'Perda constante respeita vMax em caudais altos', criterio: '20 000 m³/h → v ≤ 6 m/s', fn: () => VC.calculo.dimensionarConduta(20000, { vMax: 6 }).v <= 6 });
     self.registar({ id: 'N4.T18', nucleo: 'N4', grupo: 'Dimensionamento', nome: 'Secção retangular escolhida pelo utilizador é calculada', criterio: 'b×h, De de Huebscher e R próprio', fn: () => { const r = VC.dados.ramais.find(x => !x.parente); if (!r) return true; const ant = r.geometriaInput; const Rcirc = r.R; r.geometriaInput = Object.assign({}, ant || {}, { forma: 'retangular' }); let ok = false; try { VC.calculo.calcularTudo(); ok = r.secaoAdotada === 'retangular' && /^\d+×\d+$/.test(r.secaoCalc || '') && r.De > 0 && Math.abs(r.R - Rcirc) > 1e-6; } finally { r.geometriaInput = ant; VC.calculo.calcularTudo(); } return ok; } });
+    // v11.1 (fase 5): regressão do erro A2 (o balanço do espaço somava insuflação e extração)
+    self.registar({ id: 'N4.T11', nucleo: 'N4', grupo: 'Balanço', nome: 'Escritório com 1 difusor e 1 grelha do mesmo caudal → OK', criterio: 'só a insuflação conta para o escritório (antes: soma → SOBRE)', fn: () => {
+      const d = VC.dados, e = { id: 9991, nome: '__TESTE_ESCRITORIO__', tipo: 'Escritório', A: 15, H: 2.6, V: 39, N: 2, definicoes: [] };
+      d.espacos.push(e);
+      try {
+        const q = Math.round(VC.calculo.calcularQEspaco(e).Q_espaco);
+        const ts = [{ id: 'T-9991-I', rede: 'insuflacao', ramalRef: '', Q: q, espacos: [{ nome: e.nome, Q_parcela: q }] }, { id: 'T-9991-X', rede: 'extracao', ramalRef: '', Q: q, espacos: [{ nome: e.nome, Q_parcela: q }] }];
+        ts.forEach(t => d.terminais.push(t));
+        try { const b = VC.calculo.balancoEspaco(e.nome); return q > 0 && b.estado === 'OK' && Math.round(b.Q_servido) === q; }
+        finally { ts.forEach(t => d.terminais.splice(d.terminais.indexOf(t), 1)); }
+      } finally { d.espacos.splice(d.espacos.indexOf(e), 1); VC.perf && VC.perf.cacheCalculo && VC.perf.cacheCalculo.invalidar(); } } });
+    self.registar({ id: 'N4.T19', nucleo: 'N4', grupo: 'Hidráulico', nome: 'Caudal de cada ramal = terminais próprios + sub-ramais', criterio: 'o erro "R1 com menos caudal do que R1.1" não volta', fn: () => {
+      const R = VC.dados.ramais; if (!R.length) return true;
+      return R.every(r => { const filhos = R.filter(f => f.parente === r.nome); const proprio = VC.dados.terminais.filter(t => t.ramalRef === r.nome).reduce((s, t) => s + (Number(t.Q) || 0), 0);
+        return Math.abs((Number(r.Q) || 0) - proprio - filhos.reduce((s, f) => s + (Number(f.Q) || 0), 0)) < 1 && filhos.every(f => (Number(r.Q) || 0) >= (Number(f.Q) || 0)); }); } });
     self.registar({ id: 'N6.T10', nucleo: 'N6', grupo: 'Balanço', nome: 'Terminal↔espaço compara só a rede certa', criterio: 'insuflação 72 + extração 72 para Q=72 → OK', fn: () => { const esp = VC.dados.espacos.find(e => (e.g || 1) === 1 && VC.calculo.terminaisQueServem(e.nome).length >= 2); if (!esp) return true; const b = VC.calculo.balancoEspaco(esp.nome); return b.rede === 'insuflacao' && b.Q_servido === VC.calculo.QservidoAoEspaco(esp.nome, 'insuflacao'); } });
     self.registar({ id: 'N6.T9', nucleo: 'N6', grupo: 'UTAs', nome: 'P_motor = Q·(Δp_int+Δp_ext)/η·fs/transmissão', criterio: '±1 W', fn: () => VC.dados.utas.filter(u => u.ativo !== false).every(u => { const esperado = (u.Q || 0) * ((u.dpInt || 0) + (u.dpExt || 0)) / Math.max(u.eta || 0.65, 0.01) * (u.fs || 1.15) / Math.max(u.transmissao || 1, 0.01); return Math.abs((u.P_motor || 0) - esperado) <= 1; }) });
     self.registar({ id: 'N6.T2', nucleo: 'N6', grupo: 'UTAs', nome: 'Δp ext = Δp_total crítico', criterio: 'máximo', fn: () => { const u = VC.dados.utas[0]; if (!u) return true; const ramais = VC.dados.ramais.filter(r => r.utaRef === u.id); const max = ramais.reduce((m, r) => Math.max(m, r.deltaPtotal || 0), 0); return Math.abs((u.dpExt || 0) - max) < 1 || ramais.length === 0; } });
@@ -162,6 +183,24 @@ VC6.testes = {
     self.registar({ id: 'N8.T3', nucleo: 'N8', grupo: 'Relatórios', nome: 'Excel disponível', criterio: 'função', fn: () => typeof VC.exportacoes.excel === 'function' });
     self.registar({ id: 'N8.T4', nucleo: 'N8', grupo: 'Relatórios', nome: 'Caderno renderInline gera HTML', criterio: '> 1000 chars', fn: () => { try { const h = VC.caderno && VC.caderno.renderInline ? VC.caderno.renderInline() : ''; return typeof h === 'string' && h.length > 1000; } catch (e) { return false; } } });
     self.registar({ id: 'N8.T5', nucleo: 'N8', grupo: 'Relatórios', nome: 'SheetJS carregado', criterio: 'window.XLSX', fn: () => typeof XLSX !== 'undefined' });
+    // v11.1 (fase 5): exportações geram o ficheiro sem erro (o save é intercetado: nada é descarregado)
+    self.registar({ id: 'N8.T6', nucleo: 'N8', grupo: 'Exportação', nome: 'PDF gera-se sem exceção', criterio: 'doc.save chamado com nome .pdf e sem toast de erro', fn: () => {
+      const J = window.jspdf && window.jspdf.jsPDF; if (!J || !VC.exportacoes || !VC.exportacoes.pdf) return true;
+      // save vive no protótipo; o teste põe uma cópia em J.API e no fim apaga-a (repor 'undefined' partia o PDF)
+      const tinha = Object.prototype.hasOwnProperty.call(J.API, 'save'), saveOrig = J.API.save, toastOrig = VC.ui.toast; let nome = null, erro = null;
+      J.API.save = function (n) { nome = n; return this; };
+      VC.ui.toast = function (m) { if (/erro/i.test(String(m))) erro = m; };
+      try { VC.exportacoes.pdf(); } catch (e) { erro = e.message; }
+      finally { if (tinha) J.API.save = saveOrig; else delete J.API.save; VC.ui.toast = toastOrig; }
+      const doc = new J(); const aindaGuarda = typeof doc.save === 'function';
+      return !erro && /\.pdf$/.test(nome || '') && aindaGuarda; } });
+    self.registar({ id: 'N8.T7', nucleo: 'N8', grupo: 'Exportação', nome: 'Excel gera-se sem exceção', criterio: 'XLSX.writeFile chamado com nome .xlsx', fn: () => {
+      if (typeof XLSX === 'undefined' || !VC.exportacoes || !VC.exportacoes.excel) return true;
+      const orig = XLSX.writeFile, toastOrig = VC.ui.toast; let nome = null, folhas = 0, erro = null;
+      XLSX.writeFile = function (wb, n) { nome = n; folhas = (wb && wb.SheetNames || []).length; };
+      VC.ui.toast = function (m) { if (/erro/i.test(String(m))) erro = m; };
+      try { VC.exportacoes.excel(); } catch (e) { erro = e.message; } finally { XLSX.writeFile = orig; VC.ui.toast = toastOrig; }
+      return !erro && /\.xlsx$/.test(nome || '') && folhas > 0; } });
   },
 
   initN9() {
@@ -241,6 +280,23 @@ VC6.testes = {
     self.registar({ id: 'UI.T8', nucleo: 'UI', grupo: 'UI', nome: 'Toast existe', criterio: 'elemento presente', fn: () => !!document.getElementById('toast') });
     self.registar({ id: 'UI.T9', nucleo: 'UI', grupo: 'UI', nome: 'Modais V8 existem', criterio: '3 modais', fn: () => ['modalBalanco', 'modalTestes', 'modalExemplos'].every(id => !!document.getElementById(id)) });
     self.registar({ id: 'UI.T10', nucleo: 'UI', grupo: 'UI', nome: 'Debug disponível', criterio: 'VC.debug.registar', fn: () => !!VC.debug && typeof VC.debug.registar === 'function' });
+    // v11.1 (fase 5): nenhum botão dos ecrãs chama uma função VC.* que não exista (erros B2, B4, B7)
+    self.registar({ id: 'UI.T11', nucleo: 'UI', grupo: 'UI', nome: 'Todos os botões chamam funções que existem', criterio: 'onclick/onchange de todos os passos → VC.…( definido', fn: () => {
+      const ativo = VC._passoAtivo || 'setup', falta = new Set();
+      const existe = p => { let o = window; for (const k of p.split('.')) { if (o == null || !(k in Object(o))) return false; o = o[k]; } return typeof o === 'function'; };
+      const ver = () => document.querySelectorAll('[onclick],[onchange],[oninput]').forEach(el => ['onclick', 'onchange', 'oninput'].forEach(a => {
+        const v = el.getAttribute(a) || ''; if (/_cartaoVisualCard\(/.test(v)) return;
+        for (const m of v.matchAll(/\b(VC6?(?:\.[A-Za-z_$][\w$]*)+)\(/g)) if (!existe(m[1])) falta.add(m[1]);
+      }));
+      try { (VC.passosCatalogo || []).filter(p => p.id !== 'diagnostico').forEach(p => { VC.passos.render(p.id); ver(); }); } finally { VC.passos.render(ativo); }
+      ver();
+      if (falta.size && VC.debug && VC.debug.aviso) VC.debug.aviso('UI.T11 funções em falta: ' + [...falta].join(', '));
+      return falta.size === 0; } });
+    self.registar({ id: 'UI.T12', nucleo: 'UI', grupo: 'UI', nome: 'Ajuda por clique (VC.tooltips.mostrar)', criterio: 'abre o popup com o título da chave', fn: () => {
+      if (!VC.tooltips || typeof VC.tooltips.mostrar !== 'function') return false;
+      const b = document.createElement('span'); document.body.appendChild(b);
+      try { VC.tooltips.mostrar('tipo_espaco', b); const p = document.getElementById('ttPopup'); return !!p && /\bon\b/.test(p.className) && p.textContent.length > 0; }
+      finally { if (VC.tooltips.esconder) VC.tooltips.esconder(); b.remove(); } } });
   },
 
   correr() {
@@ -249,6 +305,14 @@ VC6.testes = {
       this.initN6(); this.initN7(); this.initN8(); this.initN9();
       this.initN10(); this.initN11(); this.initIntegracao(); this.initUI();
     }
+    // v11.1 (fase 5): um teste que desenha ecrãs pode passar pelo ecrã de Diagnóstico, que corre os
+    // testes; sem esta guarda isso seria recursivo. Durante uma corrida devolve o último resultado.
+    if (this._aCorrer) return this._resultado || { total: 0, pass: 0, fail: 0, detalhe: [], porNucleo: {} };
+    this._aCorrer = true;
+    try { return this._correr(); } finally { this._aCorrer = false; }
+  },
+
+  _correr() {
     const inicio = performance.now ? performance.now() : Date.now();
     const res = { total: 0, pass: 0, fail: 0, detalhe: [], porNucleo: {} };
     this._lista.forEach(t => {
