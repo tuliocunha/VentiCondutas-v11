@@ -1395,7 +1395,7 @@ VC.editorRamais = VC.editorRamais || {
  h += '<tr onclick="this.closest(\'tbody\').querySelectorAll(\'tr\').forEach(r=>r.classList.remove(\'linha-destaque\')); this.classList.add(\'linha-destaque\')">' +  
  '<td class="center mono" style="font-weight:800;color:var(--texto-suave)">' + (visualIdx + 1) + '</td>' +  
  '<td><b>' + VC.utils.esc(r.nome) + '</b></td>' +  
- '<td><span class="badge nivel-r' + nivelNum + '">R' + nivelNum + '</span></td>' +  
+ '<td><span class="badge nivel-r' + nivelNum + '" title="' + VC.utils.nivelRotulo(nivelNum, true) + '">' + VC.utils.nivelRotulo(nivelNum) + '</span></td>' +  
  '<td><input type="number" step="0.5" value="' + (r.L || 0) + '" onchange="VC.editorRamais.editar(' + i + ', \'L\', this.value)" ' + dis + '></td>' +  
  '<td><input type="number" step="0.1" value="' + VC.utils.fmt(r.zeta || 0, 1) + '" onchange="VC.editorRamais.editar(' + i + ', \'zeta\', this.value)" ' + dis + '></td>' +  
  '<td><b>' + (r.Dcom || '-') + '</b></td>' +  

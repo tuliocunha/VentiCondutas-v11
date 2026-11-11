@@ -143,7 +143,7 @@ R.dimensionamento = function () {
    const nivel = r.nivelNumero || 2;
    const badgeCor = ['#4f6d8c','#6d8fb0','#a7c0d6','#d6e3ef'][nivel-1] || '#6d8fb0';
    const txtCor = nivel === 4 ? '#2c3e50' : '#ffffff';
-   const badgeHtml = `<span style="background:${badgeCor}; color:${txtCor}; padding:3px 6px; border-radius:4px; font-size:9px; font-weight:900">R${nivel}</span>`;
+   const badgeHtml = `<span style="background:${badgeCor}; color:${txtCor}; padding:3px 6px; border-radius:4px; font-size:9px; font-weight:900">${VC.utils.nivelRotulo(nivel)}</span>`;
    return [VC.utils.esc(r.nome), badgeHtml, VC.utils.esc(r.rede), VC.utils.fmt(r.Q, 0), VC.utils.fmt(r.L, 1), r.Dcom || '—', VC.utils.fmt(r.v, 2), VC.utils.fmt(r.Re, 0), VC.utils.fmt(r.deltaPTroco, 1), VC.utils.fmt(r.deltaPtotal, 1), `<b>${VC.utils.fmt(r.deltaPCritico, 1)}</b>`];
  }));
  return h + R.rodape();
@@ -166,7 +166,7 @@ R.requisitos = function () {
 R.associacao = function () {
   let h = R.cabecalho('Associação Terminais ↔ Ramais', 'Derivada dos terminais');
   h += R.secao('1', 'Ramais e terminais');
-  h += R.tabela(['Ramal', 'Nível', 'Rede', 'Q derivado', 'N terminais', 'N espaços'], VC.dados.ramais.map(r => { const nTerm = VC.dados.terminais.filter(t => t.ramalRef === r.nome).length; const espacos = VC.calculo.espacosServidosPorRamal(r.nome); return [VC.utils.esc(r.nome), 'R' + (r.nivelNumero || 2), VC.utils.esc(r.rede), VC.utils.fmt(r.Q, 0), nTerm, espacos.length]; }));
+  h += R.tabela(['Ramal', 'Nível', 'Rede', 'Q derivado', 'N terminais', 'N espaços'], VC.dados.ramais.map(r => { const nTerm = VC.dados.terminais.filter(t => t.ramalRef === r.nome).length; const espacos = VC.calculo.espacosServidosPorRamal(r.nome); return [VC.utils.esc(r.nome), VC.utils.nivelRotulo(r.nivelNumero || 2), VC.utils.esc(r.rede), VC.utils.fmt(r.Q, 0), nTerm, espacos.length]; }));
   return h + R.rodape();
 };
 
@@ -286,7 +286,7 @@ R.pressoes = function () {
 };
 
 R.redeAr = function () {
-  let h = R.cabecalho('Diagrama de Rede de Ar', 'UTA → R1 → R2 → R3 → R4 → Espaços');
+  let h = R.cabecalho('Diagrama de Rede de Ar', 'UTA → N1 → N2 → N3 → N4 → Espaços (níveis dos ramais)');
   if (VC6.diagrama && VC6.diagrama.integrarRelatorio) {
     h += R.secao('1', 'Diagrama');
     h += '<div style="height:auto;max-height:720px">' + VC6.diagrama.renderSVG() + '</div>';

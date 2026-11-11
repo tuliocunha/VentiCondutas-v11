@@ -115,6 +115,13 @@ VC.utils = {
     if (subIndice != null) return 'R' + n + '.' + i + '.' + subIndice;
     return 'R' + n + '.' + i;
   },
+  /* v11.1: rótulo do NÍVEL do ramal (N1–N4). Não usar 'R1…R4': nos nomes dos ramais
+     (R1.1, R2.1…) o primeiro número é a REDE/UTA, o que tornava 'R1' ambíguo. */
+  nivelRotulo(n, longo) {
+    n = Number(n) || 2;
+    const nomes = { 1: 'Principal', 2: 'Secundário', 3: 'Terciário', 4: 'Terminal' };
+    return 'N' + n + (longo ? ' · ' + (nomes[n] || '') : '');
+  },
   nivelTextoParaNumero(nivel) {
     const mapa = { 'primario': 1, 'secundario': 2, 'terciario': 3, 'quaternario': 4, 'r1': 1, 'r2': 2, 'r3': 3, 'r4': 4 };
     return mapa[String(nivel || '').toLowerCase()] || 2;
