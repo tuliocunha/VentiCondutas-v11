@@ -32,30 +32,45 @@ if(!document.getElementById('vc-force-ui')) {
 
 if (!VC.tooltips._realImpl) {
   VC.tooltips._realImpl = true;
+  /* v11.1: desenho do popup partilhado pelo hover (instalar) e pelo clique (mostrar) */
+  VC.tooltips._desenhar = function (chave, x, y) {
+    const info = (VC.conhecimento && VC.conhecimento.tooltips) ? VC.conhecimento.tooltips[chave] : null;
+    const p = document.getElementById('ttPopup');
+    if (!info || !p) return false;
+    p.className = 'tt-popup on';
+    let html = '<div class="tt-titulo">' + VC.utils.esc(info.titulo || chave) + '</div>';
+    if (info.desc) html += '<div class="tt-desc">' + info.desc + '</div>';
+    if (info.contexto) html += '<div class="tt-desc" style="font-size:10.5px;opacity:0.8;margin-top:4px;border-top:1px dashed #475569;padding-top:4px;">' + info.contexto + '</div>';
+    if (info.formula) html += '<div class="tt-desc" style="font-family:monospace;background:rgba(255,255,255,0.1);padding:4px;border-radius:4px;margin-top:4px;">' + VC.utils.esc(info.formula) + '</div>';
+    if (info.norma) html += '<div class="tt-desc" style="color:#86efac;font-weight:800;font-size:9.5px;margin-top:4px;">📘 ' + VC.utils.esc(info.norma) + '</div>';
+    p.innerHTML = html;
+    p.style.left = Math.max(8, Math.min(x + 12, window.innerWidth - 320)) + 'px';
+    p.style.top = Math.max(8, Math.min(y + 12, window.innerHeight - 200)) + 'px';
+    return true;
+  };
+
   VC.tooltips.instalar = function() {
     document.addEventListener('mouseover', (ev) => {
       const el = ev.target.closest('[data-tt],[data-tt-simbolo]');
       if (!el) return;
-      const chave = el.getAttribute('data-tt') || el.getAttribute('data-tt-simbolo');
-      const info = (VC.conhecimento && VC.conhecimento.tooltips) ? VC.conhecimento.tooltips[chave] : null;
-      if (!info) return;
-      const p = document.getElementById('ttPopup');
-      if (!p) return;
-      p.className = 'tt-popup on';
-      let html = '<div class="tt-titulo">' + VC.utils.esc(info.titulo || chave) + '</div>';
-      if (info.desc) html += '<div class="tt-desc">' + info.desc + '</div>';
-      if (info.contexto) html += '<div class="tt-desc" style="font-size:10.5px;opacity:0.8;margin-top:4px;border-top:1px dashed #475569;padding-top:4px;">' + info.contexto + '</div>';
-      if (info.formula) html += '<div class="tt-desc" style="font-family:monospace;background:rgba(255,255,255,0.1);padding:4px;border-radius:4px;margin-top:4px;">' + VC.utils.esc(info.formula) + '</div>';
-      if (info.norma) html += '<div class="tt-desc" style="color:#86efac;font-weight:800;font-size:9.5px;margin-top:4px;">📘 ' + VC.utils.esc(info.norma) + '</div>';
-      p.innerHTML = html;
-      p.style.left = Math.min(ev.clientX + 12, window.innerWidth - 320) + 'px';
-      p.style.top = Math.min(ev.clientY + 12, window.innerHeight - 200) + 'px';
+      VC.tooltips._desenhar(el.getAttribute('data-tt') || el.getAttribute('data-tt-simbolo'), ev.clientX, ev.clientY);
     });
     document.addEventListener('mouseout', (ev) => {
       if (!ev.target.closest('[data-tt],[data-tt-simbolo]')) return;
       const p = document.getElementById('ttPopup');
       if (p) p.classList.remove('on');
     });
+  };
+
+  /* v11.1: ajuda por clique nos botões "?" (necessária em ecrã tátil). Antes não existia e
+     cada clique dava "VC.tooltips.mostrar is not a function". Fecha com novo clique ou Esc. */
+  VC.tooltips.mostrar = function (chave, el) {
+    const r = el && el.getBoundingClientRect ? el.getBoundingClientRect() : { right: 40, bottom: 40 };
+    if (!VC.tooltips._desenhar(chave, r.right, r.bottom)) return;
+    setTimeout(() => document.addEventListener('click', function fechar() {
+      VC.tooltips.esconder();
+      document.removeEventListener('click', fechar);
+    }), 0);
   };
 
   VC.tooltips.esconder = function() {
