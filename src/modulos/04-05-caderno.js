@@ -84,7 +84,7 @@ VC.caderno = {
     h += this._seccao('4', 'UTAs e ventiladores');
     if (c.utas.length) {
       c.utas.forEach((u, i) => {
-        h += this._subseccao('4.' + (i + 1) + ' · ' + u.nome);
+        h += this._subseccao('4.' + (i + 1) + ' · ' + VC.utils.esc(u.nome));
         h += this._par('Rede: <b>' + (u.rede === 'insuflacao' ? 'Insuflação' : (u.rede === 'extracao_suja' ? 'Extração suja' : 'Extração')) + '</b>. Zona: <b>' + VC.utils.esc(u.zona || '—') + '</b>.');
         h += this._par('Caudal nominal: <b>' + VC.utils.fmt(u.Q, 0) + ' m³/h</b>. Δp ext: <b>' + VC.utils.fmt(u.dpExt, 0) + ' Pa</b>. Δp int: <b>' + VC.utils.fmt(u.dpInt, 0) + ' Pa</b>.');
         h += this._par('SFPint: <b>' + VC.utils.fmt(u.sfpInt, 0) + ' W/(m³/s)</b> · classe <b>' + (VC.normas.classificarSFP('BVU_HRS', u.sfpInt, 0, u.etaRec).classe) + '</b>.');
