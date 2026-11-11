@@ -63,7 +63,12 @@ async function fotografar() {
 
   const foto = await page.evaluate(() => {
     const n = x => (typeof x === 'number' && isFinite(x)) ? Math.round(x * 1000) / 1000 : x;
-    const texto = html => { const d = document.createElement('div'); d.innerHTML = String(html || ''); return d.textContent.replace(/\s+/g, ' ').trim(); };
+    // O texto de um SVG compara-se como conjunto ordenado: a ordem de desenho dos elementos varia entre corridas.
+    const texto = html => {
+      const d = document.createElement('div'); d.innerHTML = String(html || '');
+      d.querySelectorAll('svg').forEach(s => { const t = [...s.querySelectorAll('text')].map(e => e.textContent.trim()).filter(Boolean).sort(); s.replaceWith('[SVG: ' + t.join(' · ') + ']'); });
+      return d.textContent.replace(/\s+/g, ' ').trim();
+    };
     const F = {};
     const x = VC.calculo.calcularTudo();
     F.calculo = {
