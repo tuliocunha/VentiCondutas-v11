@@ -492,7 +492,8 @@ VC.calculo = {
 
   calcularVentiladores() {
     const rho = VC.fisica.rho(VC.dados.params.temperatura, VC.dados.params.humidade, VC.dados.params.altitude);
-    const isExt = t => /(extra|retorno|exaust)/i.test((t.tipo || '') + ' ' + (t.nome || '')) || t.rede === 'extracao' || t.rede === 'extracao_suja';
+    // v11.1: a rede decide (como no resto da app). O nome/tipo do terminal já não conta.
+    const isExt = t => t.rede === 'extracao' || t.rede === 'extracao_suja';
     const ins = VC.dados.terminais.filter(t => !isExt(t)).reduce((s, t) => s + (Number(t.Q) || 0), 0);
     const ext = VC.dados.terminais.filter(isExt).reduce((s, t) => s + (Number(t.Q) || 0), 0);
     const porRede = { insuflacao: null, extracao: null };
@@ -1077,8 +1078,6 @@ VC.locks = {
 VC.optimizar = {
   MAX_ITER: 10,
   R_ALVO: 1.0,
-  V_MAX_INSUFL: 6.0,
-  V_MAX_EXTRACAO: 5.0,
   TOLERANCIA_EQUILIBRIO: 0.20,
   executar() {
     if (!VC.dados.ramais.length) { VC.ui.toast('Sem ramais para otimizar.'); return; }
@@ -1095,7 +1094,7 @@ VC.optimizar = {
         if (VC.locks.ativo(r)) return;
         const Qef = Number(r.Q || 0);
         if (Qef <= 0) return;
-        const z = VC.calculo.dimensionarConduta(Qef);
+        const z = VC.calculo.dimensionarConduta(Qef, { vMax: VC.calculo.vMaxDe(r) });   // v11.1: limite por nível
         if (z.Dc && z.Dc !== r.Dcom) { r.Dcom = z.Dc; nAjustados++; }
       });
       if (nAjustados) acoes.push('Fase 1: ' + nAjustados + ' Ø ajustados');
@@ -1103,7 +1102,7 @@ VC.optimizar = {
       let nVel = 0;
       VC.dados.ramais.forEach(r => {
         if (VC.locks.ativo(r)) return;
-        const vLim = (r.rede === 'extracao' || r.rede === 'extracao_suja') ? this.V_MAX_EXTRACAO : this.V_MAX_INSUFL;
+        const vLim = VC.calculo.vMaxDe(r);   // v11.1: o mesmo limite por nível do dimensionamento (3.5)
         if ((Number(r.v) || 0) > vLim) {
           const Qef = Number(r.Q || 0);
           let lo = r.Dcom || 100, hi = 3000, Dc = lo;
