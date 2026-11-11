@@ -585,7 +585,7 @@ window.renderConfig = function () {
 function bootstrapFinal() {
   try {
     const inicio = performance.now ? performance.now() : Date.now(); if (!VC.catalogo.hierarquia.length) VC.catalogo.init(); if (VC.exemplos && typeof VC.exemplos.init === 'function') VC.exemplos.init(); VC.atualizarVersaoNaUI();
-    if (!VC.dados.espacos.length) { if (typeof VC.carregarDegradeTorresVedras === 'function') VC.carregarDegradeTorresVedras(); else if (typeof VC.exemploV6 === 'function') VC.exemploV6(); else if (typeof VC.exemplo === 'function') VC.exemplo(); }
+    if (!VC.dados.espacos.length) { if (typeof VC.carregarDegradeTorresVedras === 'function') VC.carregarDegradeTorresVedras(); else if (typeof VC.exemploV6 === 'function') VC.exemploV6(); }
     else { VC.calculo.migrarRedes(); if (VC.rph && VC.rph.aplicarATodos) VC.rph.aplicarATodos(); if (VC.qai && VC.qai.aplicarATodos) VC.qai.aplicarATodos(); VC.calculo.calcularTudo(); if (VC6.balanco) VC6.balanco.propagar(); }
     VC.ui.renderSidebar(); if (VC.passos && typeof VC.passos.render === 'function') VC.passos.render('setup'); VC.modos.set('condutas'); if (VC.tooltips) VC.tooltips.instalar();
 

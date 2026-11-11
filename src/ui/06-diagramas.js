@@ -721,7 +721,7 @@ VC.passos.render = function (passo) {
     else el.innerHTML = '<div class="vazio"><i class="fa-solid fa-hourglass-half"></i><div class="vazio-titulo">Passo: ' + VC.utils.esc(passo) + '</div></div>';
   } catch (e) { VC.debug.erro(e); el.innerHTML = '<div class="vazio"><i class="fa-solid fa-triangle-exclamation"></i><div class="vazio-titulo">Erro: ' + VC.utils.esc(passo) + '</div><div>' + VC.utils.esc(e.message) + '</div></div>'; }
   if (VC.ui && typeof VC.ui.renderPainelInferior === 'function') VC.ui.renderPainelInferior(passo);
-  if (VC.ui && typeof VC.ui.atualizarSidebar === 'function') VC.ui.atualizarSidebar();
+  // v11.1: removida a chamada a VC.ui.atualizarSidebar (função inexistente; nunca corria)
   if (VC.tooltips && typeof VC.tooltips.reinstalar === 'function') {
     setTimeout(() => VC.tooltips.reinstalar(), 10);
   }
@@ -767,11 +767,7 @@ VC.ui.renderPainelInferior = function (passo) {
   el.innerHTML = h;
 };
 
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', function () {
-    setTimeout(function () { if (VC6.diagrama && VC6.diagrama._renderSeletorUta) VC6.diagrama._renderSeletorUta(); }, 300);
-  });
-}
+/* v11.1: removida a chamada a VC6.diagrama._renderSeletorUta (função inexistente) */
 
 console.log('%c[VentCondutas V11.0.0] 06-diagramas carregado · Sankey + Painel 2x3 Contextual', 'color:#6d8fb0;font-weight:bold;background:#eaf1f7;padding:3px 6px;border-radius:3px');
 

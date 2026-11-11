@@ -173,13 +173,7 @@ R.associacao = function () {
 R.arvore = function () {  
  let h = R.cabecalho('Árvore de Condutas e Hierarquia', 'Hierarquia visual UTA → Ramais → Espaços');  
    
- if (typeof VC6 !== 'undefined' && VC6.redeCondutas && VC6.redeCondutas.renderSVG) {  
- h += R.secao('1', 'Árvore Volumétrica dos Ramais de Condutas');  
- h += '<p style="font-size:11.5px;color:var(--texto-med);margin-bottom:10px">Representação gráfica interativa da rede de condutas, com espessura proporcional ao diâmetro e comprimento proporcional à realidade física.</p>';  
- h += '<div style="background:var(--superf2);padding:14px;border-radius:6px;border:1px solid var(--borda);overflow-x:auto;">' + VC6.redeCondutas.renderSVG() + '</div>';  
- return h + R.rodape();  
- }  
-   
+ // v11.1: removido o ramo que dependia de VC6.redeCondutas (módulo que não existe).
  const ramais = VC.dados.ramais || [];  
  const porNome = {};  
  ramais.forEach(r => { porNome[r.nome] = r; });  
