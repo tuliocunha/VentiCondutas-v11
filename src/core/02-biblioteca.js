@@ -533,6 +533,9 @@ VC6.balanco = {
       else if (Math.abs(r) > this.TOLERANCIA) estado = 'DESEQUILIBRIO_LEVE';
 
       esp.balanco = {
+        id: esp.id,          // v11.1: identificação do espaço (relatórios, PDF, Excel)
+        nome: esp.nome,
+        g: g,
         Q_in_direto: inD,
         Q_out_direto: outD,
         Q_conforto_in: qConfortoIn,
@@ -585,14 +588,15 @@ VC6.balanco = {
   },
 
   todos() {
-    return (VC.dados && VC.dados.espacos || []).map(e => e.balanco || {
-      id: e.id, nome: e.nome, g: e.g || 1,
+    // v11.1: garante id/nome/g mesmo em balanços gravados por versões anteriores
+    return (VC.dados && VC.dados.espacos || []).map(e => Object.assign({
+      g: e.g || 1,
       Q_in_direto: 0, Q_out_direto: 0,
       Q_conforto_in: 0, Q_conforto_out: 0,
       QAI_aplicado: 0, QAI_rede: 'insuflacao',
       Q_transf_in: 0, Q_transf_out: 0,
       residuo: 0, pressao_relativa_Pa: 0, estado: 'PENDENTE'
-    });
+    }, e.balanco || {}, { id: e.id, nome: e.nome }));
   },
 
   resumo() {
@@ -799,7 +803,7 @@ Object.assign(VC.dados, {
     nome: 'Degrade Torres Vedras 18out26',
     cliente: '', local: 'Torres Vedras, Portugal', autor: '', revisao: '01'
   },
-  params: VC.dados.params || { altitude: 150, temperatura: 22, humidade: 50, rugosidade: 0.15 },
+  params: VC.dados.params || { altitude: 150, temperatura: 22, humidade: 50, rugosidade: 0.15, categoria: 'II' },
   tipologia: VC.dados.tipologia || 'publico',
   restricaoH: VC.dados.restricaoH || 250,
   eficaciaRemocao: VC.dados.eficaciaRemocao || 1.0,

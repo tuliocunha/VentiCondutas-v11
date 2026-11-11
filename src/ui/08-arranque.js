@@ -313,11 +313,11 @@ window.renderSetup = function () {
   h += '<div style="font-weight:800;font-size:12px;color:var(--primario-esc);margin-bottom:8px;display:flex;align-items:center;gap:6px"><i class="fa-solid fa-users-viewfinder"></i> 2. QAI & Normativos</div>';
   
   const catSel = p.categoria || 'II';
-  h += '<div class="campo-grupo" style="margin-bottom:8px"><label>Categoria EN 16798-1</label><select onchange="VC.dados.params.categoria=this.value; if(VC.calculo.sincronizarSetup) VC.calculo.sincronizarSetup(); VC.estado.sincronizar();">' +
+  h += '<div class="campo-grupo" style="margin-bottom:8px"><label>Categoria EN 16798-1 <span style="font-weight:400;opacity:.7">(comparação)</span></label><select title="Usada só para comparar com o caudal da Portaria 138-I (Q_EN16798)" onchange="VC.dados.params.categoria=this.value; if(VC.perf&&VC.perf.cacheCalculo) VC.perf.cacheCalculo.invalidar(); VC.estado.sincronizar();">' +
        '<option value="I"' + (catSel==='I'?' selected':'') + '>Cat. I (Rp 10 · Ra 1.0)</option>' +
        '<option value="II"' + (catSel==='II'?' selected':'') + '>Cat. II (Rp 7 · Ra 0.7)</option>' +
        '<option value="III"' + (catSel==='III'?' selected':'') + '>Cat. III (Rp 4 · Ra 0.4)</option>' +
-       '<option value="IV"' + (catSel==='IV'?' selected':'') + '>Cat. IV (Rp 5.5 · Ra 0.55)</option>' +
+       '<option value="IV"' + (catSel==='IV'?' selected':'') + '>Cat. IV (Rp 2.5 · Ra 0.3)</option>' +
        '</select></div>';
 
   h += '<div class="campo-grupo" style="margin-bottom:8px"><label>Eficácia de Remoção (εv)</label><input type="number" step="0.1" min="0.1" value="' + (VC.dados.eficaciaRemocao ?? 1.0) + '" onchange="VC.dados.eficaciaRemocao=VC.utils.num(this.value); VC.estado.sincronizar();"></div>';

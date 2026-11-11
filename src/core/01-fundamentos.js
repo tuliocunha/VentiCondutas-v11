@@ -680,7 +680,7 @@ VC.estado._ultimoHash = null;
 VC.estado._hashEstado = function () {
   const partes = [];
   const p = VC.dados && VC.dados.params;
-  if (p) partes.push(p.altitude + '|' + p.temperatura + '|' + p.humidade + '|' + p.rugosidade);
+  if (p) partes.push(p.altitude + '|' + p.temperatura + '|' + p.humidade + '|' + p.rugosidade + '|' + (p.categoria || 'II'));
   partes.push(VC.dados && VC.dados.tipologia || '');
   partes.push(VC.dados && VC.dados.restricaoH || 0);
   partes.push(VC.dados && VC.dados.eficaciaRemocao || 1);
@@ -832,9 +832,12 @@ VC.fisica = {
 
 VC.normas = {
   getDef(tipo) {
-    const cat = 'II';
-    const brp = cat === 'I' ? 10 : (cat === 'III' ? 4 : (cat === 'IV' ? 5.5 : 7));
-    const bra = cat === 'I' ? 1.0 : (cat === 'III' ? 0.4 : (cat === 'IV' ? 0.55 : 0.7));
+    // v11.1: categoria escolhida no Setup (antes estava fixa em 'II').
+    // Valores EN 16798-1 (Anexo B): q por pessoa e q por m² para edifício pouco poluente.
+    // A categoria é usada só para COMPARAÇÃO (Q_EN16798); o caudal de projeto segue a Portaria 138-I.
+    const cat = (VC.dados && VC.dados.params && VC.dados.params.categoria) || 'II';
+    const brp = cat === 'I' ? 10 : (cat === 'III' ? 4 : (cat === 'IV' ? 2.5 : 7));
+    const bra = cat === 'I' ? 1.0 : (cat === 'III' ? 0.4 : (cat === 'IV' ? 0.3 : 0.7));
     const d = VC.conhecimento.tiposEspaco[tipo] || { g: 1, gn: 'Ocupação Permanente', rp: brp, ra: bra, t11: 24, t12: 3, ach: 6, desc: 'Fallback' };
     let rp = d.rp, ra = d.ra;
     if (d.g === 1) { if (rp === 7) rp = brp; if (ra === 0.7) ra = bra; }

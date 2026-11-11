@@ -154,7 +154,12 @@ R.requisitos = function () {
   const cob = VC.requisitos.coberturaGlobal();
   h += R.kpis([{ l: 'Q_normas total', v: VC.utils.fmt(cob.totalNec, 0) + ' m³/h', cor: 'primario' }, { l: 'Q definida', v: VC.utils.fmt(cob.totalCob, 0) + ' m³/h', cor: 'primario' }, { l: 'Cobertura', v: Math.round(cob.cobertura * 100) + '%', cor: cob.cobertura >= 0.95 && cob.cobertura <= 1.05 ? 'verde' : 'ambar' }, { l: 'Espaços OK', v: cob.ok + ' / ' + cob.totalEspacos, cor: 'verde' }]);
   h += R.secao('1', 'Detalhe');
-  h += R.tabela(['Espaço', 'Nº def.', 'Σ Q_def', 'Q_normas', 'Q_ConTerm', 'QAI', 'Q_total', 'Estado'], cob.detalhe.map(v => [v.espacoNome, v.nRequisitos, VC.utils.fmt(v.somaQ, 0), VC.utils.fmt(v.Q_reg || 0, 0), VC.utils.fmt(v.Q_conforto || 0, 0), VC.utils.fmt(v.QAI || 0, 0), VC.utils.fmt(v.Q_nec, 0), v.estado]));
+  // v11.1: comparação com a EN 16798-1 na categoria escolhida no Setup (informativo; o projeto segue a Portaria 138-I)
+  const cat = (VC.dados.params && VC.dados.params.categoria) || 'II';
+  const qEN = nome => { const e = VC.dados.espacos.find(x => x.nome === nome); return e ? (VC.calculo.calcularQ_normas(e).Q_EN16798 || 0) : 0; };
+  const abaixoEN = cob.detalhe.filter(v => (v.Q_nec || 0) + 0.5 < qEN(v.espacoNome)).length;
+  h += R.callout('Comparação EN 16798-1 · Categoria ' + cat + ': ' + abaixoEN + ' de ' + cob.detalhe.length + ' espaços têm Q_total abaixo do caudal EN (▲). Informativo — o caudal de projeto segue a Portaria 138-I/2021.', abaixoEN ? 'atencao' : 'info');
+  h += R.tabela(['Espaço', 'Nº def.', 'Σ Q_def', 'Q_normas', 'Q_ConTerm', 'QAI', 'Q_total', 'Q EN 16798 (Cat ' + cat + ')', 'Estado'], cob.detalhe.map(v => { const en = qEN(v.espacoNome); return [v.espacoNome, v.nRequisitos, VC.utils.fmt(v.somaQ, 0), VC.utils.fmt(v.Q_reg || 0, 0), VC.utils.fmt(v.Q_conforto || 0, 0), VC.utils.fmt(v.QAI || 0, 0), VC.utils.fmt(v.Q_nec, 0), VC.utils.fmt(en, 0) + ((v.Q_nec || 0) + 0.5 < en ? ' ▲' : ''), v.estado]; }));
   return h + R.rodape();
 };
 
