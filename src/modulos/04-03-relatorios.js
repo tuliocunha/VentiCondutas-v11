@@ -139,12 +139,12 @@ R.dimensionamento = function () {
  h += '</div>';
  h += '</div>';
  h += R.secao('3', 'Tabela Detalhada de Ramais');
- h += R.tabela(['Ramal', 'Nível', 'Rede', 'Q (m³/h)', 'L (m)', 'Ø (mm)', 'v (m/s)', 'Re', 'Δp (Pa)'], x.ramais.map(r => {
+ h += R.tabela(['Ramal', 'Nível', 'Rede', 'Q (m³/h)', 'L (m)', 'Ø (mm)', 'v (m/s)', 'Re', 'Δp troço (Pa)', 'Δp acumulado (Pa)', 'Δp crítico (Pa)'], x.ramais.map(r => {
    const nivel = r.nivelNumero || 2;
    const badgeCor = ['#4f6d8c','#6d8fb0','#a7c0d6','#d6e3ef'][nivel-1] || '#6d8fb0';
    const txtCor = nivel === 4 ? '#2c3e50' : '#ffffff';
    const badgeHtml = `<span style="background:${badgeCor}; color:${txtCor}; padding:3px 6px; border-radius:4px; font-size:9px; font-weight:900">R${nivel}</span>`;
-   return [VC.utils.esc(r.nome), badgeHtml, VC.utils.esc(r.rede), VC.utils.fmt(r.Q, 0), VC.utils.fmt(r.L, 1), r.Dcom || '—', VC.utils.fmt(r.v, 2), VC.utils.fmt(r.Re, 0), `<b>${VC.utils.fmt(r.deltaPtotal, 1)}</b>`];
+   return [VC.utils.esc(r.nome), badgeHtml, VC.utils.esc(r.rede), VC.utils.fmt(r.Q, 0), VC.utils.fmt(r.L, 1), r.Dcom || '—', VC.utils.fmt(r.v, 2), VC.utils.fmt(r.Re, 0), VC.utils.fmt(r.deltaPTroco, 1), VC.utils.fmt(r.deltaPtotal, 1), `<b>${VC.utils.fmt(r.deltaPCritico, 1)}</b>`];
  }));
  return h + R.rodape();
 };

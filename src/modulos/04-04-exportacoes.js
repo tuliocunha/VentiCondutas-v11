@@ -281,7 +281,7 @@ VC.exportacoes.pdf = function () {
     titulo('7 · Rede de condutas', 'Q derivado · secções · velocidades · perdas');
     graficoBarras('Δp total por ramal (Pa)', x.ramais.slice(0, 15).map(r => ({ nome: r.nome, valor: r.deltaPtotal || 0, cor: (r.deltaPtotal > 300 ? COR_CORAL : (r.deltaPtotal > 200 ? COR_AMBAR : COR_VERDE)) })), 'Pa', W - 2 * M, 80);
     subtitulo('Detalhe dos ramais');
-    tabelaManual(['Ramal', 'Nível', 'Rede', 'Q', 'Ø', 'v', 'Δp'], x.ramais.map(r => [r.nome, 'R' + (r.nivelNumero || 2), r.rede, VC.utils.fmt(r.Q, 0), r.Dcom || '—', VC.utils.fmt(r.v, 2), VC.utils.fmt(r.deltaPtotal, 1)]), [3, 1, 1, 1, 0.9, 0.9, 1]);
+    tabelaManual(['Ramal', 'Nível', 'Rede', 'Q', 'Ø', 'v', 'Δp troço', 'Δp acum.', 'Δp crít.'], x.ramais.map(r => [r.nome, 'R' + (r.nivelNumero || 2), r.rede, VC.utils.fmt(r.Q, 0), r.Dcom || '—', VC.utils.fmt(r.v, 2), VC.utils.fmt(r.deltaPTroco, 1), VC.utils.fmt(r.deltaPtotal, 1), VC.utils.fmt(r.deltaPCritico, 1)]), [2.6, 0.9, 1, 0.9, 0.8, 0.8, 0.9, 0.9, 0.9]);
 
     /* 8 · UTAS */
     addPagina(true); y = 22;

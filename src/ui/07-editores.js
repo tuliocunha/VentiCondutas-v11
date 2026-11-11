@@ -1379,7 +1379,9 @@ VC.editorRamais = VC.editorRamais || {
  '<th style="width:90px">Q</th>' +  
  '<th style="width:60px">v</th>' +  
  '<th style="width:80px">Re</th>' +  
- '<th style="width:85px">dp (Pa)</th>' +  
+ '<th style="width:70px" title="Perda só deste troço (atrito + singularidades)">Δp troço</th>' +  
+'<th style="width:80px" title="Perda acumulada desde a UTA até ao fim deste troço (inclui o terminal)">Δp acumulado</th>' +  
+'<th style="width:80px" title="Maior perda acumulada a jusante deste ramal: o que o ventilador tem de vencer a partir daqui">Δp crítico</th>' +  
  '<th style="width:80px">Lock D</th><th style="width:80px">Estado</th>' +  
  '</tr></thead><tbody>';  
   
@@ -1400,7 +1402,9 @@ VC.editorRamais = VC.editorRamais || {
  '<td><span class="valor-derivado">' + VC.utils.fmt(r.Q, 0) + '</span></td>' +  
  '<td>' + VC.utils.fmt(r.v, 2) + '</td>' +  
  '<td>' + VC.utils.fmt(r.Re, 0) + '</td>' +  
- '<td><b>' + VC.utils.fmt(r.deltaPtotal, 1) + '</b></td>' +  
+ '<td>' + VC.utils.fmt(r.deltaPTroco, 1) + '</td>' +  
+'<td>' + VC.utils.fmt(r.deltaPtotal, 1) + '</td>' +  
+'<td><b>' + VC.utils.fmt(r.deltaPCritico, 1) + '</b></td>' +  
  '<td>' + (lock ? 'Travado' : 'Auto') + '</td>' +  
  '<td>' + (r.status === 'OK' ? '<span class="badge ok">OK</span>' : (r.status === 'ATENÇÃO' ? '<span class="badge atencao">ATENCAO</span>' : '<span class="badge erro">NAO CONF.</span>')) + '</td>' +  
  '</tr>';  

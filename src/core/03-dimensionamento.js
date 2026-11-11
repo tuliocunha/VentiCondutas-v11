@@ -427,6 +427,18 @@ VC.calculo = {
         + (Number(r.deltaP_registo) || 0));
       r.status = r.deltaPtotal < 200 ? 'OK' : r.deltaPtotal < 300 ? 'ATENÇÃO' : 'NÃO CONF.';
     });
+    // v11.1: Δp crítico a jusante = maior deltaPtotal na sub-árvore do ramal (incluindo o próprio).
+    // É o valor que o ventilador tem de vencer a partir deste ramal; nunca é menor no pai do que num filho.
+    // (deltaPtotal é a perda ACUMULADA desde a UTA e por isso cresce para jusante.)
+    VC.dados.ramais.forEach(r => { r.deltaPCritico = r.deltaPtotal || 0; });
+    const ordem = VC.dados.ramais.slice().sort((a, b) => this._profundidade(b, byName) - this._profundidade(a, byName));
+    ordem.forEach(r => { const pai = byName[r.parente]; if (pai && pai !== r) pai.deltaPCritico = Math.max(pai.deltaPCritico || 0, r.deltaPCritico || 0); });
+  },
+
+  _profundidade(r, byName) {
+    let d = 0, p = r.parente, guard = 0;
+    while (p && byName[p] && guard++ < 100) { d++; p = byName[p].parente; }
+    return d;
   },
 
   calcularVentiladores() {
