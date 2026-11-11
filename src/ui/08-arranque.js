@@ -340,7 +340,7 @@ window.renderSetup = function () {
   const metSel = (VC.dados.metodoCalculo && VC.dados.metodoCalculo.metodo) || 'loss';
   h += '<div class="campo-grupo" style="margin-bottom:8px"><label>Método de Dimensionamento</label><select onchange="VC.dados.metodoCalculo={metodo:this.value}; VC.estado.sincronizar();">' +
        '<option value="loss"' + (metSel==='loss'?' selected':'') + '>Perda Constante (~1 Pa/m)</option>' +
-       '<option value="velocity"' + (metSel==='velocity'?' selected':'') + '>Velocidade Máxima (≤ 6 m/s)</option>' +
+       '<option value="velocity"' + (metSel==='velocity'?' selected':'') + '>Velocidade máxima por nível (6 / 5 / 4 / 3 m/s)</option>' +
        '</select></div>';
 
   h += '<div class="campo-grupo"><label>Restrição de Altura no Teto (mm)</label><input type="number" step="10" value="' + (VC.dados.restricaoH ?? 250) + '" onchange="VC.dados.restricaoH=VC.utils.num(this.value); VC.estado.sincronizar();"></div>';
