@@ -533,6 +533,9 @@ VC6.balanco = {
       else if (Math.abs(r) > this.TOLERANCIA) estado = 'DESEQUILIBRIO_LEVE';
 
       esp.balanco = {
+        id: esp.id,          // v11.1: identificação do espaço (relatórios, PDF, Excel)
+        nome: esp.nome,
+        g: g,
         Q_in_direto: inD,
         Q_out_direto: outD,
         Q_conforto_in: qConfortoIn,
@@ -585,14 +588,15 @@ VC6.balanco = {
   },
 
   todos() {
-    return (VC.dados && VC.dados.espacos || []).map(e => e.balanco || {
-      id: e.id, nome: e.nome, g: e.g || 1,
+    // v11.1: garante id/nome/g mesmo em balanços gravados por versões anteriores
+    return (VC.dados && VC.dados.espacos || []).map(e => Object.assign({
+      g: e.g || 1,
       Q_in_direto: 0, Q_out_direto: 0,
       Q_conforto_in: 0, Q_conforto_out: 0,
       QAI_aplicado: 0, QAI_rede: 'insuflacao',
       Q_transf_in: 0, Q_transf_out: 0,
       residuo: 0, pressao_relativa_Pa: 0, estado: 'PENDENTE'
-    });
+    }, e.balanco || {}, { id: e.id, nome: e.nome }));
   },
 
   resumo() {

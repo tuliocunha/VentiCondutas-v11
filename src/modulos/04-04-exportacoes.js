@@ -309,7 +309,7 @@ VC.exportacoes.pdf = function () {
       const qaiVal = Number(b.QAI_aplicado) || 0;
       const qaiIn = (b.QAI_rede === 'insuflacao') ? qaiVal : 0;
       const qaiOut = (b.QAI_rede === 'extracao' || b.QAI_rede === 'extracao_suja') ? qaiVal : 0;
-      return [(badges ? badges + ' ' : '') + b.nome.substring(0, 18), 'G' + (b.g || '?'), VC.utils.fmt(b.Q_in_direto, 0), VC.utils.fmt(b.Q_conforto_in || 0, 0), VC.utils.fmt(qaiIn, 0), VC.utils.fmt(b.Q_out_direto, 0), VC.utils.fmt(b.Q_conforto_out || 0, 0), VC.utils.fmt(qaiOut, 0), (b.residuo >= 0 ? '+' : '') + VC.utils.fmt(b.residuo, 1), b.estado];
+      return [(badges ? badges + ' ' : '') + String(b.nome || '—').substring(0, 18), 'G' + (b.g || '?'), VC.utils.fmt(b.Q_in_direto, 0), VC.utils.fmt(b.Q_conforto_in || 0, 0), VC.utils.fmt(qaiIn, 0), VC.utils.fmt(b.Q_out_direto, 0), VC.utils.fmt(b.Q_conforto_out || 0, 0), VC.utils.fmt(qaiOut, 0), (b.residuo >= 0 ? '+' : '') + VC.utils.fmt(b.residuo, 1), b.estado];
     }), [2.4, 0.6, 0.9, 0.9, 0.8, 0.9, 0.9, 0.8, 1, 1.2]);
 
     /* ANEXO A · FÓRMULAS */
