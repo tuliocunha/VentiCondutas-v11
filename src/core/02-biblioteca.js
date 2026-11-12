@@ -916,9 +916,7 @@ VC.migrador = {
       if (!r.localizacao) r.localizacao = { piso: null, ala: null, cota: null };
       if (!r.geometriaInput) r.geometriaInput = {
         material: 'Aço galvanizado',
-        rugosidade: Number(VC.dados.params.rugosidade) || 0.15,
-        forma: 'circular',
-        H_max: Number(VC.dados.restricaoH) || 250
+        forma: 'circular'   // v11.2: rugosidade e altura vêm do Setup (VC.calculo.rugosidadeDe / hMaxDe)
       };
       if (r.Q_proprio == null) r.Q_proprio = 0;
       if (r.Q_filhos == null) r.Q_filhos = 0;

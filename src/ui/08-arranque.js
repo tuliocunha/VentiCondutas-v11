@@ -318,13 +318,19 @@ window.renderSetup = function () {
 
   h += '<div class="campo-grupo" style="margin-bottom:8px"><label>Eficácia de Remoção (εv)</label><input type="number" step="0.1" min="0.1" value="' + (VC.dados.eficaciaRemocao ?? 1.0) + '" onchange="VC.dados.eficaciaRemocao=VC.utils.num(this.value); VC.estado.sincronizar();"></div>';
 
-  const tipSel = VC.dados.tipologia || 'comercio';
-  h += '<div class="campo-grupo"><label>Tipologia do Edifício</label><select onchange="VC.dados.tipologia=this.value; VC.estado.sincronizar();">' +
-       '<option value="comercio"' + (tipSel==='comercio'?' selected':'') + '>Comércio e Serviços</option>' +
-       '<option value="residencial"' + (tipSel==='residencial'?' selected':'') + '>Residencial</option>' +
-       '<option value="saude"' + (tipSel==='saude'?' selected':'') + '>Saúde</option>' +
-       '<option value="industria"' + (tipSel==='industria'?' selected':'') + '>Indústria</option>' +
-       '</select></div>';
+  // v11.2: só Comércio e Serviços (âmbito da Portaria 138-I) está implementado. As outras tipologias aparecem
+  // a cinzento, "em implementação", e não se podem escolher. Um projeto antigo que já as tenha mostra um aviso.
+  const tipSel = VC.normas.tipologiaAtual();
+  const emImpl = VC.normas.TIPOLOGIAS_EM_IMPLEMENTACAO;
+  const opcaoTip = (v, rotulo) => emImpl.indexOf(v) >= 0
+    ? '<option value="' + v + '" disabled style="color:#9ca3af"' + (tipSel === v ? ' selected' : '') + '>' + rotulo + ' (em implementação)</option>'
+    : '<option value="' + v + '"' + (tipSel === v ? ' selected' : '') + '>' + rotulo + '</option>';
+  h += '<div class="campo-grupo"><label>Tipologia do Edifício</label><select onchange="VC.dados.tipologia=this.value; VC.estado.sincronizar(); VC.passos.render(\'setup\');">' +
+       opcaoTip('comercio', 'Comércio e Serviços') + opcaoTip('residencial', 'Residencial') + opcaoTip('saude', 'Saúde') + opcaoTip('industria', 'Indústria') +
+       '</select>';
+  h += '<div style="font-size:10.5px;color:#9ca3af;margin-top:4px">Residencial, Saúde e Indústria: em implementação.</div>';
+  if (emImpl.indexOf(tipSel) >= 0) h += '<div style="font-size:11px;margin-top:6px;padding:6px 8px;border-radius:5px;background:var(--ambar-soft);color:var(--ambar-esc)"><b>Tipologia em implementação.</b> Este projeto está marcado como ' + VC.utils.esc(VC.normas.rotuloTipologia(tipSel)) + '. A app ainda só aplica as regras de Comércio e Serviços (Portaria 138-I): confirme os caudais com o regulamento desta tipologia.</div>';
+  h += '</div>';
   h += '</div>';
 
   // 3. Critérios de Dimensionamento Aeráulico

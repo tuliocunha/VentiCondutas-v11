@@ -471,13 +471,20 @@ VC.calculo = {
 
   /* v11.1: parâmetros de cada ramal (forma, rugosidade, altura disponível, velocidade máxima) */
   formaDe(r) { return (r && r.geometriaInput && r.geometriaInput.forma === 'retangular') ? 'retangular' : 'circular'; },
+  // v11.2: a rugosidade e a altura disponível vêm do Setup. Cada ramal guardava uma cópia (0,15 mm, 250 mm)
+  // feita quando foi criado, e por isso mudar o Setup não tinha efeito. O valor do ramal só conta se for
+  // marcado como próprio (geometriaInput.proprio.rugosidade / .H_max = true).
+  _proprio(r, campo) {
+    const g = r && r.geometriaInput;
+    return !!(g && g.proprio && g.proprio[campo] && Number(g[campo]) > 0);
+  },
   rugosidadeDe(r) {
-    const g = r && r.geometriaInput && Number(r.geometriaInput.rugosidade);
-    return g > 0 ? g : (VC.utils.num(VC.dados.params && VC.dados.params.rugosidade) || 0.15);
+    if (this._proprio(r, 'rugosidade')) return Number(r.geometriaInput.rugosidade);
+    return VC.utils.num(VC.dados.params && VC.dados.params.rugosidade) || 0.15;
   },
   hMaxDe(r) {
-    const g = r && r.geometriaInput && Number(r.geometriaInput.H_max);
-    return g > 0 ? g : (Number(VC.dados.restricaoH) || 250);
+    if (this._proprio(r, 'H_max')) return Number(r.geometriaInput.H_max);
+    return Number(VC.dados.restricaoH) || 250;
   },
   vMaxDe(r) {
     const n = (r && (r.nivelNumero || VC.utils.nivelTextoParaNumero(r.nivel))) || 2;
@@ -623,6 +630,8 @@ VC.calculo = {
       });
 
       const totalPower = VC.dados.utas.reduce((s, u) => s + (Number(u.P_motor) || 0), 0);
+      // v11.2: tipologia ainda não implementada (Residencial, Saúde, Indústria)
+      if (VC.normas.TIPOLOGIAS_EM_IMPLEMENTACAO.indexOf(VC.normas.tipologiaAtual()) >= 0) findings.push({ severidade: 'ATENÇÃO', tipo: 'Tipologia em implementação', elemento: 'Sistema', msg: VC.normas.rotuloTipologia(VC.normas.tipologiaAtual()) + ': a app ainda só aplica as regras de Comércio e Serviços (Portaria 138-I). Confirmar os caudais com o regulamento desta tipologia.' });
       // v11.1 (E3): ventilador escolhido não chega ao caudal de projeto
       VC.dados.utas.forEach(u => {
         const pf = u.pontoFunc;

@@ -211,7 +211,7 @@ R.ventilador = function () {
   let h = R.cabecalho('Dimensionamento de Ventiladores', 'Q · Δp · SFPint · P motor');
   const tipos = VC.conhecimento.tabelas.SFP_TIPOS || {};
   h += R.tabela(['UTA', 'Rede', 'Tipo (Ecodesign)', 'Q derivado', 'Δp externo', 'Δp interno', 'SFPint', 'Limite SFPint', 'P motor', 'Estado'], VC.dados.utas.map(u => { const c = u.sfpClass || {}; return [VC.utils.esc(u.nome), VC.utils.esc(u.rede), VC.utils.esc(tipos[c.tipo] || '—'), VC.utils.fmt(u.Q * 3600, 0) + ' m³/h', VC.utils.fmt(u.dpExt, 0) + ' Pa', VC.utils.fmt(u.dpInt, 0) + ' Pa', VC.utils.fmt(u.sfpInt, 0), c.limite != null ? c.limite + ' W/(m³/s)' : 'sem limite', VC.utils.fmt(u.P_motor, 0) + ' W', (u.status === 'OK' ? '<span class="badge ok">CONFORME</span>' : '<span class="badge erro">NÃO CONFORME</span>')]; }));
-  h += R.callout('Limites de SFPint do Reg. (UE) 1253/2014 (Ecodesign), requisitos desde 2018. UVB com recuperador: 1100 + E − 150·qnom (qnom < 2 m³/s) ou 800 + E (qnom ≥ 2 m³/s), com E = (η − 0,73)·3000 e filtros completos. UVU com filtro: 230. UVU sem filtro: sem limite. O tipo de cada UTA escolhe-se no editor de UTAs.', 'info');
+  h += R.callout('Limites de SFPint do Reg. (UE) 1253/2014 (Ecodesign), requisitos desde 2018. UVB com recuperador: 1100 + E − 150·qnom (qnom < 2 m³/s) ou 800 + E (qnom ≥ 2 m³/s), com E = (η − 0,73)·3000 e filtros completos. UVU com filtro: 230. UVU sem filtro: sem limite. O tipo de cada UTA escolhe-se no editor de UTAs. Filtros considerados: ' + ({ sujo: 'sujos (Δp final)', medio: 'médios', limpo: 'limpos (Δp inicial)' })[(VC.dados.filtros && VC.dados.filtros.modo) || 'sujo'] + '.', 'info');
   return h + R.rodape();
 };
 

@@ -476,9 +476,7 @@ VC.topologia._criarRamal = function (opts) {
     localizacao: opts.localizacao || { piso: 'P0', ala: null, cota: null },
     geometriaInput: {
       material: 'Aço galvanizado',
-      rugosidade: 0.15,
-      forma: 'circular',
-      H_max: 250
+      forma: 'circular'
     },
     lock: { D: false },
     deltaP_registo: opts.deltaP_registo || 0,

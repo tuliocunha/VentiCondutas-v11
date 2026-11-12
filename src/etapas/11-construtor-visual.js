@@ -320,7 +320,7 @@ VC.construtorVisual = {
       if (VC.dados.nextId) VC.dados.nextId.ramal = id + 1;
       VC.dados.ramais.push(Object.assign({
         id, tipo: 'Principal', nivel: 'primario',
-        geometriaInput: { material: 'Aço galvanizado', rugosidade: 0.15, forma: 'circular', H_max: 250 },
+        geometriaInput: { material: 'Aço galvanizado', forma: 'circular' },
         lock: { D: false }
       }, opts));
     }
@@ -352,7 +352,7 @@ VC.construtorVisual = {
       VC.dados.ramais.push(Object.assign({
         id, tipo: 'Sub-ramal',
         nivel: ['primario', 'secundario', 'terciario', 'quaternario'][nivelPai] || 'secundario',
-        geometriaInput: { material: 'Aço galvanizado', rugosidade: 0.15, forma: 'circular', H_max: 250 },
+        geometriaInput: { material: 'Aço galvanizado', forma: 'circular' },
         lock: { D: false }
       }, opts));
     }

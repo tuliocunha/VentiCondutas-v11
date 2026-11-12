@@ -210,7 +210,7 @@ VC.associacao = {
         nivel: ['primario', 'secundario', 'terciario', 'quaternario'][nivelNumero - 1] || 'secundario',
         nivelNumero: nivelNumero, rede: rede, utaRef: utaRef, L: L, zeta: zeta,
         localizacao: { piso: 'P0', ala: null, cota: null },
-        geometriaInput: { material: 'A\u00e7o galvanizado', rugosidade: 0.15, forma: 'circular', H_max: 250 },
+        geometriaInput: { material: 'A\u00e7o galvanizado', forma: 'circular' },
         lock: { D: false }
       });
     }
