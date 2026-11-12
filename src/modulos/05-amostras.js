@@ -376,16 +376,13 @@ VC.exemploV6 = function () {
    Carregado via fetch de exemplos/poliune-v02.json
    Fallback: se falhar, cai no exemplo clássico (VC.exemploV6)
    ============================================================ */
-VC.exemploV9_2 = async function () {
+// v11.2: carregador comum aos exemplos guardados em ficheiro JSON (PoliUne, Degrade 2).
+// urls: caminhos a tentar por ordem · rotulo: nome no aviso · seFalhar: o que fazer se não abrir.
+VC._carregarExemploDeFicheiro = async function (urls, rotulo, seFalhar) {
   try {
-    // V9.1.2 · Path real está na raiz; tenta exemplos/ primeiro (compatibilidade)
-    let url = 'exemplos/poliune-v02.json';
-    let resp = await fetch(url);
-    if (!resp.ok) {
-      url = 'poliune-v02.json';
-      resp = await fetch(url);
-    }
-    if (!resp.ok) throw new Error('HTTP ' + resp.status + ' (' + url + ')');
+    let resp = null, url = '';
+    for (const u of urls) { url = u; try { resp = await fetch(u); } catch (e) { resp = null; } if (resp && resp.ok) break; }
+    if (!resp || !resp.ok) throw new Error((resp ? 'HTTP ' + resp.status : 'sem acesso') + ' (' + url + ')');
     const projeto = await resp.json();
     if (!projeto || !projeto.dados) throw new Error('JSON inválido');
 
@@ -438,18 +435,27 @@ VC.exemploV9_2 = async function () {
     if (VC.ui && VC.ui.renderSidebar) VC.ui.renderSidebar();
     if (VC.passos && VC.passos.render) VC.passos.render(VC._passoAtivo || 'setup');
 
-    VC.ui.toast('Exemplo PoliUne v02 carregado · ' + VC.dados.espacos.length + ' espaços · ' + VC.dados.utas.length + ' UTAs');
+    VC.ui.toast('Exemplo ' + rotulo + ' carregado · ' + VC.dados.espacos.length + ' espaços · ' + VC.dados.utas.length + ' UTAs');
     return true;
   } catch (e) {
-    if (VC.debug && VC.debug.aviso) {
-      VC.debug.aviso('Falha ao carregar poliune-v02.json: ' + e.message + ' — a usar exemplo clássico.');
-    }
-    if (typeof VC.exemploV6 === 'function') {
-      VC.exemploV6();
-      VC.ui.toast('Exemplo clássico carregado (fallback).');
-    }
+    if (VC.debug && VC.debug.aviso) VC.debug.aviso('Falha ao carregar o exemplo ' + rotulo + ': ' + e.message);
+    if (typeof seFalhar === 'function') seFalhar(e);
     return false;
   }
+};
+
+VC.exemploV9_2 = function () {
+  // V9.1.2 · tenta exemplos/ primeiro e depois a raiz (compatibilidade)
+  return VC._carregarExemploDeFicheiro(['exemplos/poliune-v02.json', 'poliune-v02.json'], 'PoliUne v02', function () {
+    if (typeof VC.exemploV6 === 'function') { VC.exemploV6(); VC.ui.toast('Exemplo clássico carregado (fallback).'); }
+  });
+};
+
+// v11.2: projeto real Degrade 2 (Torres Vedras) · 45 espaços · 4 UTAs + 7 VEX
+VC.exemploDegrade2 = function () {
+  return VC._carregarExemploDeFicheiro(['exemplos/degrade-2.json'], 'Degrade 2', function () {
+    VC.ui.toast('Não foi possível abrir exemplos/degrade-2.json. Abra a app pelo GitHub Pages ou por um servidor local (o navegador bloqueia ficheiros locais).');
+  });
 };
 
 /* ============================================================
@@ -464,6 +470,16 @@ VC.exemplos = {
       if (s) this._lista = JSON.parse(s);
       else { this._lista = []; this.save(); }
     } catch (e) { this._lista = []; VC.debug.erro(e); }
+    // v11.2: o exemplo de arranque também entra na lista quando ela é criada (antes só entrava se a lista
+    // já existisse quando 05-amostras carregava, e por isso não aparecia no navegador de quem nunca a abrira)
+    if (VC._dadosReais && !this._lista.find(e => e.id === 'degrade-tv-18out26')) {
+      this._lista.unshift({ id: 'degrade-tv-18out26', nome: 'Degrade Torres Vedras 18out26', descricao: 'Projeto base · 45 espaços reais (15 × 3 pisos P0, P1, P2)', timestamp: new Date().toISOString(), builtin: true });
+      this.save();
+    }
+    if (!this._lista.find(e => e.id === 'degrade-2')) {   // v11.2
+      this._lista.push({ id: 'degrade-2', nome: 'Degrade 2 · Torres Vedras', descricao: 'Projeto real · 45 espaços (Piso 0, Piso 1, Mezanino) · 4 UTAs + 7 VEX · 7 transferências', timestamp: new Date().toISOString(), builtin: true });
+      this.save();
+    }
     if (!this._lista.find(e => e.id === 'polune-v8')) {
             this._lista.push({ id: 'polune-v8', nome: 'Edifício PoliUne v02', descricao: 'Exemplo pré-carregado · 45 espaços · 5 UTAs · 5 transferências', timestamp: new Date().toISOString(), builtin: true });
       this.save();
@@ -550,6 +566,9 @@ VC.exemplos = {
         if (VC.passos && VC.passos.render) VC.passos.render(VC._passoAtivo || 'setup');
         VC.ui.toast('Projeto «Degrade Torres Vedras 18out26» (45 espaços) carregado.');
       }
+      else if (ex.builtin && ex.id === 'degrade-2') {
+        VC.exemploDegrade2();
+      }
       else if (ex.builtin && ex.id === 'polune-v8') {
         if (typeof VC.exemploV9_2 === 'function') {
           VC.exemploV9_2().then(function (ok) {
@@ -612,6 +631,12 @@ VC.exemplos = {
     if (!this._lista) this.init();
     const ex = this._lista.find(e => e.id === id);
     if (!ex) { VC.ui.toast('Exemplo não encontrado.'); return false; }
+    // v11.2: o Degrade 2 está num ficheiro; exporta esse ficheiro (e não o projeto aberto)
+    if (ex.builtin && ex.id === 'degrade-2') {
+      fetch('exemplos/degrade-2.json').then(r => r.json()).then(p => { VC.utils.downloadJSON('VC_exemplo_Degrade_2.json', p); VC.ui.toast('Exemplo exportado: VC_exemplo_Degrade_2.json'); })
+        .catch(() => VC.ui.toast('Não foi possível ler exemplos/degrade-2.json.'));
+      return true;
+    }
     let projeto;
     if (ex.builtin && ex.id === 'polune-v8') { VC.exemploV6(); projeto = this.serializarAtual(); }
     else { projeto = ex.projeto || this.serializarAtual(); }
@@ -655,6 +680,14 @@ VC.exemplos = {
     if (!this._lista) this.init();
     const ex = this._lista.find(e => e.id === id);
     if (!ex) return false;
+    // v11.2: o Degrade 2 está num ficheiro; a cópia guarda o conteúdo desse ficheiro
+    if (ex.builtin && ex.id === 'degrade-2') {
+      fetch('exemplos/degrade-2.json').then(r => r.json()).then(p => {
+        this._lista.push({ id: 'ex-' + Date.now().toString(36), nome: ex.nome + ' (cópia)', descricao: 'Duplicado de «' + ex.nome + '»', timestamp: new Date().toISOString(), builtin: false, projeto: p });
+        this.save(); VC.ui.toast('Exemplo duplicado.'); if (this.abrirModal) this.abrirModal();
+      }).catch(() => VC.ui.toast('Não foi possível ler exemplos/degrade-2.json.'));
+      return true;
+    }
     let projeto;
     if (ex.builtin && ex.id === 'polune-v8') { VC.exemploV6(); projeto = this.serializarAtual(); }
     else { projeto = VC.utils.clonar(ex.projeto); }
