@@ -267,6 +267,7 @@ VC6.testes = {
     self.registar({ id: 'N11.T4', nucleo: 'N11', grupo: 'Construtor & Dados', nome: '5 tipos de ramal definidos', criterio: 'TIPOS_RAMAL = 5', fn: () => VC.topologia && Array.isArray(VC.topologia.TIPOS_RAMAL) && VC.topologia.TIPOS_RAMAL.length === 5 });
     self.registar({ id: 'N11.T5', nucleo: 'N11', grupo: 'Construtor & Dados', nome: 'Alias VC.balanco === VC6.balanco', criterio: 'referência igual', fn: () => VC.balanco === VC6.balanco });
     self.registar({ id: 'N11.T6', nucleo: 'N11', grupo: 'Construtor & Dados', nome: 'Migrador VERSAO_ALVO = V9', criterio: 'VERSAO_ALVO === "V9"', fn: () => VC.migrador.VERSAO_ALVO === 'V9' });
+    self.registar({ id: 'N11.T7', nucleo: 'N11', grupo: 'Construtor & Dados', nome: 'Exemplo Degrade 2 disponível', criterio: 'na lista de exemplos (pré-carregado) e com carregador', fn: () => { if (!VC.exemplos) return true; if (!VC.exemplos._lista) VC.exemplos.init(); const e = VC.exemplos._lista.find(x => x.id === 'degrade-2'); return !!e && e.builtin === true && typeof VC.exemploDegrade2 === 'function'; } });
   },
 
   initIntegracao() {
