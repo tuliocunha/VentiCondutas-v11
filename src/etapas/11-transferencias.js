@@ -45,7 +45,7 @@ window.renderTransferenciasV6 = function () {
       + '<div>Adiciona a primeira ou usa o bot\u00e3o <b>Sugerir</b> para que o sistema proponha automaticamente.</div></div>';
   } else {
     h += '<div class="tabela-wrap"><table class="tabela densa"><thead><tr>';
-    h += '<th>#</th><th>De</th><th>Para</th><th>Q (m\u00b3/h)</th><th>Tipo</th><th>\u00c1rea (cm\u00b2)</th><th>\u0394P (Pa)</th><th></th>';
+    h += '<th>#</th><th>De</th><th>Para</th><th data-ajuda="Qtrf">Q (m\u00b3/h)</th><th data-ajuda="tipo_transferencia">Tipo</th><th>\u00c1rea (cm\u00b2)</th><th>\u0394P (Pa)</th><th></th>';
     h += '</tr></thead><tbody>';
     trf.forEach(function (t, i) {
       h += '<tr>';

@@ -33,10 +33,12 @@ VC.relatorios = {
     return '<h3 style="font-size:12.5px;color:var(--texto);border-bottom:1px solid var(--borda);padding:8px 0 5px;margin:12px 0 8px;display:flex;gap:8px;align-items:center"><span style="font-size:10.5px;color:var(--primario);font-weight:900">' + numero + '</span>' + titulo + '</h3>';
   },
   kpis(items) { return VC.ui_comp.kpiGrid(items, 4); },
+  /* v11.3: mesmo estilo das tabelas da app (classe .tabela .tabela-rel, no CSS): letra legível,
+     números alinhados à direita e ajuda "?" nas colunas técnicas (escondida na impressão) */
   tabela(headers, linhas) {
-    return '<div style="overflow:auto;border:1px solid var(--borda);border-radius:var(--raio-2);margin:8px 0"><table style="width:100%;border-collapse:collapse;font-size:10.5px;table-layout:auto">' +
-      '<thead><tr style="background:var(--superf3)">' + headers.map(h => '<th style="text-align:left;padding:6px 8px;border-bottom:1px solid var(--borda-media);font-size:9.5px;text-transform:uppercase;color:var(--texto-med);font-weight:800;white-space:nowrap">' + h + '</th>').join('') + '</tr></thead>' +
-      '<tbody>' + linhas.map(l => '<tr>' + l.map(c => '<td style="padding:5px 8px;border-bottom:1px solid var(--borda);vertical-align:top">' + c + '</td>').join('') + '</tr>').join('') + '</tbody></table></div>';
+    return '<div class="tabela-wrap"><table class="tabela densa tabela-rel">' +
+      '<thead><tr>' + headers.map(h => '<th>' + h + '</th>').join('') + '</tr></thead>' +
+      '<tbody>' + linhas.map(l => '<tr>' + l.map(c => '<td>' + c + '</td>').join('') + '</tr>').join('') + '</tbody></table></div>';
   },
   callout(texto, tipo) { return VC.ui_comp.callout(texto, tipo); }
 };

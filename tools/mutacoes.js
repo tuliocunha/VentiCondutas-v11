@@ -114,6 +114,10 @@ const CASOS = [
     const o = VC.normas.tipologiaAtual; VC.normas.tipologiaAtual = () => 'comercio';
     return () => { VC.normas.tipologiaAtual = o; };
   }],
+  ['v11.3 · colunas técnicas sem ajuda "?"', 'UI.T13', () => {
+    const o = VC.tabelas.decorar; VC.tabelas.decorar = function () {};
+    return () => { VC.tabelas.decorar = o; };
+  }],
   ['E3 · sem aviso de ventilador fora da curva', 'N6.T13', () => {
     const o = VC.uta.calcularPontoFuncionamento;
     VC.uta.calcularPontoFuncionamento = function () { const r = o.apply(this, arguments); if (r) r.foraDaCurva = false; return r; };

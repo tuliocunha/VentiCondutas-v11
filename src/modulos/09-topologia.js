@@ -870,7 +870,7 @@ VC.topologia.construtor = {
     const ramaisIns = ramais.filter(r => r.rede === 'insuflacao');
     const ramaisExt = ramais.filter(r => r.rede !== 'insuflacao');
     h += '<div class="tabela-wrap" style="max-height:360px;overflow-y:auto"><table class="tabela densa"><thead><tr>';
-    h += '<th>Espaço</th><th>Tipo</th><th>Zona</th><th>Q_total (m³/h)</th><th>Ramal Insuflação</th><th>Ramal Extração</th>';
+    h += '<th>Espaço</th><th data-ajuda="tipo_espaco">Tipo</th><th>Zona</th><th>Q_total (m³/h)</th><th>Ramal Insuflação</th><th>Ramal Extração</th>';
     h += '</tr></thead><tbody>';
     espacos.forEach(e => {
       const c = VC.calculo.calcularQEspaco(e);
@@ -1020,21 +1020,20 @@ VC.bom = {
        + '<div style="font-size:18px;font-weight:900;color:#6d28d9">' + r.totais.peso + ' kg</div></div>';
     h += '</div>';
 
-    h += '<div style="overflow:auto;border:1px solid #cbd5e1;border-radius:6px">'
-       + '<table style="width:100%;border-collapse:collapse;font-size:11.5px">';
-    h += '<thead><tr style="background:#eef2f7">';
+    h += '<div class="tabela-wrap"><table class="tabela densa tabela-rel">';
+    h += '<thead><tr>';
     ['Ø (mm)', 'Material', 'Rede', 'Metros (m)', 'Nº Trechos', 'Peso (kg)'].forEach(function (c) {
-      h += '<th style="text-align:left;padding:7px 9px;font-size:10px;text-transform:uppercase;color:#5a6b7c;font-weight:800;border-bottom:1px solid #cbd5e1">' + c + '</th>';
+      h += '<th>' + c + '</th>';
     });
     h += '</tr></thead><tbody>';
     r.linhas.forEach(function (l) {
       h += '<tr>';
-      h += '<td style="padding:6px 9px;border-bottom:1px solid #eef2f7;font-weight:800;color:#1e40af">Ø' + l.diametro + '</td>';
-      h += '<td style="padding:6px 9px;border-bottom:1px solid #eef2f7">' + VC.utils.esc(l.material) + '</td>';
-      h += '<td style="padding:6px 9px;border-bottom:1px solid #eef2f7">' + VC.utils.esc(l.rede) + '</td>';
-      h += '<td style="padding:6px 9px;border-bottom:1px solid #eef2f7;font-family:ui-monospace,monospace;font-weight:800">' + VC.utils.fmt(l.metros, 1) + '</td>';
-      h += '<td style="padding:6px 9px;border-bottom:1px solid #eef2f7;text-align:center">' + l.n_trechos + '</td>';
-      h += '<td style="padding:6px 9px;border-bottom:1px solid #eef2f7;font-family:ui-monospace,monospace">' + l.peso_kg + '</td>';
+      h += '<td style="font-weight:800;color:var(--primario-esc)">Ø' + l.diametro + '</td>';
+      h += '<td>' + VC.utils.esc(l.material) + '</td>';
+      h += '<td>' + VC.utils.esc(l.rede) + '</td>';
+      h += '<td style="font-weight:800">' + VC.utils.fmt(l.metros, 1) + '</td>';
+      h += '<td>' + l.n_trechos + '</td>';
+      h += '<td>' + l.peso_kg + '</td>';
       h += '</tr>';
     });
     h += '</tbody></table></div>';

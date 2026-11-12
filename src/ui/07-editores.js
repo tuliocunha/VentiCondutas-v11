@@ -130,11 +130,11 @@ VC.editorEspacos = {
  h += '<div class="tabela-wrap" style="max-height:600px;overflow-y:auto">';  
  h += '<table class="tabela densa" id="tabelaEspacos"><thead><tr>';  
  h += '<th style="width:40px;text-align:center">#</th>';  
- const tt = (k) => ' <span class="btn-help" data-tt="' + k + '" onclick="event.stopPropagation(); VC.tooltips.mostrar(\'' + k + '\', this)" style="cursor:pointer; background:var(--verde-soft); color:var(--verde-esc); border:1px solid var(--verde-borda); border-radius:50%; padding:0 4px; font-size:9px; font-weight:900">?</span>';
+ const tt = (k) => ' ' + VC.tabelas.botao(k);
   const colunas = [  
   { id: 'nome', label: 'Nome' },  
   { id: 'tipo', label: 'Tipo' + tt('tipo_espaco') },  
-  { id: 'localizacao', label: 'Localizacao' },  
+  { id: 'localizacao', label: 'Localização' },  
   { id: 'A', label: 'A (m²)' + tt('area_geometrica'), width: '70px' },  
   { id: 'H', label: 'H (m)' + tt('pe_direito'), width: '60px' },  
   { id: 'V', label: 'V (m³)' + tt('volume_espaco'), width: '75px' },  
@@ -1290,15 +1290,15 @@ VC.editorTerminais = VC.editorTerminais || {
  h += '<div class="tabela-wrap"><table class="tabela densa"><thead><tr>';  
  h += '<th style="width:30px">#</th>';  
  h += thClick('nome', 'ID');  
- h += thClick('tipo', 'Tipo');  
- h += '<th class="col-flex">Espacos</th>';  
+ h += thClick('tipo', 'Tipo' + ' ' + VC.tabelas.botao('tipo_terminal'));  
+ h += '<th class="col-flex">Espaços</th>';  
  h += thClick('ramal', 'Ramal');  
- h += '<th>Fabricante</th><th>Familia</th><th>Tamanho</th>';  
- h += thClick('Q', 'Q proj.');  
- h += '<th title="Caudal medido em obra (TAB · EN 12599)">Q_med (TAB)</th>';  
- h += '<th>v</th>';  
- h += '<th>dp</th>';  
- h += '<th>Lw</th>';  
+ h += '<th>Fabricante</th><th>Família</th><th>Tamanho</th>';  
+ h += thClick('Q', 'Q proj. (m³/h)');  
+ h += '<th>Q_med TAB (m³/h)</th>';  
+ h += '<th data-ajuda="v_saida">v (m/s)</th>';  
+ h += '<th data-ajuda="dp_terminal">Δp (Pa)</th>';  
+ h += '<th>Lw (dB(A))</th>';  
  h += '<th>Estado</th><th></th>';  
  h += '</tr></thead><tbody>';  
  VC.editorTerminais._listaFiltrada().forEach(function (t, visualIdx) {  
@@ -1373,16 +1373,16 @@ VC.editorRamais = VC.editorRamais || {
   
  h += '<details style="margin-bottom:10px; background:var(--superf); border:1px solid var(--borda); border-radius:8px; padding:4px;"><summary style="cursor:pointer; font-weight:800; font-size:11.5px; color:var(--texto-med); padding:8px; background:var(--superf3); border-radius:6px; list-style:none; display:flex; align-items:center; gap:6px;"><i class="fa-solid fa-gear"></i> Engenharia Avançada</summary>';  
  h += '<div class="tabela-wrap" style="margin-top:10px; border:none"><table class="tabela densa"><thead><tr>' +  
- '<th style="width:30px">#</th><th>Nome</th><th style="width:55px">Nivel</th><th style="width:60px">L (m)</th>' +  
- '<th style="width:60px">zeta</th>' +  
- '<th style="width:150px" title="Forma escolhida pelo utilizador; a app só avisa se não couber na altura disponível">Secção</th>' +  
- '<th style="width:90px">Q</th>' +  
- '<th style="width:60px">v</th>' +  
- '<th style="width:80px">Re</th>' +  
- '<th style="width:70px" title="Perda só deste troço (atrito + singularidades)">Δp troço</th>' +  
-'<th style="width:80px" title="Perda acumulada desde a UTA até ao fim deste troço (inclui o terminal)">Δp acumulado</th>' +  
-'<th style="width:80px" title="Maior perda acumulada a jusante deste ramal: o que o ventilador tem de vencer a partir daqui">Δp crítico</th>' +  
- '<th style="width:80px">Lock D</th><th style="width:80px">Estado</th>' +  
+ '<th style="width:30px">#</th><th>Nome</th><th>Nível</th><th>L (m)</th>' +  
+ '<th>ζ (–)</th>' +  
+ '<th>Secção</th>' +  
+ '<th>Q (m³/h)</th>' +  
+ '<th>v (m/s)</th>' +  
+ '<th>Re (–)</th>' +  
+ '<th>Δp troço (Pa)</th>' +  
+'<th>Δp acumulado (Pa)</th>' +  
+'<th>Δp crítico (Pa)</th>' +  
+ '<th>Ø travado</th><th>Estado</th>' +  
  '</tr></thead><tbody>';  
   
  const idxOriginal = new Map();  
@@ -1443,12 +1443,14 @@ if (!VC.tooltips._realImpl) {
     p.className = 'tt-popup on';
     let html = '<div class="tt-titulo">' + VC.utils.esc(info.titulo || chave) + '</div>';
     if (info.desc) html += '<div class="tt-desc">' + info.desc + '</div>';
-    if (info.contexto) html += '<div class="tt-desc" style="font-size:10.5px;opacity:0.8;margin-top:4px;border-top:1px dashed #475569;padding-top:4px;">' + info.contexto + '</div>';
-    if (info.formula) html += '<div class="tt-desc" style="font-family:monospace;background:rgba(255,255,255,0.1);padding:4px;border-radius:4px;margin-top:4px;">' + VC.utils.esc(info.formula) + '</div>';
-    if (info.norma) html += '<div class="tt-desc" style="color:#86efac;font-weight:800;font-size:9.5px;margin-top:4px;">📘 ' + VC.utils.esc(info.norma) + '</div>';
+    if (info.contexto) html += '<div class="tt-desc tt-contexto">' + info.contexto + '</div>';
+    if (info.formula) html += '<div class="tt-formula">' + VC.utils.esc(info.formula) + '</div>';
+    if (info.norma) html += '<div class="tt-norma">📘 ' + VC.utils.esc(info.norma) + '</div>';
     p.innerHTML = html;
-    p.style.left = Math.max(8, Math.min(x + 12, window.innerWidth - 320)) + 'px';
-    p.style.top = Math.max(8, Math.min(y + 12, window.innerHeight - 200)) + 'px';
+    /* v11.3: posição pelo tamanho real do popup, para não sair do ecrã */
+    const w = p.offsetWidth || 360, hh = p.offsetHeight || 200;
+    p.style.left = Math.max(8, Math.min(x + 12, window.innerWidth - w - 8)) + 'px';
+    p.style.top = Math.max(8, (y + 12 + hh > window.innerHeight) ? y - hh - 12 : y + 12) + 'px';
     return true;
   };
 
@@ -1485,13 +1487,104 @@ if (!VC.tooltips._realImpl) {
   };
 }
 
+/* ============================================================
+   v11.3: tabelas legíveis e ajudas consistentes.
+   - Cada coluna técnica (grandeza, símbolo, norma) recebe o mesmo botão "?",
+     em todas as tabelas da app: editores, relatórios, lentes, topologia.
+     A chave vem do atributo data-ajuda do cabeçalho ou deste dicionário.
+     data-ajuda="-" deixa a coluna sem ajuda.
+   - As colunas só com números ficam alinhadas à direita (classe "num"), para
+     que as casas decimais fiquem umas debaixo das outras.
+   Corre sozinho sempre que aparece uma tabela nova (MutationObserver).
+   ============================================================ */
+VC.tabelas = {
+  ajudaPorCabecalho: {
+    'Tipo de espaço': 'tipo_espaco', 'Grupo': 'grupo_portaria', 'G': 'grupo_portaria',
+    'A': 'area_geometrica', 'H': 'pe_direito', 'V': 'volume_espaco', 'N': 'ocupacao',
+    'Localização': 'zona', 'Localizacao': 'zona', 'Zona': 'zona', 'Método': 'metodo_calculo',
+    'T11': 'T11', 'T12': 'T12', 'ACH': 'ACH', 'RPH': 'RPH', 'Q_normas': 'Q_normas', 'Q EN 16798': 'Q_normas',
+    'Q_ConTerm': 'Q_ConTerm', 'Q_conf_in': 'Q_ConTerm', 'Q_conf_out': 'Q_ConTerm',
+    'QAI_projeto': 'QAI_projeto', 'QAI': 'QAI_projeto', 'QAI_in': 'QAI_projeto', 'QAI_out': 'QAI_projeto',
+    'Q_total': 'Q_total', 'Q_in': 'Qin', 'Q_in dir.': 'Qin', 'Q_out': 'Qout', 'Q_out dir.': 'Qout',
+    'Q_transf_in': 'Qtrf', 'Q_transf_out': 'Qtrf', 'Resíduo': 'residuo',
+    'Rede': 'rede', 'Ramal': 'ramal', 'Nível': 'nivel_ramal', 'Nivel': 'nivel_ramal',
+    'L': 'L', 'ζ': 'zeta', 'zeta': 'zeta', 'Secção': 'seccao', 'Ø': 'D', 'Q': 'Q', 'Q derivado': 'Q_derivado',
+    'v': 'v', 'Re': 'Re', 'Δp troço': 'dp_troco', 'Δp acumulado': 'dp_acumulado', 'Δp crítico': 'dp_critico',
+    'Lock D': 'lock_D', 'Ø travado': 'lock_D',
+    'Q proj.': 'Q_terminal', 'Q_projeto': 'Q_terminal', 'Q_med': 'Q_medido', 'Q_medido': 'Q_medido',
+    'Desvio': 'desvio_tab', 'Lw': 'Lw', 'Tamanho': 'catalogo_terminal',
+    'Tipo (Ecodesign)': 'tipo_ecodesign', 'Δp externo': 'dp_externo', 'Δp interno': 'dp_interno',
+    'Δp limpo': 'dp_filtro', 'Δp final': 'dp_filtro', 'SFPint': 'sfp', 'Limite SFPint': 'sfp_limite', 'P motor': 'P_motor',
+    'Área': 'area_transferencia', 'ΔP': 'dp_transferencia'
+  },
+  /* o botão "?" (o mesmo em toda a app; o aspeto está no CSS, .btn-help) */
+  botao(k) {
+    return '<span class="btn-help" role="button" tabindex="0" aria-label="Ajuda" data-tt="' + k + '"'
+      + ' onclick="event.stopPropagation(); VC.tooltips.mostrar(\'' + k + '\', this)"'
+      + ' onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();this.click()}">?</span>';
+  },
+  /* texto do cabeçalho sem setas de ordenação, unidades entre parênteses nem "?" */
+  rotulo(th) {
+    const c = th.cloneNode(true);
+    c.querySelectorAll('.btn-help').forEach(b => b.remove());
+    let t = c.textContent.replace(/[▲▼?]/g, ''), a;
+    do { a = t; t = t.replace(/\([^()]*\)/g, ''); } while (t !== a);   // "Lw (dB(A))" → "Lw"
+    return t.replace(/\s+/g, ' ').trim();
+  },
+  chave(th) {
+    if (th.hasAttribute('data-ajuda')) { const k = th.getAttribute('data-ajuda'); return k === '-' ? null : k; }
+    return this.ajudaPorCabecalho[this.rotulo(th)] || null;
+  },
+  _numero: /^[−\-+]?\d[\d\s.,]*(\s?(%|m³\/h|m\/s|Pa|W|kW|mm|m|m²|m³|h⁻¹|kg|cm²|dB\(A\)))?$/,
+  _celulaNumerica(td) {
+    if (td.querySelector('input[type="number"]') && !td.querySelector('select, input:not([type="number"])')) return true;
+    if (td.querySelector('input, select, button, .badge')) return false;
+    const t = td.textContent.replace(/\s+/g, ' ').trim();
+    if (t === '' || t === '—' || t === '-' || t === '–') return null;   // vazio: não decide
+    return this._numero.test(t);
+  },
+  decorar(raiz) {
+    const dic = (VC.conhecimento && VC.conhecimento.tooltips) || {};
+    (raiz || document).querySelectorAll('table').forEach(tab => {
+      if (tab.closest('.legenda-tabela, [data-sem-ajuda]')) return;
+      const cab = tab.tHead ? tab.tHead.rows[tab.tHead.rows.length - 1] : null;
+      if (!cab) return;
+      const ths = [...cab.cells];
+      ths.forEach(th => {
+        if (th.querySelector('.btn-help')) return;
+        const k = this.chave(th);
+        if (k && dic[k]) th.insertAdjacentHTML('beforeend', ' ' + this.botao(k));
+      });
+      if (ths.some(th => th.colSpan > 1)) return;
+      const linhas = [...(tab.tBodies[0] ? tab.tBodies[0].rows : [])].filter(r => r.cells.length === ths.length);
+      if (!linhas.length) return;
+      ths.forEach((th, i) => {
+        let algum = false, todos = true;
+        for (const r of linhas) { const n = this._celulaNumerica(r.cells[i]); if (n === null) continue; algum = true; if (!n) { todos = false; break; } }
+        if (algum && todos) { th.classList.add('num'); linhas.forEach(r => r.cells[i].classList.add('num')); }
+      });
+    });
+  },
+  instalar() {
+    if (this._obs || typeof MutationObserver === 'undefined') return;
+    let pendente = false;
+    this._obs = new MutationObserver(() => {
+      if (pendente) return; pendente = true;
+      requestAnimationFrame(() => { pendente = false; try { VC.tabelas.decorar(document); } catch (e) { if (VC.debug && VC.debug.aviso) VC.debug.aviso('VC.tabelas.decorar: ' + e.message); } });
+    });
+    this._obs.observe(document.body, { childList: true, subtree: true });
+    this.decorar(document);
+  }
+};
+if (document.body) VC.tabelas.instalar(); else document.addEventListener('DOMContentLoaded', () => VC.tabelas.instalar());
+
 window.renderBalancoV6 = function () {  
  const bal = VC6.balanco.todos();  
- const ttBal = (k) => ' <span class="btn-help" data-tt="' + k + '" onclick="event.stopPropagation(); VC.tooltips.mostrar(\'' + k + '\', this)" style="cursor:pointer; background:var(--verde-soft); color:var(--verde-esc); border:1px solid var(--verde-borda); border-radius:50%; padding:0 4px; font-size:9px; font-weight:900">?</span>';
+ const ttBal = (k) => ' ' + VC.tabelas.botao(k);
 let h = '<div class="cartao-titulo"><i class="fa-solid fa-scale-balanced"></i> Balanço de Ar</div>';   
 h += '<p style="font-size:11.5px;color:var(--texto-med);margin-bottom:10px">Clica numa linha para ver o detalhe das parcelas (Conforto, QAI, Transferências).</p>';   
 h += '<div class="tabela-wrap"><table class="tabela densa"><thead><tr>';   
-h += '<th style="width:30px; text-align:center">#</th><th style="width:75px; text-align:center">Detalhes</th><th>Espaço' + ttBal('tipo_espaco') + '</th><th style="width:50px; text-align:center">G' + ttBal('grupo_portaria') + '</th><th style="width:110px; text-align:right">Q_in (m³/h)' + ttBal('Q_normas') + '</th><th style="width:110px; text-align:right">Q_out (m³/h)' + ttBal('Q_extracao') + '</th><th style="width:110px; text-align:right">Resíduo (ΔQ)' + ttBal('Q_total') + '</th><th style="width:80px; text-align:center">Estado</th>';  
+h += '<th style="width:30px; text-align:center">#</th><th style="width:75px; text-align:center">Detalhes</th><th>Espaço</th><th style="width:50px; text-align:center">G' + ttBal('grupo_portaria') + '</th><th style="width:110px; text-align:right">Q_in (m³/h)' + ttBal('Qin') + '</th><th style="width:110px; text-align:right">Q_out (m³/h)' + ttBal('Qout') + '</th><th style="width:110px; text-align:right">Resíduo ΔQ (m³/h)' + ttBal('residuo') + '</th><th style="width:80px; text-align:center">Estado</th>';  
  h += '</tr></thead><tbody>';  
  bal.forEach((b, idx) => {
     const qai = Number(b.QAI_aplicado)||0;
