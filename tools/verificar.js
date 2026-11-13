@@ -149,29 +149,26 @@ function chamadasNoCodigo() {
     const proibido = /apagar|remover|eliminar|limpar|reset|repor|novo|nova|importar|carregar|excluir|desfazer|refazer|imprimir|exportar|descarregar|download|pdf|xlsx|csv|json|window\.open|location|confirm|prompt|gerarAutomatica|regenerar|autoBalanc|aplicarATodos|delete|splice|setLente|setJanela|fechada|classList\.toggle/i;
     const visiveis = () => page.evaluate(() => [...document.querySelectorAll('[onclick]')].filter(e => e.offsetParent).map(e => e.getAttribute('onclick')));
     const clicar = a => page.evaluate(a => { const el = [...document.querySelectorAll('[onclick]')].find(e => e.getAttribute('onclick') === a && e.offsetParent); if (el) el.click(); }, a);
-    const ir = async (j, l, passo) => {
-      await page.click(`button[data-janela="${j}"]`); await page.waitForTimeout(150);
-      await page.click(`button[data-lente="${l}"]`); await page.waitForTimeout(200);
-      if (passo) { await clicar(passo); await page.waitForTimeout(200); }
+    /* v11.3: navegação única — percorre cada passo e cada vista do passo (antes: janelas × lentes) */
+    const ir = async (passo, vista) => {
+      await page.evaluate(([p, v]) => { VC.nav.irPasso(p); if (v !== 'passo') VC.nav.setVista(v); }, [passo, vista]);
+      await page.waitForTimeout(250);
     };
+    const roteiro = await page.evaluate(() => VC.passosCatalogo.map(p => [p.id, VC.nav.vistasDe(p.id).map(v => v.id)]));
     const visto = new Set(); const comErro = {}; let cliques = 0;
-    for (const j of [1, 2, 3, 4, 5, 6]) for (const l of ['passo', 'hasse', 'tabela', 'kanban']) {
-      await ir(j, l);
-      const passos = (await visiveis()).filter(a => /^VC\.ui\.setPasso\(/.test(a));
-      for (const ps of [null, ...passos]) {
-        await ir(j, l, ps);
-        for (const a of [...new Set(await visiveis())]) {
-          const k = a.replace(/\d+/g, 'N');
-          if (visto.has(k) || proibido.test(a) || /^VC\.ui\.setPasso/.test(a)) continue;
-          visto.add(k);
-          const antes = erros.length;
-          await clicar(a).catch(e => erros.push('CLIQUE ' + e.message));
-          cliques++; await page.waitForTimeout(100);
-          if (erros.length > antes) comErro[`J${j}/${l}${ps ? '/' + (ps.match(/'(.+)'/) || [])[1] : ''} · ${a.slice(0, 90)}`] = [...new Set(erros.slice(antes))];
-          await page.keyboard.press('Escape').catch(() => {});
-          await page.evaluate(() => { try { VC.ui.fecharModal && VC.ui.fecharModal(); } catch { /* sem modal aberto */ } });
-          await ir(j, l, ps);
-        }
+    for (const [passo, vistas] of roteiro) for (const vista of vistas) {
+      await ir(passo, vista);
+      for (const a of [...new Set(await visiveis())]) {
+        const k = a.replace(/\d+/g, 'N');
+        if (visto.has(k) || proibido.test(a) || /^VC\.(ui\.setPasso|nav\.(irPasso|irFase|setVista))/.test(a)) continue;
+        visto.add(k);
+        const antes = erros.length;
+        await clicar(a).catch(e => erros.push('CLIQUE ' + e.message));
+        cliques++; await page.waitForTimeout(100);
+        if (erros.length > antes) comErro[`${passo}/${vista} · ${a.slice(0, 90)}`] = [...new Set(erros.slice(antes))];
+        await page.keyboard.press('Escape').catch(() => {});
+        await page.evaluate(() => { try { VC.ui.fecharModal && VC.ui.fecharModal(); } catch { /* sem modal aberto */ } });
+        await ir(passo, vista);
       }
     }
     R.percurso = { cliques, acoesComErro: comErro };

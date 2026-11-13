@@ -334,6 +334,43 @@ VC6.testes = {
       } finally { VC.passos.render(ativo); }
       if (erros.length && VC.debug && VC.debug.aviso) VC.debug.aviso('UI.T13: ' + erros.slice(0, 8).join(' | '));
       return erros.length === 0; } });
+    // v11.3: navegação única — fases = grupos do menu, todos os passos visíveis, cada gráfico tem uma vista que o abre
+    self.registar({ id: 'UI.T14', nucleo: 'UI', grupo: 'UI', nome: 'Navegação: fases, passos e vistas coerentes', criterio: 'fases = grupos; 16 passos visíveis; todos os modos gráficos têm vista; cada vista abre sem erro', fn: () => {
+      if (!VC.nav) return false;
+      const ativo = VC._passoAtivo || 'setup', erros = [];
+      const grupos = [...new Set((VC.passosCatalogo || []).map(p => p.grupoNome))];
+      const fases = [...document.querySelectorAll('.fase-btn')].map(b => b.textContent.trim());
+      if (fases.join('|') !== grupos.join('|')) erros.push('fases ≠ grupos: ' + fases.join(',') + ' / ' + grupos.join(','));
+      const modos = [...document.querySelectorAll('.modo-btn')].map(b => b.dataset.modo).filter(m => m && m !== 'condutas');
+      const comVista = new Set(); Object.values(VC.nav.VISTAS).forEach(l => l.forEach(v => { if (v.modo) comVista.add(v.modo); }));
+      modos.forEach(m => { if (!comVista.has(m)) erros.push('gráfico sem vista: ' + m); });
+      try {
+        (VC.passosCatalogo || []).filter(p => p.id !== 'diagnostico').forEach(p => {
+          VC.nav.irPasso(p.id);
+          const vis = [...document.querySelectorAll('.passo-btn[data-passo]')].filter(b => b.style.display !== 'none').length;
+          if (vis !== VC.passosCatalogo.length) erros.push(p.id + ': só ' + vis + ' passos no menu');
+          const fase = document.querySelector('.fase-btn.ativo');
+          if (!fase || fase.textContent.trim() !== p.grupoNome) erros.push(p.id + ': fase ativa errada');
+          VC.nav.vistasDe(p.id).forEach(v => {
+            try { VC.nav.setVista(v.id); } catch (e) { erros.push(p.id + '/' + v.id + ': ' + e.message); return; }
+            if (VC.nav.vistaAtiva !== v.id) erros.push(p.id + '/' + v.id + ': não ficou ativa');
+            if (v.modo && VC._modoAtivo !== v.modo) erros.push(p.id + '/' + v.id + ': modo ' + VC._modoAtivo);
+            if (!v.modo && VC._modoAtivo !== 'condutas') erros.push(p.id + '/' + v.id + ': ficou num ecrã gráfico');
+            const c = document.getElementById('conteudoPasso');
+            if (!v.modo && c && /class="vazio"[^>]*>[\s\S]{0,80}(Erro|não carregado)/.test(c.innerHTML)) erros.push(p.id + '/' + v.id + ': erro no desenho');
+          });
+        });
+      } finally { VC.nav.irPasso(ativo); }
+      if (erros.length && VC.debug && VC.debug.aviso) VC.debug.aviso('UI.T14: ' + erros.slice(0, 6).join(' | '));
+      return erros.length === 0; } });
+    // v11.3: a Entrega mostra o estado certo — o mesmo número de avisos da auditoria, e cada um com um passo para resolver
+    self.registar({ id: 'UI.T15', nucleo: 'UI', grupo: 'UI', nome: 'Entrega: estado igual à auditoria', criterio: 'Σ avisos agrupados = findings; cada grupo aponta para um passo que existe', fn: () => {
+      if (!VC.entrega) return false;
+      const d = VC.entrega.dados(), x = VC.calculo.calcularTudo();
+      const soma = d.pontos.reduce((s, p) => s + p.n, 0);
+      const ids = new Set((VC.passosCatalogo || []).map(p => p.id));
+      const h = VC.entrega.render();
+      return soma === (x.findings || []).length && d.pontos.every(p => ids.has(p.passo)) && /Licenciamento/.test(h) && /Obra/.test(h) && /Ensaios/.test(h); } });
   },
 
   correr() {
