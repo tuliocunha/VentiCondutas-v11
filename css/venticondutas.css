@@ -362,3 +362,61 @@ html, body, .app { height: 100vh !important; overflow: hidden !important; margin
 .kanban-kpi .lbl{color:#475569}
 .kanban-kpi .val{font-weight:700;font-variant-numeric:tabular-nums}
 .kanban-vazio{font-size:13px;color:#64748b;padding:6px}
+
+/* ─── 6. v11.3 · planta como entrada de dados (18-planta.js) ─── */
+.planta{display:flex;flex-direction:column;gap:10px}
+.planta-barra{display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+.planta-pisos{display:flex;gap:4px;background:var(--superf3);border-radius:10px;padding:4px;flex-wrap:wrap}
+.planta-piso{appearance:none;border:0;background:transparent;border-radius:7px;padding:6px 12px;min-height:36px;font:inherit;font-size:13.5px;font-weight:600;color:#334155;cursor:pointer}
+.planta-piso.ativo{background:#fff;color:var(--texto);font-weight:800;box-shadow:0 1px 2px rgba(15,23,42,.1)}
+.planta-mais{color:var(--primario-esc)}
+.planta-ferr{display:flex;gap:4px;flex-wrap:wrap}
+.planta-f{appearance:none;border:1px solid var(--borda-media);background:#fff;border-radius:8px;padding:6px 12px;min-height:36px;font:inherit;font-size:13.5px;font-weight:600;color:#334155;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.planta-f.ativo{background:var(--primario-esc);border-color:var(--primario-esc);color:#fff}
+.planta-f:focus-visible,.planta-piso:focus-visible,.planta-item:focus-visible{outline:2px solid var(--primario-esc);outline-offset:2px}
+.planta-zoom{display:flex;align-items:center;gap:4px;font-size:13px;color:#475569}
+.planta-zoom span{min-width:44px;text-align:center;font-variant-numeric:tabular-nums}
+.planta-corlbl{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:#475569;margin-left:auto}
+.planta-corlbl select{font:inherit;font-size:13.5px;padding:6px 8px;border:1px solid var(--borda-media);border-radius:8px;background:#fff;min-height:36px}
+.planta-dica{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;font-size:13.5px;color:#5c4a1e;background:#fffaf0;border:1px solid #efe2c4;border-radius:8px;padding:8px 12px}
+.planta-escala{margin-left:auto;font-size:13px;color:#6b5a2e}
+.planta-corpo{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:12px;align-items:start}
+@media (max-width:1100px){.planta-corpo{grid-template-columns:1fr}}
+.planta-tela{overflow:auto;max-height:calc(100vh - 300px);min-height:360px;background:#f1f4f8;border:1px solid var(--borda-media);border-radius:8px}
+.planta-tela svg{display:block;cursor:crosshair;touch-action:none;user-select:none}
+.planta-sala{cursor:pointer}
+.planta-sala text{pointer-events:none;paint-order:stroke;stroke:#fff;stroke-width:3px;stroke-linejoin:round}
+.planta-painel{display:flex;flex-direction:column;gap:10px;font-size:13.5px}
+.planta-card{background:#fff;border:1px solid var(--borda);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.planta-card.destaque{border-color:var(--primario-esc);box-shadow:0 0 0 3px var(--primario-soft)}
+.planta-card-t{font-size:15px;font-weight:800}
+.planta-card p{margin:0}
+.planta-card label{font-size:12.5px;font-weight:700;color:#475569;margin-top:4px}
+.planta-card input:not([type="checkbox"]),.planta-card select{font:inherit;font-size:14px;padding:7px 9px;border:1px solid var(--borda-media);border-radius:8px;background:#fff;min-height:38px;width:100%;box-sizing:border-box}
+.planta-card .planta-chk{display:flex;align-items:center;gap:8px;font-weight:600;color:#334155}
+.planta-ou{font-size:12.5px;color:#64748b;text-align:center;border-top:1px solid var(--borda);padding-top:8px;margin-top:4px}
+.planta-acoes{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.planta-acoes .btn{min-height:36px}
+.planta-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.planta-kpis div{background:var(--superf3);border-radius:8px;padding:6px 8px;display:flex;flex-direction:column}
+.planta-kpis span{font-size:12px;color:#475569}
+.planta-kpis b{font-size:14px;font-variant-numeric:tabular-nums}
+.planta-meta{font-size:12.5px;color:#475569;margin:0}
+.planta-aviso{font-size:13px;font-weight:600;color:#7a5a1e;background:#faf3e3;border:1px solid #e8d4a8;border-radius:8px;padding:6px 8px;margin:0}
+.planta-lista-t{font-size:12.5px;font-weight:800;color:#475569;margin-top:4px}
+.planta-lista{display:flex;flex-direction:column;gap:2px;max-height:300px;overflow-y:auto}
+.planta-item{appearance:none;display:flex;align-items:center;gap:8px;width:100%;border:0;background:transparent;border-radius:8px;padding:7px 8px;min-height:36px;font:inherit;font-size:13.5px;color:var(--texto);cursor:pointer;text-align:left}
+.planta-item:hover{background:var(--superf2)}
+.planta-item.ativo{background:var(--primario-soft);font-weight:700}
+.planta-item span{flex:1}
+.planta-item b{font-variant-numeric:tabular-nums;font-weight:600;color:#334155}
+.planta-item i,.planta-legenda i{display:inline-block;width:12px;height:12px;border-radius:3px;border:1.5px solid;flex-shrink:0}
+.planta-legenda{display:flex;flex-wrap:wrap;gap:14px;font-size:12.5px;color:#334155}
+.planta-legenda span{display:inline-flex;align-items:center;gap:6px}
+.planta-rodape{border-top:1px solid var(--borda);padding-top:8px}
+.planta-vazia{display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;padding:40px 20px;background:#fff;border:2px dashed var(--borda-media);border-radius:12px}
+.planta-vazia > i{font-size:32px;color:var(--primario)}
+.planta-vazia h3{margin:0;font-size:18px}
+.planta-vazia p{margin:0;max-width:560px;font-size:14px;color:#475569;line-height:1.55}
+.planta-nome{display:flex;align-items:center;gap:8px;font-size:13.5px}
+.planta-nome input{font:inherit;padding:6px 9px;border:1px solid var(--borda-media);border-radius:8px}
