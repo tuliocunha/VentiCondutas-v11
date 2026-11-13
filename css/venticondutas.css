@@ -433,3 +433,7 @@ html, body, .app { height: 100vh !important; overflow: hidden !important; margin
 .entrega-planta svg{width:100%;height:auto;display:block}
 .entrega-planta figcaption{font-size:13px;color:#475569}
 @media print{.entrega-planta{break-inside:avoid}}
+/* planta · ramais (20-planta-ramais.js) */
+.planta-ramal{cursor:pointer}
+.planta-ramal text{paint-order:stroke;stroke:#fff;stroke-width:3.5px;stroke-linejoin:round;pointer-events:none}
+.planta-ramal.sel polyline:last-of-type{filter:drop-shadow(0 0 3px rgba(47,95,143,.6))}

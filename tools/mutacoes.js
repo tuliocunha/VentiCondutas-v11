@@ -134,6 +134,10 @@ const CASOS = [
     const o = VC.planta.dentro; VC.planta.dentro = () => true;
     return () => { VC.planta.dentro = o; };
   }],
+  ['v11.3 · L do ramal medido em píxeis (sem a escala)', 'UI.T18', () => {
+    const o = VC.planta.comprimentoM; VC.planta.comprimentoM = function (pts, piso) { return piso && piso.escala ? this.comprimentoPx(pts) : null; };
+    return () => { VC.planta.comprimentoM = o; };
+  }],
   ['E3 · sem aviso de ventilador fora da curva', 'N6.T13', () => {
     const o = VC.uta.calcularPontoFuncionamento;
     VC.uta.calcularPontoFuncionamento = function () { const r = o.apply(this, arguments); if (r) r.foraDaCurva = false; return r; };
