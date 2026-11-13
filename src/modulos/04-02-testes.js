@@ -405,6 +405,21 @@ VC6.testes = {
         return okDentro && okTerm && okQ;
       } finally { VC.dados.plantas = g.plantas; VC.dados.terminais = g.terminais; P.piso = g.piso; if (VC6.balanco) VC6.balanco.todos = g.bal; }
     } });
+    // v11.3: ramais na planta — L medido pela escala, curvas e ζ sugerido, encaixe no ramal-pai
+    self.registar({ id: 'UI.T18', nucleo: 'UI', grupo: 'UI', nome: 'Ramais na planta: L medido, curvas e ζ', criterio: '(0,0)→(300,0)→(300,400) a 0,01 m/px = 7 m; 1 curva de 90° → ζ = 0,30 + 0,25; reta sem curvas; encaixa no ramal desenhado', fn: () => {
+      const P = VC.planta; if (!P || !P.comprimentoM || !P.curvas || !P.zetaSugerido || !P._encaixar) return false;
+      const piso = { id: 'pR', escala: 0.01 }, L = [[0, 0], [300, 0], [300, 400]];
+      const okL = Math.abs(P.comprimentoM(L, piso) - 7) < 1e-9 && P.comprimentoM(L, { escala: null }) === null;
+      const okC = P.curvas(L).length === 1 && P.curvas(L)[0] === 90 && Math.abs(P.zetaSugerido(L) - 0.55) < 1e-9 && P.curvas([[0, 0], [100, 0], [200, 2]]).length === 0;
+      const g = { plantas: VC.dados.plantas, piso: P.piso, zoom: P.zoom, ramais: VC.dados.ramais };
+      try {
+        VC.dados.plantas = [{ id: 'pR', nome: 'T', w: 1000, h: 1000, escala: 0.01 }]; P.piso = 'pR'; P.zoom = 1;
+        VC.dados.ramais = [{ id: 9001, nome: 'RX', rede: 'insuflacao', planta: { pisoId: 'pR', pts: L } }];
+        const e = P._encaixar([305, 200]);
+        const okE = !!(e && e.ramal && e.ramal.nome === 'RX' && Math.abs(e.q[0] - 300) < 1e-9);
+        return okL && okC && okE;
+      } finally { VC.dados.plantas = g.plantas; P.piso = g.piso; P.zoom = g.zoom; VC.dados.ramais = g.ramais; }
+    } });
   },
 
   correr() {
