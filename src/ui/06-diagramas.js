@@ -748,6 +748,7 @@ VC.passos.render = function (passo) {
     else if (passo === 'otimizacao' && window.renderOtimizacao) el.innerHTML = window.renderOtimizacao();
     else if (passo === 'normativa' && window.renderNormativa) el.innerHTML = window.renderNormativa();
     else if (passo === 'diagnostico' && window.renderDiagnostico) el.innerHTML = window.renderDiagnostico();
+    else if (passo === 'relatorios' && VC.entrega) el.innerHTML = VC.entrega.render();   // v11.3: ecrã Entrega
     else if (passo === 'relatorios' && window.renderRelatoriosAtalho) el.innerHTML = window.renderRelatoriosAtalho();
     else if (passo === 'caderno' && window.renderCaderno) el.innerHTML = window.renderCaderno();
     else if (passo === 'configuracoes' && window.renderConfig) el.innerHTML = window.renderConfig();

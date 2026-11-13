@@ -118,6 +118,14 @@ const CASOS = [
     const o = VC.tabelas.decorar; VC.tabelas.decorar = function () {};
     return () => { VC.tabelas.decorar = o; };
   }],
+  ['v11.3 · gráfico sem porta de entrada (diagrama da rede sem vista)', 'UI.T14', () => {
+    const o = VC.nav.VISTAS.rede; VC.nav.VISTAS.rede = o.filter(v => v.modo !== 'diagrama-rede');
+    return () => { VC.nav.VISTAS.rede = o; };
+  }],
+  ['v11.3 · Entrega esconde avisos da auditoria', 'UI.T15', () => {
+    const o = VC.entrega.dados; VC.entrega.dados = function () { const d = o.apply(this, arguments); d.pontos = d.pontos.slice(1); return d; };
+    return () => { VC.entrega.dados = o; };
+  }],
   ['E3 · sem aviso de ventilador fora da curva', 'N6.T13', () => {
     const o = VC.uta.calcularPontoFuncionamento;
     VC.uta.calcularPontoFuncionamento = function () { const r = o.apply(this, arguments); if (r) r.foraDaCurva = false; return r; };

@@ -44,6 +44,19 @@ VC.lentes = {
     return h;
   },
 
+  /* v11.3: arrastar um cartão para outra coluna força o grupo do espaço (o mesmo que a coluna Grupo da tabela) */
+  soltarNoGrupo: function (ev, g) {
+    ev.preventDefault();
+    const col = ev.currentTarget; if (col && col.classList) col.classList.remove('kanban-alvo');
+    const idx = Number(ev.dataTransfer && ev.dataTransfer.getData('text/plain'));
+    const e = (VC.dados.espacos || [])[idx];
+    if (!e || VC.dados.congelado) return;
+    const atual = e.grupoForcado || VC.calculo.calcularQEspaco(e).g;
+    if (Number(atual) === Number(g)) return;
+    VC.caudalEspacoUI.setGrupo(idx, String(g));
+    if (VC.nav) VC.nav.setVista('kanban');
+    VC.ui.toast('«' + e.nome + '» passou para G' + g + '.');
+  },
   renderKanbanEspacos: function () {
     const espacos = VC.dados.espacos || [];
     if (!espacos.length) return '<div class="vazio"><i class="fa-solid fa-inbox"></i><div class="vazio-titulo">Sem espaços</div></div>';
@@ -58,12 +71,13 @@ VC.lentes = {
 
     const nomesGrupo = { 1: 'G1 · Ocupação Permanente', 2: 'G2 · Zona de Transferência', 3: 'G3 · Baixa Emissão', 4: 'G4 · Extração Dedicada' };
     
-    let h = '<div class="cartao-titulo"><i class="fa-solid fa-columns"></i> Kanban de Espaços por Grupo</div>';
+    let h = '<div class="cartao-titulo"><i class="fa-solid fa-columns"></i> Espaços por grupo da Portaria 138-I</div>';
+    h += '<p style="font-size:13px;color:var(--texto-med);margin:0 0 10px">Arraste um cartão para outra coluna para forçar o grupo do espaço. Para voltar ao grupo do tipo, use a coluna Grupo na vista Tabela (opção automático).</p>';
     h += '<div class="kanban-requisitos">';
     
     [1, 2, 3, 4].forEach(g => {
       const itens = grupos[g] || [];
-      h += '<div class="kanban-col" data-g="' + g + '">';
+      h += '<div class="kanban-col" data-g="' + g + '" ondragover="event.preventDefault(); this.classList.add(\'kanban-alvo\')" ondragleave="this.classList.remove(\'kanban-alvo\')" ondrop="VC.lentes.soltarNoGrupo(event, ' + g + ')">';
       h += '<div class="kanban-col-cab"><span>' + nomesGrupo[g] + '</span><span class="kanban-col-num">' + itens.length + '</span></div>';
       h += '<div class="kanban-col-body">';
       
@@ -76,13 +90,14 @@ VC.lentes = {
           const temQAI = (Number(e.QAI_projeto) || 0) > 0;
           const temRPH = (Number(e.Q_ConTerm) || 0) > 0;
           
-          h += '<div class="kanban-card">';
+          const idx = espacos.indexOf(e);
+          h += '<div class="kanban-card" draggable="true" data-idx="' + idx + '" ondragstart="event.dataTransfer.setData(\'text/plain\', \'' + idx + '\')" title="Arraste para outra coluna para mudar o grupo">';
           h += '<div class="kanban-card-cab"><div class="kanban-card-nome">' + VC.utils.esc(e.nome) + '</div></div>';
-          h += '<div class="kanban-card-tipo">' + VC.utils.esc(e.tipo) + '</div>';
+          h += '<div class="kanban-card-tipo">' + VC.utils.esc(e.tipo) + (e.grupoForcado ? ' · <b>grupo forçado</b>' : '') + '</div>';
           
           h += '<div class="kanban-card-kpis">';
-          h += '<div class="kanban-kpi"><span class="lbl">Q_normas</span><span class="val">' + VC.utils.fmt(c.Q_normas, 0) + '</span></div>';
-          h += '<div class="kanban-kpi"><span class="lbl">Q_total</span><span class="val">' + VC.utils.fmt(c.Q_total, 0) + '</span></div>';
+          h += '<div class="kanban-kpi"><span class="lbl">Q_normas</span><span class="val">' + VC.utils.fmt(c.Q_normas, 0) + ' m³/h</span></div>';
+          h += '<div class="kanban-kpi"><span class="lbl">Q_total</span><span class="val">' + VC.utils.fmt(c.Q_total, 0) + ' m³/h</span></div>';
           if (temRPH) h += '<div class="kanban-kpi destaque"><span class="lbl">RPH</span><span class="val">' + (e.rphAplicado || 0) + '</span></div>';
           if (temQAI) h += '<div class="kanban-kpi qai"><span class="lbl">QAI</span><span class="val">' + VC.utils.fmt(e.QAI_projeto, 0) + '</span></div>';
           h += '</div>';

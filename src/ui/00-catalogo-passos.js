@@ -24,7 +24,7 @@ VC.passosCatalogo = [
   { id: 'otimizacao',    grupo: 'verificacao',     grupoNome: '4 · Verificação',       titulo: 'Optimização',              sub: 'R = 1 Pa/m',                      icone: 'fa-wand-magic-sparkles' },
   { id: 'normativa',     grupo: 'verificacao',     grupoNome: '4 · Verificação',       titulo: 'Verificação Normativa',    sub: 'P138 · EN 16798',                 icone: 'fa-scale-balanced' },
   { id: 'diagnostico',   grupo: 'verificacao',     grupoNome: '4 · Verificação',       titulo: 'Diagnóstico',              sub: '109 testes',                      icone: 'fa-vial' },
-  { id: 'relatorios',    grupo: 'entrega',         grupoNome: '5 · Entrega',           titulo: 'Relatórios',               sub: '15 relatórios',                   icone: 'fa-file-lines' },
+  { id: 'relatorios',    grupo: 'entrega',         grupoNome: '5 · Entrega',           titulo: 'Entrega',                  sub: 'Licenciamento · Obra · Ensaios',  icone: 'fa-box-open' },
   { id: 'caderno',       grupo: 'entrega',         grupoNome: '5 · Entrega',           titulo: 'Caderno de Encargos',      sub: '14 secções',                      icone: 'fa-clipboard' }
 ];
 

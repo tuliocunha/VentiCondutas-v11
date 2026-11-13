@@ -224,7 +224,7 @@ html, body, .app { height: 100vh !important; overflow: hidden !important; margin
 .topo-acoes { display: flex !important; }
 #painelInferior { display: block !important; }
 .janelas-bar { display: flex !important; }
-.lens-bar { display: flex !important; }
+.lens-bar, .barra-modos { display: none !important; }   /* v11.3: lentes e modos passaram a vistas dentro de cada passo (16-navegacao.js) */
 .oculto { display: none !important; }
 
 /* ─── 4. v11.3 · tabelas legíveis e ajudas consistentes ───
@@ -274,3 +274,91 @@ html, body, .app { height: 100vh !important; overflow: hidden !important; margin
 .tabela-rel td{vertical-align:top}
 .tabela-rel tbody tr{cursor:default}
 @media print{.btn-help{display:none !important}.tabela-wrap{overflow:visible;border:none}.tabela tbody tr:nth-child(even){background:none}}
+
+/* ─── 5. v11.3 · navegação única (16-navegacao.js) e ecrã Entrega (17-entrega.js) ─── */
+.fase-btn{display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:700;padding:12px 16px;color:#475569}
+.fase-btn.ativo{color:var(--primario-esc)}
+.fase-estado{width:10px;height:10px;border-radius:50%;flex-shrink:0;border:2px solid #94a3b8;box-sizing:border-box}
+.fase-estado.fase-ok{background:#3f7a52;border-color:#3f7a52}
+.fase-estado.fase-atencao{background:#b7791f;border-color:#b7791f}
+.vistas-bar{flex-shrink:0;display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:6px 16px;background:var(--superf);border-bottom:1px solid var(--borda);min-height:48px;box-sizing:border-box}
+.vistas-titulo{font-size:13px;color:#64748b;white-space:nowrap}
+.vistas-titulo b{color:var(--texto)}
+.vistas-tabs{display:flex;gap:2px;flex-wrap:wrap}
+.vista-tab{appearance:none;background:transparent;border:0;border-bottom:3px solid transparent;padding:8px 12px;min-height:40px;font-family:inherit;font-size:13.5px;font-weight:600;color:#475569;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.vista-tab:hover{color:var(--texto);background:var(--superf2)}
+.vista-tab.ativo{color:var(--texto);font-weight:800;border-bottom-color:var(--primario-esc)}
+.vista-tab:focus-visible,.fase-btn:focus-visible{outline:2px solid var(--primario-esc);outline-offset:-2px}
+.vistas-conceitos{margin-left:auto}
+.nav-rodape{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 4px;flex-shrink:0}
+.nav-rodape .btn{min-height:40px;font-size:13px}
+.nav-rodape-pos{font-size:13px;color:#64748b}
+/* conceitos do passo: coluna à direita quando aberta; escondida quando fechada */
+.workspace-condutas:not(.com-conceitos) > .secao-conceitos{display:none}
+@media (min-width:1100px){
+  .workspace-condutas.com-conceitos{display:grid !important;grid-template-columns:minmax(0,1fr) 340px;align-content:start;align-items:start}
+  .workspace-condutas.com-conceitos > *{grid-column:1}
+  .workspace-condutas.com-conceitos > .secao-conceitos{grid-column:2;grid-row:1 / span 3;position:sticky;top:0}
+  .workspace-condutas.com-conceitos .painel-grid-2x3{grid-template-columns:1fr}
+}
+/* Entrega */
+.entrega{display:flex;flex-direction:column;gap:22px;max-width:1180px}
+.entrega-proj{font-size:13px;color:#64748b}
+.entrega-estado{border-radius:12px;padding:18px 20px;border:1px solid var(--borda)}
+.entrega-estado h2{margin:0 0 8px;font-size:20px;font-weight:800}
+.entrega-estado p{margin:0;font-size:14px}
+.entrega-ok{background:#eef6f0;border-color:#b9d8c2}
+.entrega-atencao{background:#fbf5e8;border-color:#e8d4a8}
+.entrega-erro{background:#faeeee;border-color:#e3c1c1}
+.entrega-pontos{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.entrega-pontos li{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:14px;background:#fff;border:1px solid var(--borda);border-radius:8px;padding:8px 10px}
+.entrega-pontos .btn{margin-left:auto}
+.entrega-el{color:#475569;font-size:13px}
+.entrega-msg{flex-basis:100%;font-size:13px;color:#475569}
+.entrega-h{margin:0 0 10px;font-size:16px;font-weight:800}
+.entrega-h small{font-size:13px;font-weight:500;color:#64748b;margin-left:6px}
+.entrega-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.entrega-kpi{background:#fff;border:1px solid var(--borda);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:4px}
+.entrega-kpi b{font-size:24px;font-weight:800;font-variant-numeric:tabular-nums}
+.entrega-kpi span{font-size:13px;color:#475569}
+.entrega-redes{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.entrega-rede{background:#fff;border:1px solid var(--borda);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.entrega-rede-cab{display:flex;flex-direction:column;gap:2px;margin-bottom:4px}
+.entrega-rede-cab b{font-size:14px}
+.entrega-rede-cab span{font-size:13px;color:#475569}
+.entrega-barra{display:grid;grid-template-columns:80px 1fr 56px;align-items:center;gap:8px;font-size:13px}
+.entrega-trilho{height:8px;background:var(--superf3);border-radius:4px;overflow:hidden}
+.entrega-trilho span{display:block;height:100%;border-radius:4px}
+.entrega-q{text-align:right;font-variant-numeric:tabular-nums}
+.entrega-nota{font-size:13px;color:#475569;margin:8px 0 0}
+.entrega-dest{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+.entrega-card{background:#fff;border:1px solid var(--borda);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:8px}
+.entrega-card-t{font-size:15px;font-weight:800}
+.entrega-card-s{font-size:13px;color:#475569}
+.entrega-card ul{margin:0;padding-left:18px;font-size:13.5px;line-height:1.6}
+.entrega-acoes{display:flex;flex-wrap:wrap;gap:8px;margin-top:auto;padding-top:6px}
+.entrega-acoes .btn{min-height:38px;font-size:13px}
+.entrega-det summary,.entrega-tec summary{cursor:pointer;font-size:13.5px;font-weight:700;color:var(--primario-esc);padding:6px 0}
+.entrega-tec{background:#fff;border:1px solid var(--borda);border-radius:12px;padding:10px 16px}
+.entrega-tec-grupos{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;padding:8px 0}
+.entrega-tec-grupos > div{display:flex;flex-direction:column;align-items:flex-start;gap:4px}
+.entrega-tec-t{font-size:12px;font-weight:800;color:#475569;margin-bottom:2px}
+/* o caminho (fase › passo) está na barra de vistas: no cabeçalho do passo fica só o título */
+.cabecalho-workspace .breadcrumb, .cabecalho-workspace #cabecalhoGrupo{display:none}
+.selo-estado{display:inline-flex !important;align-items:center;gap:6px;font-size:13px !important;font-weight:700;padding:5px 12px !important;border-radius:999px;cursor:pointer;white-space:nowrap;margin-right:8px;border:1px solid var(--borda-media)}
+.selo-ponto{width:9px;height:9px;border-radius:50%;background:currentColor}
+.selo-ok{color:#3f7a52;background:#eef6f0 !important;border-color:#b9d8c2 !important}
+.selo-atencao{color:#7a5a1e;background:#fbf5e8 !important;border-color:#e8d4a8 !important}
+.selo-erro{color:#8f3d3d;background:#faeeee !important;border-color:#e3c1c1 !important}
+.selo-estado:focus-visible{outline:2px solid var(--primario-esc);outline-offset:2px}
+/* vista "Por grupo" (antiga lente Kanban) */
+.kanban-col.kanban-alvo{outline:2px dashed var(--primario-esc);outline-offset:-2px;background:var(--primario-soft)}
+.kanban-card{cursor:grab}
+.kanban-card:active{cursor:grabbing}
+.kanban-card-nome{font-size:14px;font-weight:700}
+.kanban-card-tipo{font-size:12.5px;color:#475569;margin:2px 0 6px}
+.kanban-card-kpis{display:flex;flex-wrap:wrap;gap:4px 12px}
+.kanban-kpi{display:flex;gap:4px;font-size:12.5px}
+.kanban-kpi .lbl{color:#475569}
+.kanban-kpi .val{font-weight:700;font-variant-numeric:tabular-nums}
+.kanban-vazio{font-size:13px;color:#64748b;padding:6px}
