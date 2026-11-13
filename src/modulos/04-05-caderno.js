@@ -163,7 +163,7 @@ VC.caderno = {
   _subseccao(t) { return '<h4 style="font-size:11.5px;color:var(--texto);font-weight:800;margin:10px 0 5px;display:flex;align-items:center;gap:6px"><i class="fa-solid fa-caret-right" style="color:var(--primario);font-size:10px"></i>' + t + '</h4>'; },
   _par(t) { return '<p style="font-size:11px;color:var(--texto);line-height:1.6;margin:6px 0">' + t + '</p>'; },
   _lista(itens) { return '<ul style="font-size:11px;color:var(--texto);line-height:1.6;margin:6px 0 10px 0;padding-left:20px">' + itens.map(i => '<li style="margin-bottom:4px">' + i + '</li>').join('') + '</ul>'; },
-  _tabela(headers, linhas) { return '<div style="overflow:auto;border:1px solid var(--borda);border-radius:var(--raio-2);margin:8px 0"><table style="width:100%;border-collapse:collapse;font-size:10.5px;table-layout:auto"><thead><tr style="background:var(--superf3)">' + headers.map(h => '<th style="text-align:left;padding:6px 8px;border-bottom:1px solid var(--borda-media);font-size:9.5px;text-transform:uppercase;color:var(--texto-med);font-weight:800;white-space:nowrap">' + h + '</th>').join('') + '</tr></thead><tbody>' + linhas.map(l => '<tr>' + l.map(c => '<td style="padding:5px 8px;border-bottom:1px solid var(--borda);vertical-align:top">' + (c == null ? '' : c) + '</td>').join('') + '</tr>').join('') + '</tbody></table></div>'; },
+  _tabela(headers, linhas) { return '<div class="tabela-wrap"><table class="tabela densa tabela-rel"><thead><tr>' + headers.map(h => '<th>' + h + '</th>').join('') + '</tr></thead><tbody>' + linhas.map(l => '<tr>' + l.map(c => '<td>' + (c == null ? '' : c) + '</td>').join('') + '</tr>').join('') + '</tbody></table></div>'; },
 
   abrir() {
     const modal = document.getElementById('modalCaderno');

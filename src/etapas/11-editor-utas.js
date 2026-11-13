@@ -104,7 +104,7 @@ VC.editorUtas = {
 
         h += '<div style="margin-bottom:10px"><div style="font-size:10.5px;font-weight:800;color:var(--texto-med);text-transform:uppercase;margin-bottom:4px">Componentes</div>';
         h += '<div class="tabela-wrap"><table class="tabela densa"><thead><tr>';
-        h += '<th>Nome</th><th>Tipo</th><th>\u0394p limpo</th><th>\u0394p final</th><th>\u03b6</th><th></th>';
+        h += '<th>Nome</th><th>Tipo</th><th>\u0394p limpo (Pa)</th><th>\u0394p final (Pa)</th><th>\u03b6 (\u2013)</th><th></th>';
         h += '</tr></thead><tbody>';
         (u.componentes || []).forEach(function (c, idx) {
           h += '<tr>';

@@ -19,7 +19,7 @@ VC.lentes = {
     
     let h = '<div class="cartao-titulo"><i class="fa-solid fa-table"></i> Tabela Universal de Espaços</div>';
     h += '<div class="tabela-wrap"><table class="tabela densa"><thead><tr>';
-    h += '<th>Nome</th><th>Tipo</th><th>Grupo</th><th>A (m²)</th><th>H (m)</th><th>V (m³)</th><th>N</th>';
+    h += '<th>Nome</th><th data-ajuda="tipo_espaco">Tipo</th><th>Grupo</th><th>A (m²)</th><th>H (m)</th><th>V (m³)</th><th>N</th>';
     h += '<th>Q_normas (m³/h)</th><th>Q_ConTerm (m³/h)</th><th>QAI_projeto (m³/h)</th><th>Q_total (m³/h)</th>';
     h += '</tr></thead><tbody>';
     

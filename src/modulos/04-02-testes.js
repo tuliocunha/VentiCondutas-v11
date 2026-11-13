@@ -318,6 +318,22 @@ VC6.testes = {
       const b = document.createElement('span'); document.body.appendChild(b);
       try { VC.tooltips.mostrar('tipo_espaco', b); const p = document.getElementById('ttPopup'); return !!p && /\bon\b/.test(p.className) && p.textContent.length > 0; }
       finally { if (VC.tooltips.esconder) VC.tooltips.esconder(); b.remove(); } } });
+    // v11.3: todas as colunas técnicas têm o mesmo "?" e todas as ajudas abrem um texto que existe
+    self.registar({ id: 'UI.T13', nucleo: 'UI', grupo: 'UI', nome: 'Ajuda "?" em todas as colunas técnicas', criterio: 'colunas do dicionário com "?"; todas as chaves data-tt existem no glossário', fn: () => {
+      if (!VC.tabelas || typeof VC.tabelas.decorar !== 'function') return false;
+      const dic = (VC.conhecimento && VC.conhecimento.tooltips) || {}, ativo = VC._passoAtivo || 'setup', erros = [];
+      const ver = (onde, raiz) => {
+        VC.tabelas.decorar(raiz);
+        raiz.querySelectorAll('[data-tt]').forEach(el => { const k = el.getAttribute('data-tt'); if (!dic[k]) erros.push(onde + ': chave inexistente ' + k); });
+        raiz.querySelectorAll('table thead th').forEach(th => { if (th.closest('[data-sem-ajuda], .legenda-tabela')) return; const k = VC.tabelas.chave(th); if (k && !th.querySelector('.btn-help')) erros.push(onde + ': sem "?" em ' + VC.tabelas.rotulo(th)); });
+      };
+      try {
+        (VC.passosCatalogo || []).filter(p => p.id !== 'diagnostico').forEach(p => { VC.passos.render(p.id); const el = document.getElementById('conteudoPasso'); if (el) ver(p.id, el); });
+        const d = document.createElement('div');
+        (VC.listaRelatorios || []).filter(r => r.id !== 'diagnostico').forEach(r => { try { d.innerHTML = VC.relatorios[r.id](); } catch (e) { return; } ver('relatório ' + r.id, d); });
+      } finally { VC.passos.render(ativo); }
+      if (erros.length && VC.debug && VC.debug.aviso) VC.debug.aviso('UI.T13: ' + erros.slice(0, 8).join(' | '));
+      return erros.length === 0; } });
   },
 
   correr() {

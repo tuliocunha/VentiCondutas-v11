@@ -60,7 +60,7 @@ VC.associacao = {
     if (nTermSemRamal > 0) {
       h += '<div style="font-size:10.5px;font-weight:800;color:var(--ambar-esc);text-transform:uppercase;margin:14px 0 6px"><i class="fa-solid fa-triangle-exclamation"></i> Terminais sem ramal (' + nTermSemRamal + ')</div>';
       h += '<div class="tabela-wrap"><table class="tabela densa"><thead><tr>';
-      h += '<th>Terminal</th><th>Tipo</th><th>Rede</th><th>Espa\u00e7o(s)</th><th>Q</th><th>Atribuir a</th>';
+      h += '<th>Terminal</th><th data-ajuda="tipo_terminal">Tipo</th><th>Rede</th><th>Espa\u00e7o(s)</th><th data-ajuda="Q_terminal">Q (m\u00b3/h)</th><th>Atribuir a</th>';
       h += '</tr></thead><tbody>';
       terminais.forEach(function (t, idx) {
         if (t.ramalRef) return;
