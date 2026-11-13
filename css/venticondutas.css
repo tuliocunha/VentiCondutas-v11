@@ -420,3 +420,16 @@ html, body, .app { height: 100vh !important; overflow: hidden !important; margin
 .planta-vazia p{margin:0;max-width:560px;font-size:14px;color:#475569;line-height:1.55}
 .planta-nome{display:flex;align-items:center;gap:8px;font-size:13.5px}
 .planta-nome input{font:inherit;padding:6px 9px;border:1px solid var(--borda-media);border-radius:8px}
+/* planta · rede (19-planta-rede.js) */
+.planta-term{cursor:grab}
+.planta-term text{pointer-events:none}
+.planta-vert{cursor:move}
+.planta-trf text{paint-order:stroke;stroke:#fff;stroke-width:3px;stroke-linejoin:round}
+.planta-terms{display:flex;flex-direction:column;gap:4px}
+.planta-tchip{display:flex;align-items:center;gap:6px;font-size:12.5px;border-left:3px solid;padding:2px 6px;background:var(--superf2);border-radius:4px}
+.planta-tchip b{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;color:#fff;font-size:11px}
+.entrega-plantas{display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:12px}
+.entrega-planta{margin:0;background:#fff;border:1px solid var(--borda);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:6px}
+.entrega-planta svg{width:100%;height:auto;display:block}
+.entrega-planta figcaption{font-size:13px;color:#475569}
+@media print{.entrega-planta{break-inside:avoid}}

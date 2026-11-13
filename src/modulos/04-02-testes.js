@@ -388,6 +388,23 @@ VC6.testes = {
         return okArea && veio && limpou;
       } finally { VC.dados.plantas = guardadas; }
     } });
+    // v11.3: planta da rede — ponto dentro da sala, terminais distribuídos dentro do desenho, caudal sugerido pelo balanço
+    self.registar({ id: 'UI.T17', nucleo: 'UI', grupo: 'UI', nome: 'Planta da rede: salas, terminais e transferências', criterio: 'ponto-no-polígono em L; terminais distribuídos ficam dentro da sala; Q sugerido = falta no destino', fn: () => {
+      const P = VC.planta; if (!P || !P.dentro || !P.distribuir || !P._sugerirQ) return false;
+      const L = [[0, 0], [400, 0], [400, 100], [100, 100], [100, 300], [0, 300]];
+      const okDentro = P.dentro([50, 250], L) && P.dentro([300, 50], L) && !P.dentro([300, 250], L) && !P.dentro([500, 50], L);
+      const g = { plantas: VC.dados.plantas, terminais: VC.dados.terminais, piso: P.piso, bal: VC6.balanco && VC6.balanco.todos };
+      try {
+        VC.dados.plantas = [{ id: 'pT', nome: 'Teste', w: 1000, h: 1000, escala: 0.01 }]; P.piso = 'pT';
+        const e = { id: 991, nome: 'Sala L teste', planta: { pisoId: 'pT', pts: L } };
+        VC.dados.terminais = [1, 2, 3].map(i => ({ id: 'T' + i, nome: 'T' + i, rede: i === 3 ? 'extracao' : 'insuflacao', espacos: [{ id: 991, nome: 'Sala L teste' }] }));
+        const n = P.distribuir(e, true);
+        const okTerm = n === 3 && VC.dados.terminais.every(t => t.planta && t.planta.pisoId === 'pT' && P.dentro([t.planta.x, t.planta.y], L));
+        VC6.balanco.todos = () => [{ id: 1, residuo: 40 }, { id: 2, residuo: -25 }, { id: 3, residuo: 0 }];
+        const okQ = P._sugerirQ(1, 2) === 25 && P._sugerirQ(3, 2) === 25 && P._sugerirQ(3, 3) === 0;
+        return okDentro && okTerm && okQ;
+      } finally { VC.dados.plantas = g.plantas; VC.dados.terminais = g.terminais; P.piso = g.piso; if (VC6.balanco) VC6.balanco.todos = g.bal; }
+    } });
   },
 
   correr() {
