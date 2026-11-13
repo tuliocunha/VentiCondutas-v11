@@ -126,6 +126,10 @@ const CASOS = [
     const o = VC.entrega.dados; VC.entrega.dados = function () { const d = o.apply(this, arguments); d.pontos = d.pontos.slice(1); return d; };
     return () => { VC.entrega.dados = o; };
   }],
+  ['v11.3 · área da planta sem a escala ao quadrado', 'UI.T16', () => {
+    const o = VC.planta.areaM2; VC.planta.areaM2 = function (pts, piso) { return piso && piso.escala ? this.areaPx(pts) * piso.escala : null; };
+    return () => { VC.planta.areaM2 = o; };
+  }],
   ['E3 · sem aviso de ventilador fora da curva', 'N6.T13', () => {
     const o = VC.uta.calcularPontoFuncionamento;
     VC.uta.calcularPontoFuncionamento = function () { const r = o.apply(this, arguments); if (r) r.foraDaCurva = false; return r; };

@@ -425,7 +425,7 @@ VC.exportacoes.json = async function (nomeSugerido) {
     timestamp: new Date().toISOString(),
     metadados: VC.dados.metadados,
     configuracao: { tipologia: VC.dados.tipologia, params: VC.dados.params, restricaoH: VC.dados.restricaoH, serieDiametros: VC.dados.serieDiametros },
-    dados: { espacos: VC.dados.espacos, ramais: VC.dados.ramais, terminais: VC.dados.terminais, transferencias: VC.dados.transferencias || [], utas: VC.dados.utas, nos: VC.dados.nos, trechos: VC.dados.trechos, elementosRede: VC.dados.elementosRede, _mapaRenomeacao: VC.dados._mapaRenomeacao || {} },
+    dados: { espacos: VC.dados.espacos, ramais: VC.dados.ramais, terminais: VC.dados.terminais, transferencias: VC.dados.transferencias || [], utas: VC.dados.utas, nos: VC.dados.nos, trechos: VC.dados.trechos, elementosRede: VC.dados.elementosRede, _mapaRenomeacao: VC.dados._mapaRenomeacao || {}, plantas: VC.dados.plantas || [] },
     flags: VC.flags
   };
   const nome = nomeSugerido || ('VentCondutas_v' + VC.versaoCurta + '_' + new Date().toISOString().slice(0, 10) + '.json');

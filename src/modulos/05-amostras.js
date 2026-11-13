@@ -500,7 +500,7 @@ VC.exemplos = {
       _versao: 'V9', versao: VC.versao, versaoCurta: VC.versaoCurta, timestamp: new Date().toISOString(),
       metadados: VC.utils.clonar(VC.dados.metadados),
       configuracao: { tipologia: VC.dados.tipologia, params: VC.utils.clonar(VC.dados.params), restricaoH: VC.dados.restricaoH, serieDiametros: VC.dados.serieDiametros },
-      dados: { espacos: VC.utils.clonar(VC.dados.espacos), ramais: VC.utils.clonar(VC.dados.ramais), terminais: VC.utils.clonar(VC.dados.terminais), transferencias: VC.utils.clonar(VC.dados.transferencias || []), utas: VC.utils.clonar(VC.dados.utas), nos: VC.utils.clonar(VC.dados.nos), trechos: VC.utils.clonar(VC.dados.trechos), elementosRede: VC.utils.clonar(VC.dados.elementosRede), _mapaRenomeacao: VC.utils.clonar(VC.dados._mapaRenomeacao || {}) },
+      dados: { espacos: VC.utils.clonar(VC.dados.espacos), ramais: VC.utils.clonar(VC.dados.ramais), terminais: VC.utils.clonar(VC.dados.terminais), transferencias: VC.utils.clonar(VC.dados.transferencias || []), utas: VC.utils.clonar(VC.dados.utas), nos: VC.utils.clonar(VC.dados.nos), trechos: VC.utils.clonar(VC.dados.trechos), elementosRede: VC.utils.clonar(VC.dados.elementosRede), _mapaRenomeacao: VC.utils.clonar(VC.dados._mapaRenomeacao || {}) , plantas: VC.utils.clonar(VC.dados.plantas || [])},
       flags: VC.utils.clonar(VC.flags)
     };
   },

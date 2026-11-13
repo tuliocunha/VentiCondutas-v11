@@ -371,6 +371,23 @@ VC6.testes = {
       const ids = new Set((VC.passosCatalogo || []).map(p => p.id));
       const h = VC.entrega.render();
       return soma === (x.findings || []).length && d.pontos.every(p => ids.has(p.passo)) && /Licenciamento/.test(h) && /Obra/.test(h) && /Ensaios/.test(h); } });
+    // v11.3: planta — área medida pela escala, desenho ligado ao espaço, e as plantas viajam com o projeto
+    self.registar({ id: 'UI.T16', nucleo: 'UI', grupo: 'UI', nome: 'Planta: área pela escala e plantas no projeto', criterio: 'retângulo 500×250 px a 0,02 m/px = 50 m² (shoelace); polígono em L; plantas repostas ao importar', fn: () => {
+      if (!VC.planta) return false;
+      const piso = { id: 'pisoTeste', nome: 'Piso teste', imagem: null, w: 1000, h: 500, escala: 0.02 };
+      const ret = [[0, 0], [500, 0], [500, 250], [0, 250]];
+      const L = [[0, 0], [400, 0], [400, 100], [100, 100], [100, 300], [0, 300]];   // 400×100 + 100×200 = 60 000 px²
+      const okArea = Math.abs(VC.planta.areaM2(ret, piso) - 50) < 1e-9 && VC.planta.areaPx(L) === 60000 && VC.planta.areaM2(ret, { escala: null }) === null;
+      const guardadas = VC.dados.plantas;
+      try {
+        VC.dados.plantas = [piso];
+        VC.migrador.prepararParaImportar({ metadados: {}, configuracao: {}, dados: { espacos: [], plantas: [{ id: 'x', nome: 'P', w: 10, h: 10, escala: 0.1 }] } });
+        const veio = VC.dados.plantas.length === 1 && VC.dados.plantas[0].id === 'x';
+        VC.migrador.prepararParaImportar({ metadados: {}, configuracao: {}, dados: { espacos: [] } });
+        const limpou = VC.dados.plantas.length === 0;
+        return okArea && veio && limpou;
+      } finally { VC.dados.plantas = guardadas; }
+    } });
   },
 
   correr() {

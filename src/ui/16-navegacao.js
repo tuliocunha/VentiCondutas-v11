@@ -25,7 +25,8 @@ const esc = s => VC.utils.esc(s);
 VC.nav = {
   /* vistas de cada passo: 'passo' = o ecrã normal do passo; lente = desenha no passo; modo = ecrã gráfico */
   VISTAS: {
-    classificacao: [{ id: 'passo', nome: 'Tabela', icone: 'fa-table' }, { id: 'kanban', nome: 'Por grupo G1–G4', icone: 'fa-table-columns', lente: 'kanban' }],
+    levantamento: [{ id: 'passo', nome: 'Tabela', icone: 'fa-table' }, { id: 'planta', nome: 'Planta', icone: 'fa-map', desenhar: 'planta' }],
+    classificacao: [{ id: 'passo', nome: 'Tabela', icone: 'fa-table' }, { id: 'kanban', nome: 'Por grupo G1–G4', icone: 'fa-table-columns', lente: 'kanban' }, { id: 'planta', nome: 'Planta', icone: 'fa-map', desenhar: 'planta' }],
     requisitos: [{ id: 'passo', nome: 'Definições', icone: 'fa-list-check' }, { id: 'tabela', nome: 'Resumo dos espaços', icone: 'fa-table', lente: 'tabela' }],
     associacao: [{ id: 'passo', nome: 'Ligações', icone: 'fa-link' }, { id: 'hasse', nome: 'Árvore UTA → espaços', icone: 'fa-sitemap', lente: 'hasse' }, { id: 'arvore', nome: 'Árvore interativa', icone: 'fa-diagram-project', modo: 'arvore' }, { id: 'construtor', nome: 'Construtor', icone: 'fa-compass-drafting', modo: 'construtor' }],
     rede: [{ id: 'passo', nome: 'Tabela', icone: 'fa-table' }, { id: 'diagrama-rede', nome: 'Diagrama da rede', icone: 'fa-network-wired', modo: 'diagrama-rede' }, { id: 'grafico-condutas', nome: 'Gráfico das condutas', icone: 'fa-cube', modo: 'grafico-condutas' }],
@@ -61,7 +62,8 @@ VC.nav = {
       VC.modos.set(v.modo);   // o ecrã gráfico abre na área de trabalho; as fases, os passos e os separadores ficam à vista
     } else {
       if (VC._modoAtivo !== 'condutas') VC.modos.set('condutas');
-      if (v.lente) { VC.layoutV2.renderLens(v.lente); VC.flags.layoutV2Lente = v.lente; }
+      if (v.desenhar === 'planta' && VC.planta) { const el = document.getElementById('conteudoPasso'); if (el) VC.planta.mostrar(el); }
+      else if (v.lente) { VC.layoutV2.renderLens(v.lente); VC.flags.layoutV2Lente = v.lente; }
       else VC.passos.render(passo);
     }
     this.vistaAtiva = id;
@@ -180,8 +182,12 @@ VC.nav = {
     /* abrir um passo repõe a vista normal e redesenha a navegação */
     const render = VC.passos.render;
     VC.passos.render = function (passo) {
+      /* o mesmo passo redesenhado (depois de uma edição) mantém a vista em que o utilizador estava */
+      const mesmo = passo === VC._passoAtivo, antes = VC.nav.vistaAtiva;
       const r = render.apply(this, arguments);
       VC.nav.vistaAtiva = 'passo';
+      const v = mesmo && antes !== 'passo' && VC._modoAtivo === 'condutas' ? VC.nav.vistasDe(passo).find(x => x.id === antes && !x.modo) : null;
+      if (v) { try { VC.nav.setVista(v.id); return r; } catch (e) { VC.debug.erro(e); } }
       try { VC.nav.sincronizar(); } catch (e) { VC.debug.erro(e); }
       return r;
     };
