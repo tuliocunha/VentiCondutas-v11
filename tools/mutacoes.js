@@ -130,6 +130,10 @@ const CASOS = [
     const o = VC.planta.areaM2; VC.planta.areaM2 = function (pts, piso) { return piso && piso.escala ? this.areaPx(pts) * piso.escala : null; };
     return () => { VC.planta.areaM2 = o; };
   }],
+  ['v11.3 · terminais distribuídos fora da sala (sem puxar para o centro)', 'UI.T17', () => {
+    const o = VC.planta.dentro; VC.planta.dentro = () => true;
+    return () => { VC.planta.dentro = o; };
+  }],
   ['E3 · sem aviso de ventilador fora da curva', 'N6.T13', () => {
     const o = VC.uta.calcularPontoFuncionamento;
     VC.uta.calcularPontoFuncionamento = function () { const r = o.apply(this, arguments); if (r) r.foraDaCurva = false; return r; };

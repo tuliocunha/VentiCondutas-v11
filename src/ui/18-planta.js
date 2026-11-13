@@ -199,6 +199,7 @@ VC.planta = {
   },
 
   /* ── desenho do ecrã ─────────────────────── */
+  FERRAMENTAS: [['sel', 'fa-arrow-pointer', 'Selecionar'], ['escala', 'fa-ruler', 'Escala'], ['ret', 'fa-vector-square', 'Retângulo'], ['pol', 'fa-draw-polygon', 'Polígono']],
   DICAS: {
     sel: 'Clique numa sala para a selecionar. A lista ao lado localiza cada espaço.',
     escala: 'Clique nas duas pontas de uma cota conhecida e escreva a medida no painel.',
@@ -213,7 +214,7 @@ VC.planta = {
     h += '<div class="planta-pisos" role="tablist" aria-label="Pisos">' + P.map(x => '<button role="tab" aria-selected="' + (p && x.id === p.id) + '" class="planta-piso' + (p && x.id === p.id ? ' ativo' : '') + '" onclick="VC.planta.setPiso(\'' + x.id + '\')">' + esc(x.nome) + '</button>').join('')
       + '<button class="planta-piso planta-mais" onclick="VC.planta.adicionarPiso()" aria-label="Adicionar piso">+ Piso</button></div>';
     if (p && p.imagem) {
-      const F = [['sel', 'fa-arrow-pointer', 'Selecionar'], ['escala', 'fa-ruler', 'Escala'], ['ret', 'fa-vector-square', 'Retângulo'], ['pol', 'fa-draw-polygon', 'Polígono']];
+      const F = this.FERRAMENTAS;
       h += '<div class="planta-ferr">' + F.map(([id, ic, nome]) => '<button class="planta-f' + (this.ferramenta === id ? ' ativo' : '') + '" aria-pressed="' + (this.ferramenta === id) + '" onclick="VC.planta.setFerramenta(\'' + id + '\')"><i class="fa-solid ' + ic + '"></i> ' + nome + '</button>').join('') + '</div>';
       h += '<div class="planta-zoom"><button class="btn btn-mini" onclick="VC.planta.setZoom((VC.planta.zoom||1)/1.25)" aria-label="Afastar">−</button><span>' + Math.round((this.zoom || 1) * 100) + '%</span><button class="btn btn-mini" onclick="VC.planta.setZoom((VC.planta.zoom||1)*1.25)" aria-label="Aproximar">+</button><button class="btn btn-mini" onclick="VC.planta.ajustar()">Ajustar</button></div>';
       h += '<label class="planta-corlbl">Colorir por <select onchange="VC.planta.setCor(this.value)">'
@@ -230,7 +231,7 @@ VC.planta = {
         + '<button class="btn primario" onclick="VC.planta.escolherImagem()"><i class="fa-solid fa-image"></i> Escolher imagem</button> <button class="btn" onclick="VC.planta.removerPiso()">Remover este piso</button></div></div>';
       return h;
     }
-    h += '<div class="planta-dica" id="plantaDica"><b>' + ({ sel: 'Selecionar', escala: 'Calibrar escala', ret: 'Retângulo', pol: 'Polígono' })[this.ferramenta] + ':</b> ' + this.DICAS[this.ferramenta]
+    h += '<div class="planta-dica" id="plantaDica"><b>' + (this.FERRAMENTAS.find(f => f[0] === this.ferramenta) || ['sel', '', 'Selecionar'])[2] + ':</b> ' + this.DICAS[this.ferramenta]
       + '<span class="planta-escala">' + (p.escala ? 'Escala: 1 m = ' + fmt(1 / p.escala, 1) + ' px' : '<b>Sem escala</b>: as áreas não podem ser medidas') + '</span></div>';
     h += '<div class="planta-corpo"><div class="planta-tela" id="plantaTela">' + this._svg(p) + '</div><aside class="planta-painel" aria-label="Espaço e lista">' + this._painel(p) + '</aside></div>';
     h += '<div class="planta-legenda">' + this._legenda().map(([t, c]) => '<span><i style="background:' + c[0] + ';border-color:' + c[1] + '"></i>' + t + '</span>').join('') + '</div>';
@@ -247,7 +248,7 @@ VC.planta = {
       const [cx, cy] = this.centro(e.planta.pts); const A = this.areaM2(e.planta.pts, p);
       s += '<g class="planta-sala' + (on ? ' sel' : '') + '" data-esp="' + e.id + '"><polygon points="' + pts + '" fill="' + c[0] + '" fill-opacity="0.72" stroke="' + c[1] + '" stroke-width="' + (on ? 3.5 : sw) + '" vector-effect="non-scaling-stroke"/>'
         + '<text x="' + cx + '" y="' + cy + '" font-size="' + fs + '" text-anchor="middle" font-weight="700" fill="#1e293b">' + esc(e.nome) + '</text>'
-        + (A ? '<text x="' + cx + '" y="' + (cy + fs * 1.2) + '" font-size="' + (fs * 0.9) + '" text-anchor="middle" fill="#334155">' + fmt(A) + ' m²</text>' : '') + '</g>';
+        + (this._rotuloQ ? '<text x="' + cx + '" y="' + (cy + fs * 1.2) + '" font-size="' + (fs * 0.9) + '" text-anchor="middle" fill="#334155">' + fmt(VC.calculo.calcularQEspaco(e).Q_total, 0) + ' m³/h</text>' : (A ? '<text x="' + cx + '" y="' + (cy + fs * 1.2) + '" font-size="' + (fs * 0.9) + '" text-anchor="middle" fill="#334155">' + fmt(A) + ' m²</text>' : '')) + '</g>';
     });
     if (this.pendente) s += '<polygon points="' + this.pendente.map(q => q.join(',')).join(' ') + '" fill="#4f6d8c" fill-opacity="0.15" stroke="#4f6d8c" stroke-width="2.5" stroke-dasharray="6 4" vector-effect="non-scaling-stroke"/>';
     const pr = this.rascunho.concat(this.ponteiro && this.ferramenta === 'pol' && this.rascunho.length ? [this.ponteiro] : []);

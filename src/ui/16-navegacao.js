@@ -30,7 +30,9 @@ VC.nav = {
     requisitos: [{ id: 'passo', nome: 'Definições', icone: 'fa-list-check' }, { id: 'tabela', nome: 'Resumo dos espaços', icone: 'fa-table', lente: 'tabela' }],
     associacao: [{ id: 'passo', nome: 'Ligações', icone: 'fa-link' }, { id: 'hasse', nome: 'Árvore UTA → espaços', icone: 'fa-sitemap', lente: 'hasse' }, { id: 'arvore', nome: 'Árvore interativa', icone: 'fa-diagram-project', modo: 'arvore' }, { id: 'construtor', nome: 'Construtor', icone: 'fa-compass-drafting', modo: 'construtor' }],
     rede: [{ id: 'passo', nome: 'Tabela', icone: 'fa-table' }, { id: 'diagrama-rede', nome: 'Diagrama da rede', icone: 'fa-network-wired', modo: 'diagrama-rede' }, { id: 'grafico-condutas', nome: 'Gráfico das condutas', icone: 'fa-cube', modo: 'grafico-condutas' }],
-    balanco: [{ id: 'passo', nome: 'Tabela', icone: 'fa-table' }, { id: 'grafico-conceitual', nome: 'Fluxos entre espaços', icone: 'fa-diagram-project', modo: 'grafico-conceitual' }],
+    balanco: [{ id: 'passo', nome: 'Tabela', icone: 'fa-table' }, { id: 'planta', nome: 'Planta', icone: 'fa-map', desenhar: 'planta' }, { id: 'grafico-conceitual', nome: 'Fluxos entre espaços', icone: 'fa-diagram-project', modo: 'grafico-conceitual' }],
+    terminais: [{ id: 'passo', nome: 'Tabela', icone: 'fa-table' }, { id: 'planta', nome: 'Planta', icone: 'fa-map', desenhar: 'planta' }],
+    transferencias: [{ id: 'passo', nome: 'Tabela', icone: 'fa-table' }, { id: 'planta', nome: 'Planta', icone: 'fa-map', desenhar: 'planta' }],
     relatorios: [{ id: 'passo', nome: 'Entrega', icone: 'fa-box-open' }, { id: 'relatorios', nome: 'Relatórios técnicos', icone: 'fa-file-lines', modo: 'relatorios' }]
   },
   vistaAtiva: 'passo',
