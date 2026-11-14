@@ -150,6 +150,10 @@ const CASOS = [
     const o = VC.topologia.renomearRamal; VC.topologia.renomearRamal = function (a, n) { const r = VC.dados.ramais.find(x => x.nome === a); if (!r) return { ok: false }; r.nome = String(n).trim(); return { ok: true, n: 0 }; };
     return () => { VC.topologia.renomearRamal = o; };
   }],
+  ['v11.3 · Terminal colocado fora de uma sala', 'UI.T22', () => {
+    const o = VC.planta.salaEm; VC.planta.salaEm = function () { return (VC.dados.espacos || []).find(e => e.planta) || null; };
+    return () => { VC.planta.salaEm = o; };
+  }],
   ['E3 · sem aviso de ventilador fora da curva', 'N6.T13', () => {
     const o = VC.uta.calcularPontoFuncionamento;
     VC.uta.calcularPontoFuncionamento = function () { const r = o.apply(this, arguments); if (r) r.foraDaCurva = false; return r; };
