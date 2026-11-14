@@ -655,6 +655,32 @@ VC.calculo = {
         if (u && !VC.redes.compativeis(r.rede, u.rede)) findings.push({ severidade: 'ERRO', tipo: 'Ramal noutra rede', elemento: r.nome, msg: 'Ramal de ' + VC.redes.rotulo(r.rede) + ' servido pela UTA «' + u.nome + '», de ' + VC.redes.rotulo(u.rede) });
         else if (pai && !VC.redes.compativeis(r.rede, pai.rede)) findings.push({ severidade: 'ERRO', tipo: 'Ramal noutra rede', elemento: r.nome, msg: 'Ramal de ' + VC.redes.rotulo(r.rede) + ' com o pai «' + pai.nome + '», de ' + VC.redes.rotulo(pai.rede) });
       });
+      // ── regras de exaustão (Portaria 138-I, Anexo II, 1.2.2 h; RT-SCIE, Portaria 1532/2008; SCE) ──
+      const filhos = {}; VC.dados.ramais.forEach(r => { if (r.parente) (filhos[r.parente] = filhos[r.parente] || []).push(r); });
+      const subarvore = raiz => { const out = [], pilha = [raiz]; while (pilha.length) { const r = pilha.pop(); out.push(r); (filhos[r.nome] || []).forEach(f => pilha.push(f)); } return out; };
+      const espPorNome = new Map((VC.dados.espacos || []).map(e => [e.nome, e]));
+      const ehSanitaria = e => !!e && /^(Sanitários|Balneários)$/.test(e.tipo);
+      const espacosDaRede = ramaisDaRede => { const nomes = new Set(ramaisDaRede.map(r => r.nome)), out = new Map(); VC.dados.terminais.forEach(t => { if (nomes.has(t.ramalRef)) (t.espacos || []).forEach(x => { const e = espPorNome.get(x.nome); if (e) out.set(e.nome, e); }); }); return [...out.values()]; };
+      // 3 · a rede de exaustão das instalações sanitárias é independente: não serve outros espaços (1.2.2 h)
+      VC.dados.ramais.filter(r => !r.parente && VC.redes.ehExtracao(r.rede)).forEach(raiz => {
+        const E = espacosDaRede(subarvore(raiz)), outros = E.filter(e => !ehSanitaria(e));
+        if (E.some(ehSanitaria) && outros.length) findings.push({ severidade: 'ERRO', tipo: 'Exaustão sanitária partilhada', elemento: raiz.nome, msg: 'A rede ' + raiz.nome + ' extrai instalações sanitárias e também ' + outros.slice(0, 3).map(e => '«' + e.nome + '»').join(', ') + (outros.length > 3 ? ' e mais ' + (outros.length - 3) : '') + ': as instalações sanitárias têm condutas de exaustão independentes (Portaria 138-I, Anexo II, 1.2.2 h)' });
+      });
+      // 4 · recuperação de calor com ar das instalações sanitárias: admitida se o projetista garantir que o ar novo não é contaminado (SCE)
+      VC.dados.utas.forEach(u => {
+        if (u.ativo === false || !(u.componentes || []).some(c => /recupera/i.test(c.tipo || c.nome || ''))) return;
+        let raizes = VC.dados.ramais.filter(r => r.utaRef === u.id && !r.parente);
+        if (!raizes.length) raizes = VC.dados.ramais.filter(r => r.tipo === 'Principal' && (r.rede || 'insuflacao') === u.rede);
+        const San = espacosDaRede([].concat(...raizes.map(subarvore))).filter(ehSanitaria);
+        if (San.length) findings.push({ severidade: 'ATENÇÃO', tipo: 'Recuperação de calor com ar sanitário', elemento: u.nome, msg: 'A UTA ' + u.nome + ' tem recuperador e extrai ' + San.length + ' instalação(ões) sanitária(s): o projetista tem de garantir que o ar novo não é contaminado (SCE, Portaria 138-I)' });
+      });
+      // 2 · garagem: extração do RT-SCIE por veículo (controlo de CO); sem n.º de lugares fica por fazer
+      (VC.dados.espacos || []).filter(e => e.tipo === 'Garagem').forEach(e => {
+        const n = Number(e.lugares) || 0, qo = VC6.balanco && VC6.balanco.QOutDireto ? VC6.balanco.QOutDireto(e) : 0;
+        if (!(n > 0)) { findings.push({ severidade: 'POR FAZER', tipo: 'Lugares da garagem por definir', elemento: e.nome, msg: 'Escreva o número de lugares: o RT-SCIE pede 300 m³/h por veículo a 50 ppm de CO e 600 m³/h por veículo a 100 ppm' }); return; }
+        if (qo < 300 * n) findings.push({ severidade: 'ERRO', tipo: 'Garagem abaixo do RT-SCIE', elemento: e.nome, msg: 'Extração ' + VC.utils.fmt(qo, 0) + ' m³/h < 300 × ' + n + ' = ' + VC.utils.fmt(300 * n, 0) + ' m³/h (1.º patamar, 50 ppm de CO; Portaria 1532/2008)' });
+        else if (qo < 600 * n) findings.push({ severidade: 'ATENÇÃO', tipo: 'Garagem abaixo do RT-SCIE', elemento: e.nome, msg: 'Extração ' + VC.utils.fmt(qo, 0) + ' m³/h cumpre o 1.º patamar (300 × ' + n + ') mas não o 2.º, a 100 ppm de CO: 600 × ' + n + ' = ' + VC.utils.fmt(600 * n, 0) + ' m³/h (Portaria 1532/2008)' });
+      });
       // higiene do ar: nenhuma transferência leva ar de um espaço sujo para um mais limpo (regra de VC6.transferencias)
       if (window.VC6 && VC6.transferencias && VC6.transferencias.direcaoValida) {
         const espPorId = new Map((VC.dados.espacos || []).map(e => [e.id, e]));

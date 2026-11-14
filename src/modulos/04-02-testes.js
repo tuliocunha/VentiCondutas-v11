@@ -670,6 +670,33 @@ VC6.testes = {
         return ok1 && ok2 && ok3 && ok4 && ok5;
       } finally { D.espacos = g.esp; D.transferencias = g.tr; D.terminais = g.ter; VC.calculo.calcularTudo(); }
     } });
+    // coerência com as normas (pontos 1–5): arquivo G3, garagem RT-SCIE, exaustão sanitária independente, recuperação de calor, velocidade
+    self.registar({ id: 'UI.T33', nucleo: 'UI', grupo: 'UI', nome: 'Normas: arquivo, garagem, exaustão sanitária, recuperador', criterio: 'arquivo 100 m² = máx(3×100, 2×300) = 600; garagem sem lugares → POR FAZER, 10 lugares com 2000 → ERRO, 4000 → ATENÇÃO, 6000 → nada; rede com WC + escritório → ERRO; UTA com recuperador e WC → ATENÇÃO', fn: () => {
+      const D = VC.dados, g = { esp: D.espacos, ter: D.terminais, ram: D.ramais, utas: D.utas, tr: D.transferencias, ev: D.eficaciaRemocao };
+      const tipos = () => (VC.calculo.calcularTudo().findings || []).map(f => f.severidade + '|' + f.tipo + '|' + f.elemento);
+      try {
+        D.eficaciaRemocao = 1; D.transferencias = [];
+        const arq = VC.calculo.calcularQEspaco({ id: 1, nome: 'Arq', tipo: 'Arquivo', A: 100, H: 3, V: 300, geometriaMetodo: 'AH', definicoes: [] });
+        const ok1 = Math.abs(arq.Q_normas - 600) < 1e-9;
+        const gar = { id: 2, nome: 'Gar', tipo: 'Garagem', A: 300, H: 3, V: 900, geometriaMetodo: 'AH', definicoes: [{ id: 'E', rede: 'extracao_suja', Q_total: 2000, quantidade: 1 }] };
+        D.espacos = [gar]; D.terminais = []; D.ramais = []; D.utas = [];
+        const ok2a = tipos().includes('POR FAZER|Lugares da garagem por definir|Gar');
+        gar.lugares = 10; const ok2b = tipos().includes('ERRO|Garagem abaixo do RT-SCIE|Gar');
+        gar.definicoes[0].Q_total = 4000; const ok2c = tipos().includes('ATENÇÃO|Garagem abaixo do RT-SCIE|Gar');
+        gar.definicoes[0].Q_total = 6000; const ok2d = !tipos().some(t => /Garagem abaixo|Lugares da garagem/.test(t));
+        const wc = { id: 3, nome: 'WC', tipo: 'Sanitários', A: 4, H: 3, V: 12, geometriaMetodo: 'AH', definicoes: [] }, of = { id: 4, nome: 'Of', tipo: 'Escritório', A: 20, H: 3, V: 60, N: 2, geometriaMetodo: 'AH', definicoes: [] };
+        D.espacos = [wc, of];
+        D.utas = [{ id: 'U1', nome: 'UTA-E', rede: 'extracao', componentes: [{ tipo: 'Recuperador', deltaP: 100 }] }];
+        D.ramais = [{ id: 1, nome: 'RE', parente: '', tipo: 'Principal', nivelNumero: 1, rede: 'extracao', utaRef: 'U1', L: 5, zeta: 0.5, geometriaInput: { forma: 'circular' }, lock: { D: false } }];
+        D.terminais = [{ id: 'a', nome: 'ta', rede: 'extracao', ramalRef: 'RE', Q: 45, espacos: [{ id: 3, nome: 'WC', Q_parcela: 45 }] }, { id: 'b', nome: 'tb', rede: 'extracao', ramalRef: 'RE', Q: 60, espacos: [{ id: 4, nome: 'Of', Q_parcela: 60 }] }];
+        ['ordenacaoTopologica', 'cacheBalanco', 'cacheMaterializacao'].forEach(k => VC.perf[k] && VC.perf[k].invalidar && VC.perf[k].invalidar());
+        const t3 = tipos();
+        const ok3 = t3.includes('ERRO|Exaustão sanitária partilhada|RE') && t3.includes('ATENÇÃO|Recuperação de calor com ar sanitário|UTA-E');
+        D.terminais = D.terminais.slice(1); ['ordenacaoTopologica', 'cacheBalanco'].forEach(k => VC.perf[k] && VC.perf[k].invalidar && VC.perf[k].invalidar());
+        const t4 = tipos(); const ok4 = !t4.some(t => /Exaustão sanitária|Recuperação de calor/.test(t));
+        return ok1 && ok2a && ok2b && ok2c && ok2d && ok3 && ok4;
+      } finally { Object.assign(D, { espacos: g.esp, terminais: g.ter, ramais: g.ram, utas: g.utas, transferencias: g.tr, eficaciaRemocao: g.ev }); ['ordenacaoTopologica', 'cacheBalanco', 'cacheMaterializacao'].forEach(k => VC.perf[k] && VC.perf[k].invalidar && VC.perf[k].invalidar()); VC.calculo.calcularTudo(); }
+    } });
   },
 
   correr() {

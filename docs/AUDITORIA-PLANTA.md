@@ -151,3 +151,17 @@ Aplicado aos exemplos (que não são referência): o **degrade-2** tem 3 espaço
 
 **Arrumo (arrecadação), decidido pelo autor:** fica G2. Tem extração, e o ar entra por insuflação direta ou por transferência (fresta de porta ou outro tipo previsto), mas **não cede ar transferido** (alínea f). Não é G4, por isso não exige depressão. Implementado com a marca `semArCedido` no tipo, no ficheiro de normas.
 
+## PR 3 · Coerência com as normas (pontos 1–5)
+
+| # | Incoerência | Fonte | Correção |
+|---|---|---|---|
+| 1 | **Arquivo** (G3) estava na lista de isentos e dava 0 m³/h, contra o próprio princípio P3 (T12 ou ACH ≥ 2) | normativo.js (P3) | Retirado dos isentos: 100 m² → 600 m³/h |
+| 2 | **Garagem:** o caudal não seguia o RT-SCIE (por veículo) | Portaria 1532/2008 | Verificação, sem mudar o caudal calculado: número de lugares no cartão; sem lugares → «por fazer»; < 300 m³/h × lugares → erro; < 600 m³/h × lugares → atenção |
+| 3 | **Rede de exaustão sanitária partilhada** com outros espaços | Portaria 138-I, Anexo II, 1.2.2 h) | Erro «Exaustão sanitária partilhada» |
+| 4 | **Recuperação de calor com ar sanitário** sem aviso | SCE (perguntas frequentes) | Atenção: o projetista tem de garantir a não contaminação do ar novo |
+| 5 | **Velocidade:** ERRO no cálculo e ATENÇÃO na Verificação Normativa | — | Os dois dizem NÃO CONFORME |
+
+Validação: teste UI.T33 com casos calculados à mão; mutação «Arquivo volta a ser isento».
+
+**Por confirmar com o texto da Tabela 13** (fornecido pelo autor): cozinha (12 ACH), balneários e vestiário (8 ACH), instalações sanitárias públicas, valores de garagem do RT-SCIE e escadas pressurizadas (ΔP ≥ 50 Pa).
+

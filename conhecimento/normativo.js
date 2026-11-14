@@ -72,7 +72,8 @@ VC._normativo = {
     { id: 'P8', texto: 'Topologia facetada: cada ramal tem meta derivado (pisoFisico, zona, rede, caminho)', norma: 'V9 · Boas práticas de organização' }
   ],
 
-  isencoesArNovo: [ 'Circulação', 'Escadas', 'Sanitários', 'Balneários', 'Arquivo', 'Garagem', 'Cozinha', 'Arrumo', 'Vestiário' ],
+  // Arquivo saiu desta lista: é G3 e o princípio P3 manda aplicar T12 ou ACH ≥ 2 (estava isento e dava 0 m³/h)
+  isencoesArNovo: [ 'Circulação', 'Escadas', 'Sanitários', 'Balneários', 'Garagem', 'Cozinha', 'Arrumo', 'Vestiário' ],
 
   tiposTransferencia: [
     { codigo: 'grelha_transferencia', nome: 'Grelha de transferência', dp_tipico: 2, aplicacao: 'Porta ou parede', cor: '#c9a876' },

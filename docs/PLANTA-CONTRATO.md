@@ -239,6 +239,11 @@ auditoria (Fase 1) confirma-os com gestos reais e acrescenta os que faltarem.
 | **4 · Correções** | Desvios e falhas aprovados da auditoria, em 2–3 PRs por tema: entrada de dados, representação, ergonomia | sim |
 | **5 · Proteção** | C1–C5 automáticos no CI; testes «macaco» (ações ao acaso + I13) para desfazer e geometria | não |
 
+### Como se valida (regra do autor)
+- **A app tem de cumprir as normas de ventilação aplicáveis em Portugal e as regras de engenharia de dimensionamento.** A validação faz-se com **casos calculados à mão a partir do texto da norma** (testes internos), nunca a partir do resultado de um projeto de exemplo.
+- **Os exemplos não são referência:** podem ter erros, porque foram feitos antes de a app ser coerente. Quando a app passa a cumprir uma regra, é normal e desejável que apareçam avisos nos exemplos.
+- A **fotografia de referência** (`tests/fotografia-referencia.json`) é só um **alarme de mudança**: diz que algo mudou, não que está certo. Atualiza-se quando a mudança é intencional e explicada.
+
 ### Definição de pronto (todos os PRs da planta, a partir daqui)
 1. Respeita este contrato, ou altera-o no mesmo PR com a mudança explicada.
 2. Tem um cenário executado com gestos reais (rato/teclado), não só atalhos internos.

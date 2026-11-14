@@ -105,6 +105,15 @@ P.definirN = function (id, valor) {
   this._empilhar('ocupação de «' + e.nome + '»', antes);
   this.redesenhar();
 };
+/* garagem: n.º de lugares para a verificação do RT-SCIE (não muda o caudal calculado) */
+P.definirLugares = function (id, valor) {
+  const e = espPorId(id); if (!e || this._bloqueado()) return;
+  const antes = this._estado(), n = Math.max(0, Math.round(VC.utils.num(valor)));
+  if (n > 0) e.lugares = n; else delete e.lugares;
+  this._empilhar('lugares de «' + e.nome + '»', antes);
+  VC.estado.forcarSync();
+  this.redesenhar();
+};
 P.renomearEspacoPlanta = function (id, novo) {
   const e = espPorId(id); if (!e || this._bloqueado()) return;
   const antes = this._estado(), antigo = e.nome;
