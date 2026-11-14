@@ -308,6 +308,7 @@ VC.planta = {
         + '<div class="planta-kpis"><div><span>Área na tabela</span><b>' + fmt(At) + ' m²</b></div><div><span>Área medida</span><b>' + (A ? fmt(A) + ' m²' : '—') + '</b></div><div><span>Q_total</span><b>' + fmt(c.Q_total, 0) + ' m³/h</b></div></div>'
         + '<p class="planta-meta">' + esc(e.tipo || '—') + ' · G' + (e.grupoForcado || c.g || '?') + ' · ' + esc(e.zona || '') + '</p>'
         + (g1 ? '<div class="planta-renomear"><label for="plantaN">Ocupação N</label><input id="plantaN" type="number" min="0" step="1" value="' + (VC.calculo.nVazio(e) ? '' : esc(e.N)) + '" placeholder="por definir" onchange="VC.planta.definirN(' + e.id + ', this.value)"></div>' : '')
+        + ((e.tipo === 'Sanitários' || e.tipo === 'Balneários') && this._cartaoSanitaria ? this._cartaoSanitaria(e) : '')
         + (e.tipo === 'Garagem' ? '<div class="planta-renomear"><label for="plantaLugares">Lugares de estacionamento <small>RT-SCIE: 300 m³/h por veículo (50 ppm CO) · 600 (100 ppm)</small></label><input id="plantaLugares" type="number" min="0" step="1" value="' + (Number(e.lugares) > 0 ? esc(e.lugares) : '') + '" placeholder="por definir" onchange="VC.planta.definirLugares(' + e.id + ', this.value)"></div>' : '')
         + (this._parcelasCaudal ? this._parcelasCaudal(e) : '')
         + (falta.length ? '<p class="planta-porfazer">Por fazer: ' + falta.join(', ') + '.</p>' : '')

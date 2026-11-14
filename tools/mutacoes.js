@@ -203,6 +203,10 @@ const CASOS = [
     const L = VC.regulamento.isencoesArNovo; L.push('Arquivo');
     return () => { L.splice(L.indexOf('Arquivo'), 1); };
   }],
+  ['Tabela 13: pública volta a ter o mínimo de 45 que a norma não tem', 'UI.T34', () => {
+    const c = VC.conhecimento.tabelas.T13.sanitarios.publico_normal, o = c.min; c.min = 45;
+    return () => { c.min = o; };
+  }],
   ['E3 · sem aviso de ventilador fora da curva', 'N6.T13', () => {
     const o = VC.uta.calcularPontoFuncionamento;
     VC.uta.calcularPontoFuncionamento = function () { const r = o.apply(this, arguments); if (r) r.foraDaCurva = false; return r; };

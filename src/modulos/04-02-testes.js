@@ -697,6 +697,23 @@ VC6.testes = {
         return ok1 && ok2a && ok2b && ok2c && ok2d && ok3 && ok4;
       } finally { Object.assign(D, { espacos: g.esp, terminais: g.ter, ramais: g.ram, utas: g.utas, transferencias: g.tr, eficaciaRemocao: g.ev }); ['ordenacaoTopologica', 'cacheBalanco', 'cacheMaterializacao'].forEach(k => VC.perf[k] && VC.perf[k].invalidar && VC.perf[k].invalidar()); VC.calculo.calcularTudo(); }
     } });
+    // Portaria 138-I, Tabela 13 (texto confirmado): fórmulas exatas das três linhas
+    self.registar({ id: 'UI.T34', nucleo: 'UI', grupo: 'UI', nome: 'Tabela 13: instalações sanitárias', criterio: 'privada contínua 3 m² → 45, 8 m² → 80; privada não contínua 3 m² → 90, 12 m² → 120; pública 2 sanitas + 1 urinol, 3 m² → 270; pública 1 duche, 40 m² → 400; pública sem aparelhos, 3 m² → 30 (sem mínimo de 45); regime por definir → POR FAZER', fn: () => {
+      const f = o => VC.normas.calcExtracaoSanitaria(o).qExtracao;
+      const ok1 = f({ A: 3, regimeSanitario: 'privado_continuo' }) === 45 && f({ A: 8, regimeSanitario: 'privado_continuo' }) === 80;
+      const ok2 = f({ A: 3, regimeSanitario: 'privado_nao_continuo' }) === 90 && f({ A: 12, regimeSanitario: 'privado_nao_continuo' }) === 120;
+      const ok3 = f({ A: 3, regimeSanitario: 'publico_normal', numSanitas: 2, numUrinois: 1 }) === 270 && f({ A: 40, regimeSanitario: 'publico_normal', numDuches: 1 }) === 400 && f({ A: 3, regimeSanitario: 'publico_normal' }) === 30;
+      const D = VC.dados, g = { esp: D.espacos, tr: D.transferencias };
+      try {
+        D.transferencias = [];
+        D.espacos = [{ id: 1, nome: 'WCx', tipo: 'Balneários', A: 6, H: 3, V: 18, geometriaMetodo: 'AH', definicoes: [] }];
+        const ff = () => (VC.calculo.calcularTudo().findings || []).map(x => x.severidade + '|' + x.tipo);
+        const ok4 = ff().includes('POR FAZER|Regime da instalação sanitária por definir');
+        D.espacos[0].regimeSanitario = 'publico_normal'; const ok5 = ff().includes('POR FAZER|Aparelhos sanitários por definir');
+        D.espacos[0].numDuches = 4; const ok6 = !ff().some(x => /Regime da instala|Aparelhos sanit/.test(x)) && VC.calculo.calcularQEspaco(D.espacos[0]).Q_normas === 360;
+        return ok1 && ok2 && ok3 && ok4 && ok5 && ok6;
+      } finally { D.espacos = g.esp; D.transferencias = g.tr; VC.calculo.calcularTudo(); }
+    } });
   },
 
   correr() {

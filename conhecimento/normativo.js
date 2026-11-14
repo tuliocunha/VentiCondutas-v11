@@ -167,12 +167,16 @@ VC._normativo = {
     T12: {
       'Sono': 3, 'Descanso': 3, 'Retalho seco': 3, 'Loja': 3, 'Escritório': 3, 'Gabinete': 3, 'Receção': 3, 'Auditório': 3, 'Sala de reuniões': 3, 'Serviços': 3, 'Restauração': 3, 'Laboratório': 5, 'Sala de aula': 3, 'Jardim de infância': 3, 'Ginásio': 3, 'Recinto desportivo': 3, 'Cinema': 3, 'Teatro': 3, 'Consulta': 3, 'Internamento': 3, 'Sala de espera': 3, 'Arquivo': 3, 'Sala técnica': 3, 'Biblioteca': 3, 'Museu': 3, 'Sala de convívio': 3, 'Sala de operações': 5, 'Sala de recuperação': 3
     },
+    // Portaria 138-I/2021, Anexo II, Tabela 13 (texto confirmado pelo autor):
+    //   privada, com funcionamento contínuo: Máx(45; 10 × A_pav) · privada, sem funcionamento contínuo: Máx(90; 10 × A_pav)
+    //   pública, funcionamento normal: Máx(90 × (n.º urinóis + n.º sanitas + n.º duches); 10 × A_pav)
+    // «publico_intensivo» ainda por confirmar no resto da tabela.
     T13: {
       sanitarios: {
-        privado_continuo:      { base: 45,  porAparelho: 0,   porArea: 10, min: 45 },
-        privado_nao_continuo:  { base: 90,  porAparelho: 0,   porArea: 10, min: 90 },
-        publico_normal:        { base: 0,   porAparelho: 90,  porArea: 10, min: 45 },
-        publico_intensivo:     { base: 0,   porAparelho: 125, porArea: 10, min: 45 }
+        privado_continuo:      { base: 45,  porAparelho: 0,   porArea: 10, min: 45, nome: 'Privada · com funcionamento contínuo' },
+        privado_nao_continuo:  { base: 90,  porAparelho: 0,   porArea: 10, min: 90, nome: 'Privada · sem funcionamento contínuo' },
+        publico_normal:        { base: 0,   porAparelho: 90,  porArea: 10, min: 0, nome: 'Pública · funcionamento normal' },
+        publico_intensivo:     { base: 0,   porAparelho: 125, porArea: 10, min: 45, nome: 'Pública · intensivo (por confirmar na Tabela 13)' }
       }
     },
     // Reg. (UE) 1253/2014 (Ecodesign), Anexo III, requisitos desde 01-01-2018.

@@ -23,7 +23,7 @@ VC.entrega = {
     if (/espa[cç]o sujo/i.test(t)) return 'transferencias';
     if (/sem depress/i.test(t)) return 'balanco';
     if (/exaust[aã]o sanit|recupera[cç][aã]o de calor/i.test(t)) return 'associacao';
-    if (/garagem|lugares/i.test(t)) return 'levantamento';
+    if (/garagem|lugares|regime da instala|aparelhos sanit/i.test(t)) return 'levantamento';
     if (/sec[cç][aã]o|velocidade|di[aâ]metro|conduta|perda/i.test(t)) return 'rede';
     if (/ventilador|sfp|uta|motor|ecodesign|curva/i.test(t)) return 'utas';
     if (/balan|res[ií]duo/i.test(t)) return 'balanco';

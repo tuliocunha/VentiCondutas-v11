@@ -710,6 +710,13 @@ VC.calculo = {
       });
       if (totalPower > VC.constantes.DL101D.SGTC) findings.push({ severidade: 'ATENÇÃO', tipo: 'BACS', elemento: 'Sistema', msg: 'P > ' + VC.constantes.DL101D.SGTC / 1000 + ' kW' });
 
+      // instalações sanitárias: regime da Tabela 13 e aparelhos (pública) por definir → «por fazer»
+      VC.dados.espacos.forEach(e => {
+        if (e.tipo !== 'Sanitários' && e.tipo !== 'Balneários') return;
+        const nAp = (Number(e.numUrinois) || 0) + (Number(e.numSanitas) || 0) + (Number(e.numDuches) || 0);
+        if (!e.regimeSanitario) findings.push({ severidade: 'POR FAZER', tipo: 'Regime da instalação sanitária por definir', elemento: e.nome, msg: 'Escolha o regime da Tabela 13 (privada contínua, privada não contínua ou pública). Até lá, calcula-se como privada com funcionamento contínuo: Máx(45; 10 × A)' });
+        else if (/^publico/.test(e.regimeSanitario) && !nAp) findings.push({ severidade: 'POR FAZER', tipo: 'Aparelhos sanitários por definir', elemento: e.nome, msg: 'Instalação pública: indique o n.º de urinóis, sanitas e duches (Tabela 13: 90 m³/h por aparelho). Até lá conta só 10 × A' });
+      });
       // N por definir: aviso cinzento «por fazer» (não é erro; o caudal fica só por T12 × A)
       VC.dados.espacos.forEach(e => {
         const c = this.calcularQEspaco(e);

@@ -105,6 +105,24 @@ P.definirN = function (id, valor) {
   this._empilhar('ocupação de «' + e.nome + '»', antes);
   this.redesenhar();
 };
+/* instalação sanitária: regime e aparelhos da Tabela 13 (Portaria 138-I) */
+P.definirSanitaria = function (id, campo, valor) {
+  const e = espPorId(id); if (!e || this._bloqueado() || ['regimeSanitario', 'numSanitas', 'numUrinois', 'numDuches'].indexOf(campo) < 0) return;
+  const antes = this._estado();
+  if (campo === 'regimeSanitario') { if (valor) e.regimeSanitario = valor; else delete e.regimeSanitario; }
+  else { const n = Math.max(0, Math.round(VC.utils.num(valor))); if (n > 0) e[campo] = n; else delete e[campo]; }
+  this._empilhar('Tabela 13 de «' + e.nome + '»', antes);
+  VC.estado.forcarSync();
+  this.redesenhar();
+};
+P._cartaoSanitaria = function (e) {
+  const T = VC.conhecimento.tabelas.T13.sanitarios, c = VC.calculo.calcularQEspaco(e), pub = /^publico/.test(e.regimeSanitario || '');
+  const num = (campo, rot) => '<label>' + rot + ' <input type="number" min="0" step="1" style="width:60px" value="' + (Number(e[campo]) > 0 ? e[campo] : '') + '" onchange="VC.planta.definirSanitaria(' + e.id + ', \'' + campo + '\', this.value)"></label>';
+  return '<div class="planta-renomear"><label for="plantaRegime">Tabela 13 (Portaria 138-I) · regime</label><select id="plantaRegime" onchange="VC.planta.definirSanitaria(' + e.id + ', \'regimeSanitario\', this.value)">'
+    + '<option value="">— por definir —</option>' + Object.keys(T).map(k => '<option value="' + k + '"' + (e.regimeSanitario === k ? ' selected' : '') + '>' + esc(T[k].nome || k) + '</option>').join('') + '</select></div>'
+    + (pub ? '<div class="planta-dir">' + num('numSanitas', 'Sanitas') + num('numUrinois', 'Urinóis') + num('numDuches', 'Duches') + '</div>' : '')
+    + '<p class="' + (e.regimeSanitario ? 'planta-meta' : 'planta-porfazer') + '">Extração: <b>' + fmt(c.Q_extracao) + ' m³/h</b> · ' + esc(c.metodoCaudal || '') + (e.regimeSanitario ? '' : ' (regime por definir: calculado como privada contínua)') + '</p>';
+};
 /* garagem: n.º de lugares para a verificação do RT-SCIE (não muda o caudal calculado) */
 P.definirLugares = function (id, valor) {
   const e = espPorId(id); if (!e || this._bloqueado()) return;

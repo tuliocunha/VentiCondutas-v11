@@ -163,5 +163,16 @@ Aplicado aos exemplos (que não são referência): o **degrade-2** tem 3 espaço
 
 Validação: teste UI.T33 com casos calculados à mão; mutação «Arquivo volta a ser isento».
 
-**Por confirmar com o texto da Tabela 13** (fornecido pelo autor): cozinha (12 ACH), balneários e vestiário (8 ACH), instalações sanitárias públicas, valores de garagem do RT-SCIE e escadas pressurizadas (ΔP ≥ 50 Pa).
+### Tabela 13 (texto fornecido pelo autor: 3 primeiras linhas)
+| Linha | Portaria | App antes | App agora |
+|---|---|---|---|
+| Privada, com funcionamento contínuo | Máx(45; 10 × A) | igual | igual |
+| Privada, sem funcionamento contínuo | Máx(90; 10 × A) | igual | igual |
+| Pública, funcionamento normal | Máx(90 × (urinóis + sanitas + duches); 10 × A) | com um mínimo de 45 a mais | igual à norma |
+
+- O regime e os aparelhos não se podiam indicar em nenhum ecrã: todas as instalações sanitárias eram «privada contínua». Agora escolhem-se no cartão da sala na planta; sem regime → «por fazer»; pública sem aparelhos → «por fazer».
+- **Balneários** = instalação sanitária (os duches contam na mesma linha), com o regime escolhido pelo projetista.
+- Teste UI.T34 com as fórmulas da tabela; mutação «mínimo de 45 a mais».
+
+**Por confirmar (resto da Tabela 13, que continua para lá destas 3 linhas):** «pública · intensivo» (125 m³/h por aparelho na app); cozinha (12 renovações por hora), garagem (6) e vestiário (8), que a app etiqueta como «P138»; e ainda os valores de garagem do RT-SCIE e as escadas pressurizadas (ΔP ≥ 50 Pa).
 
