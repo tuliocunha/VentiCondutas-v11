@@ -125,7 +125,8 @@ VC.planta = {
     if ((VC.dados.espacos || []).some(e => String(e.nome).trim().toLowerCase() === nome.toLowerCase())) { VC.ui.toast('Já existe um espaço «' + nome + '». Escolha-o na lista para o ligar.'); return; }
     const Hs = (VC.dados.espacos || []).map(e => Number(e.H)).filter(h => h > 0).sort((a, b) => a - b);
     const H = Hs.length ? Hs[Math.floor(Hs.length / 2)] : 3;   // pé-direito mais comum no projeto
-    const A = usarArea ? (this.areaM2(this.pendente, p) || 0) : 0;
+    const ptsR = this.pendente.map(([x, y]) => [Math.round(x * 10) / 10, Math.round(y * 10) / 10]);
+    const A = usarArea ? (this.areaM2(ptsR, p) || 0) : 0;   // C5: o mesmo polígono (arredondado) que depois é medido
     const e = {
       id: VC.dados.nextId.espaco++, nome, tipo: tipo || 'Escritório', zona: p.nome, localizacao: VC.utils.parseZona ? VC.utils.parseZona(p.nome) : {}, geometriaMetodo: 'AH',
       A: Math.round(A * 100) / 100, H, V: Math.round(A * H * 100) / 100, origem: 'Planta', definicoes: [], ramalRefInsuflacao: '', ramalRefExtracao: '',
@@ -261,10 +262,12 @@ VC.planta = {
     this.espacosDoPiso(p).forEach(e => {
       const c = this.cor(e), on = String(this.selecionado) === String(e.id);
       const pts = e.planta.pts.map(q => q.join(',')).join(' ');
-      const [cx, cy] = (e.planta.rotulo && e.planta.rotulo.length === 2) ? e.planta.rotulo : this.centro(e.planta.pts); const A = this.areaM2(e.planta.pts, p);   // v11.3: o nome pode ser arrastado
+      let [cx, cy] = (e.planta.rotulo && e.planta.rotulo.length === 2) ? e.planta.rotulo : (this.pontoInterior ? this.pontoInterior(e.planta.pts) : this.centro(e.planta.pts)); const A = this.areaM2(e.planta.pts, p);   // o nome pode ser arrastado; sem isso fica no ponto mais interior (B4)
+      const rt = this.rotuloAjustado ? this.rotuloAjustado(e.nome, e.planta.pts, cx, cy, fs) : { fs, texto: e.nome };
+      if (rt.x != null && !(e.planta.rotulo && e.planta.rotulo.length === 2)) cx = rt.x;   // o nome cabe entre as paredes (um nome arrastado fica onde foi posto)
       s += '<g class="planta-sala' + (on ? ' sel' : '') + '" data-esp="' + e.id + '"><polygon points="' + pts + '" fill="' + c[0] + '" fill-opacity="0.72" stroke="' + c[1] + '" stroke-width="' + (on ? 3.5 : sw) + '" vector-effect="non-scaling-stroke"/>'
-        + '<g class="planta-rotulo" data-esp="' + e.id + '"><text x="' + cx + '" y="' + cy + '" font-size="' + fs + '" text-anchor="middle" font-weight="700" fill="#1e293b">' + esc(e.nome) + '</text>'
-        + (this._rotuloQ ? '<text x="' + cx + '" y="' + (cy + fs * 1.2) + '" font-size="' + (fs * 0.9) + '" text-anchor="middle" fill="#334155">' + fmt(VC.calculo.calcularQEspaco(e).Q_total, 0) + ' m³/h</text>' : (A ? '<text x="' + cx + '" y="' + (cy + fs * 1.2) + '" font-size="' + (fs * 0.9) + '" text-anchor="middle" fill="#334155">' + fmt(A) + ' m²</text>' : '')) + '</g>' + '</g>';
+        + '<g class="planta-rotulo" data-esp="' + e.id + '"><title>' + esc(e.nome) + '</title><text x="' + cx + '" y="' + cy + '" font-size="' + rt.fs + '" text-anchor="middle" font-weight="700" fill="#1e293b">' + esc(rt.texto) + '</text>'
+        + (this._rotuloQ ? '<text x="' + cx + '" y="' + (cy + rt.fs * 1.2) + '" font-size="' + (rt.fs * 0.9) + '" text-anchor="middle" fill="#334155">' + fmt(VC.calculo.calcularQEspaco(e).Q_total, 0) + ' m³/h</text>' : (A ? '<text x="' + cx + '" y="' + (cy + rt.fs * 1.2) + '" font-size="' + (rt.fs * 0.9) + '" text-anchor="middle" fill="#334155">' + fmt(A) + ' m²</text>' : '')) + '</g>' + '</g>';
     });
     if (this.pendente) s += '<polygon points="' + this.pendente.map(q => q.join(',')).join(' ') + '" fill="#4f6d8c" fill-opacity="0.15" stroke="#4f6d8c" stroke-width="2.5" stroke-dasharray="6 4" vector-effect="non-scaling-stroke"/>';
     const pr = this.rascunho.concat(this.ponteiro && this.ferramenta === 'pol' && this.rascunho.length ? [this.ponteiro] : []);

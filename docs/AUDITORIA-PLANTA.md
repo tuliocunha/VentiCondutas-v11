@@ -223,3 +223,13 @@ Validação: teste UI.T37 e mutação («avisos só na Entrega»); cenário real
 
 Validação: teste UI.T38 com geometria feita à mão e mutação; cenário real (área mudada na Tabela → aviso no desenho; aceitar → some; Ctrl+Z → volta).
 
+## PR 9 · Representação (B4, C5, C7)
+| Falha | Correção |
+|---|---|
+| B4 nomes | O nome fica no ponto mais interior da sala (numa sala em L o centro geométrico cai fora), a letra ajusta-se à largura livre e o texto desliza entre as paredes até caber; se não couber, é encurtado com «…» (o nome inteiro fica no título). Um nome arrastado fica onde foi posto. |
+| B4 Entrega | A planta de obra mostra só a zona desenhada (salas, ramais, terminais, setas), sem as marcas de aviso. |
+| C7 PDF/imagem | Depois de carregar, «Escolher a zona útil»: a zona é lida de novo com 2400 px no lado maior (o PDF é desenhado outra vez pelo pdf.js; a imagem é recortada do original). Só antes de desenhar no piso; a escala calibrada acompanha. |
+| C5 | A área de um espaço criado na planta é medida no mesmo polígono (arredondado) que depois é mostrado: deixa de haver 1,73 vs 1,74. |
+
+Validação: teste UI.T39 e mutação; cenário real (imagem 4000 × 3000 → zona útil 2400 × 1950, 3,8× mais nítida; nome comprido numa sala em L todo dentro; Entrega recortada). O caminho do PDF usa o pdf.js da CDN, que este ambiente não alcança: testado só com imagem.
+

@@ -808,6 +808,27 @@ VC6.testes = {
         return ok1 && ok2 && ok3 && ok4 && ok5 && ok6 && ok7;
       } finally { Object.assign(D, { espacos: g.esp, terminais: g.ter, ramais: g.ram, plantas: g.pl, transferencias: g.tr }); VC.calculo.calcularTudo(); }
     } });
+    // representação (B4, C5, C7): nome no ponto interior e a caber; planta de obra recortada; zona útil em alta resolução
+    self.registar({ id: 'UI.T39', nucleo: 'UI', grupo: 'UI', nome: 'Planta: nome legível, recorte da Entrega, zona útil', criterio: 'sala em L: nome dentro da sala (o centro geométrico fica fora); nome comprido numa sala estreita → letra menor ou «…»; Entrega recortada à zona desenhada e sem marcas de aviso; recortar 200×100 de 1000×1000 → imagem 2400×1200 e escala ÷12', fn: () => {
+      const P = VC.planta; if (!P || !P.pontoInterior || !P.limitesDesenho || !P.recortar) return false;
+      const L = [[0, 0], [300, 0], [300, 60], [60, 60], [60, 300], [0, 300]];
+      const c = P.centro(L), q = P.pontoInterior(L);
+      const ok1 = !P.dentro(c, L) && P.dentro(q, L);
+      const z = P.zoom; P.zoom = 1;
+      const r = P.rotuloAjustado('Instalação sanitária do piso 2 norte', [[0, 0], [60, 0], [60, 200], [0, 200]], 30, 100, 13);
+      P.zoom = z;
+      const ok2 = r.fs < 13 && (r.texto.length * r.fs * 0.58 <= 60 * 0.9 + 1e-6);
+      const D = VC.dados, g = { esp: D.espacos, pl: D.plantas, ter: D.terminais, ram: D.ramais, tr: D.transferencias, piso: P.piso, ult: VC.calculo.ultimo };
+      try {
+        D.plantas = [{ id: 'pR', nome: 'R', w: 1000, h: 1000, escala: 0.01, imagem: 'data:,' }]; P.piso = 'pR'; D.terminais = []; D.ramais = []; D.transferencias = [];
+        D.espacos = [{ id: 1, nome: 'S', tipo: 'Escritório', planta: { pisoId: 'pR', pts: [[400, 400], [600, 400], [600, 500], [400, 500]] } }];
+        VC.calculo.ultimo = { findings: [{ severidade: 'ERRO', tipo: 'X', elemento: 'S', msg: '' }] };
+        const lim = P.limitesDesenho(D.plantas[0]);
+        const svg = P.svgEstatico(D.plantas[0], 760);
+        const ok3 = lim[0] > 300 && lim[0] < 400 && lim[2] < 400 && /viewBox="3\d\d(\.\d)? 3\d\d/.test(svg) && !/planta-aviso-sala/.test(svg);
+        return ok1 && ok2 && ok3;
+      } finally { Object.assign(D, { espacos: g.esp, plantas: g.pl, terminais: g.ter, ramais: g.ram, transferencias: g.tr }); P.piso = g.piso; VC.calculo.ultimo = g.ult; }
+    } });
   },
 
   correr() {

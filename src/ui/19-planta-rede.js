@@ -402,6 +402,7 @@ P.lerPDF = async function (f) {
     const doc = await lib.getDocument({ data: new Uint8Array(await f.arrayBuffer()) }).promise;
     let n = 1;
     if (doc.numPages > 1) { n = parseInt(window.prompt('O PDF tem ' + doc.numPages + ' páginas. Qual é a planta deste piso?', '1'), 10) || 1; n = Math.max(1, Math.min(doc.numPages, n)); }
+    this._fontePend = { tipo: 'pdf', doc, n };   // para ler de novo só a zona útil em alta resolução
     const pag = await doc.getPage(n), v1 = pag.getViewport({ scale: 1 });
     const k = 2400 / Math.max(v1.width, v1.height), vp = pag.getViewport({ scale: k });
     const c = document.createElement('canvas'); c.width = Math.round(vp.width); c.height = Math.round(vp.height);

@@ -223,6 +223,10 @@ const CASOS = [
     const P = VC.planta, o = P.areaM2; P.areaM2 = function (pts, piso) { return piso && piso.escala ? this.areaPx(pts) * piso.escala : null; };
     return () => { P.areaM2 = o; };
   }],
+  ['Nome da sala volta ao centro geométrico (fora de uma sala em L)', 'UI.T39', () => {
+    const P = VC.planta, o = P.pontoInterior; P.pontoInterior = function (pts) { return this.centro(pts); };
+    return () => { P.pontoInterior = o; };
+  }],
   ['E3 · sem aviso de ventilador fora da curva', 'N6.T13', () => {
     const o = VC.uta.calcularPontoFuncionamento;
     VC.uta.calcularPontoFuncionamento = function () { const r = o.apply(this, arguments); if (r) r.foraDaCurva = false; return r; };

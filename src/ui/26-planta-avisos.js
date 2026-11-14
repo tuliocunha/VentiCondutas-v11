@@ -34,7 +34,7 @@ P.piorAviso = l => (l && l.length ? l[0].severidade : null);
 const svgBase = P._svg;
 P._svg = function (p) {
   const s = svgBase.call(this, p), z = this.zoom || 1, A = this.avisosPorElemento();
-  if (!A.size) return s;
+  if (!A.size || this._semAvisos) return s;
   let x = '<g class="planta-avisos" pointer-events="none">';
   this.espacosDoPiso(p).forEach(e => {
     const l = A.get(e.nome); if (!l) return;
