@@ -156,12 +156,13 @@ cenários e mostradas na app como avisos no objeto.
 | I5 | Um terminal ligado a um ramal: o ramal existe e é da mesma rede. Regra única `VC.redes.compativeis` em toda a app (Topologia, Associação, planta, verificação). A **extração suja** (casas de banho, G4) tem rede e ventilador próprios: não se liga à extração geral. Terminal sem ramal = erro na Entrega. | erro |
 | I6 | Ligação terminal → ponta do ramal ≤ 0,5 m, senão o L não a inclui. | aviso |
 | I7 | Um ramal desenhado: o pai existe, e o traçado do filho começa no traçado do pai. | aviso |
-| I8 | Uma transferência: origem ≠ destino, as duas existem, não há ciclo A→…→A e **não leva ar de um espaço sujo (G4) para um mais limpo** (EN 16798-3). | erro |
+| I8 | Uma transferência: origem ≠ destino, as duas existem, não há ciclo A→…→A e **a origem não é G4** (extração dedicada) **nem uma arrecadação** (Arrumo: tem extração, recebe ar por insuflação ou transferência, mas não o cede): o ar transferido não pode vir de instalações sanitárias, cozinhas, arrecadações, parques de estacionamento… (Portaria 138-I, Anexo II, 1.2.2 f). Espaço sujo = **G4 da classificação da app**, com o grupo forçado pelo projetista quando há outra fonte de contaminação. | erro |
 | I9 | A seta de uma transferência está a ≤ 0,5 m da parede da origem e da do destino. | aviso |
 | I10 | Uma transferência compensada: a definição de insuflação indicada existe e inclui o caudal compensado. | erro |
 | I11 | Os terminais de uma definição somam o `Q_total` da definição. | erro |
 | I12 | Balanço de cada espaço desenhado dentro da tolerância (ou isento: G2 sem conforto). | aviso |
 | I16 | Um ramal tem caudal (Q > 0); um terminal de uma sala desenhada está colocado na planta. | aviso |
+| I20 | Um espaço G4 está em depressão: extração direta > insuflação direta; o ar entra por transferência (princípio P4; para instalações sanitárias, Portaria 138-I, Anexo II, 1.2.2 h). | erro |
 | I19 | Espaço G1 com N vazio: «Ocupação por definir». O ar novo é só T12 × A até o N ser escrito; depois aplica-se o maior de T11 × N e T12 × A (Portaria 138-I). | por fazer (cinzento) |
 | I17 | Um ramal é da rede da sua UTA e do seu pai. | erro |
 | I18 | Mudar um nome (espaço ou ramal) não desliga nada: terminais, transferências e sub-ramais seguem o nome. | erro (só nos testes) |
@@ -237,6 +238,11 @@ auditoria (Fase 1) confirma-os com gestos reais e acrescenta os que faltarem.
 | **3 · Verificador** | `VC.planta.coerencia()` com I1–I15; avisos no desenho e no cartão | sim |
 | **4 · Correções** | Desvios e falhas aprovados da auditoria, em 2–3 PRs por tema: entrada de dados, representação, ergonomia | sim |
 | **5 · Proteção** | C1–C5 automáticos no CI; testes «macaco» (ações ao acaso + I13) para desfazer e geometria | não |
+
+### Como se valida (regra do autor)
+- **A app tem de cumprir as normas de ventilação aplicáveis em Portugal e as regras de engenharia de dimensionamento.** A validação faz-se com **casos calculados à mão a partir do texto da norma** (testes internos), nunca a partir do resultado de um projeto de exemplo.
+- **Os exemplos não são referência:** podem ter erros, porque foram feitos antes de a app ser coerente. Quando a app passa a cumprir uma regra, é normal e desejável que apareçam avisos nos exemplos.
+- A **fotografia de referência** (`tests/fotografia-referencia.json`) é só um **alarme de mudança**: diz que algo mudou, não que está certo. Atualiza-se quando a mudança é intencional e explicada.
 
 ### Definição de pronto (todos os PRs da planta, a partir daqui)
 1. Respeita este contrato, ou altera-o no mesmo PR com a mudança explicada.

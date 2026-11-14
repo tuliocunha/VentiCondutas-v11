@@ -838,7 +838,7 @@
       {
         "id": 2011,
         "nome": "Apoio/Serviço P0-N1",
-        "tipo": "Cozinha",
+        "tipo": "Copa",
         "zona": "P0 - Norte",
         "localizacao": {
           "piso": "P0",
@@ -2605,7 +2605,7 @@
       {
         "id": 2035,
         "nome": "Apoio/Serviço P1-S (copa)",
-        "tipo": "Cozinha",
+        "tipo": "Copa",
         "zona": "P1 - Sul",
         "localizacao": {
           "piso": "P1",

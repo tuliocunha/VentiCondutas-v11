@@ -108,6 +108,9 @@ VC.calculo = {
      calcularQ_normas — V8.0.7
      ACH so se aplica a G3 e G4 (exceto Sanitorios)
      ──────────────────────────────────────────────── */
+  /* grupo efetivo do espaço: o forçado pelo projetista ou o do tipo (G1–G4) */
+  grupoDe(esp) { return Number(esp && (esp.grupoForcado || (VC.normas.getDef(esp.tipo) || {}).g)) || 0; },
+
   /* N vazio (null, undefined ou '') = ocupação por definir; 0 é um valor escolhido */
   nVazio(esp) { return !esp || esp.N == null || String(esp.N).trim() === ''; },
 
@@ -130,7 +133,7 @@ VC.calculo = {
       if (esp.tipo === 'Sanitários' || esp.tipo === 'Balneários') {
         const xs = VC.normas.calcExtracaoSanitaria(Object.assign({}, esp, { A, H, V }));
         Q_extracao = xs.qExtracao; metodoCaudal = xs.metodo;
-      } else { Q_extracao = V * def.ach; metodoCaudal = 'P138 ACH ' + def.ach; }
+      } else { Q_extracao = V * def.ach; metodoCaudal = def.t13 ? 'P138 Tabela 13 · ' + def.ach + ' renovações/hora' : 'ACH ' + def.ach + ' (boa prática; não consta da Tabela 13)'; }
     } else if (g === 2 || isento) {
       Q_renov = 0; Q_extracao = 0; metodoCaudal = 'Isento (Portaria 138-I)';
     } else if (g === 3) {
@@ -652,9 +655,42 @@ VC.calculo = {
         if (u && !VC.redes.compativeis(r.rede, u.rede)) findings.push({ severidade: 'ERRO', tipo: 'Ramal noutra rede', elemento: r.nome, msg: 'Ramal de ' + VC.redes.rotulo(r.rede) + ' servido pela UTA «' + u.nome + '», de ' + VC.redes.rotulo(u.rede) });
         else if (pai && !VC.redes.compativeis(r.rede, pai.rede)) findings.push({ severidade: 'ERRO', tipo: 'Ramal noutra rede', elemento: r.nome, msg: 'Ramal de ' + VC.redes.rotulo(r.rede) + ' com o pai «' + pai.nome + '», de ' + VC.redes.rotulo(pai.rede) });
       });
+      // ── regras de exaustão (Portaria 138-I, Anexo II, 1.2.2 h; RT-SCIE, Portaria 1532/2008; SCE) ──
+      const filhos = {}; VC.dados.ramais.forEach(r => { if (r.parente) (filhos[r.parente] = filhos[r.parente] || []).push(r); });
+      const subarvore = raiz => { const out = [], pilha = [raiz]; while (pilha.length) { const r = pilha.pop(); out.push(r); (filhos[r.nome] || []).forEach(f => pilha.push(f)); } return out; };
+      const espPorNome = new Map((VC.dados.espacos || []).map(e => [e.nome, e]));
+      const ehSanitaria = e => !!e && /^(Sanitários|Balneários)$/.test(e.tipo);
+      const espacosDaRede = ramaisDaRede => { const nomes = new Set(ramaisDaRede.map(r => r.nome)), out = new Map(); VC.dados.terminais.forEach(t => { if (nomes.has(t.ramalRef)) (t.espacos || []).forEach(x => { const e = espPorNome.get(x.nome); if (e) out.set(e.nome, e); }); }); return [...out.values()]; };
+      // 3 · a rede de exaustão das instalações sanitárias é independente: não serve outros espaços (1.2.2 h)
+      VC.dados.ramais.filter(r => !r.parente && VC.redes.ehExtracao(r.rede)).forEach(raiz => {
+        const E = espacosDaRede(subarvore(raiz)), outros = E.filter(e => !ehSanitaria(e));
+        if (E.some(ehSanitaria) && outros.length) findings.push({ severidade: 'ERRO', tipo: 'Exaustão sanitária partilhada', elemento: raiz.nome, msg: 'A rede ' + raiz.nome + ' extrai instalações sanitárias e também ' + outros.slice(0, 3).map(e => '«' + e.nome + '»').join(', ') + (outros.length > 3 ? ' e mais ' + (outros.length - 3) : '') + ': as instalações sanitárias têm condutas de exaustão independentes (Portaria 138-I, Anexo II, 1.2.2 h)' });
+      });
+      // 4 · recuperação de calor com ar das instalações sanitárias: admitida se o projetista garantir que o ar novo não é contaminado (SCE)
+      VC.dados.utas.forEach(u => {
+        if (u.ativo === false || !(u.componentes || []).some(c => /recupera/i.test(c.tipo || c.nome || ''))) return;
+        let raizes = VC.dados.ramais.filter(r => r.utaRef === u.id && !r.parente);
+        if (!raizes.length) raizes = VC.dados.ramais.filter(r => r.tipo === 'Principal' && (r.rede || 'insuflacao') === u.rede);
+        const San = espacosDaRede([].concat(...raizes.map(subarvore))).filter(ehSanitaria);
+        if (San.length) findings.push({ severidade: 'ATENÇÃO', tipo: 'Recuperação de calor com ar sanitário', elemento: u.nome, msg: 'A UTA ' + u.nome + ' tem recuperador e extrai ' + San.length + ' instalação(ões) sanitária(s): o projetista tem de garantir que o ar novo não é contaminado (SCE, Portaria 138-I)' });
+      });
+      // 2 · garagem: extração do RT-SCIE por veículo (controlo de CO); sem n.º de lugares fica por fazer
+      (VC.dados.espacos || []).filter(e => e.tipo === 'Garagem').forEach(e => {
+        const n = Number(e.lugares) || 0, qo = VC6.balanco && VC6.balanco.QOutDireto ? VC6.balanco.QOutDireto(e) : 0;
+        if (!(n > 0)) { findings.push({ severidade: 'POR FAZER', tipo: 'Lugares da garagem por definir', elemento: e.nome, msg: 'Escreva o número de lugares: o RT-SCIE pede 300 m³/h por veículo a 50 ppm de CO e 600 m³/h por veículo a 100 ppm' }); return; }
+        if (qo < 300 * n) findings.push({ severidade: 'ERRO', tipo: 'Garagem abaixo do RT-SCIE', elemento: e.nome, msg: 'Extração ' + VC.utils.fmt(qo, 0) + ' m³/h < 300 × ' + n + ' = ' + VC.utils.fmt(300 * n, 0) + ' m³/h (1.º patamar, 50 ppm de CO; Portaria 1532/2008)' });
+        else if (qo < 600 * n) findings.push({ severidade: 'ATENÇÃO', tipo: 'Garagem abaixo do RT-SCIE', elemento: e.nome, msg: 'Extração ' + VC.utils.fmt(qo, 0) + ' m³/h cumpre o 1.º patamar (300 × ' + n + ') mas não o 2.º, a 100 ppm de CO: 600 × ' + n + ' = ' + VC.utils.fmt(600 * n, 0) + ' m³/h (Portaria 1532/2008)' });
+      });
       // higiene do ar: nenhuma transferência leva ar de um espaço sujo para um mais limpo (regra de VC6.transferencias)
       if (window.VC6 && VC6.transferencias && VC6.transferencias.direcaoValida) {
         const espPorId = new Map((VC.dados.espacos || []).map(e => [e.id, e]));
+        // G4 em depressão (princípio P4; Portaria 138-I, Anexo II, 1.2.2 h): extração direta > insuflação direta
+        (VC.dados.espacos || []).forEach(e => {
+          if (this.grupoDe(e) !== 4 || !VC6.balanco || !VC6.balanco.QOutDireto) return;
+          const qi = VC6.balanco.QInDireto(e), qo = VC6.balanco.QOutDireto(e);
+          const fonte = /^(Sanitários|Balneários)$/.test(e.tipo) ? 'Portaria 138-I, Anexo II, 1.2.2 h)' : 'G4 «Extração Dedicada», princípio P4 e limites de pressão da app';
+          if ((qi > 0 || qo > 0) && qo <= qi) findings.push({ severidade: 'ERRO', tipo: 'G4 sem depressão', elemento: e.nome, msg: 'Extração ' + VC.utils.fmt(qo, 0) + ' m³/h ≤ insuflação ' + VC.utils.fmt(qi, 0) + ' m³/h: o espaço tem de estar em depressão, com o ar a entrar por transferência (' + fonte + ')' });
+        });
         (VC.dados.transferencias || []).forEach(t => {
           const de = espPorId.get(t.deId), para = espPorId.get(t.paraId);
           if (de && para && !VC6.transferencias.direcaoValida(de, para).ok) findings.push({ severidade: 'ERRO', tipo: 'Transferência de espaço sujo', elemento: de.nome + ' → ' + para.nome, msg: 'O ar de um espaço sujo não pode passar para um espaço mais limpo: inverta a direção ou remova a transferência' });
@@ -674,6 +710,14 @@ VC.calculo = {
       });
       if (totalPower > VC.constantes.DL101D.SGTC) findings.push({ severidade: 'ATENÇÃO', tipo: 'BACS', elemento: 'Sistema', msg: 'P > ' + VC.constantes.DL101D.SGTC / 1000 + ' kW' });
 
+      // instalações sanitárias: regime da Tabela 13 e aparelhos (pública) por definir → «por fazer»
+      VC.dados.espacos.forEach(e => {
+        if (e.tipo === 'Balneários') { if (!(Number(e.numDuches) > 0)) findings.push({ severidade: 'POR FAZER', tipo: 'Duches do balneário por definir', elemento: e.nome, msg: 'Indique o n.º de duches (Tabela 13: Máx(90 × duches; 10 × A)). Até lá conta só 10 × A' }); return; }
+        if (e.tipo !== 'Sanitários') return;
+        const nAp = (Number(e.numUrinois) || 0) + (Number(e.numSanitas) || 0) + (Number(e.numDuches) || 0);
+        if (!e.regimeSanitario) findings.push({ severidade: 'POR FAZER', tipo: 'Regime da instalação sanitária por definir', elemento: e.nome, msg: 'Escolha o regime da Tabela 13 (privada contínua, privada não contínua ou pública). Até lá, calcula-se como privada com funcionamento contínuo: Máx(45; 10 × A)' });
+        else if (/^publico/.test(e.regimeSanitario) && !nAp) findings.push({ severidade: 'POR FAZER', tipo: 'Aparelhos sanitários por definir', elemento: e.nome, msg: 'Instalação pública: indique o n.º de urinóis, sanitas e duches (Tabela 13: 90 m³/h por aparelho). Até lá conta só 10 × A' });
+      });
       // N por definir: aviso cinzento «por fazer» (não é erro; o caudal fica só por T12 × A)
       VC.dados.espacos.forEach(e => {
         const c = this.calcularQEspaco(e);

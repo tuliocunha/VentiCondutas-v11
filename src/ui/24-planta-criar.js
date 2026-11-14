@@ -22,12 +22,8 @@ const espPorId = id => (VC.dados.espacos || []).find(x => String(x.id) === Strin
 
 /* ── redes que um espaço pode ter (regra única: espaço sujo → extração suja, rede própria) ── */
 P.redesDoEspaco = function (e) {
-  // espaço sujo: a EXTRAÇÃO vai para a rede própria (extração suja); a insuflação continua possível
-  // salvo nos G4 (extração dedicada). Ex.: um laboratório (G1) precisa de insuflação (T11/T12).
-  const sujo = VC6.transferencias && VC6.transferencias.ehSujo ? VC6.transferencias.ehSujo(e) : false;
-  const g = Number(e.grupoForcado || VC.calculo.calcularQEspaco(e).g) || 0;
-  if (!sujo) return ['insuflacao', 'extracao'];
-  return g === 4 ? ['extracao_suja'] : ['insuflacao', 'extracao_suja'];
+  // G4 «Extração Dedicada» (princípio P4): só extração, na rede própria; o ar entra por transferência
+  return VC.calculo.grupoDe(e) === 4 ? ['extracao_suja'] : ['insuflacao', 'extracao'];
 };
 /* caudal proposto (P7): primeiro o que falta no balanço da sala, depois o que falta à norma */
 P.qSugerido = function (e, rede) {
@@ -107,6 +103,37 @@ P.definirN = function (id, valor) {
   if (VC.editorEspacos && VC.editorEspacos.editarCampo) VC.editorEspacos.editarCampo(idx, 'N', String(valor == null ? '' : valor));   // vazio = por definir
   else if (String(valor == null ? '' : valor).trim() === '') delete e.N; else e.N = VC.utils.num(valor);
   this._empilhar('ocupação de «' + e.nome + '»', antes);
+  this.redesenhar();
+};
+/* instalação sanitária: regime e aparelhos da Tabela 13 (Portaria 138-I) */
+P.definirSanitaria = function (id, campo, valor) {
+  const e = espPorId(id); if (!e || this._bloqueado() || ['regimeSanitario', 'numSanitas', 'numUrinois', 'numDuches'].indexOf(campo) < 0) return;
+  const antes = this._estado();
+  if (campo === 'regimeSanitario') { if (valor) e.regimeSanitario = valor; else delete e.regimeSanitario; }
+  else { const n = Math.max(0, Math.round(VC.utils.num(valor))); if (n > 0) e[campo] = n; else delete e[campo]; }
+  this._empilhar('Tabela 13 de «' + e.nome + '»', antes);
+  VC.estado.forcarSync();
+  this.redesenhar();
+};
+P._cartaoSanitaria = function (e) {
+  const T = VC.conhecimento.tabelas.T13.sanitarios, c = VC.calculo.calcularQEspaco(e), pub = /^publico/.test(e.regimeSanitario || '');
+  if (e.tipo === 'Balneários') {   // linha própria da Tabela 13: só duches
+    return '<div class="planta-renomear"><label for="plantaDuches">Duches <small>Tabela 13: Máx(90 × duches; 10 × A)</small></label><input id="plantaDuches" type="number" min="0" step="1" value="' + (Number(e.numDuches) > 0 ? e.numDuches : '') + '" placeholder="por definir" onchange="VC.planta.definirSanitaria(' + e.id + ', \'numDuches\', this.value)"></div>'
+      + '<p class="' + (Number(e.numDuches) > 0 ? 'planta-meta' : 'planta-porfazer') + '">Extração: <b>' + fmt(c.Q_extracao) + ' m³/h</b> · ' + esc(c.metodoCaudal || '') + '</p>';
+  }
+  const num = (campo, rot) => '<label>' + rot + ' <input type="number" min="0" step="1" style="width:60px" value="' + (Number(e[campo]) > 0 ? e[campo] : '') + '" onchange="VC.planta.definirSanitaria(' + e.id + ', \'' + campo + '\', this.value)"></label>';
+  return '<div class="planta-renomear"><label for="plantaRegime">Tabela 13 (Portaria 138-I) · regime</label><select id="plantaRegime" onchange="VC.planta.definirSanitaria(' + e.id + ', \'regimeSanitario\', this.value)">'
+    + '<option value="">— por definir —</option>' + Object.keys(T).filter(k => !T[k].soDuches).map(k => '<option value="' + k + '"' + (e.regimeSanitario === k ? ' selected' : '') + '>' + esc(T[k].nome || k) + '</option>').join('') + '</select></div>'
+    + (pub ? '<div class="planta-dir">' + num('numSanitas', 'Sanitas') + num('numUrinois', 'Urinóis') + num('numDuches', 'Duches') + '</div>' : '')
+    + '<p class="' + (e.regimeSanitario ? 'planta-meta' : 'planta-porfazer') + '">Extração: <b>' + fmt(c.Q_extracao) + ' m³/h</b> · ' + esc(c.metodoCaudal || '') + (e.regimeSanitario ? '' : ' (regime por definir: calculado como privada contínua)') + '</p>';
+};
+/* garagem: n.º de lugares para a verificação do RT-SCIE (não muda o caudal calculado) */
+P.definirLugares = function (id, valor) {
+  const e = espPorId(id); if (!e || this._bloqueado()) return;
+  const antes = this._estado(), n = Math.max(0, Math.round(VC.utils.num(valor)));
+  if (n > 0) e.lugares = n; else delete e.lugares;
+  this._empilhar('lugares de «' + e.nome + '»', antes);
+  VC.estado.forcarSync();
   this.redesenhar();
 };
 P.renomearEspacoPlanta = function (id, novo) {

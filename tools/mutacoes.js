@@ -195,6 +195,18 @@ const CASOS = [
     const q = VC.calculo.calcularQ_normas; VC.calculo.calcularQ_normas = function (esp) { return q.call(this, esp.N == null ? Object.assign({}, esp, { N: 1 }) : esp); };
     return () => { VC.calculo.nVazio = o; VC.calculo.calcularQ_normas = q; };
   }],
+  ['Portaria 1.2.2 f) · só recusa sujo → limpo (aceita WC → WC)', 'UI.T32', () => {
+    const T = VC6.transferencias, o = T.direcaoValida; T.direcaoValida = function (de, para) { return this.ehSujo(de) && !this.ehSujo(para) ? o.call(this, de, para) : { ok: true }; };
+    return () => { T.direcaoValida = o; };
+  }],
+  ['Arquivo volta a ser isento (0 m³/h)', 'UI.T33', () => {
+    const L = VC.regulamento.isencoesArNovo; L.push('Arquivo');
+    return () => { L.splice(L.indexOf('Arquivo'), 1); };
+  }],
+  ['Tabela 13: pública volta a ter o mínimo de 45 que a norma não tem', 'UI.T34', () => {
+    const c = VC.conhecimento.tabelas.T13.sanitarios.publico_normal, o = c.min; c.min = 45;
+    return () => { c.min = o; };
+  }],
   ['E3 · sem aviso de ventilador fora da curva', 'N6.T13', () => {
     const o = VC.uta.calcularPontoFuncionamento;
     VC.uta.calcularPontoFuncionamento = function () { const r = o.apply(this, arguments); if (r) r.foraDaCurva = false; return r; };

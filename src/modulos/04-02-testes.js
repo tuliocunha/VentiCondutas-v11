@@ -32,7 +32,7 @@ VC6.testes = {
     self.registar({ id: 'N2.T2', nucleo: 'N2', grupo: 'Normas', nome: 'Sanitário → G4, extração T13', criterio: 'conforme tabela', fn: () => VC6.normas.getDef('Sanitários').g === 4 });
     self.registar({ id: 'N2.T3', nucleo: 'N2', grupo: 'Normas', nome: 'Circulação → G2 isento', criterio: 'Q=0', fn: () => { const d = VC6.normas.getDef('Circulação'); return d.g === 2 && d.t11 === 24 && d.t12 === 0; } });
     self.registar({ id: 'N2.T4', nucleo: 'N2', grupo: 'Normas', nome: 'Sanitário privado contínuo ≥ 45', criterio: 'q ≥ 45', fn: () => { const r = VC6.normas.calcExtracaoSanitaria({ A: 5, regimeSanitario: 'privado_continuo' }); return r.qExtracao >= 45; } });
-    self.registar({ id: 'N2.T5', nucleo: 'N2', grupo: 'Normas', nome: 'Sanitário público intensivo = 125·nAp', criterio: 'conforme', fn: () => { const r = VC6.normas.calcExtracaoSanitaria({ A: 5, regimeSanitario: 'publico_intensivo', numSanitas: 2 }); return r.qExtracao >= 250; } });
+    self.registar({ id: 'N2.T5', nucleo: 'N2', grupo: 'Normas', nome: 'Sanitário público = Máx(90·aparelhos; 10·A)', criterio: 'Tabela 13: 2 sanitas, 5 m² → 180; o antigo «intensivo» passa à linha pública', fn: () => { const f = o => VC6.normas.calcExtracaoSanitaria(o).qExtracao; return f({ A: 5, regimeSanitario: 'publico_normal', numSanitas: 2 }) === 180 && f({ A: 5, regimeSanitario: 'publico_intensivo', numSanitas: 2 }) === 180 && !VC.conhecimento.tabelas.T13.sanitarios.publico_intensivo; } });
     self.registar({ id: 'N2.T6', nucleo: 'N2', grupo: 'Normas', nome: 'SFPint=650 → classe 1 ou 2', criterio: 'conforme', fn: () => { const r = VC6.normas.classificarSFP('BVU_HRS', 650, 0, 0.75); return r.classe === 1 || r.classe === 2; } });
     self.registar({ id: 'N2.T7', nucleo: 'N2', grupo: 'Normas', nome: 'SFPint=1500 → NÃO CONFORME', criterio: 'conforme', fn: () => { const r = VC6.normas.classificarSFP('BVU_HRS', 1500, 0, 0.75); return r.classe === 4 && !r.conforme; } });
     self.registar({ id: 'N2.T8', nucleo: 'N2', grupo: 'Normas', nome: 'P=300 kW → BACS obrigatório', criterio: 'conforme', fn: () => { const r = VC6.normas.dl101D(300000); return r.bacsObrigatorio === true; } });
@@ -624,8 +624,8 @@ VC6.testes = {
         const esc = { id: 502, nome: 'Of', tipo: 'Escritório', A: 16.5, N: 2 };
         const h2 = P._parcelasCaudal(esc); esc.N = 6; const h6 = P._parcelasCaudal(esc);
         const ok3 = /Ar novo = o maior: <b>T12/.test(h2) && /Ar novo = o maior: <b>T11/.test(h6);
-        // um laboratório (G1, espaço sujo) tem insuflação e extração suja; uma casa de banho (G4) só extração suja
-        const ok4 = P.redesDoEspaco({ id: 503, nome: 'Lab', tipo: 'Laboratório', A: 20 }).join() === 'insuflacao,extracao_suja' && P.redesDoEspaco({ id: 504, nome: 'WC', tipo: 'Sanitários', A: 3 }).join() === 'extracao_suja';
+        // um laboratório (G1) tem insuflação e extração; uma casa de banho (G4, extração dedicada) só extração suja
+        const ok4 = P.redesDoEspaco({ id: 503, nome: 'Lab', tipo: 'Laboratório', A: 20 }).join() === 'insuflacao,extracao' && P.redesDoEspaco({ id: 504, nome: 'WC', tipo: 'Sanitários', A: 3 }).join() === 'extracao_suja';
         return ok1 && ok2 && ok3 && ok4;
       } finally { Object.assign(D, { espacos: g.esp, terminais: g.ter, plantas: g.pl, ramais: g.ram }); P.piso = g.piso; VC.ui.toast = g.toast; P._pilha = g.pilha; P.redesenhar = g.red; VC.estado.forcarSync = g.sync; if (VC.historico) VC.historico.push = g.hist; P.pendenteTerm = null; }
     } });
@@ -646,6 +646,77 @@ VC6.testes = {
         VC.editorEspacos.editarCampo(0, 'N', ''); const ok4 = !('N' in e) && VC.calculo.calcularQEspaco(e).nPorDefinir === true;
         return ok1 && ok2 && ok3 && ok4;
       } finally { D.espacos = g.esp; D.eficaciaRemocao = g.ev; VC.estado.sincronizar = g.sinc; if (VC.historico) VC.historico.push = g.hist; VC.calculo.calcularTudo(); }
+    } });
+    // Portaria 138-I, Anexo II, 1.2.2 f) e h), com a classificação G1–G4 da app (G4 = extração dedicada, princípio P4)
+    self.registar({ id: 'UI.T32', nucleo: 'UI', grupo: 'UI', nome: 'G4: sem ar transferido a partir dele, e em depressão', criterio: 'WC→escritório, WC→WC e arrumo→circulação recusadas; circulação→arrumo e escritório→WC aceites; arrumo com insuflação direta sem erro de depressão; laboratório (G1)→circulação aceite; escritório forçado a G4 → recusada; WC com insuflação 100 e extração 50 → ERRO «G4 sem depressão»; extração 150 → sem erro', fn: () => {
+      const T = VC6.transferencias; if (!T || !VC.calculo.grupoDe) return false;
+      const D = VC.dados, g = { esp: D.espacos, tr: D.transferencias, ter: D.terminais };
+      try {
+        const wc = { id: 1, nome: 'WC1', tipo: 'Sanitários', definicoes: [] }, wc2 = { id: 2, nome: 'WC2', tipo: 'Sanitários', definicoes: [] };
+        const of = { id: 3, nome: 'Of', tipo: 'Escritório', definicoes: [] }, lab = { id: 4, nome: 'Lab', tipo: 'Laboratório', definicoes: [] }, circ = { id: 5, nome: 'Circ', tipo: 'Circulação', definicoes: [] };
+        const ok1 = !T.direcaoValida(wc, of).ok && !T.direcaoValida(wc, wc2).ok && T.direcaoValida(of, wc).ok && T.direcaoValida(lab, circ).ok;
+        const forcado = { id: 6, nome: 'Copa', tipo: 'Escritório', grupoForcado: 4, definicoes: [] };
+        // arrecadação (Arrumo, G2): recebe ar (insuflação ou transferência) mas não o cede (1.2.2 f)
+        const arr = { id: 7, nome: 'Arr', tipo: 'Arrumo', definicoes: [{ id: 'I', rede: 'insuflacao', Q_total: 40, quantidade: 1 }, { id: 'E', rede: 'extracao', Q_total: 40, quantidade: 1 }] };
+        const ok2 = !T.direcaoValida(forcado, circ).ok && !T.direcaoValida(arr, circ).ok && T.direcaoValida(circ, arr).ok && VC.calculo.grupoDe(arr) === 2;
+        D.espacos = [Object.assign(wc, { A: 5, H: 2.6, V: 13, definicoes: [{ id: 'I', rede: 'insuflacao', Q_total: 100, quantidade: 1 }, { id: 'E', rede: 'extracao_suja', Q_total: 50, quantidade: 1 }] })];
+        D.transferencias = []; D.terminais = [];
+        const tem = () => (VC.calculo.calcularTudo().findings || []).some(f => f.tipo === 'G4 sem depressão' && f.elemento === 'WC1');
+        const ok3 = tem();
+        wc.definicoes[1].Q_total = 150;
+        const ok4 = !tem();
+        D.espacos = [arr];   // arrumo com insuflação direta = extração: não é G4, não exige depressão
+        const ok5 = !(VC.calculo.calcularTudo().findings || []).some(f => f.tipo === 'G4 sem depressão');
+        return ok1 && ok2 && ok3 && ok4 && ok5;
+      } finally { D.espacos = g.esp; D.transferencias = g.tr; D.terminais = g.ter; VC.calculo.calcularTudo(); }
+    } });
+    // coerência com as normas (pontos 1–5): arquivo G3, garagem RT-SCIE, exaustão sanitária independente, recuperação de calor, velocidade
+    self.registar({ id: 'UI.T33', nucleo: 'UI', grupo: 'UI', nome: 'Normas: arquivo, garagem, exaustão sanitária, recuperador', criterio: 'arquivo 100 m² = máx(3×100, 2×300) = 600; garagem sem lugares → POR FAZER, 10 lugares com 2000 → ERRO, 4000 → ATENÇÃO, 6000 → nada; rede com WC + escritório → ERRO; UTA com recuperador e WC → ATENÇÃO', fn: () => {
+      const D = VC.dados, g = { esp: D.espacos, ter: D.terminais, ram: D.ramais, utas: D.utas, tr: D.transferencias, ev: D.eficaciaRemocao };
+      const tipos = () => (VC.calculo.calcularTudo().findings || []).map(f => f.severidade + '|' + f.tipo + '|' + f.elemento);
+      try {
+        D.eficaciaRemocao = 1; D.transferencias = [];
+        const arq = VC.calculo.calcularQEspaco({ id: 1, nome: 'Arq', tipo: 'Arquivo', A: 100, H: 3, V: 300, geometriaMetodo: 'AH', definicoes: [] });
+        const ok1 = Math.abs(arq.Q_normas - 600) < 1e-9;
+        const gar = { id: 2, nome: 'Gar', tipo: 'Garagem', A: 300, H: 3, V: 900, geometriaMetodo: 'AH', definicoes: [{ id: 'E', rede: 'extracao_suja', Q_total: 2000, quantidade: 1 }] };
+        D.espacos = [gar]; D.terminais = []; D.ramais = []; D.utas = [];
+        const ok2a = tipos().includes('POR FAZER|Lugares da garagem por definir|Gar');
+        gar.lugares = 10; const ok2b = tipos().includes('ERRO|Garagem abaixo do RT-SCIE|Gar');
+        gar.definicoes[0].Q_total = 4000; const ok2c = tipos().includes('ATENÇÃO|Garagem abaixo do RT-SCIE|Gar');
+        gar.definicoes[0].Q_total = 6000; const ok2d = !tipos().some(t => /Garagem abaixo|Lugares da garagem/.test(t));
+        const wc = { id: 3, nome: 'WC', tipo: 'Sanitários', A: 4, H: 3, V: 12, geometriaMetodo: 'AH', definicoes: [] }, of = { id: 4, nome: 'Of', tipo: 'Escritório', A: 20, H: 3, V: 60, N: 2, geometriaMetodo: 'AH', definicoes: [] };
+        D.espacos = [wc, of];
+        D.utas = [{ id: 'U1', nome: 'UTA-E', rede: 'extracao', componentes: [{ tipo: 'Recuperador', deltaP: 100 }] }];
+        D.ramais = [{ id: 1, nome: 'RE', parente: '', tipo: 'Principal', nivelNumero: 1, rede: 'extracao', utaRef: 'U1', L: 5, zeta: 0.5, geometriaInput: { forma: 'circular' }, lock: { D: false } }];
+        D.terminais = [{ id: 'a', nome: 'ta', rede: 'extracao', ramalRef: 'RE', Q: 45, espacos: [{ id: 3, nome: 'WC', Q_parcela: 45 }] }, { id: 'b', nome: 'tb', rede: 'extracao', ramalRef: 'RE', Q: 60, espacos: [{ id: 4, nome: 'Of', Q_parcela: 60 }] }];
+        ['ordenacaoTopologica', 'cacheBalanco', 'cacheMaterializacao'].forEach(k => VC.perf[k] && VC.perf[k].invalidar && VC.perf[k].invalidar());
+        const t3 = tipos();
+        const ok3 = t3.includes('ERRO|Exaustão sanitária partilhada|RE') && t3.includes('ATENÇÃO|Recuperação de calor com ar sanitário|UTA-E');
+        D.terminais = D.terminais.slice(1); ['ordenacaoTopologica', 'cacheBalanco'].forEach(k => VC.perf[k] && VC.perf[k].invalidar && VC.perf[k].invalidar());
+        const t4 = tipos(); const ok4 = !t4.some(t => /Exaustão sanitária|Recuperação de calor/.test(t));
+        return ok1 && ok2a && ok2b && ok2c && ok2d && ok3 && ok4;
+      } finally { Object.assign(D, { espacos: g.esp, terminais: g.ter, ramais: g.ram, utas: g.utas, transferencias: g.tr, eficaciaRemocao: g.ev }); ['ordenacaoTopologica', 'cacheBalanco', 'cacheMaterializacao'].forEach(k => VC.perf[k] && VC.perf[k].invalidar && VC.perf[k].invalidar()); VC.calculo.calcularTudo(); }
+    } });
+    // Portaria 138-I, Tabela 13 (texto confirmado): fórmulas exatas das três linhas
+    self.registar({ id: 'UI.T34', nucleo: 'UI', grupo: 'UI', nome: 'Tabela 13 completa', criterio: 'privada contínua 3 m² → 45, 8 m² → 80; não contínua 3 m² → 90, 12 m² → 120; pública 2 sanitas + 1 urinol, 3 m² → 270; pública 1 duche, 40 m² → 400; pública sem aparelhos 3 m² → 30; balneário 4 duches 6 m² → 360, sem duches → POR FAZER; copa, resíduos e cópias com V = 30 m³ → 300 (10/h); sanitária sem regime → POR FAZER', fn: () => {
+      const f = o => VC.normas.calcExtracaoSanitaria(o).qExtracao;
+      const ok1 = f({ A: 3, regimeSanitario: 'privado_continuo' }) === 45 && f({ A: 8, regimeSanitario: 'privado_continuo' }) === 80;
+      const ok2 = f({ A: 3, regimeSanitario: 'privado_nao_continuo' }) === 90 && f({ A: 12, regimeSanitario: 'privado_nao_continuo' }) === 120;
+      const ok3 = f({ A: 3, regimeSanitario: 'publico_normal', numSanitas: 2, numUrinois: 1 }) === 270 && f({ A: 40, regimeSanitario: 'publico_normal', numDuches: 1 }) === 400 && f({ A: 3, regimeSanitario: 'publico_normal' }) === 30;
+      const ok4 = f({ tipo: 'Balneários', A: 6, numDuches: 4, numSanitas: 3 }) === 360 && f({ tipo: 'Balneários', A: 6 }) === 60;   // balneário: só duches contam
+      const q10 = t => VC.calculo.calcularQEspaco({ id: 9, nome: 'X', tipo: t, A: 10, H: 3, V: 30, geometriaMetodo: 'V', definicoes: [] });
+      const ok5 = ['Copa', 'Armazenamento de resíduos', 'Sala de cópias/impressão'].every(t => { const c = q10(t); return c.Q_normas === 300 && /Tabela 13/.test(c.metodoCaudal) && c.g === 4; }) && /boa prática/.test(q10('Cozinha').metodoCaudal);
+      const D = VC.dados, g = { esp: D.espacos, tr: D.transferencias };
+      try {
+        D.transferencias = [];
+        const ff = () => (VC.calculo.calcularTudo().findings || []).map(x => x.severidade + '|' + x.tipo);
+        D.espacos = [{ id: 1, nome: 'Bx', tipo: 'Balneários', A: 6, H: 3, V: 18, geometriaMetodo: 'AH', definicoes: [] }];
+        const ok6 = ff().includes('POR FAZER|Duches do balneário por definir') && !ff().some(x => /Regime da instala/.test(x));
+        D.espacos = [{ id: 2, nome: 'Wx', tipo: 'Sanitários', A: 3, H: 3, V: 9, geometriaMetodo: 'AH', definicoes: [] }];
+        const ok7 = ff().includes('POR FAZER|Regime da instalação sanitária por definir');
+        D.espacos[0].regimeSanitario = 'publico_normal'; const ok8 = ff().includes('POR FAZER|Aparelhos sanitários por definir');
+        return ok1 && ok2 && ok3 && ok4 && ok5 && ok6 && ok7 && ok8;
+      } finally { D.espacos = g.esp; D.transferencias = g.tr; VC.calculo.calcularTudo(); }
     } });
   },
 

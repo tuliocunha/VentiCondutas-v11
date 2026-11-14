@@ -63,16 +63,17 @@ VC._normativo = {
 
   principiosBalanco: [
     { id: 'P1', texto: 'Em cada espaço: Σ Q_in = Σ Q_out (tolerância ±5 m³/h)', norma: 'Balanço de massa' },
-    { id: 'P2', texto: 'G2 (Circulação, Escadas): isentos de renovação mas podem transferir', norma: 'Portaria 138-I/2021' },
+    { id: 'P2', texto: 'G2 (Circulação, Escadas): isentos de renovação mas podem transferir. Exceção: arrecadação (Arrumo) tem extração e não cede ar transferido', norma: 'Portaria 138-I/2021 (Anexo II, 1.2.2 f)' },
     { id: 'P3', texto: 'G3 (Arquivo): mínimo por diluição basal (T12) ou ACH ≥ 2', norma: 'Portaria 138-I/2021' },
-    { id: 'P4', texto: 'G4 (Sanitários, Cozinha, Garagem): extração dedicada, entram por transferência', norma: 'Portaria 138-I T13' },
+    { id: 'P4', texto: 'G4 (Sanitários, Cozinha, Garagem): extração dedicada, entram por transferência. Caudal pela Tabela 13: instalações sanitárias, balneário (duches), copa, resíduos e cópias/impressão (10/h); cozinha, garagem e vestiário por renovações/hora de boa prática (não constam da Tabela 13)', norma: 'Portaria 138-I (Tabela 13; Anexo II, 1.2.2 h)' },
     { id: 'P5', texto: 'Escadas pressurizadas: ΔP ≥ 50 Pa em caso de incêndio', norma: 'Portaria 1532/2008' },
     { id: 'P6', texto: 'RPH de conforto aplicável a todos os grupos (G1-G4): Q_ConTerm = RPH × V', norma: 'F-RPH · EN 16798-1 · ASHRAE 55' },
     { id: 'P7', texto: 'QAI_projeto: caudal adicional definido pelo engenheiro, auditável com motivo', norma: 'V8.0.1 · Boas práticas' },
     { id: 'P8', texto: 'Topologia facetada: cada ramal tem meta derivado (pisoFisico, zona, rede, caminho)', norma: 'V9 · Boas práticas de organização' }
   ],
 
-  isencoesArNovo: [ 'Circulação', 'Escadas', 'Sanitários', 'Balneários', 'Arquivo', 'Garagem', 'Cozinha', 'Arrumo', 'Vestiário' ],
+  // Arquivo saiu desta lista: é G3 e o princípio P3 manda aplicar T12 ou ACH ≥ 2 (estava isento e dava 0 m³/h)
+  isencoesArNovo: [ 'Circulação', 'Escadas', 'Sanitários', 'Balneários', 'Garagem', 'Cozinha', 'Arrumo', 'Vestiário' ],
 
   tiposTransferencia: [
     { codigo: 'grelha_transferencia', nome: 'Grelha de transferência', dp_tipico: 2, aplicacao: 'Porta ou parede', cor: '#c9a876' },
@@ -110,21 +111,25 @@ VC._normativo = {
     'Sala de recuperação': { g:1, gn:'Ocupação Permanente', rp:7,  ra:0.7, t11:24, t12:3, ach:6,  desc:'G1 · Recuperação' },
     'Circulação':          { g:2, gn:'Zona de Transferência', rp:0, ra:0, t11:24, t12:0, ach:0, desc:'G2 · Circulação' },
     'Escadas':             { g:2, gn:'Zona de Transferência', rp:0, ra:0, t11:24, t12:0, ach:0, desc:'G2 · Escadas' },
-    'Arrumo':              { g:2, gn:'Zona de Transferência', rp:0, ra:0, t11:0,  t12:0, ach:0, desc:'G2 · Arrumo (isento)' },
+    'Arrumo':              { g:2, gn:'Zona de Transferência', rp:0, ra:0, t11:0,  t12:0, ach:0, desc:'G2 · Arrumo (isento) · extração; o ar entra por insuflação ou transferência, mas não sai por transferência', semArCedido: true },   // arrecadação: Portaria 138-I, Anexo II, 1.2.2 f)
     'Arquivo':             { g:3, gn:'Baixa Emissão', rp:0, ra:0.7, t11:24, t12:3, ach:2, desc:'G3 · Arquivo' },
     'Sala técnica':        { g:3, gn:'Baixa Emissão', rp:0, ra:0.7, t11:0,  t12:3, ach:2, desc:'G3 · Sala técnica' },
     'Sanitários':          { g:4, gn:'Extração Dedicada', rp:0, ra:0, t11:0, t12:0, ach:0,  desc:'G4 · Sanitários' },
     'Balneários':          { g:4, gn:'Extração Dedicada', rp:0, ra:0, t11:0, t12:0, ach:8,  desc:'G4 · Balneários' },
     'Vestiário':           { g:4, gn:'Extração Dedicada', rp:0, ra:0, t11:0, t12:0, ach:8,  desc:'G4 · Vestiário' },
     'Cozinha':             { g:4, gn:'Extração Dedicada', rp:0, ra:0, t11:0, t12:0, ach:12, desc:'G4 · Cozinha' },
-    'Garagem':             { g:4, gn:'Extração Dedicada', rp:0, ra:0, t11:0, t12:0, ach:6,  desc:'G4 · Garagem' }
+    'Garagem':             { g:4, gn:'Extração Dedicada', rp:0, ra:0, t11:0, t12:0, ach:6,  desc:'G4 · Garagem' },
+    // Portaria 138-I, Tabela 13: «Copa», «Armazenamento de resíduos» e «Salas de cópias/impressão» — 10 renovações/hora
+    'Copa':                { g:4, gn:'Extração Dedicada', rp:0, ra:0, t11:0, t12:0, ach:10, desc:'G4 · Copa (Tabela 13: 10 renovações/hora)', t13: true },
+    'Armazenamento de resíduos': { g:4, gn:'Extração Dedicada', rp:0, ra:0, t11:0, t12:0, ach:10, desc:'G4 · Resíduos (Tabela 13: 10 renovações/hora)', t13: true },
+    'Sala de cópias/impressão': { g:4, gn:'Extração Dedicada', rp:0, ra:0, t11:0, t12:0, ach:10, desc:'G4 · Cópias/impressão (Tabela 13: 10 renovações/hora)', t13: true }
   },
 
   categoriasPorGrupo: {
     1: ['Sono','Descanso','Retalho seco','Loja','Escritório','Gabinete','Receção','Auditório','Sala de reuniões','Serviços','Restauração','Laboratório','Sala de aula','Jardim de infância','Ginásio','Recinto desportivo','Cinema','Teatro','Consulta','Internamento','Sala de espera','Biblioteca','Museu','Sala de convívio','Sala de operações','Sala de recuperação'],
     2: ['Circulação','Escadas','Arrumo'],
     3: ['Arquivo','Sala técnica'],
-    4: ['Sanitários','Balneários','Vestiário','Cozinha','Garagem']
+    4: ['Sanitários','Balneários','Vestiário','Cozinha','Garagem','Copa','Armazenamento de resíduos','Sala de cópias/impressão']
   },
 
   rphDefault: {
@@ -166,12 +171,18 @@ VC._normativo = {
     T12: {
       'Sono': 3, 'Descanso': 3, 'Retalho seco': 3, 'Loja': 3, 'Escritório': 3, 'Gabinete': 3, 'Receção': 3, 'Auditório': 3, 'Sala de reuniões': 3, 'Serviços': 3, 'Restauração': 3, 'Laboratório': 5, 'Sala de aula': 3, 'Jardim de infância': 3, 'Ginásio': 3, 'Recinto desportivo': 3, 'Cinema': 3, 'Teatro': 3, 'Consulta': 3, 'Internamento': 3, 'Sala de espera': 3, 'Arquivo': 3, 'Sala técnica': 3, 'Biblioteca': 3, 'Museu': 3, 'Sala de convívio': 3, 'Sala de operações': 5, 'Sala de recuperação': 3
     },
+    // Portaria 138-I/2021, Anexo II, Tabela 13 (texto confirmado pelo autor):
+    //   privada, com funcionamento contínuo: Máx(45; 10 × A_pav) · privada, sem funcionamento contínuo: Máx(90; 10 × A_pav)
+    //   pública, funcionamento normal: Máx(90 × (n.º urinóis + n.º sanitas + n.º duches); 10 × A_pav)
+    // Tabela 13 completa (texto fornecido pelo autor): estas linhas + Balneário Máx(90 × duches; 10 × A_pav) + Copa,
+    // Armazenamento de resíduos e Salas de cópias/impressão a 10 renovações/hora (tipos com t13: true).
+    // O antigo «publico_intensivo» (125/aparelho) não vem da norma: foi retirado.
     T13: {
       sanitarios: {
-        privado_continuo:      { base: 45,  porAparelho: 0,   porArea: 10, min: 45 },
-        privado_nao_continuo:  { base: 90,  porAparelho: 0,   porArea: 10, min: 90 },
-        publico_normal:        { base: 0,   porAparelho: 90,  porArea: 10, min: 45 },
-        publico_intensivo:     { base: 0,   porAparelho: 125, porArea: 10, min: 45 }
+        privado_continuo:      { base: 45,  porAparelho: 0,   porArea: 10, min: 45, nome: 'Privada · com funcionamento contínuo' },
+        privado_nao_continuo:  { base: 90,  porAparelho: 0,   porArea: 10, min: 90, nome: 'Privada · sem funcionamento contínuo' },
+        publico_normal:        { base: 0,   porAparelho: 90,  porArea: 10, min: 0, nome: 'Pública' },
+        balneario:             { base: 0,   porAparelho: 90,  porArea: 10, min: 0, nome: 'Balneário', soDuches: true }
       }
     },
     // Reg. (UE) 1253/2014 (Ecodesign), Anexo III, requisitos desde 01-01-2018.

@@ -137,3 +137,45 @@ Leitura do código do cálculo, das associações e das normas, com sondas no na
 | Vocabulário | «Associar terminal ↔ ramal» em vez de «ligar». |
 | Fica para depois | C2 (janelas nativas de confirmar/escrever fora da planta). |
 
+## PR 3 · Regras da Portaria com a classificação G1–G4
+
+Sem listas nem redes novas: a app já classifica os espaços em G1–G4 e o G4 é «Extração Dedicada» (princípio P4). O projetista pode forçar o grupo de um espaço com outra fonte de contaminação.
+
+| Regra | Fonte | O que mudou |
+|---|---|---|
+| Espaço sujo = G4 | classificação da app, princípio P4 | Uma só definição (`VC.calculo.grupoDe`). Retirada a lista de nomes da Topologia, que contradizia o G1–G4 (punha o laboratório, G1, como sujo). |
+| Nenhum ar transferido a partir de um G4 | Portaria 138-I, Anexo II, 1.2.2 f) | Recusa também WC → WC (antes só sujo → limpo). |
+| G4 em depressão | 1.2.2 h) (instalações sanitárias); P4 e limites de pressão da app (cozinha, garagem) | Novo erro «G4 sem depressão» quando extração ≤ insuflação. |
+
+Aplicado aos exemplos (que não são referência): o **degrade-2** tem 3 espaços G4 sem depressão — Garagem P0-N1 (412/412 m³/h), Apoio/Serviço P0-N1 e Apoio/Serviço P1-S (copa), do tipo Cozinha (227/227 e 423/423). O **poliune-v02** continua com 9 instalações sanitárias com falta de ar de compensação (balanço).
+
+**Arrumo (arrecadação), decidido pelo autor:** fica G2. Tem extração, e o ar entra por insuflação direta ou por transferência (fresta de porta ou outro tipo previsto), mas **não cede ar transferido** (alínea f). Não é G4, por isso não exige depressão. Implementado com a marca `semArCedido` no tipo, no ficheiro de normas.
+
+## PR 3 · Coerência com as normas (pontos 1–5)
+
+| # | Incoerência | Fonte | Correção |
+|---|---|---|---|
+| 1 | **Arquivo** (G3) estava na lista de isentos e dava 0 m³/h, contra o próprio princípio P3 (T12 ou ACH ≥ 2) | normativo.js (P3) | Retirado dos isentos: 100 m² → 600 m³/h |
+| 2 | **Garagem:** o caudal não seguia o RT-SCIE (por veículo) | Portaria 1532/2008 | Verificação, sem mudar o caudal calculado: número de lugares no cartão; sem lugares → «por fazer»; < 300 m³/h × lugares → erro; < 600 m³/h × lugares → atenção |
+| 3 | **Rede de exaustão sanitária partilhada** com outros espaços | Portaria 138-I, Anexo II, 1.2.2 h) | Erro «Exaustão sanitária partilhada» |
+| 4 | **Recuperação de calor com ar sanitário** sem aviso | SCE (perguntas frequentes) | Atenção: o projetista tem de garantir a não contaminação do ar novo |
+| 5 | **Velocidade:** ERRO no cálculo e ATENÇÃO na Verificação Normativa | — | Os dois dizem NÃO CONFORME |
+
+Validação: teste UI.T33 com casos calculados à mão; mutação «Arquivo volta a ser isento».
+
+### Tabela 13 completa (texto fornecido pelo autor) — checagem final
+
+| Linha | Portaria 138-I | App antes | App agora |
+|---|---|---|---|
+| Instalação sanitária privada, funcionamento contínuo | Máx(45; 10 × A) | igual | igual |
+| Instalação sanitária privada, sem funcionamento contínuo | Máx(90; 10 × A) | igual | igual |
+| Instalação sanitária pública | Máx[90 × (urinóis + sanitas + duches); 10 × A] | com um mínimo de 45 a mais; regime «intensivo» 125/aparelho inventado | igual à norma; «intensivo» retirado (projetos antigos passam à pública) |
+| Balneário | Máx(90 × duches; 10 × A) | tratado como sanitária privada contínua | linha própria (só duches); sem duches → «por fazer» |
+| Copa | 10 renovações/hora | não existia (copas como «Cozinha», 12/h) | novo tipo G4 |
+| Armazenamento de resíduos | 10 renovações/hora | não existia | novo tipo G4 |
+| Salas de cópias/impressão | 10 renovações/hora | não existia | novo tipo G4 |
+
+- O regime e os aparelhos não se podiam indicar: agora escolhem-se no cartão da sala (sanitária: regime + urinóis/sanitas/duches; balneário: duches). Sem dados → «por fazer».
+- Cozinha (12/h), garagem (6/h) e vestiário (8/h) **não constam da Tabela 13**: ficam como boa prática, com essa etiqueta (a garagem tem ainda a verificação do RT-SCIE).
+- Nos exemplos, as copas estão com o tipo «Cozinha»: o projetista deve mudá-las para «Copa» (10/h, Tabela 13).
+- Validação: testes N2.T5 e UI.T34 com as fórmulas da tabela; mutação «mínimo de 45 a mais».
