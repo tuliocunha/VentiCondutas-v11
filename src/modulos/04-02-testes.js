@@ -455,6 +455,23 @@ VC6.testes = {
         return okZoom && okPan && okUndo;
       } finally { P.zoom = g.z; P.vx = g.x; P.vy = g.y; P.aplicarVista = g.av; P._pilha = g.pilha; P._refeitas = g.ref; P._repor = g.repor; }
     } });
+    // v11.3: renomear um ramal atualiza tudo o que o refere; terminal largado perto da ponta encaixa nela
+    self.registar({ id: 'UI.T21', nucleo: 'UI', grupo: 'UI', nome: 'Renomear ramal em cascata e encaixe na ponta', criterio: 'parente, ramalRef, ramalRefInsuflacao, nós e troços mudam de nome; nome repetido é recusado; ponta a 5 px encaixa', fn: () => {
+      if (!VC.topologia || !VC.topologia.renomearRamal || !VC.planta || !VC.planta._ramalPerto) return false;
+      const D = VC.dados, g = { ramais: D.ramais, terminais: D.terminais, espacos: D.espacos, nos: D.nos, trechos: D.trechos, plantas: D.plantas, piso: VC.planta.piso, zoom: VC.planta.zoom };
+      try {
+        D.ramais = [{ id: 1, nome: 'RA', parente: '', rede: 'insuflacao', planta: { pisoId: 'pZ', pts: [[0, 0], [100, 0]] } }, { id: 2, nome: 'RA.1', parente: 'RA', rede: 'insuflacao' }, { id: 3, nome: 'RB', parente: '' }];
+        D.terminais = [{ id: 'T1', ramalRef: 'RA' }]; D.espacos = [{ id: 9, ramalRefInsuflacao: 'RA', ramalRefExtracao: '' }];
+        D.nos = [{ ramalRef: 'RA' }]; D.trechos = [{ ramalRef: 'RA' }];
+        const r1 = VC.topologia.renomearRamal('RA', 'Principal Norte');
+        const ok1 = r1.ok && r1.n === 5 && D.ramais[1].parente === 'Principal Norte' && D.terminais[0].ramalRef === 'Principal Norte' && D.espacos[0].ramalRefInsuflacao === 'Principal Norte' && D.nos[0].ramalRef === 'Principal Norte' && D.trechos[0].ramalRef === 'Principal Norte';
+        const ok2 = !VC.topologia.renomearRamal('RB', 'principal norte').ok && !VC.topologia.renomearRamal('RB', '  ').ok;
+        D.plantas = [{ id: 'pZ', w: 200, h: 200, escala: 0.01 }]; VC.planta.piso = 'pZ'; VC.planta.zoom = 1;
+        const m = VC.planta._ramalPerto([104, 3], 'insuflacao');
+        const ok3 = !!(m && m.ponta && m.c[0] === 100 && m.c[1] === 0) && !VC.planta._ramalPerto([104, 3], 'extracao');
+        return ok1 && ok2 && ok3;
+      } finally { Object.assign(D, { ramais: g.ramais, terminais: g.terminais, espacos: g.espacos, nos: g.nos, trechos: g.trechos, plantas: g.plantas }); VC.planta.piso = g.piso; VC.planta.zoom = g.zoom; }
+    } });
   },
 
   correr() {

@@ -475,3 +475,14 @@ html, body, .app { height: 100vh !important; overflow: hidden !important; margin
 .pe-medida{font-weight:800;color:#1e293b;font-variant-numeric:tabular-nums}
 .pe-xy,.pe-escala{font-variant-numeric:tabular-nums;color:#6b5a2e}
 @media (max-width:900px){.planta-editor{grid-template-columns:1fr;grid-template-rows:minmax(360px,1fr) auto}.planta-editor > .planta-painel{max-height:40vh}.planta-palco .planta-legenda{display:none}}
+/* planta · Fase C (22-planta-extras.js) */
+.planta-palco[data-ferr="sel"] .planta-sala .planta-rotulo text{pointer-events:auto;cursor:move}
+.planta-palco[data-ferr="sel"] .planta-term{cursor:grab}
+.planta-ligacao{pointer-events:none}
+.planta-minimapa{right:8px;bottom:84px;padding:0;overflow:hidden;cursor:pointer}
+.planta-minimapa svg{display:block}
+.planta-renomear{display:flex;align-items:flex-end;gap:6px;flex-wrap:wrap}
+.planta-renomear label{flex-basis:100%;font-size:12.5px;font-weight:700;color:#475569}
+.planta-renomear input{flex:1;min-width:120px;font:inherit;font-size:14px;padding:6px 9px;border:1px solid var(--borda-media);border-radius:8px;min-height:36px}
+#conteudoPasso:fullscreen{background:var(--fundo);padding:8px !important;overflow:hidden}
+.tabela td input.ramal-nome{font-weight:800;min-width:9ch}

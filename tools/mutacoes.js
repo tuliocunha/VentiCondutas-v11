@@ -146,6 +146,10 @@ const CASOS = [
     const o = VC.planta.zoomEm; VC.planta.zoomEm = function (z) { this.zoom = z; this.aplicarVista(); };
     return () => { VC.planta.zoomEm = o; };
   }],
+  ['v11.3 · renomear ramal só muda o nome (sub-ramais e terminais ficam órfãos)', 'UI.T21', () => {
+    const o = VC.topologia.renomearRamal; VC.topologia.renomearRamal = function (a, n) { const r = VC.dados.ramais.find(x => x.nome === a); if (!r) return { ok: false }; r.nome = String(n).trim(); return { ok: true, n: 0 }; };
+    return () => { VC.topologia.renomearRamal = o; };
+  }],
   ['E3 · sem aviso de ventilador fora da curva', 'N6.T13', () => {
     const o = VC.uta.calcularPontoFuncionamento;
     VC.uta.calcularPontoFuncionamento = function () { const r = o.apply(this, arguments); if (r) r.foraDaCurva = false; return r; };

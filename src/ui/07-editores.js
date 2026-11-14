@@ -1394,7 +1394,7 @@ VC.editorRamais = VC.editorRamais || {
  const nivelNum = r.nivelNumero || VC.utils.nivelTextoParaNumero(r.nivel || 'secundario');  
  h += '<tr onclick="this.closest(\'tbody\').querySelectorAll(\'tr\').forEach(r=>r.classList.remove(\'linha-destaque\')); this.classList.add(\'linha-destaque\')">' +  
  '<td class="center mono" style="font-weight:800;color:var(--texto-suave)">' + (visualIdx + 1) + '</td>' +  
- '<td><b>' + VC.utils.esc(r.nome) + '</b></td>' +  
+ '<td><input class="ramal-nome" value="' + VC.utils.esc(r.nome) + '" title="Renomear: atualiza sub-ramais, terminais e espaços" onclick="event.stopPropagation()" onchange="VC.editorRamais.renomear(' + i + ', this)" ' + dis + '></td>' +  
  '<td><span class="badge nivel-r' + nivelNum + '" title="' + VC.utils.nivelRotulo(nivelNum, true) + '">' + VC.utils.nivelRotulo(nivelNum) + '</span></td>' +  
  '<td><input type="number" step="0.5" value="' + (r.L || 0) + '" onchange="VC.editorRamais.editar(' + i + ', \'L\', this.value)" ' + dis + '></td>' +  
  '<td><input type="number" step="0.1" value="' + VC.utils.fmt(r.zeta || 0, 1) + '" onchange="VC.editorRamais.editar(' + i + ', \'zeta\', this.value)" ' + dis + '></td>' +  
@@ -1416,6 +1416,14 @@ VC.editorRamais = VC.editorRamais || {
  h += '</tbody></table></div></details>';  
  return h;  
  },  
+ /* v11.3: renomear em cascata (sub-ramais, terminais, espaços, nós e troços) */
+ renomear(idx, input) {
+ const r = VC.dados.ramais[idx]; if (!r) return;
+ const antigo = r.nome, res = VC.topologia.renomearRamal(antigo, input.value);
+ if (!res.ok) { VC.ui.toast(res.erro); input.value = antigo; return; }
+ VC.estado.forcarSync();
+ VC.ui.toast('Ramal ' + antigo + ' → ' + r.nome + (res.n ? ' (' + res.n + ' referências atualizadas)' : ''));
+ },
  editar(idx, campo, valor) {  
  const r = VC.dados.ramais[idx];  
  if (!r) return;  
