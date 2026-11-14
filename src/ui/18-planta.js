@@ -314,7 +314,7 @@ VC.planta = {
         + (this._parcelasCaudal ? this._parcelasCaudal(e) : '')
         + (falta.length ? '<p class="planta-porfazer">Por fazer: ' + falta.join(', ') + '.</p>' : '')
         + '<details class="planta-sub"><summary>Calibrar a escala pela área desta sala</summary><label for="plantaAreaConhS">Área conhecida (m²)</label><input id="plantaAreaConhS" type="number" step="0.01" min="0" value="' + (At ? esc(At) : '') + '"><div class="planta-acoes"><button class="btn" onclick="VC.planta.calibrarSelecionadaPorArea(' + e.id + ', document.getElementById(\'plantaAreaConhS\').value)">Calibrar pela área</button></div></details>'
-        + '<div class="planta-acoes">' + (difere ? '<button class="btn primario" onclick="VC.planta.usarAreaMedida(' + e.id + ')">Usar área medida</button>' : '')
+        + '<div class="planta-acoes">' + (difere ? '<button class="btn primario" onclick="VC.planta.usarAreaMedida(' + e.id + ')">Usar área medida</button>' + (VC.planta.aceitarDiferencaArea && At > 0 && Math.abs(A - At) / At > 0.15 && !(e.planta.areaAceite != null && Math.abs(e.planta.areaAceite - At) < 1e-6) ? '<button class="btn" onclick="VC.planta.aceitarDiferencaArea(' + e.id + ')">Aceitar a diferença</button>' : '') : '')
         + '<button class="btn" onclick="VC.planta.verNaTabela(' + e.id + ')">Ver na tabela</button><button class="btn" onclick="VC.planta.apagarDesenho(' + e.id + ')">Apagar desenho</button></div></div>';
     }
     const lista = this.espacosDoPiso(p).sort((a, b) => a.nome.localeCompare(b.nome, 'pt'));

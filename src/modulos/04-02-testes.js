@@ -780,6 +780,34 @@ VC6.testes = {
         return ok1 && ok2 && ok3;
       } finally { Object.assign(D, { espacos: g.esp, terminais: g.ter, ramais: g.ram, plantas: g.pl, transferencias: g.tr }); P.piso = g.piso; P.selecionado = g.sel; VC.calculo.calcularTudo(); }
     } });
+    // contrato secção 7: desenho ↔ tabelas (I2, I3, I4, I6, I7, I9, I11, L) com geometria feita à mão (0,01 m/px)
+    self.registar({ id: 'UI.T38', nucleo: 'UI', grupo: 'UI', nome: 'Coerência desenho ↔ tabelas', criterio: 'sala 1 m² vs tabela 1,2 → aviso (aceite → não; 1,1 → não); polígono em laço → erro; terminal fora da sala → aviso; terminal a 1,5 m do ramal → aviso; L tabela 2 vs medido 3 → aviso; sub-ramal a 0,6 m do pai → aviso (0,2 → não); seta a 2 m da porta → aviso; terminais 80 vs definição 100 → erro; piso sem escala → por fazer', fn: () => {
+      const P = VC.planta; if (!P || !P.coerencia) return false;
+      const D = VC.dados, g = { esp: D.espacos, ter: D.terminais, ram: D.ramais, pl: D.plantas, tr: D.transferencias };
+      const tem = (tipo, el) => P.coerencia().some(f => f.tipo === tipo && f.elemento === el);
+      try {
+        D.plantas = [{ id: 'pC', nome: 'PC', w: 1000, h: 1000, escala: 0.01 }];
+        const sq = (x, y, w, h) => [[x, y], [x + w, y], [x + w, y + h], [x, y + h]];
+        const A = { id: 1, nome: 'SA', tipo: 'Escritório', A: 1.2, planta: { pisoId: 'pC', pts: sq(0, 0, 100, 100) }, definicoes: [{ id: 'D1', rede: 'insuflacao', Q_total: 100, quantidade: 2 }] };
+        const B = { id: 2, nome: 'SB', tipo: 'Sanitários', A: 0.9, planta: { pisoId: 'pC', pts: sq(110, 0, 90, 100) }, definicoes: [] };
+        const L = { id: 3, nome: 'SL', tipo: 'Escritório', A: 1, planta: { pisoId: 'pC', pts: [[0, 400], [100, 500], [100, 400], [0, 500]] }, definicoes: [] };
+        D.espacos = [A, B, L];
+        D.ramais = [{ id: 10, nome: 'RP', rede: 'insuflacao', L: 2, planta: { pisoId: 'pC', pts: [[0, 200], [300, 200]] } }, { id: 11, nome: 'RF', parente: 'RP', rede: 'insuflacao', L: 1, planta: { pisoId: 'pC', pts: [[0, 260], [0, 360]] } }];
+        D.terminais = [{ id: 'T1', nome: 'T1', rede: 'insuflacao', ramalRef: 'RP', Q: 40, espacos: [{ id: 1, nome: 'SA' }], definicaoRef: { espacoId: 1, definicaoId: 'D1' }, planta: { pisoId: 'pC', x: 50, y: 50 } },
+                       { id: 'T2', nome: 'T2', rede: 'insuflacao', Q: 40, espacos: [{ id: 1, nome: 'SA' }], definicaoRef: { espacoId: 1, definicaoId: 'D1' }, planta: { pisoId: 'pC', x: 150, y: 50 } }];
+        D.transferencias = [{ id: 'X', deId: 1, paraId: 2, deNome: 'SA', paraNome: 'SB', planta: { pisoId: 'pC', x: 105, y: 300 } }];
+        const ok1 = tem('Área desenhada ≠ tabela', 'SA') && tem('Desenho da sala inválido', 'SL') && tem('Terminal fora da sala que serve', 'T2') && tem('Ligação ao ramal longa', 'T1')
+          && tem('L da tabela ≠ L medido', 'RP') && tem('Sub-ramal não começa no pai', 'RF') && tem('Seta longe da porta', 'SA → SB') && tem('Terminais ≠ definição', 'SA');
+        A.planta.areaAceite = 1.2; const ok2 = !tem('Área desenhada ≠ tabela', 'SA');
+        delete A.planta.areaAceite; A.A = 1.1; const ok3 = !tem('Área desenhada ≠ tabela', 'SA');
+        D.ramais[1].planta.pts = [[0, 220], [0, 360]]; const ok4 = !tem('Sub-ramal não começa no pai', 'RF');
+        D.transferencias[0].planta.y = 50; const ok5 = !tem('Seta longe da porta', 'SA → SB');
+        D.plantas[0].escala = null; const ok6 = tem('Escala por calibrar', 'PC');
+        D.plantas[0].escala = 0.01;
+        const ok7 = (VC.calculo.calcularTudo().findings || []).some(f => f.tipo === 'Terminal fora da sala que serve' && f.elemento === 'T2');   // ligado ao cálculo
+        return ok1 && ok2 && ok3 && ok4 && ok5 && ok6 && ok7;
+      } finally { Object.assign(D, { espacos: g.esp, terminais: g.ter, ramais: g.ram, plantas: g.pl, transferencias: g.tr }); VC.calculo.calcularTudo(); }
+    } });
   },
 
   correr() {

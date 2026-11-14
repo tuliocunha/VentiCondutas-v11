@@ -19,7 +19,8 @@ VC.entrega = {
   _passoDoAviso(tipo) {
     const t = String(tipo || '');
     if (/ocupa[cç][aã]o por definir/i.test(t)) return 'levantamento';
-    if (/terminais por criar/i.test(t)) return 'requisitos';
+    if (/terminais por criar|terminais ≠ defini/i.test(t)) return 'requisitos';
+    if (/escala por calibrar|desenho da sala|[áa]rea desenhada|fora da sala|liga[cç][aã]o ao ramal|n[aã]o come[cç]a no pai|longe da porta|L da tabela/i.test(t)) return 'levantamento';
     if (/sem ramal|outra rede|ramal sem caudal/i.test(t)) return 'associacao';
     if (/espa[cç]o sujo/i.test(t)) return 'transferencias';
     if (/sem depress/i.test(t)) return 'balanco';
