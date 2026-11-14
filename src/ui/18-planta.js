@@ -237,7 +237,7 @@ VC.planta = {
       const k = this.TECLAS[id] || '';
       /* v11.3: só o ícone; o nome, o atalho e o que faz aparecem num menu ao passar o rato ou com o foco do teclado */
       const icone = (this.ICONES && this.ICONES[id]) ? '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="' + this.ICONES[id] + '"/></svg>' : '<i class="fa-solid ' + ic + '" aria-hidden="true"></i>';
-      return '<button class="planta-ft' + (this.ferramenta === id ? ' ativo' : '') + '" aria-pressed="' + (this.ferramenta === id) + '" aria-label="' + nome + (k ? ' (atalho ' + k + ')' : '') + '" aria-describedby="dicaF_' + id + '" onclick="VC.planta.setFerramenta(\'' + id + '\')">' + icone
+      return '<button class="planta-ft' + (this.ferramenta === id ? ' ativo' : '') + '" aria-pressed="' + (this.ferramenta === id) + '" aria-label="' + nome + (k ? ' (atalho ' + k + ')' : '') + '" aria-describedby="dicaF_' + id + '" onclick="VC.planta.escolherFerramenta ? VC.planta.escolherFerramenta(\'' + id + '\') : VC.planta.setFerramenta(\'' + id + '\')">' + icone
         + '<span class="planta-ft-dica" role="tooltip" id="dicaF_' + id + '"><span class="pfd-cab"><b>' + nome + '</b>' + (k ? '<kbd>' + k + '</kbd>' : '') + '</span><span class="pfd-txt">' + (this.DICAS[id] || '') + '</span></span></button>';
     }).join('') + '</div>';
     /* zoom: canto inferior direito */
@@ -375,13 +375,7 @@ VC.planta = {
   }
 };
 
-/* teclas: Enter fecha o polígono, Esc cancela (só com a planta à vista e fora de campos de texto) */
-document.addEventListener('keydown', ev => {
-  if (!document.getElementById('plantaSVG')) return;
-  if (ev.target && /^(INPUT|SELECT|TEXTAREA)$/.test(ev.target.tagName)) return;
-  if (ev.key === 'Escape' && (VC.planta.rascunho.length || VC.planta.pendente || VC.planta.escalaPts.length)) { ev.preventDefault(); VC.planta.cancelar(); }
-  if (ev.key === 'Enter' && VC.planta.ferramenta === 'pol' && VC.planta.rascunho.length >= 3) { ev.preventDefault(); VC.planta.fecharPoligono(); }
-});
+/* teclas Esc / Enter / Delete: tratadas num só sítio (21-planta-vista.js → 25-planta-gestos.js) */
 
 /* As plantas viajam com o projeto: qualquer importação (abrir ficheiro, exemplo, projeto guardado)
    passa pelo migrador; aí repõem-se as plantas do projeto que entra (ou nenhuma). */

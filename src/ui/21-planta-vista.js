@@ -289,15 +289,15 @@ window.addEventListener('keydown', ev => {
   if (mod && k === '0') return tratar(() => P.ajustar());
   if (mod || ev.altKey) return;
   const f = Object.keys(P.TECLAS || {}).find(id => (P.TECLAS[id] || '').toLowerCase() === k.toLowerCase());   // atalhos de P.TECLAS (inclui ferramentas novas)
-  if (f && P.FERRAMENTAS.some(x => x[0] === f)) return tratar(() => P.setFerramenta(f));
+  if (f && P.FERRAMENTAS.some(x => x[0] === f)) return tratar(() => (P.escolherFerramenta ? P.escolherFerramenta(f) : P.setFerramenta(f)));
   if (k === 'f' || k === 'F') return tratar(() => P.ajustar());
   if (k === '0') return tratar(() => P.zoom100());
   if (k === '+' || k === '=') return tratar(() => P.zoomBotao(1.25));
   if (k === '-') return tratar(() => P.zoomBotao(1 / 1.25));
-  if (k === 'Delete' || k === 'Backspace') {
-    if (P.ramalSel != null && P.apagarTracado) return tratar(() => P.apagarTracado(P.ramalSel));
-    if (P.selecionado != null) return tratar(() => P.apagarDesenho(P.selecionado));
-  }
+  // Esc / Enter / Delete: regras únicas para todas as ferramentas (25-planta-gestos.js, contrato secção 5)
+  if (k === 'Escape' && P.gestoEsc) { if (P.pendenteAtual() || P.temSelecao()) tratar(() => P.gestoEsc()); return; }
+  if (k === 'Enter' && P.gestoEnter) { if (P.gestoEnter()) { ev.preventDefault(); ev.stopImmediatePropagation(); } return; }
+  if ((k === 'Delete' || k === 'Backspace') && P.gestoApagar) { if (P.gestoApagar()) { ev.preventDefault(); ev.stopImmediatePropagation(); } return; }
 }, true);
 window.addEventListener('keyup', ev => { if (ev.key === ' ' && P._espaco) { P._espaco = false; const pc = P._palco(); if (pc) pc.classList.remove('espaco'); } });
 window.addEventListener('blur', () => { P._espaco = false; });

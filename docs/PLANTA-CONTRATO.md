@@ -139,7 +139,9 @@ Escala:      0 pontos ──clique──▶ 1 ponto ──clique──▶ 2 pont
 ```
 
 Regras do gestor:
-- trocar de ferramenta cancela o que estiver a meio, com aviso se se perder um pendente [proposta];
+- trocar de ferramenta com um pendente é recusado, com aviso: confirmar (Enter) ou cancelar (Esc) primeiro [hoje];
+- mudar de passo limpa a seleção e os pendentes da planta [hoje];
+- depois de criar um ramal, a ferramenta Ramal mantém-se [hoje];
 - a navegação (P10) é tratada antes de qualquer ferramenta.
 
 ## 7. Regras de coerência (invariantes)
@@ -221,11 +223,11 @@ auditoria (Fase 1) confirma-os com gestos reais e acrescenta os que faltarem.
 | # | Desvio | Regra |
 |---|---|---|
 | D1 | Com uma seta selecionada, clicar numa sala ou num ramal mantinha o cartão da transferência. **Corrigido neste PR.** | P2 |
-| D2 | Delete não remove a transferência selecionada; Esc não limpa a seleção. | P1 |
+| D2 | ~~Delete não remove a transferência selecionada; Esc não limpa a seleção.~~ **Corrigido (PR gestos).** | P1 |
 | D3 | Mover um canto ou um terminal guarda no desfazer da planta e também no histórico geral; os outros gestos só no da planta. | P3 |
 | D4 | O nome da sala arrasta-se com Selecionar e Retângulo, mas não com Polígono, Terminal ou Transferência. | P1 |
-| D5 | Trocar de ferramenta descarta um pendente (sala, ramal ou transferência) sem aviso. | P3/P5 |
-| D6 | Esc tem três tratamentos diferentes, em ficheiros diferentes (salas, ramais, gestor de teclas). | P1 |
+| D5 | ~~Trocar de ferramenta descarta um pendente sem aviso.~~ **Corrigido:** é recusado com aviso até confirmar (Enter) ou cancelar (Esc). | P3/P5 |
+| D6 | ~~Esc tem três tratamentos diferentes.~~ **Corrigido:** Esc, Enter e Delete num só sítio (`25-planta-gestos.js`). | P1 |
 | D7 | Terminal colocado numa sala que não serve: só um aviso flutuante, que desaparece. | P6, regra da secção 8 |
 | D8 | Área desenhada muito diferente da tabela: não há indicação no desenho. | I3, P6 |
 

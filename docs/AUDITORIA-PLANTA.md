@@ -183,3 +183,15 @@ Validação: teste UI.T33 com casos calculados à mão; mutação «Arquivo volt
 ## PR 5 · Valores de boa prática (decisão do autor)
 Cozinha (12/h), vestiário (8/h) e garagem (6/h) não constam da Tabela 13. Os valores ficam como **boa prática**, e a app **alerta** («Caudal de boa prática por confirmar») até o projetista os confirmar no cartão da sala (botão «Confirmo este caudal», que se pode anular e desfazer). A garagem mantém também a verificação do RT-SCIE. Teste UI.T35.
 
+## PR 6 · Gestos coerentes (plano da planta)
+| Falha | Correção |
+|---|---|
+| D6 / B6 | Esc, Enter e Delete tratados num só sítio para todas as ferramentas (antes três tratamentos do Esc). |
+| D2 | Esc limpa a seleção; Delete numa seta remove a transferência. |
+| — | A desenhar (polígono, ramal), Delete/Backspace apaga o último vértice/ponto. Enter confirma: polígono, ramal, escala, transferência (também no campo do caudal), terminal. |
+| D5 | Trocar de ferramenta com um pendente é recusado com aviso (confirmar com Enter ou cancelar com Esc). |
+| B3 | Mudar de passo limpa a seleção e os pendentes da planta. |
+| C6 | Depois de criar um ramal, a ferramenta Ramal mantém-se. |
+
+Validação: teste UI.T36 e mutação (D5); cenário só com teclado e rato reais. **Fica para depois:** um só histórico (o desfazer da planta e o histórico geral ainda são dois, V8/D3) e a substituição das escutas de rato espalhadas por um gestor único (refactor interno, sem mudança de comportamento).
+
