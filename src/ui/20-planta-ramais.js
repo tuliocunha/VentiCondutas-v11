@@ -239,12 +239,6 @@ P.ligar = function () {
   }, true);
   svg.addEventListener('dblclick', ev => { if (this.ferramenta === 'ramal' && this.tracado.length >= 2) { ev.preventDefault(); ev.stopImmediatePropagation(); this.terminarTracado(); } }, true);
 };
-document.addEventListener('keydown', ev => {
-  if (!document.getElementById('plantaSVG') || P.ferramenta !== 'ramal') return;
-  if (ev.target && /^(INPUT|SELECT|TEXTAREA)$/.test(ev.target.tagName)) return;
-  if (ev.key === 'Enter' && P.tracado.length >= 2) { ev.preventDefault(); P.terminarTracado(); }
-  if (ev.key === 'Escape' && (P.tracado.length || P.pendenteRamal)) { ev.preventDefault(); P.cancelar(); }
-});
 
 /* ao entrar: na Topologia começa com a ferramenta Ramal */
 const mostrarBase = P.mostrar;

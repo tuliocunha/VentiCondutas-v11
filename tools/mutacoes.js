@@ -211,6 +211,10 @@ const CASOS = [
     const o = VC.calculo.grupoDe; VC.calculo.grupoDe = function (e) { const g = o.call(this, e); if (e && e.boaPraticaConfirmada) { delete e.boaPraticaConfirmada; e._mut = 1; } return g; };
     return () => { VC.calculo.grupoDe = o; };
   }],
+  ['Trocar de ferramenta descarta o pendente sem aviso (D5)', 'UI.T36', () => {
+    const P = VC.planta, o = P.escolherFerramenta; P.escolherFerramenta = function (f) { this.setFerramenta(f); return true; };
+    return () => { P.escolherFerramenta = o; };
+  }],
   ['E3 · sem aviso de ventilador fora da curva', 'N6.T13', () => {
     const o = VC.uta.calcularPontoFuncionamento;
     VC.uta.calcularPontoFuncionamento = function () { const r = o.apply(this, arguments); if (r) r.foraDaCurva = false; return r; };

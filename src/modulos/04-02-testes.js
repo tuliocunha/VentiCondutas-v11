@@ -732,6 +732,33 @@ VC6.testes = {
         return ok1 && ok2;
       } finally { D.espacos = g.esp; D.transferencias = g.tr; VC.calculo.calcularTudo(); }
     } });
+    // contrato da planta, secção 5: Esc, Enter e Delete com as mesmas regras em todas as ferramentas; sem perder um pendente
+    self.registar({ id: 'UI.T36', nucleo: 'UI', grupo: 'UI', nome: 'Planta: Esc, Enter e Delete coerentes', criterio: 'Esc: cancela o pendente, senão limpa a seleção; Delete: último vértice a desenhar, seta → remove a transferência; trocar de ferramenta com pendente é recusado; Enter fecha o polígono; mudar de passo limpa a seleção', fn: () => {
+      const P = VC.planta; if (!P || !P.gestoEsc || !P.escolherFerramenta) return false;
+      const D = VC.dados, g = { esp: D.espacos, tr: D.transferencias, ter: D.terminais, red: P.redesenhar, toast: VC.ui.toast, f: P.ferramenta, pilha: P._pilha, sync: VC.estado.forcarSync, hist: VC.historico && VC.historico.push };
+      try {
+        P.redesenhar = () => {}; VC.ui.toast = () => {}; VC.estado.forcarSync = () => {}; if (VC.historico) VC.historico.push = () => {}; P._pilha = [];
+        P.cancelar(); P.limparSelecao();
+        // seleção: Esc limpa
+        P.selecionado = 7; const ok1 = P.gestoEsc() === 'limpou' && P.selecionado === null;
+        // polígono a meio: Delete tira o último vértice; trocar de ferramenta é recusado; Esc cancela
+        P.ferramenta = 'pol'; P.rascunho = [[0, 0], [10, 0], [10, 10]];
+        const ok2 = P.gestoApagar() === 'vertice' && P.rascunho.length === 2 && P.escolherFerramenta('ret') === false && P.ferramenta === 'pol';
+        P.rascunho.push([0, 10]); const ok3 = P.gestoEnter() === 'poligono' && P.pendente && P.pendente.length === 3;
+        const ok4 = P.gestoEsc() === 'cancelou' && !P.pendente && P.escolherFerramenta('ret') === true && P.ferramenta === 'ret';
+        // seta selecionada: Delete remove a transferência
+        D.espacos = [{ id: 1, nome: 'A', tipo: 'Escritório', definicoes: [] }, { id: 2, nome: 'B', tipo: 'Sanitários', definicoes: [] }]; D.terminais = [];
+        D.transferencias = [{ id: 'TX', deId: 1, paraId: 2, deNome: 'A', paraNome: 'B', Q: 30 }];
+        P.ferramenta = 'sel'; P.trfSel = 'TX';
+        const ok5 = P.gestoApagar() === 'transferencia' && D.transferencias.length === 0;
+        // mudar de passo limpa a seleção
+        const gp = P._passoSelecao; P._passoSelecao = '__outro__'; P.selecionado = 3;
+        const el = document.getElementById('conteudoPasso'), html = el && el.innerHTML, atual = VC._passoAtivo;
+        try { VC.passos.render(atual || 'setup'); } finally { if (el) el.innerHTML = html; P._passoSelecao = gp; }
+        const ok6 = P.selecionado === null;
+        return ok1 && ok2 && ok3 && ok4 && ok5 && ok6;
+      } finally { Object.assign(D, { espacos: g.esp, transferencias: g.tr, terminais: g.ter }); P.redesenhar = g.red; VC.ui.toast = g.toast; P.ferramenta = g.f; P._pilha = g.pilha; VC.estado.forcarSync = g.sync; if (VC.historico) VC.historico.push = g.hist; P.rascunho = []; P.pendente = null; P.limparSelecao(); }
+    } });
   },
 
   correr() {
