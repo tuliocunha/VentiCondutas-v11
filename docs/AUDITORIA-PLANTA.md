@@ -179,3 +179,7 @@ Validação: teste UI.T33 com casos calculados à mão; mutação «Arquivo volt
 - Cozinha (12/h), garagem (6/h) e vestiário (8/h) **não constam da Tabela 13**: ficam como boa prática, com essa etiqueta (a garagem tem ainda a verificação do RT-SCIE).
 - Nos exemplos, as copas estão com o tipo «Cozinha»: o projetista deve mudá-las para «Copa» (10/h, Tabela 13).
 - Validação: testes N2.T5 e UI.T34 com as fórmulas da tabela; mutação «mínimo de 45 a mais».
+
+## PR 5 · Valores de boa prática (decisão do autor)
+Cozinha (12/h), vestiário (8/h) e garagem (6/h) não constam da Tabela 13. Os valores ficam como **boa prática**, e a app **alerta** («Caudal de boa prática por confirmar») até o projetista os confirmar no cartão da sala (botão «Confirmo este caudal», que se pode anular e desfazer). A garagem mantém também a verificação do RT-SCIE. Teste UI.T35.
+
