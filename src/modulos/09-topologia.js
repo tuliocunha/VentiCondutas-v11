@@ -1076,3 +1076,29 @@ console.log(
 );
 
 })();
+/* ============================================================
+   v11.3 · Renomear um ramal (e tudo o que o refere pelo nome)
+   Um ramal é referido pelo nome nos ramais-filho (parente), nos terminais
+   (ramalRef), nos espaços (ramalRefInsuflacao/Extracao), nos nós e nos
+   troços. Mudar só r.nome deixava a rede partida.
+   ============================================================ */
+VC.topologia = VC.topologia || {};
+VC.topologia.renomearRamal = function (antigo, novo) {
+  novo = String(novo == null ? '' : novo).trim();
+  const D = VC.dados, r = (D.ramais || []).find(x => x.nome === antigo);
+  if (!r) return { ok: false, erro: 'Ramal «' + antigo + '» não existe.' };
+  if (!novo) return { ok: false, erro: 'O nome não pode ficar vazio.' };
+  if (novo === antigo) return { ok: true, n: 0 };
+  if (novo.length > 40) return { ok: false, erro: 'Nome demasiado longo (máximo 40 caracteres).' };
+  if ((D.ramais || []).some(x => x !== r && x.nome.toLowerCase() === novo.toLowerCase())) return { ok: false, erro: 'Já existe um ramal «' + novo + '».' };
+  let n = 0;
+  const troca = (o, k) => { if (o && o[k] === antigo) { o[k] = novo; n++; } };
+  r.nome = novo;
+  (D.ramais || []).forEach(x => troca(x, 'parente'));
+  (D.terminais || []).forEach(t => troca(t, 'ramalRef'));
+  (D.espacos || []).forEach(e => { troca(e, 'ramalRefInsuflacao'); troca(e, 'ramalRefExtracao'); });
+  (D.nos || []).forEach(x => troca(x, 'ramalRef'));
+  (D.trechos || []).forEach(x => troca(x, 'ramalRef'));
+  if (VC.perf) ['cacheMaterializacao', 'ordenacaoTopologica', 'cacheBalanco'].forEach(k => { if (VC.perf[k] && VC.perf[k].invalidar) VC.perf[k].invalidar(); });
+  return { ok: true, n };
+};

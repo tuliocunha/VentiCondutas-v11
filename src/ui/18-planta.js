@@ -257,10 +257,10 @@ VC.planta = {
     this.espacosDoPiso(p).forEach(e => {
       const c = this.cor(e), on = String(this.selecionado) === String(e.id);
       const pts = e.planta.pts.map(q => q.join(',')).join(' ');
-      const [cx, cy] = this.centro(e.planta.pts); const A = this.areaM2(e.planta.pts, p);
+      const [cx, cy] = (e.planta.rotulo && e.planta.rotulo.length === 2) ? e.planta.rotulo : this.centro(e.planta.pts); const A = this.areaM2(e.planta.pts, p);   // v11.3: o nome pode ser arrastado
       s += '<g class="planta-sala' + (on ? ' sel' : '') + '" data-esp="' + e.id + '"><polygon points="' + pts + '" fill="' + c[0] + '" fill-opacity="0.72" stroke="' + c[1] + '" stroke-width="' + (on ? 3.5 : sw) + '" vector-effect="non-scaling-stroke"/>'
-        + '<text x="' + cx + '" y="' + cy + '" font-size="' + fs + '" text-anchor="middle" font-weight="700" fill="#1e293b">' + esc(e.nome) + '</text>'
-        + (this._rotuloQ ? '<text x="' + cx + '" y="' + (cy + fs * 1.2) + '" font-size="' + (fs * 0.9) + '" text-anchor="middle" fill="#334155">' + fmt(VC.calculo.calcularQEspaco(e).Q_total, 0) + ' m³/h</text>' : (A ? '<text x="' + cx + '" y="' + (cy + fs * 1.2) + '" font-size="' + (fs * 0.9) + '" text-anchor="middle" fill="#334155">' + fmt(A) + ' m²</text>' : '')) + '</g>';
+        + '<g class="planta-rotulo" data-esp="' + e.id + '"><text x="' + cx + '" y="' + cy + '" font-size="' + fs + '" text-anchor="middle" font-weight="700" fill="#1e293b">' + esc(e.nome) + '</text>'
+        + (this._rotuloQ ? '<text x="' + cx + '" y="' + (cy + fs * 1.2) + '" font-size="' + (fs * 0.9) + '" text-anchor="middle" fill="#334155">' + fmt(VC.calculo.calcularQEspaco(e).Q_total, 0) + ' m³/h</text>' : (A ? '<text x="' + cx + '" y="' + (cy + fs * 1.2) + '" font-size="' + (fs * 0.9) + '" text-anchor="middle" fill="#334155">' + fmt(A) + ' m²</text>' : '')) + '</g>' + '</g>';
     });
     if (this.pendente) s += '<polygon points="' + this.pendente.map(q => q.join(',')).join(' ') + '" fill="#4f6d8c" fill-opacity="0.15" stroke="#4f6d8c" stroke-width="2.5" stroke-dasharray="6 4" vector-effect="non-scaling-stroke"/>';
     const pr = this.rascunho.concat(this.ponteiro && this.ferramenta === 'pol' && this.rascunho.length ? [this.ponteiro] : []);

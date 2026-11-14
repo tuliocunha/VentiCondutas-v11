@@ -187,7 +187,9 @@ VC.nav = {
     const render = VC.passos.render;
     VC.passos.render = function (passo) {
       /* o mesmo passo redesenhado (depois de uma edição) mantém a vista em que o utilizador estava */
-      const mesmo = passo === VC._passoAtivo, antes = VC.nav.vistaAtiva;
+      /* VC.ui.setPasso muda VC._passoAtivo antes de desenhar: o "mesmo passo" compara com o último desenhado */
+      const mesmo = passo === VC.nav._ultimoPasso, antes = VC.nav.vistaAtiva;
+      VC.nav._ultimoPasso = passo;
       const r = render.apply(this, arguments);
       VC.nav.vistaAtiva = 'passo';
       const v = mesmo && antes !== 'passo' && VC._modoAtivo === 'condutas' ? VC.nav.vistasDe(passo).find(x => x.id === antes && !x.modo) : null;
