@@ -133,7 +133,7 @@ VC.calculo = {
       if (esp.tipo === 'Sanitários' || esp.tipo === 'Balneários') {
         const xs = VC.normas.calcExtracaoSanitaria(Object.assign({}, esp, { A, H, V }));
         Q_extracao = xs.qExtracao; metodoCaudal = xs.metodo;
-      } else { Q_extracao = V * def.ach; metodoCaudal = 'P138 ACH ' + def.ach; }
+      } else { Q_extracao = V * def.ach; metodoCaudal = 'ACH ' + def.ach + ' (boa prática; não consta da Tabela 13)'; }
     } else if (g === 2 || isento) {
       Q_renov = 0; Q_extracao = 0; metodoCaudal = 'Isento (Portaria 138-I)';
     } else if (g === 3) {

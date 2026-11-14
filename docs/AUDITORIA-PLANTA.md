@@ -174,5 +174,7 @@ Validação: teste UI.T33 com casos calculados à mão; mutação «Arquivo volt
 - **Balneários** = instalação sanitária (os duches contam na mesma linha), com o regime escolhido pelo projetista.
 - Teste UI.T34 com as fórmulas da tabela; mutação «mínimo de 45 a mais».
 
-**Por confirmar (resto da Tabela 13, que continua para lá destas 3 linhas):** «pública · intensivo» (125 m³/h por aparelho na app); cozinha (12 renovações por hora), garagem (6) e vestiário (8), que a app etiqueta como «P138»; e ainda os valores de garagem do RT-SCIE e as escadas pressurizadas (ΔP ≥ 50 Pa).
+**A Tabela 13 só tem estas três linhas** (confirmado pelo autor):
+- retirado o regime «pública · intensivo» (125 m³/h por aparelho), que não vem da norma; projetos antigos com esse regime passam à linha pública (90 por aparelho);
+- cozinha (12 renovações por hora), garagem (6) e vestiário (8) não constam da tabela: os valores ficam, mas a etiqueta passa de «P138 ACH» a «boa prática; não consta da Tabela 13»; o glossário e a página inicial deixam de dizer que a T13 é «para espaços G4».
 

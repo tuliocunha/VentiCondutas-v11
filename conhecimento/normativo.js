@@ -65,7 +65,7 @@ VC._normativo = {
     { id: 'P1', texto: 'Em cada espaço: Σ Q_in = Σ Q_out (tolerância ±5 m³/h)', norma: 'Balanço de massa' },
     { id: 'P2', texto: 'G2 (Circulação, Escadas): isentos de renovação mas podem transferir. Exceção: arrecadação (Arrumo) tem extração e não cede ar transferido', norma: 'Portaria 138-I/2021 (Anexo II, 1.2.2 f)' },
     { id: 'P3', texto: 'G3 (Arquivo): mínimo por diluição basal (T12) ou ACH ≥ 2', norma: 'Portaria 138-I/2021' },
-    { id: 'P4', texto: 'G4 (Sanitários, Cozinha, Garagem): extração dedicada, entram por transferência', norma: 'Portaria 138-I T13' },
+    { id: 'P4', texto: 'G4 (Sanitários, Cozinha, Garagem): extração dedicada, entram por transferência. Caudal: instalações sanitárias pela Tabela 13; cozinha, garagem e vestiário por renovações/hora (boa prática, não constam da Tabela 13)', norma: 'Portaria 138-I (Tabela 13; Anexo II, 1.2.2 h)' },
     { id: 'P5', texto: 'Escadas pressurizadas: ΔP ≥ 50 Pa em caso de incêndio', norma: 'Portaria 1532/2008' },
     { id: 'P6', texto: 'RPH de conforto aplicável a todos os grupos (G1-G4): Q_ConTerm = RPH × V', norma: 'F-RPH · EN 16798-1 · ASHRAE 55' },
     { id: 'P7', texto: 'QAI_projeto: caudal adicional definido pelo engenheiro, auditável com motivo', norma: 'V8.0.1 · Boas práticas' },
@@ -170,13 +170,12 @@ VC._normativo = {
     // Portaria 138-I/2021, Anexo II, Tabela 13 (texto confirmado pelo autor):
     //   privada, com funcionamento contínuo: Máx(45; 10 × A_pav) · privada, sem funcionamento contínuo: Máx(90; 10 × A_pav)
     //   pública, funcionamento normal: Máx(90 × (n.º urinóis + n.º sanitas + n.º duches); 10 × A_pav)
-    // «publico_intensivo» ainda por confirmar no resto da tabela.
+    // A Tabela 13 só tem estas três linhas (confirmado pelo autor). O antigo «publico_intensivo» (125/aparelho) não vem da norma: foi retirado.
     T13: {
       sanitarios: {
         privado_continuo:      { base: 45,  porAparelho: 0,   porArea: 10, min: 45, nome: 'Privada · com funcionamento contínuo' },
         privado_nao_continuo:  { base: 90,  porAparelho: 0,   porArea: 10, min: 90, nome: 'Privada · sem funcionamento contínuo' },
-        publico_normal:        { base: 0,   porAparelho: 90,  porArea: 10, min: 0, nome: 'Pública · funcionamento normal' },
-        publico_intensivo:     { base: 0,   porAparelho: 125, porArea: 10, min: 45, nome: 'Pública · intensivo (por confirmar na Tabela 13)' }
+        publico_normal:        { base: 0,   porAparelho: 90,  porArea: 10, min: 0, nome: 'Pública · funcionamento normal' }
       }
     },
     // Reg. (UE) 1253/2014 (Ecodesign), Anexo III, requisitos desde 01-01-2018.

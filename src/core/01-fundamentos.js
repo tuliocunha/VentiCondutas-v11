@@ -982,11 +982,12 @@ VC.normas = {
   },
   calcExtracaoSanitaria(esp) {
     const A = Number(esp.A) || 0;
-    const regime = esp.regimeSanitario || 'privado_continuo';
+    // projetos antigos com «publico_intensivo» (não existe na Tabela 13) passam à linha pública da norma
+    const regime = esp.regimeSanitario === 'publico_intensivo' ? 'publico_normal' : (esp.regimeSanitario || 'privado_continuo');
     const nAp = (Number(esp.numUrinois) || 0) + (Number(esp.numSanitas) || 0) + (Number(esp.numDuches) || 0);
     const cfg = VC.conhecimento.tabelas.T13.sanitarios[regime] || VC.conhecimento.tabelas.T13.sanitarios.privado_continuo;
     const q = Math.max(cfg.base, cfg.porAparelho * nAp, cfg.porArea * A, cfg.min);
-    const metodo = 'P138 T13 · ' + regime.replace(/_/g, ' ');
+    const metodo = 'P138 Tabela 13 · ' + (cfg.nome || regime.replace(/_/g, ' '));
     return { qExtracao: q, metodo, nAparelhos: nAp, regime };
   },
   limitesPressao(tipo) {
