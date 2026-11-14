@@ -468,25 +468,48 @@ VC.exemplos = {
     try {
       const s = localStorage.getItem(this.STORAGE_KEY);
       if (s) this._lista = JSON.parse(s);
-      else { this._lista = []; this.save(); }
+      else { this._lista = []; this.save({ silencioso: true }); }
     } catch (e) { this._lista = []; VC.debug.erro(e); }
     // v11.2: o exemplo de arranque também entra na lista quando ela é criada (antes só entrava se a lista
     // já existisse quando 05-amostras carregava, e por isso não aparecia no navegador de quem nunca a abrira)
     if (VC._dadosReais && !this._lista.find(e => e.id === 'degrade-tv-18out26')) {
       this._lista.unshift({ id: 'degrade-tv-18out26', nome: 'Degrade Torres Vedras 18out26', descricao: 'Projeto base · 45 espaços reais (15 × 3 pisos P0, P1, P2)', timestamp: new Date().toISOString(), builtin: true });
-      this.save();
+      this.save({ silencioso: true });
     }
     if (!this._lista.find(e => e.id === 'degrade-2')) {   // v11.2
       this._lista.push({ id: 'degrade-2', nome: 'Degrade 2 · Torres Vedras', descricao: 'Projeto real · 45 espaços (Piso 0, Piso 1, Mezanino) · 4 UTAs + 7 VEX · 7 transferências', timestamp: new Date().toISOString(), builtin: true });
-      this.save();
+      this.save({ silencioso: true });
     }
     if (!this._lista.find(e => e.id === 'polune-v8')) {
             this._lista.push({ id: 'polune-v8', nome: 'Edifício PoliUne v02', descricao: 'Exemplo pré-carregado · 45 espaços · 5 UTAs · 5 transferências', timestamp: new Date().toISOString(), builtin: true });
-      this.save();
+      this.save({ silencioso: true });
     }
     return this._lista;
   },
-  save() { try { localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this._lista || [])); } catch (e) { VC.debug.erro(e); } },
+  /* v11.3: antes, se o navegador não tinha espaço (≈ 5 MB; cada planta ocupa 300–500 kB), a gravação
+     falhava sem aviso e o exemplo parecia guardado. Agora devolve true/false, repõe a lista ao que ficou
+     realmente gravado e explica o que fazer, propondo guardar já em ficheiro JSON. */
+  save(opc) {
+    const txt = JSON.stringify(this._lista || []);
+    try { localStorage.setItem(this.STORAGE_KEY, txt); return true; }
+    catch (e) {
+      if (this._semEspaco(e) && VC.debug.aviso) VC.debug.aviso('Exemplos: sem espaço no navegador (' + e.name + ')'); else VC.debug.erro(e);   // falta de espaço é prevista e avisada ao utilizador
+      try { const s = localStorage.getItem(this.STORAGE_KEY); this._lista = s ? JSON.parse(s) : this._lista; } catch (e2) { /* fica a lista em memória */ }
+      if (!(opc && opc.silencioso)) this._avisarSemEspaco(e, txt.length);
+      return false;
+    }
+  },
+  _semEspaco(e) { return !!e && (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED' || e.code === 22 || e.code === 1014 || /quota/i.test(e.message || '')); },
+  _avisarSemEspaco(e, bytes) {
+    const mb = (bytes / 1048576).toFixed(1);
+    const motivo = this._semEspaco(e)
+      ? 'O navegador não tem espaço para guardar mais exemplos (a lista precisaria de ' + mb + ' MB; o limite é cerca de 5 MB, e cada planta ocupa 300–500 kB).'
+      : 'O navegador recusou guardar (' + (e && e.message ? e.message : 'armazenamento indisponível, por exemplo numa janela privada') + ').';
+    VC.ui.toast('Exemplo NÃO guardado: sem espaço no navegador.');
+    if (confirm('O exemplo NÃO foi guardado.\n\n' + motivo + '\n\nPara não perder o trabalho, guarde o projeto como ficheiro JSON (Projeto → Guardar). Para libertar espaço, apague exemplos antigos na lista de Exemplos (pode exportá-los antes).\n\nGuardar agora como ficheiro JSON?')) {
+      if (VC.exportacoes && VC.exportacoes.json) VC.exportacoes.json();
+    }
+  },
   listar() {
     if (!this._lista) this.init();
     return this._lista.slice().sort((a, b) => {
@@ -543,13 +566,13 @@ VC.exemplos = {
       existe.timestamp = new Date().toISOString();
       existe.descricao = descricao || existe.descricao || '';
       existe.projeto = this.serializarAtual();
-      this.save();
+      if (!this.save()) return false;
       VC.ui.toast('Exemplo «' + nome + '» substituído.');
       return true;
     }
     const id = 'ex-' + Date.now().toString(36);
     this._lista.push({ id, nome, descricao: descricao || '', timestamp: new Date().toISOString(), builtin: false, projeto: this.serializarAtual() });
-    this.save();
+    if (!this.save()) return false;
     VC.ui.toast('Exemplo «' + nome + '» guardado.');
     return true;
   },
@@ -663,13 +686,11 @@ VC.exemplos = {
             if (!confirm('Já existe um exemplo com o nome «' + nomeProjeto + '».\n\nSubstituir?')) return;
             existe.projeto = p;
             existe.timestamp = new Date().toISOString();
-            this.save();
-            VC.ui.toast('Exemplo substituído.');
+            if (this.save()) VC.ui.toast('Exemplo substituído.');
             return;
           }
           this._lista.push({ id: 'ex-' + Date.now().toString(36), nome: nomeProjeto, descricao: 'Importado de ficheiro ' + f.name, timestamp: new Date().toISOString(), builtin: false, projeto: p });
-          this.save();
-          VC.ui.toast('Exemplo importado.');
+          if (this.save()) VC.ui.toast('Exemplo importado.');
         } catch (err) { VC.debug.erro(err); VC.ui.toast('Erro a importar: ' + err.message); }
       };
       r.readAsText(f);
@@ -684,7 +705,7 @@ VC.exemplos = {
     if (ex.builtin && ex.id === 'degrade-2') {
       fetch('exemplos/degrade-2.json').then(r => r.json()).then(p => {
         this._lista.push({ id: 'ex-' + Date.now().toString(36), nome: ex.nome + ' (cópia)', descricao: 'Duplicado de «' + ex.nome + '»', timestamp: new Date().toISOString(), builtin: false, projeto: p });
-        this.save(); VC.ui.toast('Exemplo duplicado.'); if (this.abrirModal) this.abrirModal();
+        if (this.save()) VC.ui.toast('Exemplo duplicado.'); if (this.abrirModal) this.abrirModal();
       }).catch(() => VC.ui.toast('Não foi possível ler exemplos/degrade-2.json.'));
       return true;
     }
@@ -694,7 +715,7 @@ VC.exemplos = {
     if (!projeto) { VC.ui.toast('Sem dados.'); return false; }
     const nomeNovo = ex.nome + ' (cópia)';
     this._lista.push({ id: 'ex-' + Date.now().toString(36), nome: nomeNovo, descricao: 'Duplicado de «' + ex.nome + '»', timestamp: new Date().toISOString(), builtin: false, projeto });
-    this.save();
+    if (!this.save()) return false;
     VC.ui.toast('Exemplo duplicado.');
     return true;
   },

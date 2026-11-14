@@ -420,6 +420,23 @@ VC6.testes = {
         return okL && okC && okE;
       } finally { VC.dados.plantas = g.plantas; P.piso = g.piso; P.zoom = g.zoom; VC.dados.ramais = g.ramais; }
     } });
+    // v11.3: sem espaço no navegador, guardar um exemplo falha COM aviso e a lista não fica com um exemplo que não existe
+    self.registar({ id: 'UI.T19', nucleo: 'UI', grupo: 'UI', nome: 'Exemplos: falta de espaço é avisada', criterio: 'com o armazenamento recusado, salvar devolve false, a lista não muda e aparece o aviso', fn: () => {
+      const E = VC.exemplos; if (!E || !E.salvar) return false;
+      const orig = Storage.prototype.setItem, conf = window.confirm, toast = VC.ui.toast;
+      let avisou = false, perguntou = false;
+      try {
+        Storage.prototype.setItem = function (k, v) { if (k === E.STORAGE_KEY) { const e = new Error('quota'); e.name = 'QuotaExceededError'; throw e; } return orig.call(this, k, v); };
+        window.confirm = () => { perguntou = true; return false; };
+        VC.ui.toast = m => { if (/NÃO guardado/.test(m)) avisou = true; };
+        const nome = 'UI.T19 sem espaço ' + Date.now();
+        const ok = E.salvar(nome, '');
+        return ok === false && !E.listar().some(x => x.nome === nome) && avisou && perguntou;
+      } finally {
+        Storage.prototype.setItem = orig; window.confirm = conf; VC.ui.toast = toast;
+        if (E._lista && E._lista.some(x => /^UI\.T19 /.test(x.nome))) { E._lista = E._lista.filter(x => !/^UI\.T19 /.test(x.nome)); E.save({ silencioso: true }); }
+      }
+    } });
   },
 
   correr() {
