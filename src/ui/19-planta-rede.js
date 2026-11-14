@@ -147,6 +147,18 @@ P._impactoTrf = function (Q, comp) {
   if (Q > 0 && comp) h += '<p class="planta-meta">A insuflação de «' + esc(de.nome) + '» sobe ' + fmt(Q) + ' m³/h (e os seus terminais); a rede de insuflação é recalculada.</p>';
   return h;
 };
+/* auditoria B2: a compensação pode criar um terminal novo na origem; sem posição nem ramal, o ar não chega à rede */
+P._termCompensacao = function (ts) {
+  const c = ts && ts.compensacao; if (!c) return [];
+  return (VC.dados.terminais || []).filter(t => t.definicaoRef && t.definicaoRef.espacoId === ts.deId && t.definicaoRef.definicaoId === c.defId);
+};
+P._avisoTermCompensacao = function (ts) {
+  const ramais = new Set((VC.dados.ramais || []).map(r => r.nome));
+  const falta = this._termCompensacao(ts).map(t => ({ t, semPos: !t.planta, semRamal: !t.ramalRef || !ramais.has(t.ramalRef) })).filter(x => x.semPos || x.semRamal);
+  if (!falta.length) return '';
+  return '<p class="planta-aviso">' + falta.map(x => (ts.compensacao.criada ? 'Novo terminal ' : 'Terminal ') + '«' + esc(x.t.nome || x.t.id) + '» (' + fmt(x.t.Q) + ' m³/h): '
+    + [x.semPos ? 'coloque-o na sala com a ferramenta Terminal (D)' : '', x.semRamal ? 'ligue-o a um ramal de insuflação' : ''].filter(Boolean).join(' e ') + '.').join('<br>') + '</p>';
+};
 P._atualizarImpacto = function () {
   const out = document.getElementById('plantaTrfImpacto'); if (!out) return;
   const q = document.getElementById('plantaTrfQ'), c = document.getElementById('plantaTrfComp');
@@ -263,7 +275,7 @@ P._painel = function (p) {
     const lin = (e, b, papel) => e ? '<tr><th>' + esc(e.nome) + '<small>' + papel + '</small></th><td>' + fmt(b.ent) + ' / ' + fmt(b.sai) + '</td><td><span class="trf-' + (Math.abs(b.res) <= 5 ? 'ok' : (b.res < 0 ? 'falta' : 'sobra')) + '">' + (Math.abs(b.res) <= 5 ? 'equilibrada' : (b.res < 0 ? 'falta ' : 'sobra ') + fmt(Math.abs(b.res))) + '</span></td></tr>' : '';
     h = '<div class="planta-card destaque"><div class="planta-card-t">Transferência</div><p><b>' + esc(ts.deNome) + '</b> → <b>' + esc(ts.paraNome) + '</b><br>' + fmt(ts.Q) + ' m³/h · ' + esc(String(ts.tipo || '').replace(/_/g, ' ')) + ' · ' + fmt(ts.area_cm2) + ' cm² · ΔP ' + fmt(ts.dP_Pa, 1) + ' Pa</p>'
       + '<table class="planta-trf-imp"><thead><tr><th>m³/h</th><th>entra / sai</th><th>balanço</th></tr></thead><tbody>' + lin(de, b1, 'origem') + lin(para, b2, 'destino') + '</tbody></table>'
-      + (ts.compensacao ? '<p class="planta-meta">Origem compensada: a insuflação de «' + esc(ts.deNome) + '» inclui +' + fmt(ts.compensacao.Q) + ' m³/h. Remover a transferência tira-os.</p>' : (b1 && b1.res < -5 ? '<p class="planta-aviso">A origem perde ' + fmt(ts.Q) + ' m³/h por esta transferência e tem falta de ' + fmt(-b1.res) + ' m³/h.</p>' : ''))
+      + (ts.compensacao ? '<p class="planta-meta">Origem compensada: a insuflação de «' + esc(ts.deNome) + '» inclui +' + fmt(ts.compensacao.Q) + ' m³/h. Remover a transferência tira-os.</p>' + this._avisoTermCompensacao(ts) : (b1 && b1.res < -5 ? '<p class="planta-aviso">A origem perde ' + fmt(ts.Q) + ' m³/h por esta transferência e tem falta de ' + fmt(-b1.res) + ' m³/h.</p>' : ''))
       + '<p class="planta-meta">Arraste a seta para a porta certa.</p><div class="planta-acoes">' + (!ts.compensacao && b1 && b1.res < -5 ? '<button class="btn primario" onclick="VC.planta.compensarTransferencia(\'' + esc(ts.id) + '\')">Compensar na origem</button>' : '')
       + '<button class="btn coral" onclick="VC.planta.removerTransferencia(\'' + esc(ts.id) + '\')">Remover</button><button class="btn" onclick="VC.planta.trfSel=null;VC.planta.redesenhar()">Fechar</button></div></div>' + h;
   }

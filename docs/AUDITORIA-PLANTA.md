@@ -79,10 +79,20 @@ Gravidade:
 | D1 | O desfazer não diz o quê: "Desfeito: espaço criado na planta", sem o nome. |
 | D2 | A mensagem do passo anterior continua visível depois de mudar de passo. |
 
-## Decisões pedidas ao autor
-1. **A3 · Extração sanitária.** Os terminais de casas de banho (extração suja) podem ligar-se à mesma rede e UTA de extração geral? Ou têm de ter rede e ventilador próprios? A escolha muda o botão de criar UTA e a regra de ligação.
-2. **A2 · Desfazer.** Opção (a): desfazer só o que a ação mudou (o mais correto, mais trabalho). Opção (b): limpar o desfazer da planta quando se edita noutro ecrã (rápido e seguro, mas perde o histórico).
-3. **B1 · Calibrar pela área.** Aprovar como segundo modo da ferramenta Escala.
+## Decisões do autor
+1. **A3 · Extração sanitária → rede própria.** Os terminais de extração suja ligam-se só a ramais e a um ventilador de extração suja. O passo UTAs ganha o botão «Extrator de extração suja».
+2. **A2 · Desfazer → opção (a).** O desfazer repõe só o que a ação mudou.
+3. **B1 · Calibrar pela área → aprovado** (PR 2).
+
+## Estado das correções
+
+| PR | Falha | O que mudou |
+|---|---|---|
+| 1 | **A2** | O desfazer da planta guarda as diferenças campo a campo (por id) em vez de listas inteiras. Desfazer/refazer só repõe os campos que ainda têm o valor que a ação deixou; o resto fica e o aviso diz quantos dados ficaram. Subações (ex.: criar espaço que liga o desenho) contam como uma só entrada. Teste UI.T26. |
+| 1 | **A1** | Novos avisos da verificação: «Terminal sem ramal» (erro), «Terminal noutra rede» (erro), «Ramal sem caudal» (aviso). Levam ao passo Topologia dos Ramais. A Entrega soma o caudal de todos os terminais e mostra a diferença para a rede (UTAs). |
+| 1 | **B2** | O cartão da transferência compensada indica o terminal da compensação que falta colocar (D) ou ligar a um ramal; a verificação dá «Terminal fora da planta» (aviso) e «Terminal sem ramal» (erro). |
+| 1 | **A3** | Regra única `VC.redes` (01-fundamentos): Topologia (construtor), Associação (listas e automática), planta (ligar ao ramal) e verificação usam a mesma. Um terminal «extração» de um espaço sujo, ligado pela topologia automática ao extrator de extração suja, passa a «extração suja». |
+| 1 | — | Encontrado no cenário: clicar em «Tabela» com a Planta aberta não mudava de vista (o invólucro de `VC.passos.render` repunha a vista anterior). Corrigido em `VC.nav.setVista`. |
 
 ## Plano de correção (proposta)
 

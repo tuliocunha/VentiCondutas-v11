@@ -124,7 +124,7 @@ P._ligarPalco = function (palco) {
   const fim = ev => {
     if (this._pan) { ev.stopPropagation(); this._pan = null; palco.classList.remove('a-deslocar'); return; }
     this._ocupado = false;
-    if (this._tentativa) { const t = this._tentativa; this._tentativa = null; setTimeout(() => { if (JSON.stringify(t.s) !== JSON.stringify(this._estado())) this._empilhar(t.motivo, t.s); }, 0); }
+    if (this._tentativa) { const t = this._tentativa; this._tentativa = null; setTimeout(() => this._empilhar(t.motivo, t.s), 0); }
   };
   palco.addEventListener('pointerup', fim, true);
   palco.addEventListener('pointercancel', fim, true);
@@ -153,38 +153,120 @@ P._mostrarMedida = function (ev) {
   out.textContent = t;
 };
 
-/* ── desfazer da planta ──────────────────── */
+/* ── desfazer da planta ────────────────────
+   Contrato P3/I13 e auditoria A2 (opção a): o desfazer repõe SÓ o que a
+   ação mudou. Cada entrada guarda as diferenças campo a campo (por objeto,
+   pelo id) entre o estado antes e depois da ação. Desfazer volta a pôr o
+   valor de antes só nos campos que ainda têm o valor que a ação deixou:
+   o que foi editado noutro ecrã entretanto (N na Tabela, definições,
+   terminais novos…) fica como está, e o utilizador é avisado. */
 P._pilha = []; P._refeitas = [];
 P._estado = function () {
-  const c = VC.utils.clonar;
-  return { e: c(VC.dados.espacos || []), t: c(VC.dados.terminais || []), r: c(VC.dados.ramais || []), tr: c(VC.dados.transferencias || []), pl: (VC.dados.plantas || []).map(x => ({ id: x.id, nome: x.nome, escala: x.escala })) };
+  const c = VC.utils.clonar, D = VC.dados;
+  return { e: c(D.espacos || []), t: c(D.terminais || []), r: c(D.ramais || []), tr: c(D.transferencias || []), pl: (D.plantas || []).map(x => ({ id: x.id, nome: x.nome, escala: x.escala })) };
 };
-P._empilhar = function (motivo, s) { this._pilha.push({ motivo, s }); if (this._pilha.length > 40) this._pilha.shift(); this._refeitas = []; };
-P._repor = function (s) {
-  VC.dados.espacos = VC.utils.clonar(s.e); VC.dados.terminais = VC.utils.clonar(s.t); VC.dados.ramais = VC.utils.clonar(s.r); VC.dados.transferencias = VC.utils.clonar(s.tr);
-  (VC.dados.plantas || []).forEach(x => { const o = s.pl.find(y => y.id === x.id); if (o) { x.nome = o.nome; x.escala = o.escala; } });
+const CHAVE_COL = { e: 'espacos', t: 'terminais', r: 'ramais', tr: 'transferencias', pl: 'plantas' };
+/* comparação estável (a ordem das chaves não conta) */
+const canon = v => {
+  if (Array.isArray(v)) return '[' + v.map(canon).join(',') + ']';
+  if (v && typeof v === 'object') return '{' + Object.keys(v).filter(k => v[k] !== undefined).sort().map(k => JSON.stringify(k) + ':' + canon(v[k])).join(',') + '}';
+  return v === undefined ? 'undefined' : JSON.stringify(v);
+};
+P._igual = (a, b) => canon(a) === canon(b);
+const idDe = o => (o && o.id != null ? 'id:' + o.id : 'nome:' + (o && o.nome));
+/* diferenças entre dois estados: [{col, id, i, antes, depois}] (antes/depois = objeto inteiro em criação/remoção,
+   ou {campos} só com os campos que mudaram) */
+P._diferencas = function (A, B) {
+  const out = [];
+  Object.keys(CHAVE_COL).forEach(k => {
+    const la = A[k] || [], lb = B[k] || [];
+    const ma = new Map(la.map((o, i) => [idDe(o), { o, i }])), mb = new Map(lb.map((o, i) => [idDe(o), { o, i }]));
+    ma.forEach(({ o, i }, id) => {
+      const nb = mb.get(id);
+      if (!nb) { out.push({ col: k, id, i, antes: o, depois: null }); return; }
+      const campos = new Set(Object.keys(o).concat(Object.keys(nb.o))), ca = {}, cb = {}; let mudou = false;
+      campos.forEach(c => { if (!P._igual(o[c], nb.o[c])) { ca[c] = o[c]; cb[c] = nb.o[c]; mudou = true; } });
+      if (mudou) out.push({ col: k, id, i: nb.i, campos: { antes: ca, depois: cb } });
+    });
+    mb.forEach(({ o, i }, id) => { if (!ma.has(id)) out.push({ col: k, id, i, antes: null, depois: o }); });
+  });
+  return out;
+};
+/* aplica um sentido ('antes' = desfazer, 'depois' = refazer) das diferenças aos dados atuais.
+   Devolve quantas partes não foram repostas por terem sido mudadas noutro ecrã. */
+P._aplicar = function (difs, para) {
+  const de = para === 'antes' ? 'depois' : 'antes', c = VC.utils.clonar, D = VC.dados;
+  let conflitos = 0;
+  difs.forEach(d => {
+    const nome = CHAVE_COL[d.col];
+    if (!D[nome]) D[nome] = [];
+    const lista = D[nome], idx = lista.findIndex(o => idDe(o) === d.id), atual = idx >= 0 ? lista[idx] : null;
+    if (d.campos) {
+      if (!atual) { conflitos++; return; }
+      Object.keys(Object.assign({}, d.campos.antes, d.campos.depois)).forEach(f => {
+        if (!P._igual(atual[f], d.campos[de][f])) { conflitos++; return; }   // mudado noutro ecrã: fica
+        const v = d.campos[para][f];
+        if (v === undefined) delete atual[f]; else atual[f] = c(v);
+      });
+      return;
+    }
+    if (d.col === 'pl') return;        // pisos: só nome e escala; criar/remover pisos não passa por aqui
+    const alvo = d[para], origem = d[de];
+    if (alvo && !origem) {            // repor um objeto removido
+      if (atual) {
+        if (P._igual(atual, alvo)) return;
+        if (alvo.planta && !atual.planta) atual.planta = c(alvo.planta);   // o objeto ficou (foi editado noutro ecrã): repõe só o desenho
+        conflitos++; return;
+      }
+      lista.splice(Math.min(d.i, lista.length), 0, c(alvo));
+    } else if (!alvo && origem) {     // tirar um objeto criado, só se ninguém lhe mexeu depois
+      if (!atual) return;
+      if (!P._igual(atual, origem)) {
+        // editado noutro ecrã (ex.: N na Tabela): o objeto fica com esses dados; tira-se só o que é da planta (o desenho)
+        if (origem.planta && P._igual(atual.planta, origem.planta)) delete atual.planta;
+        conflitos++; return;
+      }
+      lista.splice(idx, 1);
+    }
+  });
+  return conflitos;
+};
+P._agrupar = 0;   // >0 dentro de uma ação que já entra no desfazer: as subações não criam entradas próprias
+P._empilhar = function (motivo, antes) {
+  if (this._agrupar > 0) return false;
+  const difs = this._diferencas(antes, this._estado());
+  if (!difs.length) return false;
+  this._pilha.push({ motivo, difs }); if (this._pilha.length > 40) this._pilha.shift(); this._refeitas = [];
+  return true;
+};
+P._repor = function (u, para) {
+  const conflitos = this._aplicar(u.difs, para);
   if (VC.editorEspacos) VC.editorEspacos._cacheOrdenacao = { chave: null, lista: null };
   if (VC.perf) ['cacheFisica', 'cacheMaterializacao', 'ordenacaoTopologica', 'cacheBalanco'].forEach(k => { if (VC.perf[k] && VC.perf[k].invalidar) VC.perf[k].invalidar(); });
   this.selecionado = null; this.ramalSel = null; this.pendente = null; this.pendenteTrf = null; this.trfSel = null; this.pendenteRamal = null; this.rascunho = []; this.tracado = [];
   VC.estado.forcarSync();
   this.redesenhar();
+  return conflitos;
 };
+const avisoConflitos = n => n ? ' (' + n + (n === 1 ? ' dado mudado noutro ecrã ficou' : ' dados mudados noutro ecrã ficaram') + ' como estava' + (n === 1 ? '' : 'm') + ')' : '';
 P.desfazer = function () {
   const u = this._pilha.pop(); if (!u) { VC.ui.toast('Nada para desfazer na planta.'); return false; }
-  this._refeitas.push({ motivo: u.motivo, s: this._estado() }); this._repor(u.s); VC.ui.toast('Desfeito: ' + u.motivo); return true;
+  const n = this._repor(u, 'antes'); this._refeitas.push(u); VC.ui.toast('Desfeito: ' + u.motivo + avisoConflitos(n)); return true;
 };
 P.refazer = function () {
   const u = this._refeitas.pop(); if (!u) { VC.ui.toast('Nada para refazer na planta.'); return false; }
-  this._pilha.push({ motivo: u.motivo, s: this._estado() }); this._repor(u.s); VC.ui.toast('Refeito: ' + u.motivo); return true;
+  const n = this._repor(u, 'depois'); this._pilha.push(u); VC.ui.toast('Refeito: ' + u.motivo + avisoConflitos(n)); return true;
 };
 /* cada operação que muda dados fica no desfazer, só se mudou de facto */
 const MOTIVOS = { ligarDesenho: 'desenho ligado ao espaço', criarEspaco: 'espaço criado na planta', usarAreaMedida: 'área medida aplicada', apagarDesenho: 'desenho apagado', aplicarEscala: 'escala calibrada', distribuirTodos: 'terminais distribuídos', redistribuir: 'terminais recolocados', criarTransferencia: 'transferência criada', aplicarRamal: 'traçado do ramal', usarLMedido: 'L medido aplicado', apagarTracado: 'traçado apagado' };
 Object.keys(MOTIVOS).forEach(n => {
   const o = P[n]; if (typeof o !== 'function') return;
   P[n] = function () {
-    const antes = P._estado(), sig = JSON.stringify(antes);
-    const r = o.apply(this, arguments);
-    if (JSON.stringify(P._estado()) !== sig) P._empilhar(MOTIVOS[n], antes);
+    const antes = P._estado();
+    P._agrupar++;
+    let r;
+    try { r = o.apply(this, arguments); } finally { P._agrupar--; }
+    P._empilhar(MOTIVOS[n], antes);
     return r;
   };
 });
