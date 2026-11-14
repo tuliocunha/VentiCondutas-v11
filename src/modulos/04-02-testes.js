@@ -624,7 +624,9 @@ VC6.testes = {
         const esc = { id: 502, nome: 'Of', tipo: 'Escritório', A: 16.5, N: 2 };
         const h2 = P._parcelasCaudal(esc); esc.N = 6; const h6 = P._parcelasCaudal(esc);
         const ok3 = /Ar novo = o maior: <b>T12/.test(h2) && /Ar novo = o maior: <b>T11/.test(h6);
-        return ok1 && ok2 && ok3;
+        // um laboratório (G1, espaço sujo) tem insuflação e extração suja; uma casa de banho (G4) só extração suja
+        const ok4 = P.redesDoEspaco({ id: 503, nome: 'Lab', tipo: 'Laboratório', A: 20 }).join() === 'insuflacao,extracao_suja' && P.redesDoEspaco({ id: 504, nome: 'WC', tipo: 'Sanitários', A: 3 }).join() === 'extracao_suja';
+        return ok1 && ok2 && ok3 && ok4;
       } finally { Object.assign(D, { espacos: g.esp, terminais: g.ter, plantas: g.pl, ramais: g.ram }); P.piso = g.piso; VC.ui.toast = g.toast; P._pilha = g.pilha; P.redesenhar = g.red; VC.estado.forcarSync = g.sync; if (VC.historico) VC.historico.push = g.hist; P.pendenteTerm = null; }
     } });
     // decisão do autor: N vazio = «por definir» — ar novo G1 só por T12 × A, aviso cinzento «por fazer»; N = 0 é uma escolha (sem aviso)
