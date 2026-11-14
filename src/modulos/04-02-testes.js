@@ -648,7 +648,7 @@ VC6.testes = {
       } finally { D.espacos = g.esp; D.eficaciaRemocao = g.ev; VC.estado.sincronizar = g.sinc; if (VC.historico) VC.historico.push = g.hist; VC.calculo.calcularTudo(); }
     } });
     // Portaria 138-I, Anexo II, 1.2.2 f) e h), com a classificação G1–G4 da app (G4 = extração dedicada, princípio P4)
-    self.registar({ id: 'UI.T32', nucleo: 'UI', grupo: 'UI', nome: 'G4: sem ar transferido a partir dele, e em depressão', criterio: 'WC→escritório e WC→WC recusadas; escritório→WC aceite; laboratório (G1)→circulação aceite; escritório forçado a G4 → recusada; WC com insuflação 100 e extração 50 → ERRO «G4 sem depressão»; extração 150 → sem erro', fn: () => {
+    self.registar({ id: 'UI.T32', nucleo: 'UI', grupo: 'UI', nome: 'G4: sem ar transferido a partir dele, e em depressão', criterio: 'WC→escritório, WC→WC e arrumo→circulação recusadas; circulação→arrumo e escritório→WC aceites; arrumo com insuflação direta sem erro de depressão; laboratório (G1)→circulação aceite; escritório forçado a G4 → recusada; WC com insuflação 100 e extração 50 → ERRO «G4 sem depressão»; extração 150 → sem erro', fn: () => {
       const T = VC6.transferencias; if (!T || !VC.calculo.grupoDe) return false;
       const D = VC.dados, g = { esp: D.espacos, tr: D.transferencias, ter: D.terminais };
       try {
@@ -656,14 +656,18 @@ VC6.testes = {
         const of = { id: 3, nome: 'Of', tipo: 'Escritório', definicoes: [] }, lab = { id: 4, nome: 'Lab', tipo: 'Laboratório', definicoes: [] }, circ = { id: 5, nome: 'Circ', tipo: 'Circulação', definicoes: [] };
         const ok1 = !T.direcaoValida(wc, of).ok && !T.direcaoValida(wc, wc2).ok && T.direcaoValida(of, wc).ok && T.direcaoValida(lab, circ).ok;
         const forcado = { id: 6, nome: 'Copa', tipo: 'Escritório', grupoForcado: 4, definicoes: [] };
-        const ok2 = !T.direcaoValida(forcado, circ).ok;
+        // arrecadação (Arrumo, G2): recebe ar (insuflação ou transferência) mas não o cede (1.2.2 f)
+        const arr = { id: 7, nome: 'Arr', tipo: 'Arrumo', definicoes: [{ id: 'I', rede: 'insuflacao', Q_total: 40, quantidade: 1 }, { id: 'E', rede: 'extracao', Q_total: 40, quantidade: 1 }] };
+        const ok2 = !T.direcaoValida(forcado, circ).ok && !T.direcaoValida(arr, circ).ok && T.direcaoValida(circ, arr).ok && VC.calculo.grupoDe(arr) === 2;
         D.espacos = [Object.assign(wc, { A: 5, H: 2.6, V: 13, definicoes: [{ id: 'I', rede: 'insuflacao', Q_total: 100, quantidade: 1 }, { id: 'E', rede: 'extracao_suja', Q_total: 50, quantidade: 1 }] })];
         D.transferencias = []; D.terminais = [];
         const tem = () => (VC.calculo.calcularTudo().findings || []).some(f => f.tipo === 'G4 sem depressão' && f.elemento === 'WC1');
         const ok3 = tem();
         wc.definicoes[1].Q_total = 150;
         const ok4 = !tem();
-        return ok1 && ok2 && ok3 && ok4;
+        D.espacos = [arr];   // arrumo com insuflação direta = extração: não é G4, não exige depressão
+        const ok5 = !(VC.calculo.calcularTudo().findings || []).some(f => f.tipo === 'G4 sem depressão');
+        return ok1 && ok2 && ok3 && ok4 && ok5;
       } finally { D.espacos = g.esp; D.transferencias = g.tr; D.terminais = g.ter; VC.calculo.calcularTudo(); }
     } });
   },

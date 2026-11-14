@@ -658,9 +658,10 @@ VC6.transferencias = {
      Regra única: a Tabela, a planta e as sugestões passam por aqui. */
   /* espaço sujo = G4 «Extração Dedicada» (princípio P4; o projetista pode forçar o grupo de um espaço) */
   ehSujo(esp) { return !!esp && VC.calculo.grupoDe(esp) === 4; },
-  /* Portaria 138-I, Anexo II, 1.2.2 f): o ar transferido não pode vir destes espaços, para nenhum espaço */
+  /* Portaria 138-I, Anexo II, 1.2.2 f): o ar transferido não pode vir de G4 nem de uma arrecadação (tipo marcado semArCedido) */
+  cedeAr(esp) { return !!esp && !this.ehSujo(esp) && !(VC.normas.getDef(esp.tipo) || {}).semArCedido; },
   direcaoValida(de, para) {
-    if (this.ehSujo(de)) return { ok: false, erro: 'O ar de «' + de.nome + '» (G4, extração dedicada) não pode ser transferido para «' + para.nome + '»: Portaria 138-I, Anexo II, 1.2.2 f). Inverta a direção.' };
+    if (!this.cedeAr(de)) return { ok: false, erro: 'O ar de «' + de.nome + '» (' + (this.ehSujo(de) ? 'G4, extração dedicada' : de.tipo) + ') não pode ser transferido para «' + para.nome + '»: Portaria 138-I, Anexo II, 1.2.2 f). Inverta a direção.' };
     return { ok: true };
   },
 

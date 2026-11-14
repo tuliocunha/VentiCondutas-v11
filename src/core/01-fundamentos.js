@@ -897,7 +897,7 @@ VC.normas = {
     const d = VC.conhecimento.tiposEspaco[tipo] || { g: 1, gn: 'Ocupação Permanente', rp: brp, ra: bra, t11: 24, t12: 3, ach: 6, desc: 'Fallback' };
     let rp = d.rp, ra = d.ra;
     if (d.g === 1) { if (rp === 7) rp = brp; if (ra === 0.7) ra = bra; }
-    return { g: d.g, gn: d.gn, rp, ra, t11: d.t11, t12: d.t12, ach: d.ach, desc: d.desc };
+    return { g: d.g, gn: d.gn, rp, ra, t11: d.t11, t12: d.t12, ach: d.ach, desc: d.desc, semArCedido: !!d.semArCedido };   // semArCedido: Portaria 138-I, Anexo II, 1.2.2 f)
   },
   // v11.1: limites do Reg. (UE) 1253/2014 (Ecodesign) por tipo de unidade de ventilação.
   // qnom em m³/s; etaRec = eficiência térmica do recuperador (0–1).

@@ -149,5 +149,5 @@ Sem listas nem redes novas: a app já classifica os espaços em G1–G4 e o G4 �
 
 Aplicado aos exemplos (que não são referência): o **degrade-2** tem 3 espaços G4 sem depressão — Garagem P0-N1 (412/412 m³/h), Apoio/Serviço P0-N1 e Apoio/Serviço P1-S (copa), do tipo Cozinha (227/227 e 423/423). O **poliune-v02** continua com 9 instalações sanitárias com falta de ar de compensação (balanço).
 
-**Por decidir:** o tipo «Arrumo» é G2 («Zona de Transferência») na app, mas a alínea f) inclui as arrecadações entre os espaços de onde não pode vir ar transferido.
+**Arrumo (arrecadação), decidido pelo autor:** fica G2. Tem extração, e o ar entra por insuflação direta ou por transferência (fresta de porta ou outro tipo previsto), mas **não cede ar transferido** (alínea f). Não é G4, por isso não exige depressão. Implementado com a marca `semArCedido` no tipo, no ficheiro de normas.
 

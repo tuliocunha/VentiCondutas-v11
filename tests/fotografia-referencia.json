@@ -1069,6 +1069,7 @@
   "VC.transferencias._parcelas",
   "VC.transferencias.aplicarSugestao",
   "VC.transferencias.aplicarTodasSugestoes",
+  "VC.transferencias.cedeAr",
   "VC.transferencias.compensarOrigem",
   "VC.transferencias.criar",
   "VC.transferencias.descompensar",

@@ -63,7 +63,7 @@ VC._normativo = {
 
   principiosBalanco: [
     { id: 'P1', texto: 'Em cada espaço: Σ Q_in = Σ Q_out (tolerância ±5 m³/h)', norma: 'Balanço de massa' },
-    { id: 'P2', texto: 'G2 (Circulação, Escadas): isentos de renovação mas podem transferir', norma: 'Portaria 138-I/2021' },
+    { id: 'P2', texto: 'G2 (Circulação, Escadas): isentos de renovação mas podem transferir. Exceção: arrecadação (Arrumo) tem extração e não cede ar transferido', norma: 'Portaria 138-I/2021 (Anexo II, 1.2.2 f)' },
     { id: 'P3', texto: 'G3 (Arquivo): mínimo por diluição basal (T12) ou ACH ≥ 2', norma: 'Portaria 138-I/2021' },
     { id: 'P4', texto: 'G4 (Sanitários, Cozinha, Garagem): extração dedicada, entram por transferência', norma: 'Portaria 138-I T13' },
     { id: 'P5', texto: 'Escadas pressurizadas: ΔP ≥ 50 Pa em caso de incêndio', norma: 'Portaria 1532/2008' },
@@ -110,7 +110,7 @@ VC._normativo = {
     'Sala de recuperação': { g:1, gn:'Ocupação Permanente', rp:7,  ra:0.7, t11:24, t12:3, ach:6,  desc:'G1 · Recuperação' },
     'Circulação':          { g:2, gn:'Zona de Transferência', rp:0, ra:0, t11:24, t12:0, ach:0, desc:'G2 · Circulação' },
     'Escadas':             { g:2, gn:'Zona de Transferência', rp:0, ra:0, t11:24, t12:0, ach:0, desc:'G2 · Escadas' },
-    'Arrumo':              { g:2, gn:'Zona de Transferência', rp:0, ra:0, t11:0,  t12:0, ach:0, desc:'G2 · Arrumo (isento)' },
+    'Arrumo':              { g:2, gn:'Zona de Transferência', rp:0, ra:0, t11:0,  t12:0, ach:0, desc:'G2 · Arrumo (isento) · extração; o ar entra por insuflação ou transferência, mas não sai por transferência', semArCedido: true },   // arrecadação: Portaria 138-I, Anexo II, 1.2.2 f)
     'Arquivo':             { g:3, gn:'Baixa Emissão', rp:0, ra:0.7, t11:24, t12:3, ach:2, desc:'G3 · Arquivo' },
     'Sala técnica':        { g:3, gn:'Baixa Emissão', rp:0, ra:0.7, t11:0,  t12:3, ach:2, desc:'G3 · Sala técnica' },
     'Sanitários':          { g:4, gn:'Extração Dedicada', rp:0, ra:0, t11:0, t12:0, ach:0,  desc:'G4 · Sanitários' },
