@@ -24,6 +24,7 @@ VC.editorUtas = {
         + '<div class="vazio-acoes" style="margin-top:10px">'
         + '<button class="btn primario" onclick="VC.editorUtas.criarUta(\'insuflacao\')"><i class="fa-solid fa-plus"></i> UTA insufla\u00e7\u00e3o</button>'
         + '<button class="btn ambar" onclick="VC.editorUtas.criarUta(\'extracao\')"><i class="fa-solid fa-plus"></i> UTA extra\u00e7\u00e3o</button>'
+        + '<button class="btn" onclick="VC.editorUtas.criarUta(\'extracao_suja\')" title="Casas de banho e outros espa\u00e7os sujos: rede e ventilador pr\u00f3prios"><i class="fa-solid fa-plus"></i> Extrator de extra\u00e7\u00e3o suja</button>'
         + '</div></div>';
     }
 
@@ -51,6 +52,7 @@ VC.editorUtas = {
     h += '<div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap">';
     h += '<button class="btn primario" onclick="VC.editorUtas.criarUta(\'insuflacao\')"><i class="fa-solid fa-plus"></i> UTA insufla\u00e7\u00e3o</button>';
     h += '<button class="btn ambar" onclick="VC.editorUtas.criarUta(\'extracao\')"><i class="fa-solid fa-plus"></i> UTA extra\u00e7\u00e3o</button>';
+    h += '<button class="btn" onclick="VC.editorUtas.criarUta(\'extracao_suja\')" title="Casas de banho e outros espa\u00e7os sujos: rede e ventilador pr\u00f3prios"><i class="fa-solid fa-plus"></i> Extrator de extra\u00e7\u00e3o suja</button>';
     h += '<button class="btn violeta" onclick="VC.estado.forcarSync(); VC.passos.render(\'utas\');"><i class="fa-solid fa-rotate"></i> Recalcular</button>';
     h += '</div>';
 
@@ -275,7 +277,7 @@ VC.editorUtas = {
   },
 
   criarUta: function (rede) {
-    var nome = prompt('Nome da UTA:', 'UTA-' + rede);
+    var nome = prompt('Nome da UTA:', rede === 'extracao_suja' ? 'VEX-' + ((VC.dados.utas || []).filter(function (x) { return x.rede === 'extracao_suja'; }).length + 1) : 'UTA-' + rede);
     if (!nome) return;
     var u = VC.uta.criar(nome, rede, '');
     u.componentes = (rede === 'insuflacao') ? VC.uta.componentesPadrao() : VC.uta.componentesExtracao();

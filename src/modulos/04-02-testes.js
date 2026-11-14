@@ -440,7 +440,7 @@ VC6.testes = {
     // v11.3: área de desenho — zoom no cursor (o ponto fica no sítio), deslocar, e desfazer da planta
     self.registar({ id: 'UI.T20', nucleo: 'UI', grupo: 'UI', nome: 'Planta: zoom no cursor, deslocar e desfazer', criterio: 'zoom 1→2 no ponto (500,300) mantém esse ponto; deslocar 100 px a 2× = 50 px de imagem; desfazer repõe o espaço', fn: () => {
       const P = VC.planta; if (!P || !P.zoomEm || !P.deslocar || !P.desfazer || !P.viewBox) return false;
-      const g = { z: P.zoom, x: P.vx, y: P.vy, av: P.aplicarVista, pilha: P._pilha, ref: P._refeitas, repor: P._repor };
+      const g = { z: P.zoom, x: P.vx, y: P.vy, av: P.aplicarVista, pilha: P._pilha, ref: P._refeitas };
       try {
         P.aplicarVista = function () {};   // sem desenho no ecrã durante o teste
         P.zoom = 1; P.vx = 0; P.vy = 0;
@@ -449,11 +449,16 @@ VC6.testes = {
         P.deslocar(100, 0);
         const okPan = Math.abs(P.vx - 200) < 1e-9;
         P._pilha = []; P._refeitas = [];
-        let reposto = null; P._repor = function (st) { reposto = st; };
-        P._empilhar('teste', { e: [{ id: 1, nome: 'antes' }], t: [], r: [], tr: [], pl: [] });
-        const okUndo = P.desfazer() === true && reposto && reposto.e[0].nome === 'antes' && P._refeitas.length === 1 && P._pilha.length === 0;
+        const D = VC.dados, ge = D.espacos, gred = P.redesenhar, gsync = VC.estado.forcarSync, gtoast = VC.ui.toast;
+        let okUndo = false;
+        try {
+          P.redesenhar = () => {}; VC.estado.forcarSync = () => {}; VC.ui.toast = () => {};
+          D.espacos = [{ id: 1, nome: 'antes' }];
+          const s0 = P._estado(); D.espacos[0].nome = 'depois'; P._empilhar('teste', s0);
+          okUndo = P.desfazer() === true && D.espacos[0].nome === 'antes' && P._refeitas.length === 1 && P._pilha.length === 0;
+        } finally { D.espacos = ge; P.redesenhar = gred; VC.estado.forcarSync = gsync; VC.ui.toast = gtoast; }
         return okZoom && okPan && okUndo;
-      } finally { P.zoom = g.z; P.vx = g.x; P.vy = g.y; P.aplicarVista = g.av; P._pilha = g.pilha; P._refeitas = g.ref; P._repor = g.repor; }
+      } finally { P.zoom = g.z; P.vx = g.x; P.vy = g.y; P.aplicarVista = g.av; P._pilha = g.pilha; P._refeitas = g.ref; }
     } });
     // v11.3: renomear um ramal atualiza tudo o que o refere; terminal largado perto da ponta encaixa nela
     self.registar({ id: 'UI.T21', nucleo: 'UI', grupo: 'UI', nome: 'Renomear ramal em cascata e encaixe na ponta', criterio: 'parente, ramalRef, ramalRefInsuflacao, nós e troços mudam de nome; nome repetido é recusado; ponta a 5 px encaixa', fn: () => {
@@ -530,6 +535,33 @@ VC6.testes = {
         P.trfSel = 'TRF-x'; P.selecionarRamal(2); const ok2 = P.trfSel === null && P.ramalSel === 2 && P.selecionado === null;
         return ok1 && ok2;
       } finally { P.selecionado = g.sel; P.ramalSel = g.r; P.trfSel = g.t; P.redesenhar = g.red; }
+    } });
+    // auditoria A2 (opção a): o desfazer da planta repõe só o que a ação mudou; o que se editou noutro ecrã fica
+    self.registar({ id: 'UI.T26', nucleo: 'UI', grupo: 'UI', nome: 'Planta: desfazer não apaga trabalho de outros ecrãs', criterio: 'sala desenhada; N = 6 e terminal novo noutro ecrã; Ctrl+Z tira o desenho e mantém N e o terminal; refazer repõe o desenho; espaço criado na planta e depois editado fica (sem o desenho), com aviso', fn: () => {
+      const P = VC.planta; if (!P || !P._diferencas || !P._aplicar) return false;
+      const D = VC.dados, g = { esp: D.espacos, ter: D.terminais, ram: D.ramais, tr: D.transferencias, pilha: P._pilha, ref: P._refeitas, red: P.redesenhar, sync: VC.estado.forcarSync, toast: VC.ui.toast };
+      try {
+        P.redesenhar = () => {}; VC.estado.forcarSync = () => {}; VC.ui.toast = () => {}; P._pilha = []; P._refeitas = [];
+        D.espacos = [{ id: 5, nome: 'Sala', N: 0 }]; D.terminais = []; D.ramais = []; D.transferencias = [];
+        const s0 = P._estado();
+        D.espacos[0].planta = { pisoId: 'p', pts: [[0, 0], [10, 0], [10, 10]] };
+        P._empilhar('desenho ligado ao espaço', s0);
+        D.espacos[0].N = 6;                                                    // Tabela
+        D.terminais.push({ id: 'TX', nome: 'TX', rede: 'insuflacao' });         // passo Definição
+        P.desfazer();
+        const ok1 = !D.espacos[0].planta && D.espacos[0].N === 6 && D.terminais.length === 1;
+        P.refazer();
+        const ok2 = !!D.espacos[0].planta && D.espacos[0].N === 6 && D.terminais.length === 1;
+        const s1 = P._estado();
+        D.espacos.push({ id: 6, nome: 'Nova', planta: { pisoId: 'p', pts: [[0, 0], [5, 0], [5, 5]] } }); P._empilhar('espaço criado na planta', s1);
+        D.espacos[1].N = 3;                                                    // editado depois, noutro ecrã
+        let aviso = ''; VC.ui.toast = m => { aviso = m; };
+        P.desfazer();
+        const ok3a = D.espacos.length === 2 && D.espacos[1].N === 3 && !D.espacos[1].planta && /noutro ecrã/.test(aviso);
+        P.refazer();
+        const ok3 = ok3a && !!D.espacos[1].planta && D.espacos[1].N === 3;
+        return ok1 && ok2 && ok3;
+      } finally { Object.assign(D, { espacos: g.esp, terminais: g.ter, ramais: g.ram, transferencias: g.tr }); P._pilha = g.pilha; P._refeitas = g.ref; P.redesenhar = g.red; VC.estado.forcarSync = g.sync; VC.ui.toast = g.toast; }
     } });
   },
 

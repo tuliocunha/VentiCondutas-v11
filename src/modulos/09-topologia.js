@@ -254,11 +254,11 @@ VC.topologia.mover = {
     const r = VC.dados.ramais.find(x => x.nome === ramalNome);
     if (!t || !r) return { ok: false, erro: 'Terminal ou ramal não encontrado' };
 
-    const redeR = r.rede || 'insuflacao';
-    const redeT = t.rede || 'insuflacao';
+    const redeR = VC.redes.normalizar(r.rede);
+    const redeT = VC.redes.normalizar(t.rede);
 
-    if (redeR !== redeT) {
-      return { ok: false, erro: 'Terminal é «' + redeT + '», ramal é «' + redeR + '»' };
+    if (!VC.redes.compativeis(redeT, redeR)) {
+      return { ok: false, erro: 'Terminal é de «' + VC.redes.rotulo(redeT) + '», ramal é de «' + VC.redes.rotulo(redeR) + '»' };
     }
 
     t.ramalRef = ramalNome;
@@ -497,19 +497,22 @@ VC.topologia._atribuirTerminaisAoRamal = function (ramalNome, terminais) {
   const ramal = VC.dados.ramais.find(r => r.nome === ramalNome);
   if (!ramal) return 0;
 
-  const redeR = ramal.rede || 'insuflacao';
+  const redeR = VC.redes.normalizar(ramal.rede);
   let n = 0;
 
   terminais.forEach(t => {
-    const redeT = t.rede || 'insuflacao';
+    const redeT = VC.redes.normalizar(t.rede);
 
-    const exato = (redeR === redeT);
+    const exato = VC.redes.compativeis(redeT, redeR);
+    // extração de um espaço sujo (casa de banho, cozinha…) marcada como «extração»: passa a «extração suja»,
+    // a rede própria da extração sanitária, para que terminal e ramal fiquem na mesma rede (VC.redes)
     const extSujaOverride =
       (redeR === 'extracao_suja') &&
       (redeT === 'extracao') &&
       VC.topologia._eEspacoSujoPorTerminal(t);
 
     if (!exato && !extSujaOverride) return;
+    if (extSujaOverride) t.rede = 'extracao_suja';
 
     t.ramalRef = ramalNome;
 

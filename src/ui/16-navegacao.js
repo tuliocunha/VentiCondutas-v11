@@ -60,6 +60,7 @@ VC.nav = {
     const passo = VC._passoAtivo || 'setup';
     const v = this.vistasDe(passo).find(x => x.id === id);
     if (!v) return;
+    this.vistaAtiva = id;   // antes de desenhar: o invólucro de VC.passos.render repunha a vista anterior (Tabela → voltava à Planta)
     if (v.modo) {
       VC.modos.set(v.modo);   // o ecrã gráfico abre na área de trabalho; as fases, os passos e os separadores ficam à vista
     } else {

@@ -83,7 +83,6 @@ VC.associacao = {
     if (nEspacosSemAssoc > 0) {
       h += '<div style="font-size:10.5px;font-weight:800;color:var(--ambar-esc);text-transform:uppercase;margin:14px 0 6px"><i class="fa-solid fa-triangle-exclamation"></i> Espa\u00e7os com defini\u00e7\u00f5es sem ramal (' + nEspacosSemAssoc + ')</div>';
       var ramaisIns = ramais.filter(function (r) { return r.rede === 'insuflacao'; });
-      var ramaisExt = ramais.filter(function (r) { return r.rede === 'extracao' || r.rede === 'extracao_suja'; });
       h += '<div class="tabela-wrap"><table class="tabela densa"><thead><tr>';
       h += '<th>Espa\u00e7o</th><th>Insufla\u00e7\u00e3o</th><th>Extra\u00e7\u00e3o</th>';
       h += '</tr></thead><tbody>';
@@ -96,6 +95,7 @@ VC.associacao = {
         h += '<tr>';
         h += '<td><b>' + VC.utils.esc(e.nome) + '</b></td>';
         h += '<td>' + (faltaIns ? self._selectRamal('atribuirEspaco(' + idx + ', this.value, \'insuflacao\')', ramaisIns) : '<span class="badge ok">' + VC.utils.esc(e.ramalRefInsuflacao || '\u2014') + '</span>') + '</td>';
+        var redeExt = VC.redes.extracaoDe(e), ramaisExt = ramais.filter(function (r) { return VC.redes.compativeis(r.rede, redeExt); });
         h += '<td>' + (faltaExt ? self._selectRamal('atribuirEspaco(' + idx + ', this.value, \'extracao\')', ramaisExt) : '<span class="badge ok">' + VC.utils.esc(e.ramalRefExtracao || '\u2014') + '</span>') + '</td>';
         h += '</tr>';
       });
@@ -290,7 +290,7 @@ VC.associacao = {
 
       if (!e.ramalRefExtracao) {
         var candExt = ramais.filter(function (r) {
-          if (r.rede !== 'extracao' && r.rede !== 'extracao_suja') return false;
+          if (!VC.redes.compativeis(r.rede, VC.redes.extracaoDe(e))) return false;
           var pisos = (r.meta && r.meta.pisoFisico) || [];
           return pisos.some(function (p) { return String(p).toUpperCase() === piso; });
         });
@@ -308,9 +308,9 @@ VC.associacao = {
       for (var i = 0; i < serve.length; i++) {
         var esp = VC.dados.espacos.find(function (x) { return x.nome === serve[i].nome; });
         if (!esp) continue;
-        var ehExt = t.rede === 'extracao' || t.rede === 'extracao_suja';
-        var ref = ehExt ? esp.ramalRefExtracao : esp.ramalRefInsuflacao;
-        if (ref) { t.ramalRef = ref; nTerm++; break; }
+        var ref = VC.redes.ehExtracao(t.rede) ? esp.ramalRefExtracao : esp.ramalRefInsuflacao;
+        var rRef = ref && VC.dados.ramais.find(function (r) { return r.nome === ref; });
+        if (rRef && VC.redes.compativeis(t.rede, rRef.rede)) { t.ramalRef = ref; nTerm++; break; }
       }
     });
 

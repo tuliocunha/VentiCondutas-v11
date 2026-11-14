@@ -185,7 +185,7 @@ P._painel = function (p) {
       + '<div class="planta-acoes"><button class="btn primario" onclick="VC.planta._aplicarDoPainel(\'existente\')">Usar este traçado</button></div>'
       + '<div class="planta-ou">ou criar um ramal novo</div>'
       + '<label for="rmPai">Sai de</label><select id="rmPai"><option value="">— ramal principal de uma UTA —</option>' + todos.filter(r => (r.nivelNumero || 1) < 4).map(r => '<option value="' + esc(r.nome) + '"' + (r.nome === pr.pai ? ' selected' : '') + '>' + esc(r.nome) + ' (N' + (r.nivelNumero || 1) + ')</option>').join('') + '</select>'
-      + '<label for="rmUta">UTA (só para um ramal principal)</label><select id="rmUta">' + utas.map(u => '<option value="' + u.id + '">' + esc(u.nome) + '</option>').join('') + '</select>'
+      + '<label for="rmUta">UTA (só para um ramal principal)</label><select id="rmUta">' + utas.map(u => '<option value="' + u.id + '">' + esc(u.nome) + ' · ' + esc(VC.redes.rotulo(u.rede)) + '</option>').join('') + '</select>'
       + '<div class="planta-acoes"><button class="btn primario" onclick="VC.planta._aplicarDoPainel(\'novo\')">Criar ramal</button><button class="btn" onclick="VC.planta.cancelar()">Cancelar</button></div></div>' + h;
     return h;
   }

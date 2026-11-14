@@ -18,6 +18,7 @@ VC.entrega = {
   /* onde se resolve cada tipo de aviso da auditoria */
   _passoDoAviso(tipo) {
     const t = String(tipo || '');
+    if (/sem ramal|outra rede|ramal sem caudal/i.test(t)) return 'associacao';
     if (/sec[cç][aã]o|velocidade|di[aâ]metro|conduta|perda/i.test(t)) return 'rede';
     if (/ventilador|sfp|uta|motor|ecodesign|curva/i.test(t)) return 'utas';
     if (/balan|res[ií]duo/i.test(t)) return 'balanco';
@@ -54,6 +55,9 @@ VC.entrega = {
     const Qmh = u => (Number(u.Q) || 0) * 3600;
     const insufl = (D.utas || []).filter(u => u.rede === 'insuflacao').reduce((s, u) => s + Qmh(u), 0);
     const extr = (D.utas || []).filter(u => u.rede !== 'insuflacao').reduce((s, u) => s + Qmh(u), 0);
+    /* auditoria A1: o total do projeto é o de TODOS os terminais; a diferença para a rede (UTAs) fica à vista */
+    const termIns = (D.terminais || []).filter(t => !VC.redes.ehExtracao(t.rede)).reduce((s, t) => s + (Number(t.Q) || 0), 0);
+    const termExt = (D.terminais || []).filter(t => VC.redes.ehExtracao(t.rede)).reduce((s, t) => s + (Number(t.Q) || 0), 0);
     const potencias = utas.map(u => Number(u.P_motor) || 0).filter(p => p > 0);
 
     /* caudal de cada unidade por piso: terminal → ramal → UTA; espaço → piso */
@@ -84,7 +88,7 @@ VC.entrega = {
 
     return {
       meta: D.metadados || {}, pontos, nErros, nAvisos: avisos.length,
-      insufl, extr, utas, vex, potencias, redes, bom, condutas,
+      insufl, extr, termIns, termExt, utas, vex, potencias, redes, bom, condutas,
       dMin: dNum.length ? Math.min(...dNum) : null, dMax: dNum.length ? Math.max(...dNum) : null,
       nTerminais: (D.terminais || []).length, nEspacos: (D.espacos || []).length,
       vexQ: vex.reduce((s, u) => s + Qmh(u), 0)
@@ -128,7 +132,8 @@ VC.entrega = {
     /* 2 · resultado */
     const pot = d.potencias.length ? fmt(Math.min(...d.potencias)) + '–' + fmt(Math.max(...d.potencias)) + ' W' : '—';
     h += '<section aria-label="Resultado do projeto"><h3 class="entrega-h">O resultado do projeto</h3><div class="entrega-kpis">'
-      + '<div class="entrega-kpi"><b>' + milhar(d.insufl) + ' m³/h</b><span>de ar insuflado · ' + milhar(d.extr) + ' m³/h extraídos</span></div>'
+      + '<div class="entrega-kpi"><b>' + milhar(d.termIns) + ' m³/h</b><span>de ar insuflado · ' + milhar(d.termExt) + ' m³/h extraídos'
+      + (Math.abs(d.termIns - d.insufl) > 1 || Math.abs(d.termExt - d.extr) > 1 ? '<span class="entrega-dif">Na rede (UTAs): ' + milhar(d.insufl) + ' insuflados · ' + milhar(d.extr) + ' extraídos. A diferença vem de terminais sem ramal.</span>' : '') + '</span></div>'
       + '<div class="entrega-kpi"><b>' + d.utas.length + (d.vex.length ? ' + ' + d.vex.length : '') + ' unidades</b><span>' + d.utas.length + ' UTAs (motores ' + pot + ')' + (d.vex.length ? ' e ' + d.vex.length + ' extratores' : '') + '</span></div>'
       + '<div class="entrega-kpi"><b>' + fmt(d.bom.totais.metros || 0) + ' m</b><span>de conduta' + (d.dMin ? ', Ø' + d.dMin + ' a Ø' + d.dMax : '') + ' · ' + (d.bom.totais.trechos || 0) + ' troços</span></div>'
       + '</div></section>';

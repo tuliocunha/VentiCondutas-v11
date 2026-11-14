@@ -22,9 +22,10 @@ const _corPorRede = (rede) => {
   return t ? t.cor : '#64748b';
 };
 
-const _aceitaSlot = (slotRede, ramalRede) => {
-  if (slotRede === 'insuflacao') return ramalRede === 'insuflacao';
-  if (slotRede === 'extracao') return ramalRede === 'extracao' || ramalRede === 'extracao_suja';
+/* a rede do slot é a do espaço: a extração de uma casa de banho só aceita um ramal de extração suja (VC.redes) */
+const _aceitaSlot = (slot, ramalRede) => {
+  if (slot.rede === 'insuflacao') return VC.redes.compativeis('insuflacao', ramalRede);
+  if (slot.rede === 'extracao') return VC.redes.compativeis(VC.redes.extracaoDe(slot.espaco), ramalRede);
   return false;
 };
 
@@ -410,15 +411,14 @@ VC.construtorVisual = {
       if (!ramal) return;
       let atribuidos = 0, rejeitados = 0;
       arr.itens.forEach(slot => {
-        if (_aceitaSlot(slot.rede, ramal.rede)) {
-          const esp = (VC.dados.espacos || []).find(x => String(x.id) === String(slot.espacoId));
+        const esp = (VC.dados.espacos || []).find(x => String(x.id) === String(slot.espacoId));
+        if (_aceitaSlot({ rede: slot.rede, espaco: esp || slot.espaco }, ramal.rede)) {
           if (esp) {
             if (slot.rede === 'insuflacao') esp.ramalRefInsuflacao = ramalNome; else esp.ramalRefExtracao = ramalNome;
             (VC.dados.terminais || []).forEach(t => {
               const serve = (t.espacos || []).some(x => x.nome === esp.nome);
               if (!serve) return;
-              const ehIns = (t.rede || 'insuflacao') === 'insuflacao';
-              if ((ehIns && slot.rede === 'insuflacao') || (!ehIns && slot.rede !== 'insuflacao')) t.ramalRef = ramalNome;
+              if (VC.redes.compativeis(t.rede, ramal.rede)) t.ramalRef = ramalNome;
             });
             atribuidos++;
           }

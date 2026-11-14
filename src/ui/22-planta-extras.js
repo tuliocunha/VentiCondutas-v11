@@ -27,7 +27,7 @@ P._ramalPerto = function (q, rede, tolPx) {
   const p = this.pisoAtual(), tol = (tolPx || 16) / (this.zoom || 1);
   let melhor = null;
   (this.ramaisDoPiso ? this.ramaisDoPiso(p) : []).forEach(r => {
-    if (rede && r.rede !== rede) return;
+    if (rede && !VC.redes.compativeis(rede, r.rede)) return;
     const pts = r.planta.pts;
     for (let i = 1; i < pts.length; i++) { const [d, c] = this._distSeg(q, pts[i - 1], pts[i]); if (d < tol && (!melhor || d < melhor.d)) melhor = { d, c, r }; }
     [pts[0], pts[pts.length - 1]].forEach(a => { const d = Math.hypot(q[0] - a[0], q[1] - a[1]); if (d < tol && (!melhor || d <= melhor.d + 1e-9)) melhor = { d, c: a, r, ponta: true }; });

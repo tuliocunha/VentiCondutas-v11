@@ -78,7 +78,7 @@ Medidas em metros = píxeis × escala.
 |---|---|---|
 | P1 | **Um gesto, um significado.** Clicar num objeto com Selecionar seleciona-o; arrastar move-o; duplo clique edita ou termina; Esc cancela; Delete apaga. Igual para todos os objetos. | parcial — ver desvios |
 | P2 | **Uma seleção de cada vez.** Selecionar uma sala tira a seleção do ramal e da transferência, e vice-versa. | [hoje] (corrigido neste PR) |
-| P3 | **Tudo se desfaz.** Cada ação que muda dados entra no desfazer da planta (Ctrl+Z / Ctrl+Y), com um nome legível. | parcial |
+| P3 | **Tudo se desfaz.** Cada ação que muda dados entra no desfazer da planta (Ctrl+Z / Ctrl+Y), com um nome legível. O desfazer repõe **só o que a ação mudou** (campo a campo, por objeto): o que foi editado noutro ecrã entretanto fica, e o aviso diz quantos dados ficaram. Um espaço criado na planta e depois editado na Tabela não é removido: perde só o desenho. | parcial (o mecanismo: [hoje], PR 1 da auditoria) |
 | P4 | **Toda a ação tem inversa à vista**: criar/remover, ligar/desligar, compensar/descompensar. | parcial |
 | P5 | **O estado está à vista**: ferramenta ativa, o que está pendente, o que falta desenhar, o que está desequilibrado. | [hoje] |
 | P6 | **O erro aparece no objeto**, não só no Balanço ou na Entrega (cor, ícone, aviso no cartão). | parcial |
@@ -142,7 +142,7 @@ cenários e mostradas na app como avisos no objeto.
 | I2 | O polígono de uma sala tem ≥ 3 vértices e não se cruza. | erro |
 | I3 | A área desenhada (com escala) não difere mais de 15 % da área da tabela, ou o utilizador aceitou a diferença. | aviso |
 | I4 | Um terminal colocado está dentro de uma sala que ele serve. | aviso |
-| I5 | Um terminal ligado a um ramal: o ramal existe e é da mesma rede. | erro |
+| I5 | Um terminal ligado a um ramal: o ramal existe e é da mesma rede. Regra única `VC.redes.compativeis` em toda a app (Topologia, Associação, planta, verificação). A **extração suja** (casas de banho, G4) tem rede e ventilador próprios: não se liga à extração geral. Terminal sem ramal = erro na Entrega. | erro |
 | I6 | Ligação terminal → ponta do ramal ≤ 0,5 m, senão o L não a inclui. | aviso |
 | I7 | Um ramal desenhado: o pai existe, e o traçado do filho começa no traçado do pai. | aviso |
 | I8 | Uma transferência: origem ≠ destino, as duas existem e não há ciclo A→…→A. | erro |
@@ -150,6 +150,7 @@ cenários e mostradas na app como avisos no objeto.
 | I10 | Uma transferência compensada: a definição de insuflação indicada existe e inclui o caudal compensado. | erro |
 | I11 | Os terminais de uma definição somam o `Q_total` da definição. | erro |
 | I12 | Balanço de cada espaço desenhado dentro da tolerância (ou isento: G2 sem conforto). | aviso |
+| I16 | Um ramal tem caudal (Q > 0); um terminal de uma sala desenhada está colocado na planta. | aviso |
 | I13 | Desfazer tudo o que se fez numa sessão devolve exatamente o estado inicial; refazer devolve o final. | erro (só nos testes) |
 | I14 | Há no máximo uma seleção (sala, ramal ou transferência). | erro (só nos testes) |
 | I15 | Nenhuma ação deixa erros JavaScript na consola. | erro (só nos testes) |
