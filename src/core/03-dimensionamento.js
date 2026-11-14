@@ -108,6 +108,9 @@ VC.calculo = {
      calcularQ_normas — V8.0.7
      ACH so se aplica a G3 e G4 (exceto Sanitorios)
      ──────────────────────────────────────────────── */
+  /* N vazio (null, undefined ou '') = ocupação por definir; 0 é um valor escolhido */
+  nVazio(esp) { return !esp || esp.N == null || String(esp.N).trim() === ''; },
+
   calcularQ_normas(esp) {
     const ev = Number(VC.dados.eficaciaRemocao) || 1.0;
     const met = esp.geometriaMetodo || 'V';
@@ -118,7 +121,9 @@ VC.calculo = {
     if (!A && V) A = V / 3.0;
     const def = VC.normas.getDef(esp.tipo);
     const g = esp.grupoForcado || def.g;
-    const N = (g === 2 || g === 3 || g === 4) ? 0 : (esp.N != null ? Number(esp.N) : 1);
+    // Decisão do autor: N vazio = «por definir» (não N = 1). O ar novo de G1 é então só T12 × A, e a app avisa (por fazer).
+    const nPorDefinir = g === 1 && VC.calculo.nVazio(esp);
+    const N = (g === 2 || g === 3 || g === 4 || nPorDefinir) ? 0 : (Number(esp.N) || 0);
     const isento = VC.regulamento.isencoesArNovo.indexOf(esp.tipo) >= 0;
     let Q_renov = 0, Q_extracao = 0, metodoCaudal = '';
     if (g === 4) {
@@ -137,7 +142,7 @@ VC.calculo = {
     } else {
       const t11 = Number(def.t11) || 0, t12 = Number(def.t12) || 0;
       Q_renov = Math.max(t11 * N, t12 * A) / Math.max(ev, 0.1);
-      metodoCaudal = 'P138 T11/T12';
+      metodoCaudal = nPorDefinir ? 'P138 T12 (N por definir)' : 'P138 T11/T12';
     }
     const qEN = this.qEN16798(esp, def, A);
     const ACH = V ? (Q_renov || Q_extracao) / V : 0;
@@ -164,7 +169,7 @@ VC.calculo = {
     }
 
     return {
-      V, A, H, N,
+      V, A, H, N, nPorDefinir,
       geometriaMetodo: met,
       tipoCaudal: g === 4 ? 'EXTRACAO' : 'RENOVACAO',
       Q_renov, Q_extracao,
@@ -640,6 +645,21 @@ VC.calculo = {
         else if (!VC.redes.compativeis(t.rede, r.rede)) findings.push({ severidade: 'ERRO', tipo: 'Terminal noutra rede', elemento: nomeT, msg: 'Terminal de ' + VC.redes.rotulo(t.rede) + ' ligado ao ramal «' + r.nome + '», de ' + VC.redes.rotulo(r.rede) });
         if (temPlantas && !t.planta && (t.espacos || []).some(x => espDesenhado.has(x.nome))) findings.push({ severidade: 'ATENÇÃO', tipo: 'Terminal fora da planta', elemento: nomeT, msg: 'A sala está desenhada mas o terminal não: coloque-o com a ferramenta Terminal (D)' });
       });
+      // A3 (rede própria): um ramal pertence à rede da sua UTA e do seu pai — redes misturadas somam ar que não se pode misturar
+      const utaPorId = new Map((VC.dados.utas || []).map(u => [u.id, u]));
+      VC.dados.ramais.forEach(r => {
+        const u = r.utaRef ? utaPorId.get(r.utaRef) : null, pai = r.parente ? ramalPorNome.get(r.parente) : null;
+        if (u && !VC.redes.compativeis(r.rede, u.rede)) findings.push({ severidade: 'ERRO', tipo: 'Ramal noutra rede', elemento: r.nome, msg: 'Ramal de ' + VC.redes.rotulo(r.rede) + ' servido pela UTA «' + u.nome + '», de ' + VC.redes.rotulo(u.rede) });
+        else if (pai && !VC.redes.compativeis(r.rede, pai.rede)) findings.push({ severidade: 'ERRO', tipo: 'Ramal noutra rede', elemento: r.nome, msg: 'Ramal de ' + VC.redes.rotulo(r.rede) + ' com o pai «' + pai.nome + '», de ' + VC.redes.rotulo(pai.rede) });
+      });
+      // higiene do ar: nenhuma transferência leva ar de um espaço sujo para um mais limpo (regra de VC6.transferencias)
+      if (window.VC6 && VC6.transferencias && VC6.transferencias.direcaoValida) {
+        const espPorId = new Map((VC.dados.espacos || []).map(e => [e.id, e]));
+        (VC.dados.transferencias || []).forEach(t => {
+          const de = espPorId.get(t.deId), para = espPorId.get(t.paraId);
+          if (de && para && !VC6.transferencias.direcaoValida(de, para).ok) findings.push({ severidade: 'ERRO', tipo: 'Transferência de espaço sujo', elemento: de.nome + ' → ' + para.nome, msg: 'O ar de um espaço sujo não pode passar para um espaço mais limpo: inverta a direção ou remova a transferência' });
+        });
+      }
       VC.dados.ramais.forEach(r => {
         if (!(Number(r.Q) > 0)) findings.push({ severidade: 'ATENÇÃO', tipo: 'Ramal sem caudal', elemento: r.nome, msg: 'Q = 0 m³/h: nenhum terminal ligado a este ramal nem aos seus sub-ramais' });
       });
@@ -654,6 +674,11 @@ VC.calculo = {
       });
       if (totalPower > VC.constantes.DL101D.SGTC) findings.push({ severidade: 'ATENÇÃO', tipo: 'BACS', elemento: 'Sistema', msg: 'P > ' + VC.constantes.DL101D.SGTC / 1000 + ' kW' });
 
+      // N por definir: aviso cinzento «por fazer» (não é erro; o caudal fica só por T12 × A)
+      VC.dados.espacos.forEach(e => {
+        const c = this.calcularQEspaco(e);
+        if (c.nPorDefinir) findings.push({ severidade: 'POR FAZER', tipo: 'Ocupação por definir', elemento: e.nome, msg: 'N vazio: o ar novo é calculado só por T12 × A (' + VC.utils.fmt(c.Q_normas, 0) + ' m³/h). Escreva o número de pessoas para comparar com T11 × N.' });
+      });
       VC.dados.espacos.forEach(e => {
         const b = this.balancoEspaco(e.nome);
         if (b.estado === 'ORFAO') findings.push({ severidade: 'ERRO', tipo: 'Balanço terminal ↔ espaço', elemento: e.nome, msg: '0 terminais para Q_espaco=' + VC.utils.fmt(b.Q_nec, 0) + ' m³/h' });
@@ -695,6 +720,7 @@ VC.calculo = {
           insuflacao: { maxPerda: vent.porRede.insuflacao ? vent.porRede.insuflacao.maxPerda : 0, Qnom: vent.porRede.insuflacao ? vent.porRede.insuflacao.Qnom : 0 },
           extracao: { maxPerda: vent.porRede.extracao ? vent.porRede.extracao.maxPerda : 0, Qnom: vent.porRede.extracao ? vent.porRede.extracao.Qnom : 0 }
         },
+        // «por fazer» (ex.: N por definir) não é conformidade provada: o estado global fica ATENÇÃO (os ecrãs mostram-no a cinzento)
         overall: findings.some(f => f.severidade === 'ERRO') ? 'NÃO CONFORME' : findings.length ? 'ATENÇÃO' : 'CONFORME'
       };
       this.ultimo = resultado;

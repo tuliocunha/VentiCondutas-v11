@@ -27,7 +27,7 @@ P.ICONES = {
 };
 P.FERRAMENTAS.push(['term', 'fa-plus', 'Terminal']);
 P.TECLAS.term = 'D';
-P.DICAS.term = 'Clique dentro de uma sala desenhada para colocar o próximo terminal dessa sala nesse ponto. Sobre um ramal da mesma rede, fica ligado a ele.';
+P.DICAS.term = 'Clique dentro de uma sala desenhada para colocar o próximo terminal dessa sala nesse ponto. Sobre um ramal da mesma rede, fica associado a ele.';
 
 /* coloca o próximo terminal da sala em q */
 P.colocarTerminal = function (q) {
@@ -37,7 +37,7 @@ P.colocarTerminal = function (q) {
   const T = this.terminaisDe(sala);
   if (!T.length) { VC.ui.toast('«' + sala.nome + '» não tem terminais. Os terminais criam-se no passo Terminais (Dimensionamento).'); return null; }
   const livres = T.filter(t => !(t.planta && t.planta.pisoId === p.id)).sort((a, b) => (a.rede === 'insuflacao' ? 0 : 1) - (b.rede === 'insuflacao' ? 0 : 1));
-  if (!livres.length) { VC.ui.toast('Os ' + T.length + ' terminais de «' + sala.nome + '» já estão na planta: arraste-os com Selecionar (V). Para ter mais, mude o número no passo Terminais.'); return null; }
+  if (!livres.length) { VC.ui.toast('Os ' + T.length + ' terminais de «' + sala.nome + '» já estão na planta: arraste-os com Selecionar (V), ou clique de novo com Terminal (D) para criar outro.'); return null; }
   const t = livres[0], antes = this._estado();
   t.planta = { pisoId: p.id, x: Math.round(q[0] * 10) / 10, y: Math.round(q[1] * 10) / 10 };
   this._empilhar('terminal colocado', antes);

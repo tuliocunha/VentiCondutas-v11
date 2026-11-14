@@ -307,7 +307,9 @@ var locais = Array.from(new Set(espacos.map(function(e) { return (e.localizacao 
     } catch (err) { if (VC.debug) VC.debug.erro(err); }
     VC.estado.forcarSync();
     if (VC._passoAtivo === 'requisitos') VC.passos.render('requisitos');
-    var msg = 'Materializa\u00e7\u00e3o: ' + (r.criados || 0) + ' criados';
+    // auditoria C3: dizer quantos terminais existem, não só quantos nasceram agora (a cache devolvia «0 criados»)
+    var existem = (VC.dados.terminais || []).filter(function (t) { return t.definicaoRef; }).length;
+    var msg = 'Terminais: ' + existem + ' existem \u00b7 ' + (r.criados || 0) + ' criados agora';
     if (r.removidos) msg += ' \u00b7 ' + r.removidos + ' removidos';
     if (r.respeitados) msg += ' \u00b7 ' + r.respeitados + ' respeitados';
     VC.ui.toast(msg);

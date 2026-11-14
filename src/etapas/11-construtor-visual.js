@@ -22,13 +22,6 @@ const _corPorRede = (rede) => {
   return t ? t.cor : '#64748b';
 };
 
-/* a rede do slot é a do espaço: a extração de uma casa de banho só aceita um ramal de extração suja (VC.redes) */
-const _aceitaSlot = (slot, ramalRede) => {
-  if (slot.rede === 'insuflacao') return VC.redes.compativeis('insuflacao', ramalRede);
-  if (slot.rede === 'extracao') return VC.redes.compativeis(VC.redes.extracaoDe(slot.espaco), ramalRede);
-  return false;
-};
-
 const _collator = new Intl.Collator('pt-PT', { numeric: true, sensitivity: 'base' });
 
 VC.construtorVisual = {
@@ -267,14 +260,8 @@ VC.construtorVisual = {
     const e = (VC.dados.espacos || []).find(x => String(x.id) === String(espacoId));
     if (!e) return;
     if (VC.snap && VC.snap.capturar) { try { VC.snap.capturar('Associar ' + e.nome + ' (' + rede + ') -> ' + ramalNome); } catch (err) { VC.debug && VC.debug.erro && VC.debug.erro(err); } }
-    if (rede === 'insuflacao') e.ramalRefInsuflacao = ramalNome; else e.ramalRefExtracao = ramalNome;
-    (VC.dados.terminais || []).forEach(t => {
-      const serve = (t.espacos || []).some(x => x.nome === e.nome);
-      if (!serve) return;
-      const ehIns = (t.rede || 'insuflacao') === 'insuflacao';
-      if (ehIns && rede === 'insuflacao') t.ramalRef = ramalNome;
-      if (!ehIns && rede !== 'insuflacao') t.ramalRef = ramalNome;
-    });
+    const res = VC.associacoes.associarEspaco(e, rede, ramalNome);
+    if (!res.ok) { VC.ui.toast(res.erro); return; }
     VC.estado.forcarSync();
     this.render();
     VC.ui.toast(e.nome + ' (' + rede + ') -> ' + ramalNome);
@@ -412,17 +399,8 @@ VC.construtorVisual = {
       let atribuidos = 0, rejeitados = 0;
       arr.itens.forEach(slot => {
         const esp = (VC.dados.espacos || []).find(x => String(x.id) === String(slot.espacoId));
-        if (_aceitaSlot({ rede: slot.rede, espaco: esp || slot.espaco }, ramal.rede)) {
-          if (esp) {
-            if (slot.rede === 'insuflacao') esp.ramalRefInsuflacao = ramalNome; else esp.ramalRefExtracao = ramalNome;
-            (VC.dados.terminais || []).forEach(t => {
-              const serve = (t.espacos || []).some(x => x.nome === esp.nome);
-              if (!serve) return;
-              if (VC.redes.compativeis(t.rede, ramal.rede)) t.ramalRef = ramalNome;
-            });
-            atribuidos++;
-          }
-        } else rejeitados++;
+        if (esp && VC.associacoes.associarEspaco(esp, slot.rede, ramalNome).ok) atribuidos++;
+        else rejeitados++;
       });
       if (atribuidos > 0) {
         if (VC.snap && VC.snap.capturar) { try { VC.snap.capturar(atribuidos + ' slot(s) -> ' + ramalNome); } catch (err) { VC.debug && VC.debug.erro && VC.debug.erro(err); } }
