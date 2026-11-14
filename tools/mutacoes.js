@@ -154,6 +154,14 @@ const CASOS = [
     const o = VC.planta.salaEm; VC.planta.salaEm = function () { return (VC.dados.espacos || []).find(e => e.planta) || null; };
     return () => { VC.planta.salaEm = o; };
   }],
+  ['v11.3 · seta da transferência a meio entre os centros das salas (não na porta)', 'UI.T24', () => {
+    const o = VC.planta.portaEntre; VC.planta.portaEntre = function (A, B) { const a = this.centro(A.planta.pts), b = this.centro(B.planta.pts); return { x: (a[0] + b[0]) / 2, y: (a[1] + b[1]) / 2, ang: Math.atan2(b[1] - a[1], b[0] - a[0]), folga: 0 }; };
+    return () => { VC.planta.portaEntre = o; };
+  }],
+  ['v11.3 · compensar a origem não atualiza os terminais', 'UI.T24', () => {
+    const o = VC6.transferencias._parcelas; VC6.transferencias._parcelas = function () {};
+    return () => { VC6.transferencias._parcelas = o; };
+  }],
   ['E3 · sem aviso de ventilador fora da curva', 'N6.T13', () => {
     const o = VC.uta.calcularPontoFuncionamento;
     VC.uta.calcularPontoFuncionamento = function () { const r = o.apply(this, arguments); if (r) r.foraDaCurva = false; return r; };

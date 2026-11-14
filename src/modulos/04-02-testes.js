@@ -498,6 +498,28 @@ VC6.testes = {
         return Math.abs(L - 1) < 1e-9 && P.comprimentoLigacao({ ramalRef: 'XX', planta: { pisoId: 'pF', x: 1, y: 1 } }) === null;
       } finally { D.plantas = g.pl; D.ramais = g.ram; P.piso = g.piso; }
     } });
+    // transferência na planta: a seta fica na porta (entre as paredes das duas salas) e «Compensar na origem» soma o caudal à insuflação da origem; remover tira-o
+    self.registar({ id: 'UI.T24', nucleo: 'UI', grupo: 'UI', nome: 'Planta: transferência na porta e compensação da origem', criterio: 'salas 0–100 e 110–200: porta em x=105; 40 m³/h compensados → insuflação 100→140 e terminais 50→70; remover → 100 e 50', fn: () => {
+      const P = VC.planta; if (!P || !P.portaEntre || !VC6.transferencias.compensarOrigem) return false;
+      const D = VC.dados, g = { esp: D.espacos, ter: D.terminais, tr: D.transferencias, pl: D.plantas, piso: P.piso, toast: VC.ui.toast, pilha: P._pilha, sync: VC.estado.forcarSync, hist: VC.historico && VC.historico.push, sel: P.trfSel };
+      try {
+        VC.ui.toast = () => {}; VC.estado.forcarSync = () => {}; if (VC.historico) VC.historico.push = () => {}; P._pilha = [];
+        D.plantas = [{ id: 'pR', nome: 'R', w: 500, h: 500, escala: 0.01 }]; P.piso = 'pR'; D.transferencias = [];
+        const A = { id: 81, nome: 'Corredor T', definicoes: [{ id: 'DEF-T-I', rede: 'insuflacao', quantidade: 2, Q_total: 100 }], planta: { pisoId: 'pR', pts: [[0, 0], [100, 0], [100, 100], [0, 100]] } };
+        const B = { id: 82, nome: 'WC T', definicoes: [], planta: { pisoId: 'pR', pts: [[110, 0], [200, 0], [200, 100], [110, 100]] } };
+        D.espacos = [A, B];
+        D.terminais = [1, 2].map(i => ({ id: 'TI' + i, rede: 'insuflacao', Q: 50, espacos: [{ id: 81, nome: 'Corredor T', Q_parcela: 50 }], definicaoRef: { espacoId: 81, definicaoId: 'DEF-T-I' } }));
+        const legado = P.portaEntre(A, B);
+        P.pendenteTrf = { deId: 81, paraId: 82, linha: [[20, 50], [180, 50]] };
+        P.criarTransferencia(40, 'fresta_porta', 2, true);
+        const t = D.transferencias[0];
+        const ok1 = legado.x === 105 && legado.y === 50 && t && t.planta && t.planta.x === 105 && t.planta.y === 50 && Math.abs(t.planta.ang) < 1e-9;
+        const ok2 = A.definicoes[0].Q_total === 140 && D.terminais.every(x => x.Q === 70) && t.compensacao && t.compensacao.Q === 40;
+        P.removerTransferencia(t.id);
+        const ok3 = D.transferencias.length === 0 && A.definicoes[0].Q_total === 100 && D.terminais.every(x => x.Q === 50);
+        return ok1 && ok2 && ok3;
+      } finally { D.espacos = g.esp; D.terminais = g.ter; D.transferencias = g.tr; D.plantas = g.pl; P.piso = g.piso; VC.ui.toast = g.toast; P._pilha = g.pilha; VC.estado.forcarSync = g.sync; if (VC.historico) VC.historico.push = g.hist; P.trfSel = g.sel; P.pendenteTrf = null; }
+    } });
   },
 
   correr() {

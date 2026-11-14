@@ -165,7 +165,7 @@ P._repor = function (s) {
   (VC.dados.plantas || []).forEach(x => { const o = s.pl.find(y => y.id === x.id); if (o) { x.nome = o.nome; x.escala = o.escala; } });
   if (VC.editorEspacos) VC.editorEspacos._cacheOrdenacao = { chave: null, lista: null };
   if (VC.perf) ['cacheFisica', 'cacheMaterializacao', 'ordenacaoTopologica', 'cacheBalanco'].forEach(k => { if (VC.perf[k] && VC.perf[k].invalidar) VC.perf[k].invalidar(); });
-  this.selecionado = null; this.ramalSel = null; this.pendente = null; this.pendenteTrf = null; this.pendenteRamal = null; this.rascunho = []; this.tracado = [];
+  this.selecionado = null; this.ramalSel = null; this.pendente = null; this.pendenteTrf = null; this.trfSel = null; this.pendenteRamal = null; this.rascunho = []; this.tracado = [];
   VC.estado.forcarSync();
   this.redesenhar();
 };

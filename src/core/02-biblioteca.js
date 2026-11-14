@@ -692,8 +692,64 @@ VC6.transferencias = {
     return { ok: true, transferencia: trf };
   },
 
+  /* Compensar na origem: o ar que sai por transferência tem de entrar na
+     origem. Soma Q à primeira definição de insuflação da origem (e às
+     parcelas dos seus terminais) ou, se não houver, cria uma com 1 terminal.
+     Fica registado em trf.compensacao para ser desfeito ao remover. */
+  compensarOrigem(trf) {
+    const espacos = (VC.dados && VC.dados.espacos) || [];
+    const idx = espacos.findIndex(e => e.id === trf.deId), de = espacos[idx];
+    const Q = Number(trf.Q) || 0;
+    if (!de || !(Q > 0) || trf.compensacao) return null;
+    if (!de.definicoes) de.definicoes = [];
+    let def = de.definicoes.find(d => d.rede === 'insuflacao'), criada = false;
+    if (def) {
+      def.Q_total = Math.round(((Number(def.Q_total) || 0) + Q) * 10) / 10;
+      this._parcelas(de, def);
+    } else {
+      if (VC.requisitos && VC.requisitos._recalcNextIdDefinicao) VC.requisitos._recalcNextIdDefinicao();
+      if (!VC.dados.nextId) VC.dados.nextId = {};
+      const n = VC.dados.nextId.definicao || 1; VC.dados.nextId.definicao = n + 1;
+      def = { id: 'DEF-' + n + '-I', tipo: 'Grelha Insuflação', rede: 'insuflacao', quantidade: 1, Q_total: Q, origem: 'Transferência' };
+      de.definicoes.push(def); criada = true;
+      if (VC.calculo && VC.calculo.materializar) VC.calculo.materializar(idx);
+    }
+    trf.compensacao = { defId: def.id, Q, criada };
+    this._invalidar();
+    return trf.compensacao;
+  },
+  descompensar(trf) {
+    const c = trf && trf.compensacao; if (!c) return false;
+    const espacos = (VC.dados && VC.dados.espacos) || [];
+    const idx = espacos.findIndex(e => e.id === trf.deId), de = espacos[idx];
+    delete trf.compensacao;
+    const def = de && (de.definicoes || []).find(d => d.id === c.defId);
+    if (!def) return false;
+    def.Q_total = Math.max(0, Math.round(((Number(def.Q_total) || 0) - c.Q) * 10) / 10);
+    if (c.criada && def.Q_total < 0.5) {
+      de.definicoes = de.definicoes.filter(d => d !== def);
+      if (VC.calculo && VC.calculo.materializar) VC.calculo.materializar(idx);
+    } else this._parcelas(de, def);
+    this._invalidar();
+    return true;
+  },
+  /* terminais materializados de uma definição: parcela = Q_total / quantidade */
+  _parcelas(esp, def) {
+    const q = Math.round((Number(def.Q_total) || 0) / Math.max(1, Number(def.quantidade) || 1) * 10) / 10;
+    ((VC.dados && VC.dados.terminais) || []).forEach(t => {
+      if (!t.definicaoRef || t.definicaoRef.espacoId !== esp.id || t.definicaoRef.definicaoId !== def.id) return;
+      (t.espacos || []).forEach(x => { if (x.nome === esp.nome || String(x.id) === String(esp.id)) x.Q_parcela = q; });
+      t.Q = (t.espacos || []).reduce((s, x) => s + (Number(x.Q_parcela) || 0), 0);
+    });
+  },
+  _invalidar() {
+    if (VC.perf) ['cacheFisica', 'cacheMaterializacao', 'ordenacaoTopologica', 'cacheBalanco'].forEach(k => { if (VC.perf[k] && VC.perf[k].invalidar) VC.perf[k].invalidar(); });
+  },
+
   remover(id) {
     if (!VC.dados.transferencias) return false;
+    const alvo = VC.dados.transferencias.find(t => t.id === id);
+    if (alvo && alvo.compensacao) this.descompensar(alvo);
     const antes = VC.dados.transferencias.length;
     VC.dados.transferencias = VC.dados.transferencias.filter(t => t.id !== id);
     return VC.dados.transferencias.length < antes;
