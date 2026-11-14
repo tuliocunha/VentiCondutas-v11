@@ -39,3 +39,10 @@ editável.
 ## Método da planta (contrato, cenários, gestor de gestos)
 
 Ver [PLANTA-CONTRATO.md](PLANTA-CONTRATO.md) e o resultado da auditoria em [AUDITORIA-PLANTA.md](AUDITORIA-PLANTA.md): vocabulário, modelo de dados, gestos por ferramenta, regras de coerência, cenários C1–C5, desvios conhecidos e o plano em 5 fases.
+
+## Um só histórico (registado 2026-11-15, prioridade alta)
+Hoje há dois históricos: o desfazer da planta (guarda só as diferenças de cada ação e não apaga o que foi feito noutros ecrãs) e o histórico geral da app. Algumas ações entram nos dois, outras só num.
+- Um único histórico para toda a app, com o nome legível de cada ação.
+- Cada ação entra uma só vez, guardando só as diferenças.
+- Ctrl+Z / Ctrl+Y iguais em qualquer ecrã; desfazer nunca apaga o que foi feito noutro ecrã.
+

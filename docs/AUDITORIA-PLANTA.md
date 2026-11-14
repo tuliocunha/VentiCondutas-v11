@@ -183,6 +183,9 @@ Validação: teste UI.T33 com casos calculados à mão; mutação «Arquivo volt
 ## PR 5 · Valores de boa prática (decisão do autor)
 Cozinha (12/h), vestiário (8/h) e garagem (6/h) não constam da Tabela 13. Os valores ficam como **boa prática**, e a app **alerta** («Caudal de boa prática por confirmar») até o projetista os confirmar no cartão da sala (botão «Confirmo este caudal», que se pode anular e desfazer). A garagem mantém também a verificação do RT-SCIE. Teste UI.T35.
 
+## Por fazer (registado pelo autor)
+- **Um só histórico** (D3/V8): unir o desfazer da planta e o histórico geral num único histórico, com Ctrl+Z / Ctrl+Y iguais em todos os ecrãs. Registado também em Sistema › Funções planeadas e em docs/PLANEAMENTO.md.
+
 ## PR 6 · Gestos coerentes (plano da planta)
 | Falha | Correção |
 |---|---|
@@ -194,4 +197,12 @@ Cozinha (12/h), vestiário (8/h) e garagem (6/h) não constam da Tabela 13. Os v
 | C6 | Depois de criar um ramal, a ferramenta Ramal mantém-se. |
 
 Validação: teste UI.T36 e mutação (D5); cenário só com teclado e rato reais. **Fica para depois:** um só histórico (o desfazer da planta e o histórico geral ainda são dois, V8/D3) e a substituição das escutas de rato espalhadas por um gestor único (refactor interno, sem mudança de comportamento).
+
+## PR 7 · Avisos no próprio desenho (plano da planta)
+| Falha | Correção |
+|---|---|
+| P6 / C9 | Os avisos da verificação aparecem no objeto: marca no canto da sala (vermelho = erro, âmbar = atenção, cinzento = por fazer) com o número; contorno tracejado no ramal; anel no terminal. O cartão do objeto selecionado lista os seus avisos enquanto persistirem. As marcas não intercetam o rato. |
+| B5 | Espaço ainda sem terminais deixa de ser ERRO e passa a «Terminais por criar» (por fazer, cinzento); o botão «Resolver» leva à Definição de Terminais. |
+
+Validação: teste UI.T37 e mutação («avisos só na Entrega»); cenário real (duas salas sem terminais → marcas cinzentas; sala selecionada → cartão com os 2 avisos).
 

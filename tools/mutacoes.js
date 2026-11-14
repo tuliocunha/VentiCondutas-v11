@@ -215,6 +215,10 @@ const CASOS = [
     const P = VC.planta, o = P.escolherFerramenta; P.escolherFerramenta = function (f) { this.setFerramenta(f); return true; };
     return () => { P.escolherFerramenta = o; };
   }],
+  ['Avisos só na Entrega (nada no desenho)', 'UI.T37', () => {
+    const P = VC.planta, o = P.avisosPorElemento; P.avisosPorElemento = () => new Map();
+    return () => { P.avisosPorElemento = o; };
+  }],
   ['E3 · sem aviso de ventilador fora da curva', 'N6.T13', () => {
     const o = VC.uta.calcularPontoFuncionamento;
     VC.uta.calcularPontoFuncionamento = function () { const r = o.apply(this, arguments); if (r) r.foraDaCurva = false; return r; };

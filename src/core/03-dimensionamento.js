@@ -732,7 +732,8 @@ VC.calculo = {
       });
       VC.dados.espacos.forEach(e => {
         const b = this.balancoEspaco(e.nome);
-        if (b.estado === 'ORFAO') findings.push({ severidade: 'ERRO', tipo: 'Balanço terminal ↔ espaço', elemento: e.nome, msg: '0 terminais para Q_espaco=' + VC.utils.fmt(b.Q_nec, 0) + ' m³/h' });
+        // auditoria B5: um espaço ainda sem terminais é trabalho por fazer (cinzento), não um erro (vermelho) a meio do projeto
+        if (b.estado === 'ORFAO') findings.push({ severidade: 'POR FAZER', tipo: 'Terminais por criar', elemento: e.nome, msg: '0 terminais para Q_espaco=' + VC.utils.fmt(b.Q_nec, 0) + ' m³/h: crie-os no passo Definição de Terminais ou na planta (Terminal, D)' });
         else if (b.estado === 'SUB') findings.push({ severidade: 'ATENÇÃO', tipo: 'Balanço terminal ↔ espaço', elemento: e.nome, msg: 'Sub-servido — ' + VC.utils.fmt(b.Q_servido, 0) + ' / ' + VC.utils.fmt(b.Q_nec, 0) + ' m³/h' });
         else if (b.estado === 'SOBRE') findings.push({ severidade: 'ATENÇÃO', tipo: 'Balanço terminal ↔ espaço', elemento: e.nome, msg: 'Sobre-servido — ' + VC.utils.fmt(b.Q_servido, 0) + ' / ' + VC.utils.fmt(b.Q_nec, 0) + ' m³/h' });
       });

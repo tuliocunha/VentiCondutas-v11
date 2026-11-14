@@ -759,6 +759,27 @@ VC6.testes = {
         return ok1 && ok2 && ok3 && ok4 && ok5 && ok6;
       } finally { Object.assign(D, { espacos: g.esp, transferencias: g.tr, terminais: g.ter }); P.redesenhar = g.red; VC.ui.toast = g.toast; P.ferramenta = g.f; P._pilha = g.pilha; VC.estado.forcarSync = g.sync; if (VC.historico) VC.historico.push = g.hist; P.rascunho = []; P.pendente = null; P.limparSelecao(); }
     } });
+    // contrato P6 / secção 8: o aviso aparece no objeto (sala, ramal, terminal) e no cartão do selecionado; B5: sem terminais = por fazer
+    self.registar({ id: 'UI.T37', nucleo: 'UI', grupo: 'UI', nome: 'Planta: avisos no próprio desenho', criterio: 'sala com ERRO → marca vermelha com o n.º; ramal com ATENÇÃO → contorno âmbar; terminal → anel; sala selecionada → cartão com os avisos; espaço sem terminais → POR FAZER (não ERRO)', fn: () => {
+      const P = VC.planta; if (!P || !P.avisosPorElemento) return false;
+      const D = VC.dados, g = { esp: D.espacos, ter: D.terminais, ram: D.ramais, pl: D.plantas, piso: P.piso, ult: VC.calculo.ultimo, sel: P.selecionado, tr: D.transferencias };
+      try {
+        D.plantas = [{ id: 'pA', nome: 'A', w: 500, h: 500, escala: 0.01, imagem: '' }]; P.piso = 'pA';
+        D.espacos = [{ id: 1, nome: 'Sala A', tipo: 'Escritório', planta: { pisoId: 'pA', pts: [[0, 0], [100, 0], [100, 100], [0, 100]] } }];
+        D.ramais = [{ id: 2, nome: 'R9', rede: 'insuflacao', planta: { pisoId: 'pA', pts: [[0, 200], [200, 200]] } }];
+        D.terminais = [{ id: 'T9', nome: 'T9', rede: 'insuflacao', espacos: [{ id: 1, nome: 'Sala A' }], planta: { pisoId: 'pA', x: 50, y: 50 } }]; D.transferencias = [];
+        VC.calculo.ultimo = { findings: [{ severidade: 'ERRO', tipo: 'X', elemento: 'Sala A', msg: 'm1' }, { severidade: 'POR FAZER', tipo: 'Y', elemento: 'Sala A', msg: 'm2' }, { severidade: 'ATENÇÃO', tipo: 'Z', elemento: 'R9', msg: 'm3' }, { severidade: 'ERRO', tipo: 'Terminal sem ramal', elemento: 'T9', msg: 'm4' }] };
+        const svg = P._svg(D.plantas[0]);
+        const ok1 = /planta-aviso-sala" data-esp="1" data-sev="erro"[\s\S]*?>2<\/text>/.test(svg) && /planta-aviso-ramal" data-r="2"[^>]*stroke="#b7791f"/.test(svg) && /planta-aviso-term" data-t="T9"/.test(svg);
+        P.selecionado = 1; const h = P._cartaoAvisos('Sala A', P.avisosPorElemento().get('Sala A'));
+        const ok2 = /Avisos de «Sala A» \(2\)/.test(h) && h.indexOf('badge erro') < h.indexOf('badge porfazer');
+        // B5
+        D.espacos = [{ id: 3, nome: 'Of', tipo: 'Escritório', A: 20, H: 3, V: 60, N: 2, geometriaMetodo: 'AH', definicoes: [] }]; D.terminais = []; D.ramais = [];
+        const f = (VC.calculo.calcularTudo().findings || []).filter(x => x.elemento === 'Of' && /terminais|Balanço terminal/i.test(x.tipo));
+        const ok3 = f.length === 1 && f[0].severidade === 'POR FAZER' && f[0].tipo === 'Terminais por criar';
+        return ok1 && ok2 && ok3;
+      } finally { Object.assign(D, { espacos: g.esp, terminais: g.ter, ramais: g.ram, plantas: g.pl, transferencias: g.tr }); P.piso = g.piso; P.selecionado = g.sel; VC.calculo.calcularTudo(); }
+    } });
   },
 
   correr() {
