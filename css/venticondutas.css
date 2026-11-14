@@ -493,3 +493,15 @@ html, body, .app { height: 100vh !important; overflow: hidden !important; margin
 .tabela td input.ramal-nome{font-weight:800;min-width:9ch}
 
 .planta-palco[data-ferr="term"] > svg{cursor:copy}
+/* Sistema › Funções planeadas (24-planeamento.js) */
+.planeamento{display:flex;flex-direction:column;gap:12px}
+.plan-intro{margin:0;font-size:13.5px;color:#475569}
+.plan-item{border:1px solid var(--borda);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.plan-item p,.plan-item ol{margin:0;font-size:13.5px;line-height:1.55}
+.plan-item ol{padding-left:20px}
+.plan-cab{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.plan-cab b{font-size:14.5px}
+.plan-tags{display:flex;gap:6px;flex-shrink:0}
+.plan-tags span{font-size:12px;font-weight:700;padding:2px 8px;border-radius:999px;background:var(--superf3);color:#475569}
+.plan-tags .plan-alta{background:#fbecc8;color:#7a5a1e}
+.plan-hoje{background:#eef6f0;border-radius:8px;padding:6px 10px;color:#2f5a3c}

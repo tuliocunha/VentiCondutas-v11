@@ -52,6 +52,14 @@ P.ligarTerminalAoRamal = function (idT) {
   return ligou;
 };
 
+/* comprimento (m) da ligação entre o terminal e o ramal desenhado a que está ligado; null se não houver */
+P.comprimentoLigacao = function (t) {
+  const p = this.pisoAtual(); if (!t || !t.planta || !p || !p.escala || t.planta.pisoId !== p.id) return null;
+  const r = (this.ramaisDoPiso ? this.ramaisDoPiso(p) : []).find(x => x.nome === t.ramalRef); if (!r) return null;
+  let d = Infinity; for (let i = 1; i < r.planta.pts.length; i++) d = Math.min(d, this._distSeg([t.planta.x, t.planta.y], r.planta.pts[i - 1], r.planta.pts[i])[0]);
+  return d * p.escala;
+};
+
 /* ── renomear ramal no cartão ────────────── */
 P.renomearRamalPlanta = function (id, novo) {
   const r = (VC.dados.ramais || []).find(x => String(x.id) === String(id)); if (!r || this._bloqueado()) return;
@@ -185,7 +193,12 @@ P._ligarExtras = function (palco) {
     const g = ev.target.closest && ev.target.closest('.planta-term');
     if (g) {
       const t = (VC.dados.terminais || []).find(x => String(x.id) === String(g.dataset.t));
-      if (t) out.textContent = (t.nome || t.id) + ' · ' + fmt(t.Q) + ' m³/h · ramal ' + (t.ramalRef || '—') + (this.ferramenta === 'sel' ? ' — arraste para mover; largue sobre um ramal para o ligar' : ' — use Selecionar (V) para o mover');
+      if (t) {
+        const lig = this.comprimentoLigacao ? this.comprimentoLigacao(t) : null;
+        out.textContent = (t.nome || t.id) + ' · ' + fmt(t.Q) + ' m³/h · ramal ' + (t.ramalRef || '—')
+          + (lig != null && lig > 0.05 ? ' · ligação ' + VC.utils.fmt(lig, 2) + ' m' + (lig > 0.5 ? ' (não entra no L — ligações flexíveis: ver Sistema › Funções planeadas)' : '') : '')
+          + (this.ferramenta === 'sel' ? ' — arraste para mover; largue sobre um ramal para o ligar' : ' — use Selecionar (V) para o mover');
+      }
     } else if (ev.target.closest && ev.target.closest('.planta-sala')) {
       if (this.ROTULO_FERR.indexOf(this.ferramenta) >= 0 && ev.target.closest('.planta-rotulo')) out.textContent = 'Arraste o nome para o mover; duplo clique repõe-no no centro';
       else if (this.ROTULO_FERR.indexOf(this.ferramenta) < 0 && this.ferramenta !== 'mao' && !(this.rascunho.length || (this.tracado && this.tracado.length))) out.textContent = 'Para mover o nome da sala, prima V (Selecionar) ou R (Retângulo)';
