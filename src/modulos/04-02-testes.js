@@ -718,6 +718,20 @@ VC6.testes = {
         return ok1 && ok2 && ok3 && ok4 && ok5 && ok6 && ok7 && ok8;
       } finally { D.espacos = g.esp; D.transferencias = g.tr; VC.calculo.calcularTudo(); }
     } });
+    // valores de boa prática (G4 fora da Tabela 13): alerta até o projetista confirmar; a Tabela 13 e as sanitárias não alertam
+    self.registar({ id: 'UI.T35', nucleo: 'UI', grupo: 'UI', nome: 'Caudal de boa prática por confirmar', criterio: 'cozinha, vestiário e garagem → ATENÇÃO; confirmada → sem alerta; copa (Tabela 13) e sanitários → sem alerta', fn: () => {
+      const D = VC.dados, g = { esp: D.espacos, tr: D.transferencias };
+      try {
+        D.transferencias = [];
+        const mk = (id, tipo) => ({ id, nome: tipo + id, tipo, A: 10, H: 3, V: 30, geometriaMetodo: 'AH', definicoes: [] });
+        D.espacos = [mk(1, 'Cozinha'), mk(2, 'Vestiário'), mk(3, 'Garagem'), mk(4, 'Copa'), mk(5, 'Sanitários')];
+        const alertas = () => (VC.calculo.calcularTudo().findings || []).filter(f => f.tipo === 'Caudal de boa prática por confirmar').map(f => f.elemento).sort().join();
+        const ok1 = alertas() === 'Cozinha1,Garagem3,Vestiário2';
+        D.espacos[0].boaPraticaConfirmada = true;
+        const ok2 = alertas() === 'Garagem3,Vestiário2';
+        return ok1 && ok2;
+      } finally { D.espacos = g.esp; D.transferencias = g.tr; VC.calculo.calcularTudo(); }
+    } });
   },
 
   correr() {

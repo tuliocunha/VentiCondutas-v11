@@ -718,6 +718,13 @@ VC.calculo = {
         if (!e.regimeSanitario) findings.push({ severidade: 'POR FAZER', tipo: 'Regime da instalação sanitária por definir', elemento: e.nome, msg: 'Escolha o regime da Tabela 13 (privada contínua, privada não contínua ou pública). Até lá, calcula-se como privada com funcionamento contínuo: Máx(45; 10 × A)' });
         else if (/^publico/.test(e.regimeSanitario) && !nAp) findings.push({ severidade: 'POR FAZER', tipo: 'Aparelhos sanitários por definir', elemento: e.nome, msg: 'Instalação pública: indique o n.º de urinóis, sanitas e duches (Tabela 13: 90 m³/h por aparelho). Até lá conta só 10 × A' });
       });
+      // caudal por boa prática (G4 fora da Tabela 13: cozinha, vestiário, garagem): alerta até o projetista o confirmar
+      VC.dados.espacos.forEach(e => {
+        if (this.grupoDe(e) !== 4 || /^(Sanitários|Balneários)$/.test(e.tipo) || e.boaPraticaConfirmada) return;
+        const def = VC.normas.getDef(e.tipo) || {};
+        if (def.t13 || !(Number(def.ach) > 0)) return;
+        findings.push({ severidade: 'ATENÇÃO', tipo: 'Caudal de boa prática por confirmar', elemento: e.nome, msg: e.tipo + ': ' + def.ach + ' renovações/hora é boa prática de projeto, não consta da Tabela 13 da Portaria 138-I. Confirme o valor (ou aplique a norma específica) no cartão da sala.' });
+      });
       // N por definir: aviso cinzento «por fazer» (não é erro; o caudal fica só por T12 × A)
       VC.dados.espacos.forEach(e => {
         const c = this.calcularQEspaco(e);

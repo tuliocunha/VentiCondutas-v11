@@ -127,6 +127,23 @@ P._cartaoSanitaria = function (e) {
     + (pub ? '<div class="planta-dir">' + num('numSanitas', 'Sanitas') + num('numUrinois', 'Urinóis') + num('numDuches', 'Duches') + '</div>' : '')
     + '<p class="' + (e.regimeSanitario ? 'planta-meta' : 'planta-porfazer') + '">Extração: <b>' + fmt(c.Q_extracao) + ' m³/h</b> · ' + esc(c.metodoCaudal || '') + (e.regimeSanitario ? '' : ' (regime por definir: calculado como privada contínua)') + '</p>';
 };
+/* caudal por boa prática (fora da Tabela 13): o projetista confirma-o; desfaz-se como qualquer ação */
+P._cartaoBoaPratica = function (e) {
+  const def = VC.normas.getDef(e.tipo) || {};
+  if (VC.calculo.grupoDe(e) !== 4 || /^(Sanitários|Balneários)$/.test(e.tipo) || def.t13 || !(Number(def.ach) > 0)) return '';
+  const c = VC.calculo.calcularQEspaco(e);
+  if (e.boaPraticaConfirmada) return '<p class="planta-meta">Extração ' + fmt(c.Q_extracao) + ' m³/h (' + def.ach + ' renovações/hora, boa prática) · confirmada pelo projetista. <button class="btn btn-mini" onclick="VC.planta.confirmarBoaPratica(' + e.id + ', false)">Anular</button></p>';
+  return '<p class="planta-aviso">Extração ' + fmt(c.Q_extracao) + ' m³/h = ' + def.ach + ' renovações/hora: <b>boa prática de projeto</b>, não consta da Tabela 13 da Portaria 138-I.</p>'
+    + '<div class="planta-acoes"><button class="btn" onclick="VC.planta.confirmarBoaPratica(' + e.id + ', true)">Confirmo este caudal</button></div>';
+};
+P.confirmarBoaPratica = function (id, sim) {
+  const e = espPorId(id); if (!e || this._bloqueado()) return;
+  const antes = this._estado();
+  if (sim) e.boaPraticaConfirmada = true; else delete e.boaPraticaConfirmada;
+  this._empilhar((sim ? 'caudal de boa prática confirmado' : 'confirmação anulada') + ' em «' + e.nome + '»', antes);
+  VC.estado.forcarSync();
+  this.redesenhar();
+};
 /* garagem: n.º de lugares para a verificação do RT-SCIE (não muda o caudal calculado) */
 P.definirLugares = function (id, valor) {
   const e = espPorId(id); if (!e || this._bloqueado()) return;

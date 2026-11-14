@@ -207,6 +207,10 @@ const CASOS = [
     const c = VC.conhecimento.tabelas.T13.sanitarios.publico_normal, o = c.min; c.min = 45;
     return () => { c.min = o; };
   }],
+  ['Confirmação do projetista ignorada (alerta de boa prática nunca sai)', 'UI.T35', () => {
+    const o = VC.calculo.grupoDe; VC.calculo.grupoDe = function (e) { const g = o.call(this, e); if (e && e.boaPraticaConfirmada) { delete e.boaPraticaConfirmada; e._mut = 1; } return g; };
+    return () => { VC.calculo.grupoDe = o; };
+  }],
   ['E3 · sem aviso de ventilador fora da curva', 'N6.T13', () => {
     const o = VC.uta.calcularPontoFuncionamento;
     VC.uta.calcularPontoFuncionamento = function () { const r = o.apply(this, arguments); if (r) r.foraDaCurva = false; return r; };
