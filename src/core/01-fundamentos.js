@@ -897,7 +897,7 @@ VC.normas = {
     const d = VC.conhecimento.tiposEspaco[tipo] || { g: 1, gn: 'Ocupação Permanente', rp: brp, ra: bra, t11: 24, t12: 3, ach: 6, desc: 'Fallback' };
     let rp = d.rp, ra = d.ra;
     if (d.g === 1) { if (rp === 7) rp = brp; if (ra === 0.7) ra = bra; }
-    return { g: d.g, gn: d.gn, rp, ra, t11: d.t11, t12: d.t12, ach: d.ach, desc: d.desc, semArCedido: !!d.semArCedido };   // semArCedido: Portaria 138-I, Anexo II, 1.2.2 f)
+    return { g: d.g, gn: d.gn, rp, ra, t11: d.t11, t12: d.t12, ach: d.ach, desc: d.desc, semArCedido: !!d.semArCedido, t13: !!d.t13 };   // semArCedido: Portaria 138-I, Anexo II, 1.2.2 f)
   },
   // v11.1: limites do Reg. (UE) 1253/2014 (Ecodesign) por tipo de unidade de ventilação.
   // qnom em m³/s; etaRec = eficiência térmica do recuperador (0–1).
@@ -983,8 +983,9 @@ VC.normas = {
   calcExtracaoSanitaria(esp) {
     const A = Number(esp.A) || 0;
     // projetos antigos com «publico_intensivo» (não existe na Tabela 13) passam à linha pública da norma
-    const regime = esp.regimeSanitario === 'publico_intensivo' ? 'publico_normal' : (esp.regimeSanitario || 'privado_continuo');
-    const nAp = (Number(esp.numUrinois) || 0) + (Number(esp.numSanitas) || 0) + (Number(esp.numDuches) || 0);
+    // Balneário tem linha própria na Tabela 13 (só duches, sem regime)
+    const regime = esp.tipo === 'Balneários' ? 'balneario' : (esp.regimeSanitario === 'publico_intensivo' ? 'publico_normal' : (esp.regimeSanitario || 'privado_continuo'));
+    const nAp = regime === 'balneario' ? (Number(esp.numDuches) || 0) : (Number(esp.numUrinois) || 0) + (Number(esp.numSanitas) || 0) + (Number(esp.numDuches) || 0);
     const cfg = VC.conhecimento.tabelas.T13.sanitarios[regime] || VC.conhecimento.tabelas.T13.sanitarios.privado_continuo;
     const q = Math.max(cfg.base, cfg.porAparelho * nAp, cfg.porArea * A, cfg.min);
     const metodo = 'P138 Tabela 13 · ' + (cfg.nome || regime.replace(/_/g, ' '));

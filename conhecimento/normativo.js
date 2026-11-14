@@ -65,7 +65,7 @@ VC._normativo = {
     { id: 'P1', texto: 'Em cada espaço: Σ Q_in = Σ Q_out (tolerância ±5 m³/h)', norma: 'Balanço de massa' },
     { id: 'P2', texto: 'G2 (Circulação, Escadas): isentos de renovação mas podem transferir. Exceção: arrecadação (Arrumo) tem extração e não cede ar transferido', norma: 'Portaria 138-I/2021 (Anexo II, 1.2.2 f)' },
     { id: 'P3', texto: 'G3 (Arquivo): mínimo por diluição basal (T12) ou ACH ≥ 2', norma: 'Portaria 138-I/2021' },
-    { id: 'P4', texto: 'G4 (Sanitários, Cozinha, Garagem): extração dedicada, entram por transferência. Caudal: instalações sanitárias pela Tabela 13; cozinha, garagem e vestiário por renovações/hora (boa prática, não constam da Tabela 13)', norma: 'Portaria 138-I (Tabela 13; Anexo II, 1.2.2 h)' },
+    { id: 'P4', texto: 'G4 (Sanitários, Cozinha, Garagem): extração dedicada, entram por transferência. Caudal pela Tabela 13: instalações sanitárias, balneário (duches), copa, resíduos e cópias/impressão (10/h); cozinha, garagem e vestiário por renovações/hora de boa prática (não constam da Tabela 13)', norma: 'Portaria 138-I (Tabela 13; Anexo II, 1.2.2 h)' },
     { id: 'P5', texto: 'Escadas pressurizadas: ΔP ≥ 50 Pa em caso de incêndio', norma: 'Portaria 1532/2008' },
     { id: 'P6', texto: 'RPH de conforto aplicável a todos os grupos (G1-G4): Q_ConTerm = RPH × V', norma: 'F-RPH · EN 16798-1 · ASHRAE 55' },
     { id: 'P7', texto: 'QAI_projeto: caudal adicional definido pelo engenheiro, auditável com motivo', norma: 'V8.0.1 · Boas práticas' },
@@ -118,14 +118,18 @@ VC._normativo = {
     'Balneários':          { g:4, gn:'Extração Dedicada', rp:0, ra:0, t11:0, t12:0, ach:8,  desc:'G4 · Balneários' },
     'Vestiário':           { g:4, gn:'Extração Dedicada', rp:0, ra:0, t11:0, t12:0, ach:8,  desc:'G4 · Vestiário' },
     'Cozinha':             { g:4, gn:'Extração Dedicada', rp:0, ra:0, t11:0, t12:0, ach:12, desc:'G4 · Cozinha' },
-    'Garagem':             { g:4, gn:'Extração Dedicada', rp:0, ra:0, t11:0, t12:0, ach:6,  desc:'G4 · Garagem' }
+    'Garagem':             { g:4, gn:'Extração Dedicada', rp:0, ra:0, t11:0, t12:0, ach:6,  desc:'G4 · Garagem' },
+    // Portaria 138-I, Tabela 13: «Copa», «Armazenamento de resíduos» e «Salas de cópias/impressão» — 10 renovações/hora
+    'Copa':                { g:4, gn:'Extração Dedicada', rp:0, ra:0, t11:0, t12:0, ach:10, desc:'G4 · Copa (Tabela 13: 10 renovações/hora)', t13: true },
+    'Armazenamento de resíduos': { g:4, gn:'Extração Dedicada', rp:0, ra:0, t11:0, t12:0, ach:10, desc:'G4 · Resíduos (Tabela 13: 10 renovações/hora)', t13: true },
+    'Sala de cópias/impressão': { g:4, gn:'Extração Dedicada', rp:0, ra:0, t11:0, t12:0, ach:10, desc:'G4 · Cópias/impressão (Tabela 13: 10 renovações/hora)', t13: true }
   },
 
   categoriasPorGrupo: {
     1: ['Sono','Descanso','Retalho seco','Loja','Escritório','Gabinete','Receção','Auditório','Sala de reuniões','Serviços','Restauração','Laboratório','Sala de aula','Jardim de infância','Ginásio','Recinto desportivo','Cinema','Teatro','Consulta','Internamento','Sala de espera','Biblioteca','Museu','Sala de convívio','Sala de operações','Sala de recuperação'],
     2: ['Circulação','Escadas','Arrumo'],
     3: ['Arquivo','Sala técnica'],
-    4: ['Sanitários','Balneários','Vestiário','Cozinha','Garagem']
+    4: ['Sanitários','Balneários','Vestiário','Cozinha','Garagem','Copa','Armazenamento de resíduos','Sala de cópias/impressão']
   },
 
   rphDefault: {
@@ -170,12 +174,15 @@ VC._normativo = {
     // Portaria 138-I/2021, Anexo II, Tabela 13 (texto confirmado pelo autor):
     //   privada, com funcionamento contínuo: Máx(45; 10 × A_pav) · privada, sem funcionamento contínuo: Máx(90; 10 × A_pav)
     //   pública, funcionamento normal: Máx(90 × (n.º urinóis + n.º sanitas + n.º duches); 10 × A_pav)
-    // A Tabela 13 só tem estas três linhas (confirmado pelo autor). O antigo «publico_intensivo» (125/aparelho) não vem da norma: foi retirado.
+    // Tabela 13 completa (texto fornecido pelo autor): estas linhas + Balneário Máx(90 × duches; 10 × A_pav) + Copa,
+    // Armazenamento de resíduos e Salas de cópias/impressão a 10 renovações/hora (tipos com t13: true).
+    // O antigo «publico_intensivo» (125/aparelho) não vem da norma: foi retirado.
     T13: {
       sanitarios: {
         privado_continuo:      { base: 45,  porAparelho: 0,   porArea: 10, min: 45, nome: 'Privada · com funcionamento contínuo' },
         privado_nao_continuo:  { base: 90,  porAparelho: 0,   porArea: 10, min: 90, nome: 'Privada · sem funcionamento contínuo' },
-        publico_normal:        { base: 0,   porAparelho: 90,  porArea: 10, min: 0, nome: 'Pública · funcionamento normal' }
+        publico_normal:        { base: 0,   porAparelho: 90,  porArea: 10, min: 0, nome: 'Pública' },
+        balneario:             { base: 0,   porAparelho: 90,  porArea: 10, min: 0, nome: 'Balneário', soDuches: true }
       }
     },
     // Reg. (UE) 1253/2014 (Ecodesign), Anexo III, requisitos desde 01-01-2018.

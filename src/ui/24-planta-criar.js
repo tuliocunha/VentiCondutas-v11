@@ -117,9 +117,13 @@ P.definirSanitaria = function (id, campo, valor) {
 };
 P._cartaoSanitaria = function (e) {
   const T = VC.conhecimento.tabelas.T13.sanitarios, c = VC.calculo.calcularQEspaco(e), pub = /^publico/.test(e.regimeSanitario || '');
+  if (e.tipo === 'Balneários') {   // linha própria da Tabela 13: só duches
+    return '<div class="planta-renomear"><label for="plantaDuches">Duches <small>Tabela 13: Máx(90 × duches; 10 × A)</small></label><input id="plantaDuches" type="number" min="0" step="1" value="' + (Number(e.numDuches) > 0 ? e.numDuches : '') + '" placeholder="por definir" onchange="VC.planta.definirSanitaria(' + e.id + ', \'numDuches\', this.value)"></div>'
+      + '<p class="' + (Number(e.numDuches) > 0 ? 'planta-meta' : 'planta-porfazer') + '">Extração: <b>' + fmt(c.Q_extracao) + ' m³/h</b> · ' + esc(c.metodoCaudal || '') + '</p>';
+  }
   const num = (campo, rot) => '<label>' + rot + ' <input type="number" min="0" step="1" style="width:60px" value="' + (Number(e[campo]) > 0 ? e[campo] : '') + '" onchange="VC.planta.definirSanitaria(' + e.id + ', \'' + campo + '\', this.value)"></label>';
   return '<div class="planta-renomear"><label for="plantaRegime">Tabela 13 (Portaria 138-I) · regime</label><select id="plantaRegime" onchange="VC.planta.definirSanitaria(' + e.id + ', \'regimeSanitario\', this.value)">'
-    + '<option value="">— por definir —</option>' + Object.keys(T).map(k => '<option value="' + k + '"' + (e.regimeSanitario === k ? ' selected' : '') + '>' + esc(T[k].nome || k) + '</option>').join('') + '</select></div>'
+    + '<option value="">— por definir —</option>' + Object.keys(T).filter(k => !T[k].soDuches).map(k => '<option value="' + k + '"' + (e.regimeSanitario === k ? ' selected' : '') + '>' + esc(T[k].nome || k) + '</option>').join('') + '</select></div>'
     + (pub ? '<div class="planta-dir">' + num('numSanitas', 'Sanitas') + num('numUrinois', 'Urinóis') + num('numDuches', 'Duches') + '</div>' : '')
     + '<p class="' + (e.regimeSanitario ? 'planta-meta' : 'planta-porfazer') + '">Extração: <b>' + fmt(c.Q_extracao) + ' m³/h</b> · ' + esc(c.metodoCaudal || '') + (e.regimeSanitario ? '' : ' (regime por definir: calculado como privada contínua)') + '</p>';
 };

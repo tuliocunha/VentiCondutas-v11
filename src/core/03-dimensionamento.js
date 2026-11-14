@@ -133,7 +133,7 @@ VC.calculo = {
       if (esp.tipo === 'Sanitários' || esp.tipo === 'Balneários') {
         const xs = VC.normas.calcExtracaoSanitaria(Object.assign({}, esp, { A, H, V }));
         Q_extracao = xs.qExtracao; metodoCaudal = xs.metodo;
-      } else { Q_extracao = V * def.ach; metodoCaudal = 'ACH ' + def.ach + ' (boa prática; não consta da Tabela 13)'; }
+      } else { Q_extracao = V * def.ach; metodoCaudal = def.t13 ? 'P138 Tabela 13 · ' + def.ach + ' renovações/hora' : 'ACH ' + def.ach + ' (boa prática; não consta da Tabela 13)'; }
     } else if (g === 2 || isento) {
       Q_renov = 0; Q_extracao = 0; metodoCaudal = 'Isento (Portaria 138-I)';
     } else if (g === 3) {
@@ -712,7 +712,8 @@ VC.calculo = {
 
       // instalações sanitárias: regime da Tabela 13 e aparelhos (pública) por definir → «por fazer»
       VC.dados.espacos.forEach(e => {
-        if (e.tipo !== 'Sanitários' && e.tipo !== 'Balneários') return;
+        if (e.tipo === 'Balneários') { if (!(Number(e.numDuches) > 0)) findings.push({ severidade: 'POR FAZER', tipo: 'Duches do balneário por definir', elemento: e.nome, msg: 'Indique o n.º de duches (Tabela 13: Máx(90 × duches; 10 × A)). Até lá conta só 10 × A' }); return; }
+        if (e.tipo !== 'Sanitários') return;
         const nAp = (Number(e.numUrinois) || 0) + (Number(e.numSanitas) || 0) + (Number(e.numDuches) || 0);
         if (!e.regimeSanitario) findings.push({ severidade: 'POR FAZER', tipo: 'Regime da instalação sanitária por definir', elemento: e.nome, msg: 'Escolha o regime da Tabela 13 (privada contínua, privada não contínua ou pública). Até lá, calcula-se como privada com funcionamento contínuo: Máx(45; 10 × A)' });
         else if (/^publico/.test(e.regimeSanitario) && !nAp) findings.push({ severidade: 'POR FAZER', tipo: 'Aparelhos sanitários por definir', elemento: e.nome, msg: 'Instalação pública: indique o n.º de urinóis, sanitas e duches (Tabela 13: 90 m³/h por aparelho). Até lá conta só 10 × A' });

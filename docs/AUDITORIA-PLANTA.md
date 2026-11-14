@@ -163,18 +163,19 @@ Aplicado aos exemplos (que não são referência): o **degrade-2** tem 3 espaço
 
 Validação: teste UI.T33 com casos calculados à mão; mutação «Arquivo volta a ser isento».
 
-### Tabela 13 (texto fornecido pelo autor: 3 primeiras linhas)
-| Linha | Portaria | App antes | App agora |
+### Tabela 13 completa (texto fornecido pelo autor) — checagem final
+
+| Linha | Portaria 138-I | App antes | App agora |
 |---|---|---|---|
-| Privada, com funcionamento contínuo | Máx(45; 10 × A) | igual | igual |
-| Privada, sem funcionamento contínuo | Máx(90; 10 × A) | igual | igual |
-| Pública, funcionamento normal | Máx(90 × (urinóis + sanitas + duches); 10 × A) | com um mínimo de 45 a mais | igual à norma |
+| Instalação sanitária privada, funcionamento contínuo | Máx(45; 10 × A) | igual | igual |
+| Instalação sanitária privada, sem funcionamento contínuo | Máx(90; 10 × A) | igual | igual |
+| Instalação sanitária pública | Máx[90 × (urinóis + sanitas + duches); 10 × A] | com um mínimo de 45 a mais; regime «intensivo» 125/aparelho inventado | igual à norma; «intensivo» retirado (projetos antigos passam à pública) |
+| Balneário | Máx(90 × duches; 10 × A) | tratado como sanitária privada contínua | linha própria (só duches); sem duches → «por fazer» |
+| Copa | 10 renovações/hora | não existia (copas como «Cozinha», 12/h) | novo tipo G4 |
+| Armazenamento de resíduos | 10 renovações/hora | não existia | novo tipo G4 |
+| Salas de cópias/impressão | 10 renovações/hora | não existia | novo tipo G4 |
 
-- O regime e os aparelhos não se podiam indicar em nenhum ecrã: todas as instalações sanitárias eram «privada contínua». Agora escolhem-se no cartão da sala na planta; sem regime → «por fazer»; pública sem aparelhos → «por fazer».
-- **Balneários** = instalação sanitária (os duches contam na mesma linha), com o regime escolhido pelo projetista.
-- Teste UI.T34 com as fórmulas da tabela; mutação «mínimo de 45 a mais».
-
-**A Tabela 13 só tem estas três linhas** (confirmado pelo autor):
-- retirado o regime «pública · intensivo» (125 m³/h por aparelho), que não vem da norma; projetos antigos com esse regime passam à linha pública (90 por aparelho);
-- cozinha (12 renovações por hora), garagem (6) e vestiário (8) não constam da tabela: os valores ficam, mas a etiqueta passa de «P138 ACH» a «boa prática; não consta da Tabela 13»; o glossário e a página inicial deixam de dizer que a T13 é «para espaços G4».
-
+- O regime e os aparelhos não se podiam indicar: agora escolhem-se no cartão da sala (sanitária: regime + urinóis/sanitas/duches; balneário: duches). Sem dados → «por fazer».
+- Cozinha (12/h), garagem (6/h) e vestiário (8/h) **não constam da Tabela 13**: ficam como boa prática, com essa etiqueta (a garagem tem ainda a verificação do RT-SCIE).
+- Nos exemplos, as copas estão com o tipo «Cozinha»: o projetista deve mudá-las para «Copa» (10/h, Tabela 13).
+- Validação: testes N2.T5 e UI.T34 com as fórmulas da tabela; mutação «mínimo de 45 a mais».
