@@ -652,12 +652,29 @@ VC6.transferencias = {
     return 'grelha_transferencia';
   },
 
-  criar(deId, paraId, Q, tipo) {
+  /* tipo do catálogo normativo (Grelha de transferência, Fresta sob porta, Grelha de parede, Abertura natural) */
+  tipoInfo(codigo) { return this.CATALOGO.find(t => t.codigo === codigo) || null; },
+  /* higiene do ar (EN 16798-3: o ar de um espaço sujo, ETA 3/4, não é transferido para um espaço mais limpo).
+     Regra única: a Tabela, a planta e as sugestões passam por aqui. */
+  ehSujo(esp) {
+    if (!esp) return false;
+    const g = Number(esp.grupoForcado || (VC.normas && VC.normas.getDef ? VC.normas.getDef(esp.tipo).g : 0)) || 0;
+    return g === 4 || !!(VC.topologia && VC.topologia._eEspacoSujo && VC.topologia._eEspacoSujo(esp));
+  },
+  direcaoValida(de, para) {
+    if (this.ehSujo(de) && !this.ehSujo(para)) return { ok: false, erro: 'O ar de «' + de.nome + '» (espaço sujo) não pode passar para «' + para.nome + '». A transferência vai do espaço mais limpo para o mais sujo — inverta a direção.' };
+    return { ok: true };
+  },
+
+  criar(deId, paraId, Q, tipo, dP) {
     const espacos = (VC.dados && VC.dados.espacos) || [];
     const de = espacos.find(e => e.id === deId);
     const para = espacos.find(e => e.id === paraId);
     if (!de || !para) return { ok: false, erro: 'Espaços inválidos' };
+    if (deId === paraId) return { ok: false, erro: 'Origem e destino são o mesmo espaço' };
     if (Number(Q) <= 0) return { ok: false, erro: 'Q deve ser > 0' };
+    const dir = this.direcaoValida(de, para);
+    if (!dir.ok) return dir;
 
     const existentes = (VC.dados && VC.dados.transferencias) || [];
     const hipoteticas = existentes.concat([{ deId, paraId }]);
@@ -684,9 +701,11 @@ VC6.transferencias = {
       deId, paraId, deNome: de.nome, paraNome: para.nome,
       Q: Number(Q) || 0,
       tipo: tipo || 'grelha_transferencia',
-      area_cm2: this.dimensionarArea(Q, 2),
       dP_Pa: 2
     };
+    const info = this.tipoInfo(trf.tipo);
+    trf.dP_Pa = Number(dP) > 0 ? Number(dP) : ((info && info.dp_tipico) || 2);   // ΔP típico do tipo, se não for dado
+    trf.area_cm2 = this.dimensionarArea(Q, trf.dP_Pa);
     if (!VC.dados.transferencias) VC.dados.transferencias = [];
     VC.dados.transferencias.push(trf);
     return { ok: true, transferencia: trf };

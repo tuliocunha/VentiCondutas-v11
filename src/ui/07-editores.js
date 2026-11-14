@@ -361,7 +361,8 @@ VC.editorEspacos = {
  inputs.forEach(inp => { inp.value = e.nome; inp.style.borderColor = 'var(--coral)'; inp.style.background = 'var(--coral-soft)'; setTimeout(() => { inp.style.borderColor = ''; inp.style.background = ''; }, 1500); });  
  return;  
  }  
- e.nome = String(valor || '').trim();  
+ const ren = VC.associacoes.renomearEspaco(e, valor);   // em cascata: terminais e transferências seguem o nome  
+ if (!ren.ok) { VC.ui.toast(ren.erro); return; }  
  } else if (campo === 'zona') {  
  e.zona = valor;  
  e.localizacao = VC.utils.parseZona(valor);  

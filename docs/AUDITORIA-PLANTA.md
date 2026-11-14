@@ -106,3 +106,34 @@ A auditoria mudou as prioridades: as falhas mais graves (A1, A2) são de **integ
 | 4 | **Representação** | B4 (rótulos e Entrega recortada), C7 (recorte e resolução do PDF), C5 |
 | 5 | **Verificador e textos** (Fase 3) | I1–I15 com avisos no objeto, B5 (por fazer vs erro), C1, C8, C9, D1, D2 |
 | 6 | **Proteção** (Fase 5) | Estes cenários automáticos no CI, com uma planta sintética parecida com esta |
+
+## Verificação antes do PR 2
+
+Leitura do código do cálculo, das associações e das normas, com sondas no navegador.
+
+| # | Encontrado | Tipo | Estado |
+|---|---|---|---|
+| V1 | Mudar o nome de um espaço na Tabela deixava os terminais órfãos (balanço «0 terminais», ERRO) e as transferências com o nome antigo. | **cálculo** | corrigido (PR 2) |
+| V2 | Era possível criar uma transferência de uma casa de banho (G4) para um espaço limpo. | **norma** (EN 16798-3) | corrigido (PR 2): recusada na Tabela e na planta; aviso nos dados antigos |
+| V3 | A Verificação Normativa usava 5/6 m/s por rede; o dimensionamento usa 6/5/4/3 m/s por nível. Podiam dizer coisas diferentes. | coerência | corrigido: ambos usam `VMAX_NIVEL` |
+| V4 | Na Tabela, o ΔP da transferência era guardado mas a área era calculada com 2 Pa. Listas de tipos diferentes na Tabela (4) e na planta (3). | cálculo / coerência | corrigido: área com o ΔP escrito; tipos do catálogo normativo; ΔP típico por tipo |
+| V5 | Associar terminal ↔ ramal estava escrito em 7 sítios; 3 não verificavam a rede. | estrutura | corrigido: serviço único `VC.associacoes` |
+| V6 | Um ramal podia pertencer a uma UTA (ou pai) de outra rede, sem aviso. | coerência | corrigido: aviso «Ramal noutra rede» |
+| V7 | N vazio vale N = 1 em silêncio. | clareza | o cartão diz «N não definido: a app usa N = 1». Comportamento do cálculo **por decidir** |
+| V8 | Dois históricos (desfazer da planta e histórico geral). | estrutura | fica para o PR 3 (gestor único) |
+| V9 | A ligação espaço ↔ ramal é guardada duas vezes (`terminal.ramalRef` conta para o cálculo; `espaco.ramalRef*` é a rede do espaço). | estrutura | só muda pelo serviço único; tirar o campo duplicado exige migração (PR à parte) |
+
+## PR 2 · Fluxo sem becos
+
+| Falha | O que mudou |
+|---|---|
+| **A4** | O cartão do novo ramal cria a UTA (rede + nome) sem sair da planta; sem UTAs, a secção abre sozinha e diz porquê. |
+| **Terminal (D)** | Numa sala sem terminais por colocar, cria o terminal no ponto clicado: rede (espaço sujo → só extração suja), caudal proposto pelo balanço ou pela norma, n.º. Cria a definição (fonte dos terminais) e associa ao ramal por baixo. |
+| **Transferências** | Tipos do catálogo normativo com ΔP típico; botão «Inverter direção»; sentido sujo → limpo é recusado com explicação. |
+| **B1** | «Calibrar a escala pela área» no cartão do novo desenho (aberto quando não há escala) e no da sala. |
+| **C4** | N no cartão do novo desenho e no da sala; parcelas T11 × N e T12 × A com a maior realçada (Portaria 138-I: aplica-se o maior). |
+| **C3** | «Terminais: X existem · Y criados agora» em vez de «0 criados». |
+| **Nomes** | Espaço e ramal renomeiam-se na Tabela e no desenho, em cascata (V1). |
+| Vocabulário | «Associar terminal ↔ ramal» em vez de «ligar». |
+| Fica para depois | C2 (janelas nativas de confirmar/escrever fora da planta). |
+

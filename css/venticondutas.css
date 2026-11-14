@@ -510,3 +510,11 @@ html, body, .app { height: 100vh !important; overflow: hidden !important; margin
 .plan-tags span{font-size:12px;font-weight:700;padding:2px 8px;border-radius:999px;background:var(--superf3);color:#475569}
 .plan-tags .plan-alta{background:#fbecc8;color:#7a5a1e}
 .plan-hoje{background:#eef6f0;border-radius:8px;padding:6px 10px;color:#2f5a3c}
+/* PR 2 · planta: secções recolhidas, parcelas T11/T12, direção da transferência */
+.planta-sub{margin:8px 0;border:1px solid var(--borda);border-radius:8px;padding:6px 9px}
+.planta-sub summary{cursor:pointer;font-size:12.5px;font-weight:700;color:#475569}
+.planta-parcelas{width:100%;border-collapse:collapse;margin:6px 0;font-size:12.5px}
+.planta-parcelas th,.planta-parcelas td{padding:3px 6px;border-bottom:1px solid var(--borda);text-align:left}
+.planta-parcelas tr.planta-ganha{background:var(--primario-soft,#e8f0f8);font-weight:700}
+.planta-dir{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:6px 0;font-size:13px}
+.planta-dir b{padding:2px 6px;border-radius:6px;background:var(--superf2,#f1f5f9)}

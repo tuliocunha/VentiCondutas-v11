@@ -253,26 +253,8 @@ VC.topologia.mover = {
     const t = VC.dados.terminais.find(x => String(x.id) === String(terminalId));
     const r = VC.dados.ramais.find(x => x.nome === ramalNome);
     if (!t || !r) return { ok: false, erro: 'Terminal ou ramal não encontrado' };
-
-    const redeR = VC.redes.normalizar(r.rede);
-    const redeT = VC.redes.normalizar(t.rede);
-
-    if (!VC.redes.compativeis(redeT, redeR)) {
-      return { ok: false, erro: 'Terminal é de «' + VC.redes.rotulo(redeT) + '», ramal é de «' + VC.redes.rotulo(redeR) + '»' };
-    }
-
-    t.ramalRef = ramalNome;
-
-    (t.espacos || []).forEach(e => {
-      const esp = VC.dados.espacos.find(x => x.nome === e.nome);
-      if (!esp) return;
-      if (redeT === 'extracao' || redeT === 'extracao_suja') {
-        esp.ramalRefExtracao = ramalNome;
-      } else {
-        esp.ramalRefInsuflacao = ramalNome;
-      }
-    });
-
+    const res = VC.associacoes.associar(t, ramalNome);
+    if (!res.n) return { ok: false, erro: res.erro };
     return { ok: true };
   }
 };
@@ -494,39 +476,7 @@ VC.topologia._criarRamal = function (opts) {
    §3.8 · ATRIBUIR TERMINAIS (por objeto, não por id)
    ──────────────────────────────────────────────── */
 VC.topologia._atribuirTerminaisAoRamal = function (ramalNome, terminais) {
-  const ramal = VC.dados.ramais.find(r => r.nome === ramalNome);
-  if (!ramal) return 0;
-
-  const redeR = VC.redes.normalizar(ramal.rede);
-  let n = 0;
-
-  terminais.forEach(t => {
-    const redeT = VC.redes.normalizar(t.rede);
-
-    const exato = VC.redes.compativeis(redeT, redeR);
-    // extração de um espaço sujo (casa de banho, cozinha…) marcada como «extração»: passa a «extração suja»,
-    // a rede própria da extração sanitária, para que terminal e ramal fiquem na mesma rede (VC.redes)
-    const extSujaOverride =
-      (redeR === 'extracao_suja') &&
-      (redeT === 'extracao') &&
-      VC.topologia._eEspacoSujoPorTerminal(t);
-
-    if (!exato && !extSujaOverride) return;
-    if (extSujaOverride) t.rede = 'extracao_suja';
-
-    t.ramalRef = ramalNome;
-
-    (t.espacos || []).forEach(e => {
-      const esp = VC.dados.espacos.find(x => x.nome === e.nome);
-      if (!esp) return;
-      if (redeR === 'insuflacao') esp.ramalRefInsuflacao = ramalNome;
-      else esp.ramalRefExtracao = ramalNome;
-    });
-
-    n++;
-  });
-
-  return n;
+  return VC.associacoes.associar(terminais, ramalNome).n;   // serviço único (regra VC.redes)
 };
 
 /* ────────────────────────────────────────────────
@@ -848,16 +798,8 @@ VC.topologia.construtor = {
     const ramal = (VC.dados.ramais || []).find(r => r.nome === ramalNome);
     if (!esp || !ramal) return { ok: false, erro: 'Espaço ou ramal inválido' };
     if (VC.snap && VC.snap.capturar) VC.snap.capturar('Atribuir ' + esp.nome + ' a ' + ramalNome);
-    const redeR = ramal.rede || 'insuflacao';
-    if (redeR === 'insuflacao') esp.ramalRefInsuflacao = ramal.nome;
-    else esp.ramalRefExtracao = ramal.nome;
-    (VC.dados.terminais || []).forEach(t => {
-      const serveEspaco = (t.espacos || []).some(x => x.nome === esp.nome);
-      if (!serveEspaco) return;
-      if (t.rede === redeR || (redeR === 'extracao_suja' && t.rede === 'extracao')) {
-        t.ramalRef = ramal.nome;
-      }
-    });
+    const res = VC.associacoes.associarEspaco(esp, (ramal.rede || 'insuflacao') === 'insuflacao' ? 'insuflacao' : 'extracao', ramal.nome);
+    if (!res.ok) return { ok: false, erro: res.erro };
     VC.estado.forcarSync();
     return { ok: true };
   },

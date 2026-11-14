@@ -563,6 +563,70 @@ VC6.testes = {
         return ok1 && ok2 && ok3;
       } finally { Object.assign(D, { espacos: g.esp, terminais: g.ter, ramais: g.ram, transferencias: g.tr }); P._pilha = g.pilha; P._refeitas = g.ref; P.redesenhar = g.red; VC.estado.forcarSync = g.sync; VC.ui.toast = g.toast; }
     } });
+    // PR 2 · nomes em cascata: mudar o nome de um espaço não desliga os terminais nem as transferências (falha de cálculo encontrada na verificação)
+    self.registar({ id: 'UI.T27', nucleo: 'UI', grupo: 'UI', nome: 'Renomear espaço em cascata', criterio: 'terminal e transferência seguem o nome novo; nome repetido é recusado', fn: () => {
+      const A = VC.associacoes; if (!A || !A.renomearEspaco) return false;
+      const D = VC.dados, g = { esp: D.espacos, ter: D.terminais, tr: D.transferencias };
+      try {
+        D.espacos = [{ id: 1, nome: 'Sala A' }, { id: 2, nome: 'WC' }];
+        D.terminais = [{ id: 'T', espacos: [{ id: 1, nome: 'Sala A', Q_parcela: 50 }] }];
+        D.transferencias = [{ id: 'X', deId: 1, paraId: 2, deNome: 'Sala A', paraNome: 'WC' }];
+        const r = A.renomearEspaco(D.espacos[0], 'Sala B');
+        const ok1 = r.ok && D.terminais[0].espacos[0].nome === 'Sala B' && D.transferencias[0].deNome === 'Sala B' && D.transferencias[0].paraNome === 'WC';
+        const ok2 = !A.renomearEspaco(D.espacos[0], 'wc').ok && !A.renomearEspaco(D.espacos[0], ' ').ok;
+        return ok1 && ok2;
+      } finally { D.espacos = g.esp; D.terminais = g.ter; D.transferencias = g.tr; }
+    } });
+    // PR 2 · associar terminal ↔ ramal pelo serviço único: a mesma regra de redes em todos os ecrãs
+    self.registar({ id: 'UI.T28', nucleo: 'UI', grupo: 'UI', nome: 'Associar terminal ↔ ramal (serviço único)', criterio: 'insuflação→insuflação associa; extração suja→extração é recusada; espaço G4 só aceita ramal de extração suja; Topologia usa o mesmo serviço', fn: () => {
+      const A = VC.associacoes; if (!A || !A.associar) return false;
+      const D = VC.dados, g = { esp: D.espacos, ter: D.terminais, ram: D.ramais };
+      try {
+        D.ramais = [{ id: 1, nome: 'RI', rede: 'insuflacao' }, { id: 2, nome: 'RE', rede: 'extracao' }, { id: 3, nome: 'RS', rede: 'extracao_suja' }];
+        D.espacos = [{ id: 9, nome: 'WC', tipo: 'Sanitários', definicoes: [{ rede: 'extracao_suja' }] }];
+        const ti = { id: 'a', rede: 'insuflacao', espacos: [] }, ts = { id: 'b', rede: 'extracao_suja', espacos: [{ id: 9, nome: 'WC' }] };
+        D.terminais = [ti, ts];
+        const ok1 = A.associar(ti, 'RI').n === 1 && ti.ramalRef === 'RI';
+        const ok2 = A.associar(ts, 'RE').n === 0 && !ts.ramalRef;
+        const ok3 = !A.associarEspaco(D.espacos[0], 'extracao', 'RE').ok && A.associarEspaco(D.espacos[0], 'extracao', 'RS').ok && ts.ramalRef === 'RS' && D.espacos[0].ramalRefExtracao === 'RS';
+        const ok4 = VC.topologia._atribuirTerminaisAoRamal('RI', [ts]) === 0 && ts.ramalRef === 'RS';
+        return ok1 && ok2 && ok3 && ok4;
+      } finally { D.espacos = g.esp; D.terminais = g.ter; D.ramais = g.ram; }
+    } });
+    // PR 2 · higiene do ar (EN 16798-3): sem transferências de um espaço sujo para um mais limpo; área com o ΔP dado
+    self.registar({ id: 'UI.T29', nucleo: 'UI', grupo: 'UI', nome: 'Transferências: direção e ΔP do tipo', criterio: 'WC → escritório recusada; escritório → WC aceite; A = Q/(0,36·√ΔP) com o ΔP escrito; sem ΔP usa o típico do tipo (grelha de parede 5 Pa)', fn: () => {
+      const T = VC6.transferencias; if (!T || !T.direcaoValida) return false;
+      const D = VC.dados, g = { esp: D.espacos, tr: D.transferencias };
+      try {
+        D.espacos = [{ id: 1, nome: 'Esc', tipo: 'Escritório' }, { id: 2, nome: 'WC', tipo: 'Sanitários' }]; D.transferencias = [];
+        const mal = T.criar(2, 1, 30, 'fresta_porta');
+        const bem = T.criar(1, 2, 30, 'fresta_porta', 4);
+        const ok1 = !mal.ok && bem.ok && bem.transferencia.dP_Pa === 4 && Math.abs(bem.transferencia.area_cm2 - 30 / (0.36 * 2)) < 1e-9;
+        D.transferencias = [];
+        const par = T.criar(1, 2, 30, 'grelha_parede');
+        return ok1 && par.ok && par.transferencia.dP_Pa === 5;
+      } finally { D.espacos = g.esp; D.transferencias = g.tr; }
+    } });
+    // PR 2 · a planta cria: terminal no ponto (com definição), escala pela área, parcelas T11/T12
+    self.registar({ id: 'UI.T30', nucleo: 'UI', grupo: 'UI', nome: 'Planta: criar terminal, escala pela área, T11/T12', criterio: 'sala sem terminais → definição + terminal no ponto clicado; 100×100 px com 4 m² → 0,02 m/px; N=2 → T12 (48 < 49,5); N=6 → T11', fn: () => {
+      const P = VC.planta; if (!P || !P.criarTerminalAqui || !P.calibrarPorArea || !P._parcelasCaudal) return false;
+      const D = VC.dados, g = { esp: D.espacos, ter: D.terminais, pl: D.plantas, ram: D.ramais, piso: P.piso, toast: VC.ui.toast, pilha: P._pilha, red: P.redesenhar, sync: VC.estado.forcarSync, hist: VC.historico && VC.historico.push };
+      try {
+        VC.ui.toast = () => {}; P.redesenhar = () => {}; VC.estado.forcarSync = () => {}; if (VC.historico) VC.historico.push = () => {}; P._pilha = [];
+        D.plantas = [{ id: 'pC', nome: 'C', w: 500, h: 500, escala: 0.01 }]; P.piso = 'pC'; D.ramais = []; D.terminais = [];
+        const sala = { id: 501, nome: 'Circ T', tipo: 'Circulação', A: 8.7, H: 3, definicoes: [], planta: { pisoId: 'pC', pts: [[0, 0], [100, 0], [100, 100], [0, 100]] } };
+        D.espacos = [sala];
+        P.colocarTerminal([40, 60]);
+        const pend = P.pendenteTerm && P.pendenteTerm.espId === 501;
+        const t = P.criarTerminalAqui('insuflacao', 107, 1);
+        const ok1 = pend && t && t.planta.x === 40 && t.planta.y === 60 && t.Q === 107 && sala.definicoes.length === 1 && sala.definicoes[0].rede === 'insuflacao' && P._pilha.length === 1;
+        const ok2 = P.calibrarPorArea([[0, 0], [100, 0], [100, 100], [0, 100]], 4) && Math.abs(D.plantas[0].escala - 0.02) < 1e-12;
+        const esc = { id: 502, nome: 'Of', tipo: 'Escritório', A: 16.5, N: 2 };
+        const h2 = P._parcelasCaudal(esc); esc.N = 6; const h6 = P._parcelasCaudal(esc);
+        const ok3 = /Ar novo = o maior: <b>T12/.test(h2) && /Ar novo = o maior: <b>T11/.test(h6);
+        return ok1 && ok2 && ok3;
+      } finally { Object.assign(D, { espacos: g.esp, terminais: g.ter, plantas: g.pl, ramais: g.ram }); P.piso = g.piso; VC.ui.toast = g.toast; P._pilha = g.pilha; P.redesenhar = g.red; VC.estado.forcarSync = g.sync; if (VC.historico) VC.historico.push = g.hist; P.pendenteTerm = null; }
+    } });
   },
 
   correr() {

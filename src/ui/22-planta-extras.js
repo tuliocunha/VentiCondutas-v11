@@ -46,8 +46,8 @@ P.ligarTerminalAoRamal = function (idT) {
     ligou = VC.topologia._atribuirTerminaisAoRamal(m.r.nome, [t]) > 0;
     if (ligou) VC.estado.forcarSync();
   }
-  if (ligou || m.ponta) { this._empilhar(ligou ? 'terminal ligado ao ramal ' + m.r.nome : 'terminal encaixado na ponta', antes); }
-  if (ligou) VC.ui.toast('«' + (t.nome || t.id) + '» ligado ao ramal ' + m.r.nome + (m.ponta ? ' (na ponta)' : '') + '.');
+  if (ligou || m.ponta) { this._empilhar(ligou ? 'terminal associado ao ramal ' + m.r.nome : 'terminal encaixado na ponta', antes); }
+  if (ligou) VC.ui.toast('«' + (t.nome || t.id) + '» associado ao ramal ' + m.r.nome + (m.ponta ? ' (na ponta)' : '') + '.');
   this.redesenhar();
   return ligou;
 };
@@ -197,7 +197,7 @@ P._ligarExtras = function (palco) {
         const lig = this.comprimentoLigacao ? this.comprimentoLigacao(t) : null;
         out.textContent = (t.nome || t.id) + ' · ' + fmt(t.Q) + ' m³/h · ramal ' + (t.ramalRef || '—')
           + (lig != null && lig > 0.05 ? ' · ligação ' + VC.utils.fmt(lig, 2) + ' m' + (lig > 0.5 ? ' (não entra no L — ligações flexíveis: ver Sistema › Funções planeadas)' : '') : '')
-          + (this.ferramenta === 'sel' ? ' — arraste para mover; largue sobre um ramal para o ligar' : ' — use Selecionar (V) para o mover');
+          + (this.ferramenta === 'sel' ? ' — arraste para mover; largue sobre um ramal para o associar' : ' — use Selecionar (V) para o mover');
       }
     } else if (ev.target.closest && ev.target.closest('.planta-sala')) {
       if (this.ROTULO_FERR.indexOf(this.ferramenta) >= 0 && ev.target.closest('.planta-rotulo')) out.textContent = 'Arraste o nome para o mover; duplo clique repõe-no no centro';

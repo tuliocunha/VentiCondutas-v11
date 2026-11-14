@@ -640,6 +640,21 @@ VC.calculo = {
         else if (!VC.redes.compativeis(t.rede, r.rede)) findings.push({ severidade: 'ERRO', tipo: 'Terminal noutra rede', elemento: nomeT, msg: 'Terminal de ' + VC.redes.rotulo(t.rede) + ' ligado ao ramal «' + r.nome + '», de ' + VC.redes.rotulo(r.rede) });
         if (temPlantas && !t.planta && (t.espacos || []).some(x => espDesenhado.has(x.nome))) findings.push({ severidade: 'ATENÇÃO', tipo: 'Terminal fora da planta', elemento: nomeT, msg: 'A sala está desenhada mas o terminal não: coloque-o com a ferramenta Terminal (D)' });
       });
+      // A3 (rede própria): um ramal pertence à rede da sua UTA e do seu pai — redes misturadas somam ar que não se pode misturar
+      const utaPorId = new Map((VC.dados.utas || []).map(u => [u.id, u]));
+      VC.dados.ramais.forEach(r => {
+        const u = r.utaRef ? utaPorId.get(r.utaRef) : null, pai = r.parente ? ramalPorNome.get(r.parente) : null;
+        if (u && !VC.redes.compativeis(r.rede, u.rede)) findings.push({ severidade: 'ERRO', tipo: 'Ramal noutra rede', elemento: r.nome, msg: 'Ramal de ' + VC.redes.rotulo(r.rede) + ' servido pela UTA «' + u.nome + '», de ' + VC.redes.rotulo(u.rede) });
+        else if (pai && !VC.redes.compativeis(r.rede, pai.rede)) findings.push({ severidade: 'ERRO', tipo: 'Ramal noutra rede', elemento: r.nome, msg: 'Ramal de ' + VC.redes.rotulo(r.rede) + ' com o pai «' + pai.nome + '», de ' + VC.redes.rotulo(pai.rede) });
+      });
+      // higiene do ar: nenhuma transferência leva ar de um espaço sujo para um mais limpo (regra de VC6.transferencias)
+      if (window.VC6 && VC6.transferencias && VC6.transferencias.direcaoValida) {
+        const espPorId = new Map((VC.dados.espacos || []).map(e => [e.id, e]));
+        (VC.dados.transferencias || []).forEach(t => {
+          const de = espPorId.get(t.deId), para = espPorId.get(t.paraId);
+          if (de && para && !VC6.transferencias.direcaoValida(de, para).ok) findings.push({ severidade: 'ERRO', tipo: 'Transferência de espaço sujo', elemento: de.nome + ' → ' + para.nome, msg: 'O ar de um espaço sujo não pode passar para um espaço mais limpo: inverta a direção ou remova a transferência' });
+        });
+      }
       VC.dados.ramais.forEach(r => {
         if (!(Number(r.Q) > 0)) findings.push({ severidade: 'ATENÇÃO', tipo: 'Ramal sem caudal', elemento: r.nome, msg: 'Q = 0 m³/h: nenhum terminal ligado a este ramal nem aos seus sub-ramais' });
       });

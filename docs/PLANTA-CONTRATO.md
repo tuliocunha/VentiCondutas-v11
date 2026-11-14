@@ -40,10 +40,11 @@ Os mesmos nomes na app, nos testes e neste documento.
 | **Espaço** | Sala do levantamento (tabela). Existe com ou sem desenho |
 | **Desenho da sala** | O polígono de um espaço num piso. `espaco.planta.pts` |
 | **Nome da sala** | O rótulo do desenho; pode ser deslocado. `espaco.planta.rotulo` |
-| **Terminal** | Difusor/grelha/boca. Nasce no passo Terminais, a partir das *definições* do espaço; na planta só se escolhe onde fica. `terminal.planta = {pisoId,x,y}` |
+| **Terminal** | Difusor/grelha/boca. Nasce de uma *definição* do espaço (passo Definição de Terminais **ou** ferramenta Terminal na planta, que cria a definição). `terminal.planta = {pisoId,x,y}` |
 | **Ramal** | Troço da rede (N1…N4). Na planta é um traçado. `ramal.planta.pts` |
-| **Ligação** | Distância entre o terminal e a ponta do ramal a que está ligado |
-| **Transferência** | Ar que passa de um espaço (origem) para outro (destino) por uma grelha, fresta ou abertura |
+| **Associar** | Pôr um terminal num ramal (terminal ↔ ramal) ou um espaço numa rede. Termo usado em toda a app (não «ligar»). `terminal.ramalRef` |
+| **Ligação** | Distância entre o terminal e a ponta do ramal a que está associado |
+| **Transferência** | Ar que passa de um espaço (origem) para outro (destino) por um dos tipos do catálogo normativo (grelha de transferência, fresta sob porta, grelha de parede, abertura natural). A direção conta: nunca de um espaço sujo para um mais limpo |
 | **Porta** | Ponto do desenho onde fica a seta de uma transferência. `transferencia.planta = {pisoId,x,y,ang}` |
 | **Compensação** | Caudal somado à insuflação da origem por causa de uma transferência. `transferencia.compensacao` |
 | **Balanço** | Por espaço: entra (insuflação + transferências que chegam) − sai (extração + transferências que saem) |
@@ -68,6 +69,16 @@ explicitamente, por exemplo:
 | Terminal | `dados.terminais[]` | `planta.{x,y}` | `ramalRef` (ligar ao ramal) |
 | Ramal | `dados.ramais[]` | `planta.pts` | `L` (comprimento medido), `nome` (renomear, em cascata) |
 | Transferência | `dados.transferencias[]` | `planta.{x,y,ang}` | criar/remover; `compensacao` muda a insuflação da origem |
+
+**Serviço único `VC.associacoes`** (src/core/03-associacoes.js). Todas as vistas (Tabela, Topologia, Associação, Construtor, planta) usam as mesmas operações, com a mesma regra:
+
+| Operação | O que faz | Regra |
+|---|---|---|
+| `associar` / `desassociar` | terminal ↔ ramal | `VC.redes.compativeis` (mesma rede) |
+| `associarEspaco` | rede do espaço → ramal, e os seus terminais | extração de espaço sujo só em extração suja |
+| `criarTerminal` | nova definição no espaço → terminais materializados | as definições são a fonte dos terminais |
+| `renomearEspaco` / `renomearRamal` | nome em cascata (terminais, transferências, sub-ramais, espaços) | o nome é o mesmo na tabela e no desenho |
+| `criarTransferencia` | origem → destino, tipo, ΔP (área = Q / (0,36·√ΔP)) | `VC6.transferencias.direcaoValida` (higiene) |
 
 Coordenadas: sempre em **píxeis da imagem**, nunca em píxeis do ecrã.
 Medidas em metros = píxeis × escala.
@@ -96,12 +107,12 @@ T Transferência · L Ramal · D Terminal.
 |---|---|---|---|---|---|---|
 | **Selecionar (V)** | seleciona sala / ramal / seta; no vazio limpa a seleção | canto da sala selecionada; terminal; nome da sala; seta | no nome: repõe no centro | — | limpa a seleção [proposta] | apaga o desenho ou o traçado selecionado; **seta: remove a transferência [proposta]** |
 | **Mão (H)** | — | desloca a vista | — | — | — | — |
-| **Escala (S)** | 1.º e 2.º ponto da medida | — | — | aplica os metros [hoje no campo] | cancela | — |
+| **Escala (S)** | 1.º e 2.º ponto da medida; ou, no cartão de uma sala, **calibrar pela área** conhecida (escala = √(A / área em px)) | — | — | aplica os metros [hoje no campo] | cancela | — |
 | **Retângulo (R)** | — | desenha a sala → pendente | — | — | cancela pendente | — |
 | **Polígono (P)** | acrescenta vértice; no 1.º vértice fecha | — | fecha | fecha | cancela | apaga último vértice [proposta] |
-| **Transferência (T)** | — | da origem ao destino, pela porta → pendente | — | cria [proposta] | cancela pendente | — |
+| **Transferência (T)** | — | da origem ao destino, pela porta → pendente (cartão: tipo do catálogo, ΔP típico, **inverter direção**; sentido sujo → limpo é recusado) | — | cria [proposta] | cancela pendente | — |
 | **Ramal (L)** | acrescenta ponto (encaixa em ramais/terminais) | — | termina | termina | cancela | apaga último ponto [proposta] |
-| **Terminal (D)** | coloca o próximo terminal da sala | — | — | — | — | — |
+| **Terminal (D)** | coloca o próximo terminal da sala; se não houver nenhum por colocar, **cria** um nesse ponto (rede e caudal propostos pelo balanço/norma) e associa-o ao ramal por baixo | — | — | — | — | — |
 
 Com qualquer ferramenta: o nome da sala arrasta-se com Selecionar e
 Retângulo [hoje]. Generalizar a «arrasta-se com qualquer ferramenta que não
@@ -145,12 +156,14 @@ cenários e mostradas na app como avisos no objeto.
 | I5 | Um terminal ligado a um ramal: o ramal existe e é da mesma rede. Regra única `VC.redes.compativeis` em toda a app (Topologia, Associação, planta, verificação). A **extração suja** (casas de banho, G4) tem rede e ventilador próprios: não se liga à extração geral. Terminal sem ramal = erro na Entrega. | erro |
 | I6 | Ligação terminal → ponta do ramal ≤ 0,5 m, senão o L não a inclui. | aviso |
 | I7 | Um ramal desenhado: o pai existe, e o traçado do filho começa no traçado do pai. | aviso |
-| I8 | Uma transferência: origem ≠ destino, as duas existem e não há ciclo A→…→A. | erro |
+| I8 | Uma transferência: origem ≠ destino, as duas existem, não há ciclo A→…→A e **não leva ar de um espaço sujo (G4) para um mais limpo** (EN 16798-3). | erro |
 | I9 | A seta de uma transferência está a ≤ 0,5 m da parede da origem e da do destino. | aviso |
 | I10 | Uma transferência compensada: a definição de insuflação indicada existe e inclui o caudal compensado. | erro |
 | I11 | Os terminais de uma definição somam o `Q_total` da definição. | erro |
 | I12 | Balanço de cada espaço desenhado dentro da tolerância (ou isento: G2 sem conforto). | aviso |
 | I16 | Um ramal tem caudal (Q > 0); um terminal de uma sala desenhada está colocado na planta. | aviso |
+| I17 | Um ramal é da rede da sua UTA e do seu pai. | erro |
+| I18 | Mudar um nome (espaço ou ramal) não desliga nada: terminais, transferências e sub-ramais seguem o nome. | erro (só nos testes) |
 | I13 | Desfazer tudo o que se fez numa sessão devolve exatamente o estado inicial; refazer devolve o final. | erro (só nos testes) |
 | I14 | Há no máximo uma seleção (sala, ramal ou transferência). | erro (só nos testes) |
 | I15 | Nenhuma ação deixa erros JavaScript na consola. | erro (só nos testes) |

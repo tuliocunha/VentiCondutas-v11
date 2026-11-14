@@ -94,10 +94,7 @@ VC.transferenciasUI = {
     h += '<div class="campo-grupo"><label>\u0394P (Pa)</label><input type="number" id="trfDp" value="2" min="0.1" step="0.1" style="width:100%;padding:8px 10px;border:1px solid var(--borda-media);border-radius:5px;font-size:13px;font-family:inherit;font-weight:700"></div>';
     h += '</div>';
     h += '<div class="campo-grupo" style="margin-bottom:10px"><label>Tipo</label><select id="trfTipo" style="width:100%;padding:8px 10px;border:1px solid var(--borda-media);border-radius:5px;font-size:12px;font-family:inherit">';
-    h += '<option value="fresta_porta">Fresta sob porta</option>';
-    h += '<option value="grelha_transferencia">Grelha de transfer\u00eancia</option>';
-    h += '<option value="grelha_parede">Grelha de parede</option>';
-    h += '<option value="abertura_natural">Abertura natural</option>';
+    h += VC6.transferencias.CATALOGO.map(function (t) { return '<option value="' + t.codigo + '">' + VC.utils.esc(t.nome) + '</option>'; }).join('');   // catálogo normativo (o mesmo da planta)
     h += '</select></div>';
     h += '<div style="padding:8px 12px;background:var(--primario-soft);border-left:3px solid var(--primario);border-radius:5px;font-size:10.5px;color:var(--primario-esc);line-height:1.55">';
     h += '\u00c1rea calculada: <b id="trfArea">\u2014</b> cm\u00b2 (f\u00f3rmula A = Q / (0,36\u00b7\u221a\u0394P))';
@@ -138,9 +135,8 @@ VC.transferenciasUI = {
     if (!deId || !paraId) { fail('Escolhe origem e destino.'); return; }
     if (String(deId) === String(paraId)) { fail('Origem e destino n\u00e3o podem ser iguais.'); return; }
     if (Q <= 0) { fail('Q deve ser > 0.'); return; }
-    var r = VC6.transferencias.criar(Number(deId), Number(paraId), Q, tipo);
+    var r = VC.associacoes.criarTransferencia(Number(deId), Number(paraId), Q, tipo, dp);   // área calculada com o ΔP escrito
     if (!r || !r.ok) { fail((r && r.erro) || 'Erro ao criar.'); return; }
-    if (r.transferencia) r.transferencia.dP_Pa = dp;
     if (VC.historico) VC.historico.push('Nova transfer\u00eancia');
     VC.estado.forcarSync();
     VC.ui.fecharModal('modalGenerico');

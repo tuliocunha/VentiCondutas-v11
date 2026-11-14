@@ -225,20 +225,15 @@ VC.associacao = {
   atribuirTerminal: function (termIdx, ramalNome) {
     var t = VC.dados.terminais[termIdx];
     if (!t) return;
-    if (!ramalNome) { t.ramalRef = ''; }
+    if (!ramalNome) VC.associacoes.desassociar(t);
     else {
-      var r = (VC.dados.ramais || []).find(function (x) { return x.nome === ramalNome; });
-      if (!r) { VC.ui.toast('Ramal n\u00e3o encontrado.'); return; }
-      if ((r.rede || 'insuflacao') !== (t.rede || 'insuflacao')) {
-        VC.ui.toast('Rede do terminal (' + t.rede + ') e do ramal (' + r.rede + ') diferem.');
-        return;
-      }
-      t.ramalRef = ramalNome;
+      var res = VC.associacoes.associar(t, ramalNome);
+      if (!res.n) { VC.ui.toast(res.erro || 'N\u00e3o foi poss\u00edvel associar.'); return; }
     }
     if (VC.historico) VC.historico.push('Terminal ' + t.nome + ' \u2192 ' + (ramalNome || '(sem ramal)'));
     VC.estado.forcarSync();
     VC.passos.render('associacao');
-    if (ramalNome) VC.ui.toast('Terminal ' + t.nome + ' atribu\u00eddo a ' + ramalNome);
+    if (ramalNome) VC.ui.toast('Terminal ' + t.nome + ' associado ao ramal ' + ramalNome);
   },
 
   atribuirEspaco: function (espIdx, ramalNome, rede) {
@@ -248,16 +243,9 @@ VC.associacao = {
       if (rede === 'insuflacao') e.ramalRefInsuflacao = '';
       else e.ramalRefExtracao = '';
     } else {
-      if (rede === 'insuflacao') e.ramalRefInsuflacao = ramalNome;
-      else e.ramalRefExtracao = ramalNome;
+      var res = VC.associacoes.associarEspaco(e, rede, ramalNome);
+      if (!res.ok) { VC.ui.toast(res.erro); return; }
     }
-    VC.dados.terminais.forEach(function (t) {
-      var serve = (t.espacos || []).some(function (x) { return x.nome === e.nome; });
-      if (!serve) return;
-      var ehIns = (t.rede || 'insuflacao') === 'insuflacao';
-      if (ehIns && rede === 'insuflacao') t.ramalRef = ramalNome;
-      if (!ehIns && rede !== 'insuflacao') t.ramalRef = ramalNome;
-    });
     VC.estado.forcarSync();
     VC.passos.render('associacao');
     if (ramalNome) VC.ui.toast('Espa\u00e7o ' + e.nome + ' \u2192 ' + ramalNome);
