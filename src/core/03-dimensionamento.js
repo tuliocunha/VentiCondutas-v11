@@ -750,6 +750,9 @@ VC.calculo = {
         } catch (e) { VC.debug && VC.debug.erro && VC.debug.erro(e); }
       }
 
+      // verificadores registados por outros módulos (ex.: coerência desenho ↔ tabelas, VC.planta.coerencia)
+      (this.verificadores || []).forEach(v => { try { (v() || []).forEach(f => findings.push(f)); } catch (e) { VC.debug && VC.debug.erro && VC.debug.erro(e); } });
+
       const max = Math.max.apply(null, [0].concat(VC.dados.ramais.map(r => r.deltaPtotal || 0)));
       const critical = VC.dados.ramais.reduce((a, b) => (b.deltaPtotal || 0) > ((a && a.deltaPtotal) || 0) ? b : a, null);
       const sfpIntGlobal = VC.dados.utas.length > 0 ? Math.max.apply(null, VC.dados.utas.map(u => u.sfpInt || 0)) : 0;

@@ -206,3 +206,20 @@ Validação: teste UI.T36 e mutação (D5); cenário só com teclado e rato reai
 
 Validação: teste UI.T37 e mutação («avisos só na Entrega»); cenário real (duas salas sem terminais → marcas cinzentas; sala selecionada → cartão com os 2 avisos).
 
+## PR 8 · Desenho ligado às tabelas e ao cálculo (verificador do contrato)
+`VC.planta.coerencia()` junta ao cálculo os avisos de coerência entre o desenho e as tabelas (aparecem no desenho, no cartão e na Entrega):
+
+| Regra | Porque importa para o cálculo | Gravidade |
+|---|---|---|
+| I2 polígono inválido (< 3 vértices ou cruzado) | a área medida não vale | erro |
+| I3 área desenhada ≠ tabela > 15 % | o caudal da norma usa a área da tabela (T12 × A, 10 × A…); «Usar área medida» ou «Aceitar a diferença» | atenção |
+| I4 terminal fora da sala que serve | caudal atribuído à sala errada no desenho | atenção |
+| I6 ligação terminal → ramal > 0,5 m | não entra no L nem no Δp | atenção |
+| I7 sub-ramal que não começa no pai | a topologia desenhada não é a da tabela | atenção |
+| I9 seta a > 0,5 m das paredes | a transferência não está numa porta | atenção |
+| I11 terminais ≠ Q_total da definição | caudal dos terminais diferente do exigido | erro |
+| L da tabela ≠ L medido (> 10 % e > 0,5 m) | o Δp usa o L da tabela; «Usar L medido» | atenção |
+| piso desenhado sem escala | áreas e comprimentos não medidos | por fazer |
+
+Validação: teste UI.T38 com geometria feita à mão e mutação; cenário real (área mudada na Tabela → aviso no desenho; aceitar → some; Ctrl+Z → volta).
+

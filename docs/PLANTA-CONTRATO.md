@@ -146,8 +146,7 @@ Regras do gestor:
 
 ## 7. Regras de coerência (invariantes)
 
-Verificadas por `VC.planta.coerencia()` (Fase 3) depois de cada passo dos
-cenários e mostradas na app como avisos no objeto.
+Verificadas por `VC.planta.coerencia()` (src/ui/27-planta-coerencia.js) e pelo cálculo, em cada recálculo, e mostradas na app como avisos no objeto, no cartão e na Entrega. As regras do desenho (I2, I3, I4, I6, I7, I9, I11, e L da tabela ≠ L medido) estão implementadas [hoje].
 
 | # | Regra | Gravidade |
 |---|---|---|
