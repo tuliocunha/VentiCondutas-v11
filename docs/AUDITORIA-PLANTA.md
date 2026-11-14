@@ -137,3 +137,17 @@ Leitura do código do cálculo, das associações e das normas, com sondas no na
 | Vocabulário | «Associar terminal ↔ ramal» em vez de «ligar». |
 | Fica para depois | C2 (janelas nativas de confirmar/escrever fora da planta). |
 
+## PR 3 · Regras da Portaria com a classificação G1–G4
+
+Sem listas nem redes novas: a app já classifica os espaços em G1–G4 e o G4 é «Extração Dedicada» (princípio P4). O projetista pode forçar o grupo de um espaço com outra fonte de contaminação.
+
+| Regra | Fonte | O que mudou |
+|---|---|---|
+| Espaço sujo = G4 | classificação da app, princípio P4 | Uma só definição (`VC.calculo.grupoDe`). Retirada a lista de nomes da Topologia, que contradizia o G1–G4 (punha o laboratório, G1, como sujo). |
+| Nenhum ar transferido a partir de um G4 | Portaria 138-I, Anexo II, 1.2.2 f) | Recusa também WC → WC (antes só sujo → limpo). |
+| G4 em depressão | 1.2.2 h) (instalações sanitárias); P4 e limites de pressão da app (cozinha, garagem) | Novo erro «G4 sem depressão» quando extração ≤ insuflação. |
+
+Aplicado aos exemplos (que não são referência): o **degrade-2** tem 3 espaços G4 sem depressão — Garagem P0-N1 (412/412 m³/h), Apoio/Serviço P0-N1 e Apoio/Serviço P1-S (copa), do tipo Cozinha (227/227 e 423/423). O **poliune-v02** continua com 9 instalações sanitárias com falta de ar de compensação (balanço).
+
+**Por decidir:** o tipo «Arrumo» é G2 («Zona de Transferência») na app, mas a alínea f) inclui as arrecadações entre os espaços de onde não pode vir ar transferido.
+

@@ -624,8 +624,8 @@ VC6.testes = {
         const esc = { id: 502, nome: 'Of', tipo: 'Escritório', A: 16.5, N: 2 };
         const h2 = P._parcelasCaudal(esc); esc.N = 6; const h6 = P._parcelasCaudal(esc);
         const ok3 = /Ar novo = o maior: <b>T12/.test(h2) && /Ar novo = o maior: <b>T11/.test(h6);
-        // um laboratório (G1, espaço sujo) tem insuflação e extração suja; uma casa de banho (G4) só extração suja
-        const ok4 = P.redesDoEspaco({ id: 503, nome: 'Lab', tipo: 'Laboratório', A: 20 }).join() === 'insuflacao,extracao_suja' && P.redesDoEspaco({ id: 504, nome: 'WC', tipo: 'Sanitários', A: 3 }).join() === 'extracao_suja';
+        // um laboratório (G1) tem insuflação e extração; uma casa de banho (G4, extração dedicada) só extração suja
+        const ok4 = P.redesDoEspaco({ id: 503, nome: 'Lab', tipo: 'Laboratório', A: 20 }).join() === 'insuflacao,extracao' && P.redesDoEspaco({ id: 504, nome: 'WC', tipo: 'Sanitários', A: 3 }).join() === 'extracao_suja';
         return ok1 && ok2 && ok3 && ok4;
       } finally { Object.assign(D, { espacos: g.esp, terminais: g.ter, plantas: g.pl, ramais: g.ram }); P.piso = g.piso; VC.ui.toast = g.toast; P._pilha = g.pilha; P.redesenhar = g.red; VC.estado.forcarSync = g.sync; if (VC.historico) VC.historico.push = g.hist; P.pendenteTerm = null; }
     } });
@@ -646,6 +646,25 @@ VC6.testes = {
         VC.editorEspacos.editarCampo(0, 'N', ''); const ok4 = !('N' in e) && VC.calculo.calcularQEspaco(e).nPorDefinir === true;
         return ok1 && ok2 && ok3 && ok4;
       } finally { D.espacos = g.esp; D.eficaciaRemocao = g.ev; VC.estado.sincronizar = g.sinc; if (VC.historico) VC.historico.push = g.hist; VC.calculo.calcularTudo(); }
+    } });
+    // Portaria 138-I, Anexo II, 1.2.2 f) e h), com a classificação G1–G4 da app (G4 = extração dedicada, princípio P4)
+    self.registar({ id: 'UI.T32', nucleo: 'UI', grupo: 'UI', nome: 'G4: sem ar transferido a partir dele, e em depressão', criterio: 'WC→escritório e WC→WC recusadas; escritório→WC aceite; laboratório (G1)→circulação aceite; escritório forçado a G4 → recusada; WC com insuflação 100 e extração 50 → ERRO «G4 sem depressão»; extração 150 → sem erro', fn: () => {
+      const T = VC6.transferencias; if (!T || !VC.calculo.grupoDe) return false;
+      const D = VC.dados, g = { esp: D.espacos, tr: D.transferencias, ter: D.terminais };
+      try {
+        const wc = { id: 1, nome: 'WC1', tipo: 'Sanitários', definicoes: [] }, wc2 = { id: 2, nome: 'WC2', tipo: 'Sanitários', definicoes: [] };
+        const of = { id: 3, nome: 'Of', tipo: 'Escritório', definicoes: [] }, lab = { id: 4, nome: 'Lab', tipo: 'Laboratório', definicoes: [] }, circ = { id: 5, nome: 'Circ', tipo: 'Circulação', definicoes: [] };
+        const ok1 = !T.direcaoValida(wc, of).ok && !T.direcaoValida(wc, wc2).ok && T.direcaoValida(of, wc).ok && T.direcaoValida(lab, circ).ok;
+        const forcado = { id: 6, nome: 'Copa', tipo: 'Escritório', grupoForcado: 4, definicoes: [] };
+        const ok2 = !T.direcaoValida(forcado, circ).ok;
+        D.espacos = [Object.assign(wc, { A: 5, H: 2.6, V: 13, definicoes: [{ id: 'I', rede: 'insuflacao', Q_total: 100, quantidade: 1 }, { id: 'E', rede: 'extracao_suja', Q_total: 50, quantidade: 1 }] })];
+        D.transferencias = []; D.terminais = [];
+        const tem = () => (VC.calculo.calcularTudo().findings || []).some(f => f.tipo === 'G4 sem depressão' && f.elemento === 'WC1');
+        const ok3 = tem();
+        wc.definicoes[1].Q_total = 150;
+        const ok4 = !tem();
+        return ok1 && ok2 && ok3 && ok4;
+      } finally { D.espacos = g.esp; D.transferencias = g.tr; D.terminais = g.ter; VC.calculo.calcularTudo(); }
     } });
   },
 

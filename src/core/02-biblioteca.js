@@ -656,13 +656,11 @@ VC6.transferencias = {
   tipoInfo(codigo) { return this.CATALOGO.find(t => t.codigo === codigo) || null; },
   /* higiene do ar (EN 16798-3: o ar de um espaço sujo, ETA 3/4, não é transferido para um espaço mais limpo).
      Regra única: a Tabela, a planta e as sugestões passam por aqui. */
-  ehSujo(esp) {
-    if (!esp) return false;
-    const g = Number(esp.grupoForcado || (VC.normas && VC.normas.getDef ? VC.normas.getDef(esp.tipo).g : 0)) || 0;
-    return g === 4 || !!(VC.topologia && VC.topologia._eEspacoSujo && VC.topologia._eEspacoSujo(esp));
-  },
+  /* espaço sujo = G4 «Extração Dedicada» (princípio P4; o projetista pode forçar o grupo de um espaço) */
+  ehSujo(esp) { return !!esp && VC.calculo.grupoDe(esp) === 4; },
+  /* Portaria 138-I, Anexo II, 1.2.2 f): o ar transferido não pode vir destes espaços, para nenhum espaço */
   direcaoValida(de, para) {
-    if (this.ehSujo(de) && !this.ehSujo(para)) return { ok: false, erro: 'O ar de «' + de.nome + '» (espaço sujo) não pode passar para «' + para.nome + '». A transferência vai do espaço mais limpo para o mais sujo — inverta a direção.' };
+    if (this.ehSujo(de)) return { ok: false, erro: 'O ar de «' + de.nome + '» (G4, extração dedicada) não pode ser transferido para «' + para.nome + '»: Portaria 138-I, Anexo II, 1.2.2 f). Inverta a direção.' };
     return { ok: true };
   },
 

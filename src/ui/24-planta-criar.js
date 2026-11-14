@@ -22,12 +22,8 @@ const espPorId = id => (VC.dados.espacos || []).find(x => String(x.id) === Strin
 
 /* ── redes que um espaço pode ter (regra única: espaço sujo → extração suja, rede própria) ── */
 P.redesDoEspaco = function (e) {
-  // espaço sujo: a EXTRAÇÃO vai para a rede própria (extração suja); a insuflação continua possível
-  // salvo nos G4 (extração dedicada). Ex.: um laboratório (G1) precisa de insuflação (T11/T12).
-  const sujo = VC6.transferencias && VC6.transferencias.ehSujo ? VC6.transferencias.ehSujo(e) : false;
-  const g = Number(e.grupoForcado || VC.calculo.calcularQEspaco(e).g) || 0;
-  if (!sujo) return ['insuflacao', 'extracao'];
-  return g === 4 ? ['extracao_suja'] : ['insuflacao', 'extracao_suja'];
+  // G4 «Extração Dedicada» (princípio P4): só extração, na rede própria; o ar entra por transferência
+  return VC.calculo.grupoDe(e) === 4 ? ['extracao_suja'] : ['insuflacao', 'extracao'];
 };
 /* caudal proposto (P7): primeiro o que falta no balanço da sala, depois o que falta à norma */
 P.qSugerido = function (e, rede) {

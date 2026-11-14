@@ -108,6 +108,9 @@ VC.calculo = {
      calcularQ_normas — V8.0.7
      ACH so se aplica a G3 e G4 (exceto Sanitorios)
      ──────────────────────────────────────────────── */
+  /* grupo efetivo do espaço: o forçado pelo projetista ou o do tipo (G1–G4) */
+  grupoDe(esp) { return Number(esp && (esp.grupoForcado || (VC.normas.getDef(esp.tipo) || {}).g)) || 0; },
+
   /* N vazio (null, undefined ou '') = ocupação por definir; 0 é um valor escolhido */
   nVazio(esp) { return !esp || esp.N == null || String(esp.N).trim() === ''; },
 
@@ -655,6 +658,13 @@ VC.calculo = {
       // higiene do ar: nenhuma transferência leva ar de um espaço sujo para um mais limpo (regra de VC6.transferencias)
       if (window.VC6 && VC6.transferencias && VC6.transferencias.direcaoValida) {
         const espPorId = new Map((VC.dados.espacos || []).map(e => [e.id, e]));
+        // G4 em depressão (princípio P4; Portaria 138-I, Anexo II, 1.2.2 h): extração direta > insuflação direta
+        (VC.dados.espacos || []).forEach(e => {
+          if (this.grupoDe(e) !== 4 || !VC6.balanco || !VC6.balanco.QOutDireto) return;
+          const qi = VC6.balanco.QInDireto(e), qo = VC6.balanco.QOutDireto(e);
+          const fonte = /^(Sanitários|Balneários)$/.test(e.tipo) ? 'Portaria 138-I, Anexo II, 1.2.2 h)' : 'G4 «Extração Dedicada», princípio P4 e limites de pressão da app';
+          if ((qi > 0 || qo > 0) && qo <= qi) findings.push({ severidade: 'ERRO', tipo: 'G4 sem depressão', elemento: e.nome, msg: 'Extração ' + VC.utils.fmt(qo, 0) + ' m³/h ≤ insuflação ' + VC.utils.fmt(qi, 0) + ' m³/h: o espaço tem de estar em depressão, com o ar a entrar por transferência (' + fonte + ')' });
+        });
         (VC.dados.transferencias || []).forEach(t => {
           const de = espPorId.get(t.deId), para = espPorId.get(t.paraId);
           if (de && para && !VC6.transferencias.direcaoValida(de, para).ok) findings.push({ severidade: 'ERRO', tipo: 'Transferência de espaço sujo', elemento: de.nome + ' → ' + para.nome, msg: 'O ar de um espaço sujo não pode passar para um espaço mais limpo: inverta a direção ou remova a transferência' });

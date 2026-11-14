@@ -305,14 +305,6 @@ if (document.readyState === 'complete' || document.readyState === 'interactive')
    ============================================================ */
 
 /* ────────────────────────────────────────────────
-   CONSTANTES
-   ──────────────────────────────────────────────── */
-VC.topologia._TIPOS_SUJOS = [
-  'sanitario', 'balneario', 'vestiario',
-  'cozinha', 'garagem', 'laboratorio'
-];
-
-/* ────────────────────────────────────────────────
    §3.1 · CLASSIFICAR UTA
    ──────────────────────────────────────────────── */
 VC.topologia._classificarUta = function (uta) {
@@ -326,17 +318,10 @@ VC.topologia._classificarUta = function (uta) {
 /* ────────────────────────────────────────────────
    §3.2 · DETEÇÃO DE ESPAÇO SUJO
    ──────────────────────────────────────────────── */
-VC.topologia._normalizarTipo = function (tipo) {
-  return String(tipo || '')
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .replace(/s$/, '');
-};
-
+// espaço sujo = grupo G4 «Extração Dedicada» (princípio P4), com o grupo forçado pelo projetista; não há lista de nomes à parte
 VC.topologia._eEspacoSujo = function (esp) {
   if (!esp) return false;
-  const tipoNorm = VC.topologia._normalizarTipo(esp.tipo);
-  if (VC.topologia._TIPOS_SUJOS.indexOf(tipoNorm) >= 0) return true;
+  if (VC.calculo && VC.calculo.grupoDe && VC.calculo.grupoDe(esp) === 4) return true;   // G4 (respeita o grupo forçado)
   if ((esp.definicoes || []).some(d => d.rede === 'extracao_suja')) return true;
   const temTerminal = (VC.dados.terminais || []).some(t =>
     t.rede === 'extracao_suja' &&

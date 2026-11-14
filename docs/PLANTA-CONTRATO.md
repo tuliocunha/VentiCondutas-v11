@@ -156,12 +156,13 @@ cenários e mostradas na app como avisos no objeto.
 | I5 | Um terminal ligado a um ramal: o ramal existe e é da mesma rede. Regra única `VC.redes.compativeis` em toda a app (Topologia, Associação, planta, verificação). A **extração suja** (casas de banho, G4) tem rede e ventilador próprios: não se liga à extração geral. Terminal sem ramal = erro na Entrega. | erro |
 | I6 | Ligação terminal → ponta do ramal ≤ 0,5 m, senão o L não a inclui. | aviso |
 | I7 | Um ramal desenhado: o pai existe, e o traçado do filho começa no traçado do pai. | aviso |
-| I8 | Uma transferência: origem ≠ destino, as duas existem, não há ciclo A→…→A e **não leva ar de um espaço sujo (G4) para um mais limpo** (EN 16798-3). | erro |
+| I8 | Uma transferência: origem ≠ destino, as duas existem, não há ciclo A→…→A e **a origem não é G4** (extração dedicada): o ar transferido não pode vir de instalações sanitárias, cozinhas, parques de estacionamento… (Portaria 138-I, Anexo II, 1.2.2 f). Espaço sujo = **G4 da classificação da app**, com o grupo forçado pelo projetista quando há outra fonte de contaminação. | erro |
 | I9 | A seta de uma transferência está a ≤ 0,5 m da parede da origem e da do destino. | aviso |
 | I10 | Uma transferência compensada: a definição de insuflação indicada existe e inclui o caudal compensado. | erro |
 | I11 | Os terminais de uma definição somam o `Q_total` da definição. | erro |
 | I12 | Balanço de cada espaço desenhado dentro da tolerância (ou isento: G2 sem conforto). | aviso |
 | I16 | Um ramal tem caudal (Q > 0); um terminal de uma sala desenhada está colocado na planta. | aviso |
+| I20 | Um espaço G4 está em depressão: extração direta > insuflação direta; o ar entra por transferência (princípio P4; para instalações sanitárias, Portaria 138-I, Anexo II, 1.2.2 h). | erro |
 | I19 | Espaço G1 com N vazio: «Ocupação por definir». O ar novo é só T12 × A até o N ser escrito; depois aplica-se o maior de T11 × N e T12 × A (Portaria 138-I). | por fazer (cinzento) |
 | I17 | Um ramal é da rede da sua UTA e do seu pai. | erro |
 | I18 | Mudar um nome (espaço ou ramal) não desliga nada: terminais, transferências e sub-ramais seguem o nome. | erro (só nos testes) |

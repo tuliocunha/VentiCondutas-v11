@@ -195,6 +195,10 @@ const CASOS = [
     const q = VC.calculo.calcularQ_normas; VC.calculo.calcularQ_normas = function (esp) { return q.call(this, esp.N == null ? Object.assign({}, esp, { N: 1 }) : esp); };
     return () => { VC.calculo.nVazio = o; VC.calculo.calcularQ_normas = q; };
   }],
+  ['Portaria 1.2.2 f) · só recusa sujo → limpo (aceita WC → WC)', 'UI.T32', () => {
+    const T = VC6.transferencias, o = T.direcaoValida; T.direcaoValida = function (de, para) { return this.ehSujo(de) && !this.ehSujo(para) ? o.call(this, de, para) : { ok: true }; };
+    return () => { T.direcaoValida = o; };
+  }],
   ['E3 · sem aviso de ventilador fora da curva', 'N6.T13', () => {
     const o = VC.uta.calcularPontoFuncionamento;
     VC.uta.calcularPontoFuncionamento = function () { const r = o.apply(this, arguments); if (r) r.foraDaCurva = false; return r; };

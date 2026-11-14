@@ -21,6 +21,7 @@ VC.entrega = {
     if (/ocupa[cç][aã]o por definir/i.test(t)) return 'levantamento';
     if (/sem ramal|outra rede|ramal sem caudal/i.test(t)) return 'associacao';
     if (/espa[cç]o sujo/i.test(t)) return 'transferencias';
+    if (/sem depress/i.test(t)) return 'balanco';
     if (/sec[cç][aã]o|velocidade|di[aâ]metro|conduta|perda/i.test(t)) return 'rede';
     if (/ventilador|sfp|uta|motor|ecodesign|curva/i.test(t)) return 'utas';
     if (/balan|res[ií]duo/i.test(t)) return 'balanco';
