@@ -239,7 +239,7 @@ auditoria (Fase 1) confirma-os com gestos reais e acrescenta os que faltarem.
 | **2 · Gestor de gestos** | Uma máquina de estados (secção 6) no lugar das 30+ escutas; comportamento igual, provado pelos cenários | sim (interno) |
 | **3 · Verificador** | `VC.planta.coerencia()` com I1–I15; avisos no desenho e no cartão | sim |
 | **4 · Correções** | Desvios e falhas aprovados da auditoria, em 2–3 PRs por tema: entrada de dados, representação, ergonomia | sim |
-| **5 · Proteção** | C1–C5 automáticos no CI; testes «macaco» (ações ao acaso + I13) para desfazer e geometria | não |
+| **5 · Proteção** | Cenários automáticos no CI: `tools/cenarios-planta.js` (`npm run cenarios`) com rato e teclado reais — desfazer, criar na planta, gestos, coerência desenho ↔ tabela, representação [hoje]. Por fazer: testes «macaco» (ações ao acaso + I13) | não |
 
 ### Como se valida (regra do autor)
 - **A app tem de cumprir as normas de ventilação aplicáveis em Portugal e as regras de engenharia de dimensionamento.** A validação faz-se com **casos calculados à mão a partir do texto da norma** (testes internos), nunca a partir do resultado de um projeto de exemplo.
