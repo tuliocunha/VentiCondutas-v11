@@ -425,6 +425,10 @@ html, body, .app { height: 100vh !important; overflow: hidden !important; margin
 .planta-term text{pointer-events:none}
 .planta-vert{cursor:move}
 .planta-trf text{paint-order:stroke;stroke:#fff;stroke-width:3px;stroke-linejoin:round}
+.planta-trf[data-trf]{cursor:grab}.planta-trf.sel line+line{stroke:#7a4f05}
+.planta-trf-imp{width:100%;border-collapse:collapse;font-size:12.5px;margin:4px 0}.planta-trf-imp th,.planta-trf-imp td{padding:3px 4px;border-bottom:1px solid #e2e8f0;text-align:left;vertical-align:top}.planta-trf-imp th small{display:block;font-weight:400;color:#64748b}.planta-trf-imp thead th{font-size:11.5px;color:#475569}
+.trf-ok{color:#2f6b45;font-weight:700}.trf-falta{color:#a14b4b;font-weight:700}.trf-sobra{color:#7a5a1e;font-weight:700}
+.planta-check{display:flex;gap:6px;align-items:flex-start;font-size:13px;font-weight:600;margin:4px 0}.planta-check input{margin-top:3px}.planta-check small{display:block;font-weight:400;color:#64748b}
 .planta-terms{display:flex;flex-direction:column;gap:4px}
 .planta-tchip{display:flex;align-items:center;gap:6px;font-size:12.5px;border-left:3px solid;padding:2px 6px;background:var(--superf2);border-radius:4px}
 .planta-tchip b{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;color:#fff;font-size:11px}

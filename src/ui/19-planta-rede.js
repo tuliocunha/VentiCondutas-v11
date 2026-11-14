@@ -25,7 +25,7 @@ const PDFJS = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/';
 
 P.FERRAMENTAS.push(['trf', 'fa-right-left', 'Transferência']);
 P.DICAS.sel = 'Clique numa sala para a selecionar; arraste os cantos da sala selecionada para corrigir o desenho. Os terminais (I, E) também se arrastam.';
-P.DICAS.trf = 'Arraste de uma sala para outra (por exemplo, do corredor para a casa de banho). O caudal sugerido equilibra o destino.';
+P.DICAS.trf = 'Arraste de uma sala para outra passando pela porta (por exemplo, do corredor para a casa de banho): a seta fica onde o arrasto atravessa as paredes. O caudal sugerido equilibra o destino; a origem pode ser compensada.';
 P.pendenteTrf = null;
 
 /* ── geometria ───────────────────────────── */
@@ -94,7 +94,65 @@ P._sugerirQ = function (deId, paraId) {
   if (falta > 0) return Math.round(falta);
   return sobra > 0 ? Math.round(sobra) : 0;
 };
-P.criarTransferencia = function (Q, tipo, dp) {
+/* parâmetros t ∈ [0,1] onde o segmento a→b atravessa o contorno pts */
+P._cortes = function (a, b, pts) {
+  const r = [], dx = b[0] - a[0], dy = b[1] - a[1];
+  for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+    const [x1, y1] = pts[j], [x2, y2] = pts[i], ex = x2 - x1, ey = y2 - y1, den = dx * ey - dy * ex;
+    if (Math.abs(den) < 1e-9) continue;
+    const t = ((x1 - a[0]) * ey - (y1 - a[1]) * ex) / den, u = ((x1 - a[0]) * dy - (y1 - a[1]) * dx) / den;
+    if (t >= 0 && t <= 1 && u >= 0 && u <= 1) r.push(t);
+  }
+  return r.sort((m, n) => m - n);
+};
+/* A porta entre duas salas: o ponto onde a linha a→b sai de A e entra em B
+   (o meio dos dois, porque entre as salas há a espessura da parede).
+   Devolve { x, y, ang, folga } — folga = distância entre as duas paredes (px). */
+P.portaEntre = function (A, B, a, b) {
+  a = a || this.centro(A.planta.pts); b = b || this.centro(B.planta.pts);
+  const ta = this._cortes(a, b, A.planta.pts), tb = this._cortes(a, b, B.planta.pts);
+  const sai = ta.length ? ta[0] : null, entra = tb.length ? tb[tb.length - 1] : null;
+  const t1 = sai != null ? sai : (entra != null ? entra : 0.5), t2 = entra != null ? entra : t1, t = (t1 + t2) / 2;
+  const L = Math.hypot(b[0] - a[0], b[1] - a[1]);
+  return { x: Math.round((a[0] + (b[0] - a[0]) * t) * 10) / 10, y: Math.round((a[1] + (b[1] - a[1]) * t) * 10) / 10, ang: Math.round(Math.atan2(b[1] - a[1], b[0] - a[0]) * 1000) / 1000, folga: Math.abs(t2 - t1) * L };
+};
+/* onde desenhar a seta de uma transferência (a guardada ou a calculada) */
+P._portaDe = function (t, A, B, p) {
+  if (t.planta && t.planta.pisoId === p.id) return t.planta;
+  return this.portaEntre(A, B);
+};
+/* balanço de uma sala, com uma transferência hipotética (Q de deId para paraId) */
+P._balancoSala = function (e, extra) {
+  const B = VC6.balanco, tr = (VC.dados.transferencias || []).concat(extra ? [extra] : []);
+  const ent = B.QInDireto(e) + B.QTransfIn(e, tr), sai = B.QOutDireto(e) + B.QTransfOut(e, tr);
+  return { ent, sai, res: ent - sai };
+};
+P._linhaImpacto = function (nome, papel, a, d) {
+  const cl = r => (Math.abs(r) <= 5 ? 'ok' : (r < 0 ? 'falta' : 'sobra'));
+  const txt = r => (Math.abs(r) <= 5 ? 'equilibrada' : (r < 0 ? 'falta ' + fmt(-r) : 'sobra ' + fmt(r)));
+  return '<tr><th>' + esc(nome) + '<small>' + papel + '</small></th><td>' + fmt(a.ent) + ' / ' + fmt(a.sai) + '<br><span class="trf-' + cl(a.res) + '">' + txt(a.res) + '</span></td>'
+    + '<td>' + fmt(d.ent) + ' / ' + fmt(d.sai) + '<br><span class="trf-' + cl(d.res) + '">' + txt(d.res) + '</span></td></tr>';
+};
+/* efeito da transferência pendente nas duas salas (antes → depois) */
+P._impactoTrf = function (Q, comp) {
+  const t = this.pendenteTrf; if (!t) return '';
+  const de = VC.dados.espacos.find(e => String(e.id) === String(t.deId)), para = VC.dados.espacos.find(e => String(e.id) === String(t.paraId));
+  if (!de || !para || !VC6.balanco || !VC6.balanco.QInDireto) return '';
+  Q = VC.utils.num(Q) || 0;
+  const hip = { deId: de.id, paraId: para.id, Q }, a1 = this._balancoSala(de), a2 = this._balancoSala(para), d1 = this._balancoSala(de, hip), d2 = this._balancoSala(para, hip);
+  if (comp) { d1.ent += Q; d1.res += Q; }
+  let h = '<table class="planta-trf-imp"><thead><tr><th>m³/h <small>entra / sai</small></th><th>antes</th><th>depois</th></tr></thead><tbody>'
+    + this._linhaImpacto(de.nome, 'origem', a1, d1) + this._linhaImpacto(para.nome, 'destino', a2, d2) + '</tbody></table>';
+  if (Q > 0 && !comp && d1.res < -5) h += '<p class="planta-aviso">A origem perde ' + fmt(Q) + ' m³/h e fica com falta de ' + fmt(-d1.res) + ' m³/h. Marque «Compensar na origem» ou aumente a insuflação de «' + esc(de.nome) + '» no passo Terminais.</p>';
+  if (Q > 0 && comp) h += '<p class="planta-meta">A insuflação de «' + esc(de.nome) + '» sobe ' + fmt(Q) + ' m³/h (e os seus terminais); a rede de insuflação é recalculada.</p>';
+  return h;
+};
+P._atualizarImpacto = function () {
+  const out = document.getElementById('plantaTrfImpacto'); if (!out) return;
+  const q = document.getElementById('plantaTrfQ'), c = document.getElementById('plantaTrfComp');
+  out.innerHTML = this._impactoTrf(q && q.value, c && c.checked);
+};
+P.criarTransferencia = function (Q, tipo, dp, compensar) {
   const t = this.pendenteTrf; if (!t || this._bloqueado()) return;
   Q = VC.utils.num(Q); dp = VC.utils.num(dp) || 2;
   if (!(Q > 0)) { VC.ui.toast('Escreva o caudal a transferir (m³/h).'); return; }
@@ -102,18 +160,58 @@ P.criarTransferencia = function (Q, tipo, dp) {
   if (!r || !r.ok) { VC.ui.toast((r && r.erro) || 'Não foi possível criar a transferência.'); return; }
   r.transferencia.dP_Pa = dp;
   if (VC6.transferencias.dimensionarArea) r.transferencia.area_cm2 = VC6.transferencias.dimensionarArea(Q, dp);
-  this.pendenteTrf = null;
+  const p = this.pisoAtual(), A = VC.dados.espacos.find(e => String(e.id) === String(t.deId)), B = VC.dados.espacos.find(e => String(e.id) === String(t.paraId));
+  if (p && A && A.planta && B && B.planta) {
+    const po = this.portaEntre(A, B, t.linha && t.linha[0], t.linha && t.linha[1]);
+    r.transferencia.planta = { pisoId: p.id, x: po.x, y: po.y, ang: po.ang };
+  }
+  const comp = compensar && VC6.transferencias.compensarOrigem ? VC6.transferencias.compensarOrigem(r.transferencia) : null;
+  this.pendenteTrf = null; this.trfSel = r.transferencia.id;
   if (VC.historico && VC.historico.push) VC.historico.push('transferência na planta');
   VC.estado.forcarSync();
-  VC.ui.toast('Transferência ' + r.transferencia.deNome + ' → ' + r.transferencia.paraNome + ': ' + fmt(Q) + ' m³/h, ' + fmt(r.transferencia.area_cm2) + ' cm².');
+  VC.ui.toast('Transferência ' + r.transferencia.deNome + ' → ' + r.transferencia.paraNome + ': ' + fmt(Q) + ' m³/h, ' + fmt(r.transferencia.area_cm2) + ' cm²' + (comp ? ' · insuflação da origem +' + fmt(Q) + ' m³/h' : '') + '.');
+  this.redesenhar();
+};
+P.removerTransferencia = function (id) {
+  if (this._bloqueado()) return;
+  const t = (VC.dados.transferencias || []).find(x => x.id === id); if (!t) return;
+  const antes = this._estado(), comp = t.compensacao;
+  VC6.transferencias.remover(id);
+  this.trfSel = null;
+  this._empilhar('transferência removida', antes);
+  if (VC.historico && VC.historico.push) VC.historico.push('transferência removida na planta');
+  VC.estado.forcarSync();
+  VC.ui.toast('Transferência ' + t.deNome + ' → ' + t.paraNome + ' removida' + (comp ? '; a insuflação da origem voltou a baixar ' + fmt(comp.Q) + ' m³/h' : '') + '.');
+  this.redesenhar();
+};
+P.compensarTransferencia = function (id) {
+  if (this._bloqueado()) return;
+  const t = (VC.dados.transferencias || []).find(x => x.id === id); if (!t || t.compensacao) return;
+  const antes = this._estado();
+  if (!VC6.transferencias.compensarOrigem(t)) return;
+  this._empilhar('origem compensada', antes);
+  VC.estado.forcarSync();
+  VC.ui.toast('Insuflação de «' + t.deNome + '» +' + fmt(t.Q) + ' m³/h.');
   this.redesenhar();
 };
 const cancelarBase = P.cancelar;
-P.cancelar = function () { this.pendenteTrf = null; return cancelarBase.apply(this, arguments); };
+P.cancelar = function () { this.pendenteTrf = null; this.trfSel = null; return cancelarBase.apply(this, arguments); };
 const setFerrBase = P.setFerramenta;
 P.setFerramenta = function () { this.pendenteTrf = null; return setFerrBase.apply(this, arguments); };
 
 /* ── desenho: setas, terminais e cantos ──── */
+/* seta curta (≈ 46 px no ecrã) centrada na porta, de A para B, com o caudal */
+P._setaTrf = function (t, po, z) {
+  const m = 23 / z, cx = Math.cos(po.ang), sy = Math.sin(po.ang);
+  const x1 = po.x - cx * m, y1 = po.y - sy * m, x2 = po.x + cx * m, y2 = po.y + sy * m;
+  const nx = -sy, ny = cx, k = (ny > 0 ? -1 : 1) * 15 / z;   // rótulo do lado de cima da seta
+  const sel = String(this.trfSel) === String(t.id);
+  return '<g class="planta-trf' + (sel ? ' sel' : '') + '" data-trf="' + esc(t.id) + '"><title>' + esc(t.deNome) + ' → ' + esc(t.paraNome) + ' · ' + fmt(t.Q) + ' m³/h' + (t.compensacao ? ' · origem compensada' : '') + '</title>'
+    + '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="transparent" stroke-width="18" vector-effect="non-scaling-stroke"/>'
+    + (sel ? '<circle cx="' + po.x + '" cy="' + po.y + '" r="' + 30 / z + '" fill="rgba(154,106,18,.12)" stroke="#9a6a12" stroke-dasharray="4 3" vector-effect="non-scaling-stroke"/>' : '')
+    + '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="#9a6a12" stroke-width="3.5" vector-effect="non-scaling-stroke" marker-end="url(#plantaSeta)"/>'
+    + '<text x="' + (po.x + nx * k) + '" y="' + (po.y + ny * k + 4 / z) + '" font-size="' + 12 / z + '" text-anchor="middle" font-weight="700" fill="#7a5a1e" stroke="#fff" stroke-width="3" paint-order="stroke" vector-effect="non-scaling-stroke">' + fmt(t.Q) + ' m³/h</text></g>';
+};
 const svgBase = P._svg;
 P._svg = function (p) {
   const s = svgBase.call(this, p), z = this.zoom || 1;
@@ -121,10 +219,7 @@ P._svg = function (p) {
   const salas = this.espacosDoPiso(p), porId = {}; salas.forEach(e => { porId[e.id] = e; });
   (VC.dados.transferencias || []).forEach(t => {
     const a = porId[t.deId], b = porId[t.paraId]; if (!a || !b) return;
-    const [ax, ay] = this.centro(a.planta.pts), [bx, by] = this.centro(b.planta.pts);
-    const k = 0.22, x1 = ax + (bx - ax) * k, y1 = ay + (by - ay) * k, x2 = bx - (bx - ax) * k, y2 = by - (by - ay) * k;
-    x += '<g class="planta-trf"><line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="#9a6a12" stroke-width="3" vector-effect="non-scaling-stroke" marker-end="url(#plantaSeta)"/>'
-      + '<text x="' + (x1 + x2) / 2 + '" y="' + ((y1 + y2) / 2 - 6 / z) + '" font-size="' + 12 / z + '" text-anchor="middle" font-weight="700" fill="#7a5a1e">' + fmt(t.Q) + ' m³/h</text></g>';
+    x += this._setaTrf(t, this._portaDe(t, a, b, p), z);
   });
   (VC.dados.terminais || []).forEach(t => {
     if (!t.planta || t.planta.pisoId !== p.id) return;
@@ -145,14 +240,31 @@ P._painel = function (p) {
   if (this.pendenteTrf) {
     const de = VC.dados.espacos.find(e => String(e.id) === String(this.pendenteTrf.deId)), para = VC.dados.espacos.find(e => String(e.id) === String(this.pendenteTrf.paraId));
     const Q = this._sugerirQ(this.pendenteTrf.deId, this.pendenteTrf.paraId);
+    const comp = !!(de && (de.definicoes || []).some(d => d.rede === 'insuflacao'));
+    const esc0 = Number(p && p.escala) || 0, l = this.pendenteTrf.linha;
+    const porta = de && de.planta && para && para.planta ? this.portaEntre(de, para, l && l[0], l && l[1]) : null;
     h = '<div class="planta-card destaque"><div class="planta-card-t">Nova transferência</div><p><b>' + esc(de && de.nome) + '</b> → <b>' + esc(para && para.nome) + '</b></p>'
-      + '<label for="plantaTrfQ">Caudal (m³/h)</label><input id="plantaTrfQ" type="number" min="0" step="1" value="' + (Q || '') + '"' + (Q ? '' : ' placeholder="caudal"') + '>'
+      + '<label for="plantaTrfQ">Caudal (m³/h)</label><input id="plantaTrfQ" type="number" min="0" step="1" value="' + (Q || '') + '"' + (Q ? '' : ' placeholder="caudal"') + ' oninput="VC.planta._atualizarImpacto()">'
       + (Q ? '<p class="planta-meta">Sugerido pelo balanço: o que falta no destino.</p>' : '<p class="planta-meta">O balanço não pede caudal entre estas salas; escreva o valor.</p>')
       + '<label for="plantaTrfTipo">Tipo</label><select id="plantaTrfTipo"><option value="grelha_transferencia">Grelha de transferência</option><option value="fresta_porta">Fresta sob porta</option><option value="abertura_natural">Abertura natural</option></select>'
       + '<label for="plantaTrfDp">ΔP (Pa)</label><input id="plantaTrfDp" type="number" min="0.5" step="0.5" value="2">'
-      + '<div class="planta-acoes"><button class="btn primario" onclick="VC.planta.criarTransferencia(document.getElementById(\'plantaTrfQ\').value, document.getElementById(\'plantaTrfTipo\').value, document.getElementById(\'plantaTrfDp\').value)">Criar transferência</button><button class="btn" onclick="VC.planta.cancelar()">Cancelar</button></div></div>' + h;
+      + '<label class="planta-check"><input id="plantaTrfComp" type="checkbox"' + (comp ? ' checked' : '') + ' onchange="VC.planta._atualizarImpacto()"><span>Compensar na origem<small>soma o caudal à insuflação de «' + esc(de && de.nome) + '»</small></span></label>'
+      + '<div id="plantaTrfImpacto">' + this._impactoTrf(Q, comp) + '</div>'
+      + (porta && porta.folga * esc0 > 0.6 ? '<p class="planta-aviso">As salas não se tocam neste ponto (' + fmt(porta.folga * esc0, 1) + ' m entre as paredes). A seta fica a meio; arraste-a para a porta com Selecionar (V).</p>' : '<p class="planta-meta">A seta fica na passagem entre as salas; arraste-a com Selecionar (V) para acertar a porta.</p>')
+      + '<div class="planta-acoes"><button class="btn primario" onclick="VC.planta.criarTransferencia(document.getElementById(\'plantaTrfQ\').value, document.getElementById(\'plantaTrfTipo\').value, document.getElementById(\'plantaTrfDp\').value, document.getElementById(\'plantaTrfComp\').checked)">Criar transferência</button><button class="btn" onclick="VC.planta.cancelar()">Cancelar</button></div></div>' + h;
   }
-  const e = !this.pendente && !this.pendenteTrf && (VC.dados.espacos || []).find(x => String(x.id) === String(this.selecionado));
+  const ts = !this.pendenteTrf && this.trfSel && (VC.dados.transferencias || []).find(x => String(x.id) === String(this.trfSel));
+  if (ts) {
+    const de = VC.dados.espacos.find(e => e.id === ts.deId), para = VC.dados.espacos.find(e => e.id === ts.paraId);
+    const b1 = de && this._balancoSala(de), b2 = para && this._balancoSala(para);
+    const lin = (e, b, papel) => e ? '<tr><th>' + esc(e.nome) + '<small>' + papel + '</small></th><td>' + fmt(b.ent) + ' / ' + fmt(b.sai) + '</td><td><span class="trf-' + (Math.abs(b.res) <= 5 ? 'ok' : (b.res < 0 ? 'falta' : 'sobra')) + '">' + (Math.abs(b.res) <= 5 ? 'equilibrada' : (b.res < 0 ? 'falta ' : 'sobra ') + fmt(Math.abs(b.res))) + '</span></td></tr>' : '';
+    h = '<div class="planta-card destaque"><div class="planta-card-t">Transferência</div><p><b>' + esc(ts.deNome) + '</b> → <b>' + esc(ts.paraNome) + '</b><br>' + fmt(ts.Q) + ' m³/h · ' + esc(String(ts.tipo || '').replace(/_/g, ' ')) + ' · ' + fmt(ts.area_cm2) + ' cm² · ΔP ' + fmt(ts.dP_Pa, 1) + ' Pa</p>'
+      + '<table class="planta-trf-imp"><thead><tr><th>m³/h</th><th>entra / sai</th><th>balanço</th></tr></thead><tbody>' + lin(de, b1, 'origem') + lin(para, b2, 'destino') + '</tbody></table>'
+      + (ts.compensacao ? '<p class="planta-meta">Origem compensada: a insuflação de «' + esc(ts.deNome) + '» inclui +' + fmt(ts.compensacao.Q) + ' m³/h. Remover a transferência tira-os.</p>' : (b1 && b1.res < -5 ? '<p class="planta-aviso">A origem perde ' + fmt(ts.Q) + ' m³/h por esta transferência e tem falta de ' + fmt(-b1.res) + ' m³/h.</p>' : ''))
+      + '<p class="planta-meta">Arraste a seta para a porta certa.</p><div class="planta-acoes">' + (!ts.compensacao && b1 && b1.res < -5 ? '<button class="btn primario" onclick="VC.planta.compensarTransferencia(\'' + esc(ts.id) + '\')">Compensar na origem</button>' : '')
+      + '<button class="btn coral" onclick="VC.planta.removerTransferencia(\'' + esc(ts.id) + '\')">Remover</button><button class="btn" onclick="VC.planta.trfSel=null;VC.planta.redesenhar()">Fechar</button></div></div>' + h;
+  }
+  const e = !this.pendente && !this.pendenteTrf && !ts && (VC.dados.espacos || []).find(x => String(x.id) === String(this.selecionado));
   if (e && e.planta) {
     const T = this.terminaisDe(e), fora = T.filter(t => !(t.planta && t.planta.pisoId === p.id));
     const bloco = '<div class="planta-card"><div class="planta-card-t">Terminais de ' + esc(e.nome) + ' (' + T.length + ')</div>'
@@ -171,14 +283,17 @@ P.ligar = function () {
   let arr = null;
   svg.addEventListener('pointerdown', ev => {
     if (ev.button !== 0) return;
-    const vert = ev.target.closest('.planta-vert'), term = ev.target.closest('.planta-term');
-    if (this.ferramenta === 'sel' && (vert || term)) {
+    const vert = ev.target.closest('.planta-vert'), term = ev.target.closest('.planta-term'), seta = ev.target.closest('.planta-trf[data-trf]');
+    if (this.ferramenta === 'sel' && seta && !vert && !term) {
+      if (this._bloqueado()) return;
+      arr = { tipo: 'seta', id: seta.dataset.trf, el: seta, q0: this._ponto(ev), antes: this._estado() };
+    } else if (this.ferramenta === 'sel' && (vert || term)) {
       if (this._bloqueado()) return;
       arr = vert ? { tipo: 'vert', i: Number(vert.dataset.i), el: vert } : { tipo: 'term', id: term.dataset.t, el: term };
     } else if (this.ferramenta === 'trf') {
       const q = this._ponto(ev), de = this.salaEm(q);
       if (!de) { VC.ui.toast('Comece dentro de uma sala desenhada.'); ev.stopImmediatePropagation(); return; }
-      arr = { tipo: 'trf', de, q0: this.centro(de.planta.pts) };
+      arr = { tipo: 'trf', de, q0: q };
     } else return;
     ev.stopImmediatePropagation(); ev.preventDefault();
     try { svg.setPointerCapture(ev.pointerId); } catch (e) { /* captura opcional */ }
@@ -194,6 +309,10 @@ P.ligar = function () {
     } else if (arr.tipo === 'term') {
       arr.q = q; arr.el.querySelector('circle').setAttribute('cx', q[0]); arr.el.querySelector('circle').setAttribute('cy', q[1]);
       const tx = arr.el.querySelector('text'); tx.setAttribute('x', q[0]); tx.setAttribute('y', q[1] + 4 / (this.zoom || 1));
+    } else if (arr.tipo === 'seta') {
+      arr.dx = q[0] - arr.q0[0]; arr.dy = q[1] - arr.q0[1];
+      if (Math.hypot(arr.dx, arr.dy) * (this.zoom || 1) > 3) arr.mudou = true;
+      arr.el.setAttribute('transform', 'translate(' + arr.dx + ' ' + arr.dy + ')');
     } else if (arr.tipo === 'trf') {
       const l = document.getElementById('plantaTrfLinha');
       if (l) { l.setAttribute('x1', arr.q0[0]); l.setAttribute('y1', arr.q0[1]); l.setAttribute('x2', q[0]); l.setAttribute('y2', q[1]); l.setAttribute('visibility', 'visible'); }
@@ -203,6 +322,18 @@ P.ligar = function () {
     if (!arr) return;
     const a = arr; arr = null; ev.stopImmediatePropagation();
     const q = this._ponto(ev), p = this.pisoAtual();
+    if (a.tipo === 'seta') {
+      const t = (VC.dados.transferencias || []).find(x => String(x.id) === String(a.id));
+      if (t && a.mudou) {
+        const A = VC.dados.espacos.find(e => e.id === t.deId), B = VC.dados.espacos.find(e => e.id === t.paraId);
+        const po = this._portaDe(t, A, B, p);
+        t.planta = { pisoId: p.id, x: Math.round((po.x + a.dx) * 10) / 10, y: Math.round((po.y + a.dy) * 10) / 10, ang: po.ang };
+        this._empilhar('seta da transferência movida', a.antes);
+        if (VC.historico && VC.historico.push) VC.historico.push('transferência movida na planta');
+      }
+      this.trfSel = t ? t.id : null; this.selecionado = null;
+      this.redesenhar(); return;
+    }
     if (a.tipo === 'vert') { if (a.mudou && VC.historico && VC.historico.push) VC.historico.push('desenho corrigido'); this.redesenhar(); return; }
     if (a.tipo === 'term') {
       const t = (VC.dados.terminais || []).find(x => String(x.id) === String(a.id));
@@ -218,7 +349,7 @@ P.ligar = function () {
     if (a.tipo === 'trf') {
       const para = this.salaEm(q);
       if (!para || String(para.id) === String(a.de.id)) { VC.ui.toast('Largue dentro de outra sala desenhada.'); this.redesenhar(); return; }
-      this.pendenteTrf = { deId: a.de.id, paraId: para.id }; this.selecionado = null; this.redesenhar();
+      this.pendenteTrf = { deId: a.de.id, paraId: para.id, linha: [a.q0, q] }; this.selecionado = null; this.trfSel = null; this.redesenhar();
     }
   }, true);
 };
@@ -269,16 +400,16 @@ P.mostrar = function (el) {
     this._passoVisto = passo;
     this.corPor = (passo === 'balanco' || passo === 'transferencias') ? 'balanco' : 'grupo';
     this.ferramenta = passo === 'transferencias' ? 'trf' : 'sel';
-    this.pendente = null; this.pendenteTrf = null;
+    this.pendente = null; this.pendenteTrf = null; this.trfSel = null;
   }
   return mostrarBase.call(this, el);
 };
 
 /* ── plantas na Entrega (só leitura) ─────── */
 P.svgEstatico = function (piso, largura) {
-  const guard = { zoom: this.zoom, selecionado: this.selecionado, rascunho: this.rascunho, pendente: this.pendente, escalaPts: this.escalaPts, corPor: this.corPor, ferramenta: this.ferramenta };
+  const guard = { zoom: this.zoom, selecionado: this.selecionado, trfSel: this.trfSel, rascunho: this.rascunho, pendente: this.pendente, escalaPts: this.escalaPts, corPor: this.corPor, ferramenta: this.ferramenta };
   try {
-    Object.assign(this, { zoom: largura / piso.w, selecionado: null, rascunho: [], pendente: null, escalaPts: [], corPor: 'grupo', ferramenta: 'ver', _rotuloQ: true });
+    Object.assign(this, { zoom: largura / piso.w, selecionado: null, trfSel: null, rascunho: [], pendente: null, escalaPts: [], corPor: 'grupo', ferramenta: 'ver', _rotuloQ: true });
     return this._svg(piso).replace(/^<svg [^>]*>/, '<svg class="planta-estatica" viewBox="0 0 ' + piso.w + ' ' + piso.h + '" role="img" aria-label="Planta de ' + esc(piso.nome) + '">').replace('<polyline id="plantaRascunho" points="" fill="none" stroke="#4f6d8c" stroke-width="2.5" vector-effect="non-scaling-stroke"/>', '').replace(/<line id="plantaTrfLinha"[^>]*\/>/, '');
   } finally { Object.assign(this, guard); this._rotuloQ = false; }
 };
