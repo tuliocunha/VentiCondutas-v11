@@ -234,7 +234,10 @@ VC.planta = {
     /* ferramentas: barra vertical à esquerda, sempre à vista */
     h += '<div class="planta-flut planta-ferrbar" role="toolbar" aria-label="Ferramentas de desenho" aria-orientation="vertical">' + F.map(([id, ic, nome]) => {
       const k = this.TECLAS[id] || '';
-      return '<button class="planta-ft' + (this.ferramenta === id ? ' ativo' : '') + '" aria-pressed="' + (this.ferramenta === id) + '" title="' + nome + (k ? ' (' + k + ')' : '') + '" onclick="VC.planta.setFerramenta(\'' + id + '\')"><i class="fa-solid ' + ic + '" aria-hidden="true"></i><span>' + nome + '</span>' + (k ? '<kbd>' + k + '</kbd>' : '') + '</button>';
+      /* v11.3: só o ícone; o nome, o atalho e o que faz aparecem num menu ao passar o rato ou com o foco do teclado */
+      const icone = (this.ICONES && this.ICONES[id]) ? '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="' + this.ICONES[id] + '"/></svg>' : '<i class="fa-solid ' + ic + '" aria-hidden="true"></i>';
+      return '<button class="planta-ft' + (this.ferramenta === id ? ' ativo' : '') + '" aria-pressed="' + (this.ferramenta === id) + '" aria-label="' + nome + (k ? ' (atalho ' + k + ')' : '') + '" aria-describedby="dicaF_' + id + '" onclick="VC.planta.setFerramenta(\'' + id + '\')">' + icone
+        + '<span class="planta-ft-dica" role="tooltip" id="dicaF_' + id + '"><span class="pfd-cab"><b>' + nome + '</b>' + (k ? '<kbd>' + k + '</kbd>' : '') + '</span><span class="pfd-txt">' + (this.DICAS[id] || '') + '</span></span></button>';
     }).join('') + '</div>';
     /* zoom: canto inferior direito */
     h += '<div class="planta-flut planta-zoombar" role="group" aria-label="Zoom"><button class="planta-bt" onclick="VC.planta.zoomBotao(1/1.25)" aria-label="Afastar" title="Afastar (−)">−</button><span id="plantaZoomTxt">' + Math.round((this.zoom || 1) * 100) + '%</span><button class="planta-bt" onclick="VC.planta.zoomBotao(1.25)" aria-label="Aproximar" title="Aproximar (+)">+</button><button class="planta-bt" onclick="VC.planta.ajustar()" title="Mostrar a planta inteira (F)">Ajustar</button><button class="planta-bt" onclick="VC.planta.zoom100()" title="Tamanho real da imagem (0)">100%</button></div>';

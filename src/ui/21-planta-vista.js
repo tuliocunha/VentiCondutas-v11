@@ -47,7 +47,7 @@ P.redesenharDesenho = function () {
   svg.outerHTML = this._svg(p); this.ligar();
 };
 /* "Ajustar" enquadra a planta na zona livre entre as barras flutuantes (nada fica tapado) */
-P.MARGENS = { e: 104, t: 62, d: 12, b: 80 };
+P.MARGENS = { e: 64, t: 62, d: 12, b: 80 };
 P._ajustarVista = function (p) {
   const [W, H] = this._dim(), M = this.MARGENS;
   const w = Math.max(80, W - M.e - M.d), h = Math.max(80, H - M.t - M.b);
@@ -206,7 +206,7 @@ window.addEventListener('keydown', ev => {
   if (mod && k === '-') return tratar(() => P.zoomBotao(1 / 1.25));
   if (mod && k === '0') return tratar(() => P.ajustar());
   if (mod || ev.altKey) return;
-  const f = { v: 'sel', h: 'mao', s: 'escala', r: 'ret', p: 'pol', t: 'trf', l: 'ramal' }[k.toLowerCase()];
+  const f = Object.keys(P.TECLAS || {}).find(id => (P.TECLAS[id] || '').toLowerCase() === k.toLowerCase());   // atalhos de P.TECLAS (inclui ferramentas novas)
   if (f && P.FERRAMENTAS.some(x => x[0] === f)) return tratar(() => P.setFerramenta(f));
   if (k === 'f' || k === 'F') return tratar(() => P.ajustar());
   if (k === '0') return tratar(() => P.zoom100());

@@ -473,6 +473,20 @@ VC6.testes = {
         return ok1 && ok2 && ok3 && ok4;
       } finally { Object.assign(D, { ramais: g.ramais, terminais: g.terminais, espacos: g.espacos, nos: g.nos, trechos: g.trechos, plantas: g.plantas }); VC.planta.piso = g.piso; VC.planta.zoom = g.zoom; }
     } });
+    // v11.3: ferramenta Terminal — clicar numa sala coloca o próximo terminal dela (insuflação primeiro); fora de uma sala não faz nada
+    self.registar({ id: 'UI.T22', nucleo: 'UI', grupo: 'UI', nome: 'Planta: colocar terminais com a ferramenta Terminal', criterio: '1.º clique = insuflação no ponto; 2.º = extração; 3.º = nada (todos colocados); fora da sala = nada', fn: () => {
+      const P = VC.planta; if (!P || !P.colocarTerminal) return false;
+      const D = VC.dados, g = { esp: D.espacos, ter: D.terminais, pl: D.plantas, ram: D.ramais, piso: P.piso, toast: VC.ui.toast, pilha: P._pilha };
+      try {
+        VC.ui.toast = () => {}; P._pilha = [];
+        D.plantas = [{ id: 'pT', nome: 'T', w: 500, h: 500, escala: 0.01 }]; P.piso = 'pT'; D.ramais = [];
+        D.espacos = [{ id: 77, nome: 'Sala T', planta: { pisoId: 'pT', pts: [[0, 0], [200, 0], [200, 200], [0, 200]] } }];
+        D.terminais = [{ id: 'E1', nome: 'E1', rede: 'extracao', espacos: [{ id: 77, nome: 'Sala T' }] }, { id: 'I1', nome: 'I1', rede: 'insuflacao', espacos: [{ id: 77, nome: 'Sala T' }] }];
+        const fora = P.colocarTerminal([300, 300]);
+        const t1 = P.colocarTerminal([50, 60]), t2 = P.colocarTerminal([150, 160]), t3 = P.colocarTerminal([100, 100]);
+        return fora === null && t1 && t1.id === 'I1' && t1.planta.x === 50 && t1.planta.y === 60 && t2 && t2.id === 'E1' && t3 === null && P._pilha.length === 2;
+      } finally { D.espacos = g.esp; D.terminais = g.ter; D.plantas = g.pl; D.ramais = g.ram; P.piso = g.piso; VC.ui.toast = g.toast; P._pilha = g.pilha; }
+    } });
   },
 
   correr() {

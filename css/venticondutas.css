@@ -458,18 +458,23 @@ html, body, .app { height: 100vh !important; overflow: hidden !important; margin
 .planta-topo{top:8px;left:8px;right:8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:4px 6px}
 .planta-topo .planta-pisos{background:transparent;padding:0}
 .planta-topo .planta-corlbl{margin-left:auto}
-.planta-ferrbar{top:64px;left:8px;display:flex;flex-direction:column;gap:2px;padding:4px;max-height:calc(100% - 120px);overflow-y:auto}
-.planta-ft{appearance:none;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;width:84px;min-height:50px;border:0;border-radius:8px;background:transparent;color:#334155;font:inherit;font-size:11.5px;font-weight:700;cursor:pointer;padding:4px 2px}
-.planta-ft i{font-size:15px}
+.planta-ferrbar{top:64px;left:8px;display:flex;flex-direction:column;gap:2px;padding:4px;max-height:calc(100% - 120px);overflow:visible}
+.planta-ft{appearance:none;position:relative;display:flex;align-items:center;justify-content:center;width:44px;height:44px;border:0;border-radius:8px;background:transparent;color:#334155;cursor:pointer;padding:0}
+.planta-ft svg{display:block}
 .planta-ft:hover{background:var(--superf3)}
 .planta-ft.ativo{background:var(--primario-esc);color:#fff}
-.planta-ft kbd{position:absolute;top:2px;right:4px;font:700 9.5px/1 ui-monospace,monospace;opacity:.75}
+/* menu da ferramenta: nome, atalho e o que faz (rato ou foco do teclado) */
+.planta-ft-dica{position:absolute;left:calc(100% + 10px);top:50%;transform:translateY(-50%);z-index:6;display:none;flex-direction:column;gap:4px;width:max-content;max-width:260px;padding:8px 10px;background:#fff;color:#1e293b;border:1px solid var(--borda-media);border-top:3px solid var(--primario-esc);border-radius:8px;box-shadow:0 8px 24px rgba(15,23,42,.18);text-align:left;font-size:12.5px;line-height:1.45;font-weight:500;pointer-events:none}
+.planta-ft:hover .planta-ft-dica,.planta-ft:focus-visible .planta-ft-dica{display:flex}
+.pfd-cab{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:13.5px}
+.pfd-cab kbd{font:700 12px/1 ui-monospace,monospace;background:var(--superf3);border:1px solid var(--borda-media);border-bottom-width:2px;border-radius:4px;padding:3px 6px;color:#334155}
+.pfd-txt{color:#475569;white-space:normal}
 .planta-ft:focus-visible,.planta-bt:focus-visible{outline:2px solid var(--primario-esc);outline-offset:1px}
 .planta-zoombar{right:8px;bottom:40px;display:flex;align-items:center;gap:2px;padding:3px}
 .planta-zoombar span{min-width:50px;text-align:center;font-size:13px;font-weight:700;font-variant-numeric:tabular-nums}
 .planta-bt{appearance:none;border:0;background:transparent;border-radius:7px;padding:6px 10px;min-height:34px;font:inherit;font-size:13px;font-weight:700;color:#334155;cursor:pointer}
 .planta-bt:hover{background:var(--superf3)}
-.planta-palco .planta-legenda{left:104px;bottom:40px;display:flex;flex-wrap:wrap;gap:12px;padding:5px 10px;font-size:12px;max-width:calc(100% - 420px)}
+.planta-palco .planta-legenda{left:66px;bottom:40px;display:flex;flex-wrap:wrap;gap:12px;padding:5px 10px;font-size:12px;max-width:calc(100% - 420px)}
 .planta-estado{position:absolute;left:0;right:0;bottom:0;z-index:3;height:30px;display:flex;align-items:center;gap:16px;padding:0 12px;background:rgba(255,250,240,.97);border-top:1px solid #efe2c4;font-size:12.5px;color:#5c4a1e;white-space:nowrap;overflow:hidden}
 .pe-ferr{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
 .pe-medida{font-weight:800;color:#1e293b;font-variant-numeric:tabular-nums}
@@ -486,3 +491,5 @@ html, body, .app { height: 100vh !important; overflow: hidden !important; margin
 .planta-renomear input{flex:1;min-width:120px;font:inherit;font-size:14px;padding:6px 9px;border:1px solid var(--borda-media);border-radius:8px;min-height:36px}
 #conteudoPasso:fullscreen{background:var(--fundo);padding:8px !important;overflow:hidden}
 .tabela td input.ramal-nome{font-weight:800;min-width:9ch}
+
+.planta-palco[data-ferr="term"] > svg{cursor:copy}
