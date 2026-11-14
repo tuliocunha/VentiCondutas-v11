@@ -487,6 +487,17 @@ VC6.testes = {
         return fora === null && t1 && t1.id === 'I1' && t1.planta.x === 50 && t1.planta.y === 60 && t2 && t2.id === 'E1' && t3 === null && P._pilha.length === 2;
       } finally { D.espacos = g.esp; D.terminais = g.ter; D.plantas = g.pl; D.ramais = g.ram; P.piso = g.piso; VC.ui.toast = g.toast; P._pilha = g.pilha; }
     } });
+    // planeamento: a ideia das ligações flexíveis está registada na app, e a planta já mede a ligação terminal → ramal
+    self.registar({ id: 'UI.T23', nucleo: 'UI', grupo: 'UI', nome: 'Funções planeadas registadas (ligações flexíveis)', criterio: 'Sistema › Funções planeadas lista as ligações flexíveis; terminal a 50 px de um ramal a 0,02 m/px = 1,0 m de ligação', fn: () => {
+      if (!VC.planeamento || !VC.planeamento.itens.some(i => i.id === 'ligacoes-flexiveis') || !VC.planta || !VC.planta.comprimentoLigacao) return false;
+      const D = VC.dados, P = VC.planta, g = { pl: D.plantas, ram: D.ramais, piso: P.piso };
+      try {
+        D.plantas = [{ id: 'pF', nome: 'F', w: 500, h: 500, escala: 0.02 }]; P.piso = 'pF';
+        D.ramais = [{ id: 1, nome: 'RF', planta: { pisoId: 'pF', pts: [[0, 0], [200, 0]] } }];
+        const L = P.comprimentoLigacao({ ramalRef: 'RF', planta: { pisoId: 'pF', x: 100, y: 50 } });
+        return Math.abs(L - 1) < 1e-9 && P.comprimentoLigacao({ ramalRef: 'XX', planta: { pisoId: 'pF', x: 1, y: 1 } }) === null;
+      } finally { D.plantas = g.pl; D.ramais = g.ram; P.piso = g.piso; }
+    } });
   },
 
   correr() {
