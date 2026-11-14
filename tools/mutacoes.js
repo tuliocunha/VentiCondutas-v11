@@ -139,7 +139,7 @@ const CASOS = [
     return () => { VC.planta.comprimentoM = o; };
   }],
   ['v11.3 · exemplo "guardado" sem espaço no navegador (falha silenciosa)', 'UI.T19', () => {
-    const o = VC.exemplos.save; VC.exemplos.save = function () { try { localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this._lista || [])); } catch (e) { /* engolido */ } return true; };
+    const o = VC.exemplos.save; VC.exemplos.save = function () { try { localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this._lista || [])); } catch { /* engolido */ } return true; };
     return () => { VC.exemplos.save = o; };
   }],
   ['E3 · sem aviso de ventilador fora da curva', 'N6.T13', () => {
