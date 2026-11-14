@@ -19,6 +19,7 @@ VC.entrega = {
   _passoDoAviso(tipo) {
     const t = String(tipo || '');
     if (/ocupa[cç][aã]o por definir/i.test(t)) return 'levantamento';
+    if (/terminais por criar/i.test(t)) return 'requisitos';
     if (/sem ramal|outra rede|ramal sem caudal/i.test(t)) return 'associacao';
     if (/espa[cç]o sujo/i.test(t)) return 'transferencias';
     if (/sem depress/i.test(t)) return 'balanco';

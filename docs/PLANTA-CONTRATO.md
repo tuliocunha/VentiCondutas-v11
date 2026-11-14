@@ -92,7 +92,7 @@ Medidas em metros = píxeis × escala.
 | P3 | **Tudo se desfaz.** Cada ação que muda dados entra no desfazer da planta (Ctrl+Z / Ctrl+Y), com um nome legível. O desfazer repõe **só o que a ação mudou** (campo a campo, por objeto): o que foi editado noutro ecrã entretanto fica, e o aviso diz quantos dados ficaram. Um espaço criado na planta e depois editado na Tabela não é removido: perde só o desenho. | parcial (o mecanismo: [hoje], PR 1 da auditoria) |
 | P4 | **Toda a ação tem inversa à vista**: criar/remover, ligar/desligar, compensar/descompensar. | parcial |
 | P5 | **O estado está à vista**: ferramenta ativa, o que está pendente, o que falta desenhar, o que está desequilibrado. | [hoje] |
-| P6 | **O erro aparece no objeto**, não só no Balanço ou na Entrega (cor, ícone, aviso no cartão). | parcial |
+| P6 | **O erro aparece no objeto**, não só no Balanço ou na Entrega (cor, ícone, aviso no cartão). | [hoje]: marca na sala (vermelho/âmbar/cinzento + n.º), contorno no ramal, anel no terminal, lista no cartão do selecionado |
 | P7 | **A app propõe, o utilizador confirma.** Nunca pede um dado que já conhece (ex.: caudal sugerido pelo balanço). | [hoje] |
 | P8 | **Tabela ⇄ planta**: mudar na tabela atualiza o desenho; mudar no desenho atualiza a tabela. Os dois mostram o mesmo número. | [hoje] |
 | P9 | **Três canais de mensagem, cada um com o seu papel**: barra de estado (o que o rato está a apontar, medidas); cartão no painel (o objeto selecionado ou pendente, com ações); aviso flutuante (resultado de uma ação, desaparece). | parcial |

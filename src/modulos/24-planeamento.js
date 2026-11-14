@@ -25,6 +25,17 @@ VC.planeamento = {
       hoje: 'Desenhe o último ramal (N3/N4) com a ferramenta Ramal até tocar no terminal: assim o comprimento entra no L.'
     },
     {
+      id: 'historico-unico', area: 'Planta e rede', prioridade: 'Alta', registado: '2026-11-15',
+      titulo: 'Um só histórico: o desfazer da planta e o histórico geral',
+      porque: 'Hoje há dois: o desfazer da planta (Ctrl+Z com a planta aberta, que repõe só o que a ação mudou) e o histórico geral da app. Algumas ações entram nos dois, outras só num, e o Ctrl+Z faz coisas diferentes conforme o ecrã.',
+      passos: [
+        'Um único histórico para toda a app, com o nome legível de cada ação.',
+        'Cada ação entra uma só vez, guardando só as diferenças (como o desfazer da planta já faz).',
+        'Ctrl+Z / Ctrl+Y iguais em qualquer ecrã; desfazer nunca apaga o que foi feito noutro ecrã.'
+      ],
+      hoje: 'Com a planta aberta, Ctrl+Z desfaz as ações da planta; nos outros ecrãs, o histórico geral.'
+    },
+    {
       id: 'contrato-planta', area: 'Planta e rede', prioridade: 'Alta', registado: '2026-11-14',
       titulo: 'Método: contrato da planta, auditoria por cenários e gestor único de gestos',
       porque: 'As falhas de entrada de dados e de representação na planta apareciam uma a uma. O contrato (docs/PLANTA-CONTRATO.md) fixa o que cada ferramenta faz com cada gesto e as regras de coerência dos dados.',
