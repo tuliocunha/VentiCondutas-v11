@@ -194,6 +194,9 @@ P.compensarTransferencia = function (id) {
   VC.ui.toast('Insuflação de «' + t.deNome + '» +' + fmt(t.Q) + ' m³/h.');
   this.redesenhar();
 };
+/* uma só seleção de cada vez: sala, ramal ou transferência */
+const selSala = P.selecionar;
+P.selecionar = function () { this.trfSel = null; return selSala.apply(this, arguments); };
 const cancelarBase = P.cancelar;
 P.cancelar = function () { this.pendenteTrf = null; this.trfSel = null; return cancelarBase.apply(this, arguments); };
 const setFerrBase = P.setFerramenta;
@@ -331,7 +334,7 @@ P.ligar = function () {
         this._empilhar('seta da transferência movida', a.antes);
         if (VC.historico && VC.historico.push) VC.historico.push('transferência movida na planta');
       }
-      this.trfSel = t ? t.id : null; this.selecionado = null;
+      this.trfSel = t ? t.id : null; this.selecionado = null; this.ramalSel = null;
       this.redesenhar(); return;
     }
     if (a.tipo === 'vert') { if (a.mudou && VC.historico && VC.historico.push) VC.historico.push('desenho corrigido'); this.redesenhar(); return; }

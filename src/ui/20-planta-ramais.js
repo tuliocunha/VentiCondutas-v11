@@ -128,7 +128,7 @@ P.apagarTracado = function (id) {
   const r = (VC.dados.ramais || []).find(x => String(x.id) === String(id)); if (!r || this._bloqueado()) return;
   delete r.planta; this.ramalSel = null; if (VC.historico && VC.historico.push) VC.historico.push('traçado apagado'); this.redesenhar();
 };
-P.selecionarRamal = function (id) { this.ramalSel = id; this.selecionado = null; this.pendente = null; this.pendenteRamal = null; this.redesenhar(); };
+P.selecionarRamal = function (id) { this.ramalSel = id; this.selecionado = null; this.trfSel = null; this.pendente = null; this.pendenteRamal = null; this.redesenhar(); };
 const selBase = P.selecionar;
 P.selecionar = function () { this.ramalSel = null; return selBase.apply(this, arguments); };
 
