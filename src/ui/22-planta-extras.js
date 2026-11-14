@@ -20,6 +20,7 @@ if (!P || !P.prepararVista) return;
 const esc = s => VC.utils.esc(s);
 const fmt = (n, d) => VC.utils.fmt(n, d == null ? 0 : d);
 P.minimapa = true;
+P.ROTULO_FERR = ['sel', 'ret'];   // ferramentas com que o nome da sala se arrasta
 
 /* ── terminal ↔ ramal ────────────────────── */
 P._ramalPerto = function (q, rede, tolPx) {
@@ -142,10 +143,11 @@ P._ligarMini = function (mini) {
 };
 P._ligarExtras = function (palco) {
   palco.addEventListener('pointerdown', ev => {
-    if (ev.button !== 0 || this._espaco || this.ferramenta !== 'sel') return;
+    if (ev.button !== 0 || this._espaco) return;
     const rot = ev.target.closest('.planta-rotulo'), term = ev.target.closest('.planta-term');
-    if (term) { this._termDrag = term.dataset.t; return; }   // o arrasto em si é tratado em 19-planta-rede.js
-    if (!rot) return;
+    if (term && this.ferramenta === 'sel') { this._termDrag = term.dataset.t; return; }   // o arrasto em si é tratado em 19-planta-rede.js
+    /* o nome arrasta-se com Selecionar e também com o Retângulo (a ferramenta com que se acabou de desenhar a sala) */
+    if (!rot || this.ROTULO_FERR.indexOf(this.ferramenta) < 0) return;
     ev.stopPropagation(); ev.preventDefault();
     const e = (VC.dados.espacos || []).find(x => String(x.id) === String(rot.dataset.esp)); if (!e || !e.planta) return;
     const base = (e.planta.rotulo && e.planta.rotulo.length === 2) ? e.planta.rotulo : this.centro(e.planta.pts);
@@ -173,7 +175,7 @@ P._ligarExtras = function (palco) {
     if (this._termDrag) { const id = this._termDrag; this._termDrag = null; setTimeout(() => this.ligarTerminalAoRamal(id), 0); }
   }, true);
   palco.addEventListener('dblclick', ev => {
-    const rot = this.ferramenta === 'sel' && ev.target.closest('.planta-rotulo'); if (!rot) return;
+    const rot = this.ROTULO_FERR.indexOf(this.ferramenta) >= 0 && ev.target.closest('.planta-rotulo'); if (!rot) return;
     const e = (VC.dados.espacos || []).find(x => String(x.id) === String(rot.dataset.esp));
     if (e && e.planta && e.planta.rotulo) { const antes = this._estado(); delete e.planta.rotulo; this._empilhar('nome reposto no centro', antes); this.redesenhar(); }
   }, true);
@@ -184,7 +186,10 @@ P._ligarExtras = function (palco) {
     if (g) {
       const t = (VC.dados.terminais || []).find(x => String(x.id) === String(g.dataset.t));
       if (t) out.textContent = (t.nome || t.id) + ' · ' + fmt(t.Q) + ' m³/h · ramal ' + (t.ramalRef || '—') + (this.ferramenta === 'sel' ? ' — arraste para mover; largue sobre um ramal para o ligar' : ' — use Selecionar (V) para o mover');
-    } else if (ev.target.closest && ev.target.closest('.planta-rotulo') && this.ferramenta === 'sel') out.textContent = 'Arraste o nome para o mover; duplo clique repõe-no no centro';
+    } else if (ev.target.closest && ev.target.closest('.planta-sala')) {
+      if (this.ROTULO_FERR.indexOf(this.ferramenta) >= 0 && ev.target.closest('.planta-rotulo')) out.textContent = 'Arraste o nome para o mover; duplo clique repõe-no no centro';
+      else if (this.ROTULO_FERR.indexOf(this.ferramenta) < 0 && this.ferramenta !== 'mao' && !(this.rascunho.length || (this.tracado && this.tracado.length))) out.textContent = 'Para mover o nome da sala, prima V (Selecionar) ou R (Retângulo)';
+    }
   });
 };
 /* toque: dois dedos = zoom (pinça) e deslocar; trata-se antes de chegar às ferramentas */

@@ -469,7 +469,8 @@ VC6.testes = {
         D.plantas = [{ id: 'pZ', w: 200, h: 200, escala: 0.01 }]; VC.planta.piso = 'pZ'; VC.planta.zoom = 1;
         const m = VC.planta._ramalPerto([104, 3], 'insuflacao');
         const ok3 = !!(m && m.ponta && m.c[0] === 100 && m.c[1] === 0) && !VC.planta._ramalPerto([104, 3], 'extracao');
-        return ok1 && ok2 && ok3;
+        const ok4 = Array.isArray(VC.planta.ROTULO_FERR) && VC.planta.ROTULO_FERR.indexOf('sel') >= 0 && VC.planta.ROTULO_FERR.indexOf('ret') >= 0;   // o nome move-se logo depois de desenhar
+        return ok1 && ok2 && ok3 && ok4;
       } finally { Object.assign(D, { ramais: g.ramais, terminais: g.terminais, espacos: g.espacos, nos: g.nos, trechos: g.trechos, plantas: g.plantas }); VC.planta.piso = g.piso; VC.planta.zoom = g.zoom; }
     } });
   },

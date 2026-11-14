@@ -476,7 +476,7 @@ html, body, .app { height: 100vh !important; overflow: hidden !important; margin
 .pe-xy,.pe-escala{font-variant-numeric:tabular-nums;color:#6b5a2e}
 @media (max-width:900px){.planta-editor{grid-template-columns:1fr;grid-template-rows:minmax(360px,1fr) auto}.planta-editor > .planta-painel{max-height:40vh}.planta-palco .planta-legenda{display:none}}
 /* planta · Fase C (22-planta-extras.js) */
-.planta-palco[data-ferr="sel"] .planta-sala .planta-rotulo text{pointer-events:auto;cursor:move}
+.planta-palco[data-ferr="sel"] .planta-sala .planta-rotulo text,.planta-palco[data-ferr="ret"] .planta-sala .planta-rotulo text{pointer-events:auto;cursor:move}
 .planta-palco[data-ferr="sel"] .planta-term{cursor:grab}
 .planta-ligacao{pointer-events:none}
 .planta-minimapa{right:8px;bottom:84px;padding:0;overflow:hidden;cursor:pointer}
