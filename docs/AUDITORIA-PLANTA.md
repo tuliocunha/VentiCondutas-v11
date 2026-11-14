@@ -233,3 +233,12 @@ Validação: teste UI.T38 com geometria feita à mão e mutação; cenário real
 
 Validação: teste UI.T39 e mutação; cenário real (imagem 4000 × 3000 → zona útil 2400 × 1950, 3,8× mais nítida; nome comprido numa sala em L todo dentro; Entrega recortada). O caminho do PDF usa o pdf.js da CDN, que este ambiente não alcança: testado só com imagem.
 
+## PR 10 · Cenários da planta no CI (fase 5)
+`tools/cenarios-planta.js` (`npm run cenarios`, também em `npm run testes` e na verificação do GitHub) faz tarefas reais só com gestos num Chromium sem janela, com uma planta sintética (não usa os exemplos), e confere os dados e o ecrã — 25 verificações em 5 cenários:
+- **desfazer:** Ctrl+Z tira o desenho e mantém o N escrito na Tabela; Ctrl+Y repõe;
+- **criar:** escala pela área, transferência no sentido proibido bloqueada e invertida, terminal criado com Terminal (D), UTA no cartão, nomes de ramal e espaço sincronizados com a Tabela;
+- **gestos:** pendente não se perde ao trocar de ferramenta, Esc, Enter, Backspace, Delete na seta, mudar de passo limpa a seleção;
+- **coerência:** área mudada na Tabela → aviso na sala e no cartão; aceitar → some; Ctrl+Z → volta;
+- **representação:** zona útil relida a 2400 px, nome dentro da sala em L, Entrega recortada.
+Prova de que apanha falhas: o cenário de representação falha no `main` sem o PR 9.
+

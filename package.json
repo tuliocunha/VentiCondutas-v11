@@ -12,7 +12,8 @@
     "referencia": "node tools/fotografia.js --gravar tests/fotografia-referencia.json",
     "regressao": "node tools/fotografia.js --comparar tests/fotografia-referencia.json",
     "mutacoes": "node tools/mutacoes.js",
-    "testes": "npm run verificar && npm run regressao && npm run mutacoes"
+    "cenarios": "node tools/cenarios-planta.js",
+    "testes": "npm run verificar && npm run regressao && npm run mutacoes && npm run cenarios"
   },
   "devDependencies": {
     "@eslint/js": "9.15.0",
