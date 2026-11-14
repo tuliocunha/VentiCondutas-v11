@@ -279,7 +279,7 @@ P.svgEstatico = function (piso, largura) {
   const guard = { zoom: this.zoom, selecionado: this.selecionado, rascunho: this.rascunho, pendente: this.pendente, escalaPts: this.escalaPts, corPor: this.corPor, ferramenta: this.ferramenta };
   try {
     Object.assign(this, { zoom: largura / piso.w, selecionado: null, rascunho: [], pendente: null, escalaPts: [], corPor: 'grupo', ferramenta: 'ver', _rotuloQ: true });
-    return this._svg(piso).replace('id="plantaSVG"', 'class="planta-estatica"').replace('<polyline id="plantaRascunho" points="" fill="none" stroke="#4f6d8c" stroke-width="2.5" vector-effect="non-scaling-stroke"/>', '').replace(/<line id="plantaTrfLinha"[^>]*\/>/, '');
+    return this._svg(piso).replace(/^<svg [^>]*>/, '<svg class="planta-estatica" viewBox="0 0 ' + piso.w + ' ' + piso.h + '" role="img" aria-label="Planta de ' + esc(piso.nome) + '">').replace('<polyline id="plantaRascunho" points="" fill="none" stroke="#4f6d8c" stroke-width="2.5" vector-effect="non-scaling-stroke"/>', '').replace(/<line id="plantaTrfLinha"[^>]*\/>/, '');
   } finally { Object.assign(this, guard); this._rotuloQ = false; }
 };
 if (VC.entrega && VC.entrega.render) {

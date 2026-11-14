@@ -437,6 +437,24 @@ VC6.testes = {
         if (E._lista && E._lista.some(x => /^UI\.T19 /.test(x.nome))) { E._lista = E._lista.filter(x => !/^UI\.T19 /.test(x.nome)); E.save({ silencioso: true }); }
       }
     } });
+    // v11.3: área de desenho — zoom no cursor (o ponto fica no sítio), deslocar, e desfazer da planta
+    self.registar({ id: 'UI.T20', nucleo: 'UI', grupo: 'UI', nome: 'Planta: zoom no cursor, deslocar e desfazer', criterio: 'zoom 1→2 no ponto (500,300) mantém esse ponto; deslocar 100 px a 2× = 50 px de imagem; desfazer repõe o espaço', fn: () => {
+      const P = VC.planta; if (!P || !P.zoomEm || !P.deslocar || !P.desfazer || !P.viewBox) return false;
+      const g = { z: P.zoom, x: P.vx, y: P.vy, av: P.aplicarVista, pilha: P._pilha, ref: P._refeitas, repor: P._repor };
+      try {
+        P.aplicarVista = function () {};   // sem desenho no ecrã durante o teste
+        P.zoom = 1; P.vx = 0; P.vy = 0;
+        P.zoomEm(2, 500, 300);
+        const okZoom = P.zoom === 2 && Math.abs(P.vx - 250) < 1e-9 && Math.abs(P.vy - 150) < 1e-9 && Math.abs((P.vx + 500 / P.zoom) - 500) < 1e-9;
+        P.deslocar(100, 0);
+        const okPan = Math.abs(P.vx - 200) < 1e-9;
+        P._pilha = []; P._refeitas = [];
+        let reposto = null; P._repor = function (st) { reposto = st; };
+        P._empilhar('teste', { e: [{ id: 1, nome: 'antes' }], t: [], r: [], tr: [], pl: [] });
+        const okUndo = P.desfazer() === true && reposto && reposto.e[0].nome === 'antes' && P._refeitas.length === 1 && P._pilha.length === 0;
+        return okZoom && okPan && okUndo;
+      } finally { P.zoom = g.z; P.vx = g.x; P.vy = g.y; P.aplicarVista = g.av; P._pilha = g.pilha; P._refeitas = g.ref; P._repor = g.repor; }
+    } });
   },
 
   correr() {

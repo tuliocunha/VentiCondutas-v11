@@ -142,6 +142,10 @@ const CASOS = [
     const o = VC.exemplos.save; VC.exemplos.save = function () { try { localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this._lista || [])); } catch { /* engolido */ } return true; };
     return () => { VC.exemplos.save = o; };
   }],
+  ['v11.3 · zoom no centro em vez de no cursor', 'UI.T20', () => {
+    const o = VC.planta.zoomEm; VC.planta.zoomEm = function (z) { this.zoom = z; this.aplicarVista(); };
+    return () => { VC.planta.zoomEm = o; };
+  }],
   ['E3 · sem aviso de ventilador fora da curva', 'N6.T13', () => {
     const o = VC.uta.calcularPontoFuncionamento;
     VC.uta.calcularPontoFuncionamento = function () { const r = o.apply(this, arguments); if (r) r.foraDaCurva = false; return r; };

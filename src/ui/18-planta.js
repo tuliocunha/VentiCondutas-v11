@@ -206,41 +206,53 @@ VC.planta = {
     ret: 'Arraste para desenhar um retângulo por cima da sala.',
     pol: 'Clique nos cantos da sala. Para fechar: clique no primeiro ponto, duplo clique ou Enter. Esc cancela.'
   },
+  /* v11.3 (A+B): a planta é uma área de desenho própria — ocupa o ecrã, as ferramentas flutuam por
+     cima do desenho e a navegação (zoom/deslocar) mexe só na vista (viewBox), nunca na página. */
+  TECLAS: { sel: 'V', mao: 'H', escala: 'S', ret: 'R', pol: 'P', trf: 'T', ramal: 'L' },
+  painelAberto: true,
   render() {
     const P = VC.dados.plantas || [];
     const p = this.pisoAtual(); if (p) this.piso = p.id;
-    let h = '<div class="planta">';
-    h += '<div class="planta-barra" role="toolbar" aria-label="Planta">';
-    h += '<div class="planta-pisos" role="tablist" aria-label="Pisos">' + P.map(x => '<button role="tab" aria-selected="' + (p && x.id === p.id) + '" class="planta-piso' + (p && x.id === p.id ? ' ativo' : '') + '" onclick="VC.planta.setPiso(\'' + x.id + '\')">' + esc(x.nome) + '</button>').join('')
+    const pisos = '<div class="planta-pisos" role="tablist" aria-label="Pisos">' + P.map(x => '<button role="tab" aria-selected="' + (p && x.id === p.id) + '" class="planta-piso' + (p && x.id === p.id ? ' ativo' : '') + '" onclick="VC.planta.setPiso(\'' + x.id + '\')">' + esc(x.nome) + '</button>').join('')
       + '<button class="planta-piso planta-mais" onclick="VC.planta.adicionarPiso()" aria-label="Adicionar piso">+ Piso</button></div>';
-    if (p && p.imagem) {
-      const F = this.FERRAMENTAS;
-      h += '<div class="planta-ferr">' + F.map(([id, ic, nome]) => '<button class="planta-f' + (this.ferramenta === id ? ' ativo' : '') + '" aria-pressed="' + (this.ferramenta === id) + '" onclick="VC.planta.setFerramenta(\'' + id + '\')"><i class="fa-solid ' + ic + '"></i> ' + nome + '</button>').join('') + '</div>';
-      h += '<div class="planta-zoom"><button class="btn btn-mini" onclick="VC.planta.setZoom((VC.planta.zoom||1)/1.25)" aria-label="Afastar">−</button><span>' + Math.round((this.zoom || 1) * 100) + '%</span><button class="btn btn-mini" onclick="VC.planta.setZoom((VC.planta.zoom||1)*1.25)" aria-label="Aproximar">+</button><button class="btn btn-mini" onclick="VC.planta.ajustar()">Ajustar</button></div>';
-      h += '<label class="planta-corlbl">Colorir por <select onchange="VC.planta.setCor(this.value)">'
-        + [['grupo', 'Grupo G1–G4'], ['falta', 'Dados em falta'], ['balanco', 'Balanço ΔQ']].map(([v, t]) => '<option value="' + v + '"' + (this.corPor === v ? ' selected' : '') + '>' + t + '</option>').join('') + '</select></label>';
-    }
-    h += '</div>';
     if (!p) {
-      h += '<div class="planta-vazia"><i class="fa-solid fa-map"></i><h3>Use a planta para entrar os espaços</h3><p>Carregue uma imagem de cada piso (PNG ou JPG), calibre a escala numa cota e desenhe as salas. A área é medida e o espaço fica ligado à tabela. Tudo continua a poder entrar pela tabela.</p><button class="btn primario" onclick="VC.planta.adicionarPiso();VC.planta.escolherImagem()"><i class="fa-solid fa-image"></i> Escolher imagem da planta</button></div></div>';
-      return h;
+      return '<div class="planta"><div class="planta-barra">' + pisos + '</div><div class="planta-vazia"><i class="fa-solid fa-map"></i><h3>Use a planta para entrar os espaços</h3><p>Carregue uma imagem de cada piso (PNG, JPG ou PDF), calibre a escala numa cota e desenhe as salas. A área é medida e o espaço fica ligado à tabela. Tudo continua a poder entrar pela tabela.</p><button class="btn primario" onclick="VC.planta.adicionarPiso();VC.planta.escolherImagem()"><i class="fa-solid fa-image"></i> Escolher imagem da planta</button></div></div>';
     }
     if (!p.imagem) {
-      h += '<div class="planta-vazia"><i class="fa-solid fa-image"></i><h3>' + esc(p.nome) + ' ainda sem imagem</h3><p>PNG ou JPG. Uma planta em PDF exporta-se primeiro para imagem (por exemplo, com a captura de ecrã ou "Exportar como imagem").</p>'
+      return '<div class="planta"><div class="planta-barra">' + pisos + '</div><div class="planta-vazia"><i class="fa-solid fa-image"></i><h3>' + esc(p.nome) + ' ainda sem imagem</h3><p>PNG, JPG ou PDF da planta deste piso.</p>'
         + '<div class="planta-nome"><label for="plantaNomePiso">Nome do piso</label><input id="plantaNomePiso" value="' + esc(p.nome) + '" onchange="VC.planta.renomearPiso(this.value)"></div>'
         + '<button class="btn primario" onclick="VC.planta.escolherImagem()"><i class="fa-solid fa-image"></i> Escolher imagem</button> <button class="btn" onclick="VC.planta.removerPiso()">Remover este piso</button></div></div>';
-      return h;
     }
-    h += '<div class="planta-dica" id="plantaDica"><b>' + (this.FERRAMENTAS.find(f => f[0] === this.ferramenta) || ['sel', '', 'Selecionar'])[2] + ':</b> ' + this.DICAS[this.ferramenta]
-      + '<span class="planta-escala">' + (p.escala ? 'Escala: 1 m = ' + fmt(1 / p.escala, 1) + ' px' : '<b>Sem escala</b>: as áreas não podem ser medidas') + '</span></div>';
-    h += '<div class="planta-corpo"><div class="planta-tela" id="plantaTela">' + this._svg(p) + '</div><aside class="planta-painel" aria-label="Espaço e lista">' + this._painel(p) + '</aside></div>';
-    h += '<div class="planta-legenda">' + this._legenda().map(([t, c]) => '<span><i style="background:' + c[0] + ';border-color:' + c[1] + '"></i>' + t + '</span>').join('') + '</div>';
+    const F = this.FERRAMENTAS, nomeF = (F.find(f => f[0] === this.ferramenta) || ['sel', '', 'Selecionar'])[2];
+    let h = '<div class="planta planta-editor' + (this.painelAberto ? '' : ' sem-painel') + '" id="plantaRaiz">';
+    h += '<div class="planta-palco" id="plantaTela" data-ferr="' + this.ferramenta + '">' + this._svg(p);
+    /* topo: pisos, cor e painel */
+    h += '<div class="planta-flut planta-topo">' + pisos
+      + '<label class="planta-corlbl">Colorir por <select onchange="VC.planta.setCor(this.value)">'
+      + [['grupo', 'Grupo G1–G4'], ['falta', 'Dados em falta'], ['balanco', 'Balanço ΔQ']].map(([v, t]) => '<option value="' + v + '"' + (this.corPor === v ? ' selected' : '') + '>' + t + '</option>').join('') + '</select></label>'
+      + '<button class="planta-bt planta-btpainel" onclick="VC.planta.alternarPainel()" aria-pressed="' + this.painelAberto + '" title="Mostrar ou esconder o painel">' + (this.painelAberto ? 'Esconder painel ▸' : '◂ Painel') + '</button></div>';
+    /* ferramentas: barra vertical à esquerda, sempre à vista */
+    h += '<div class="planta-flut planta-ferrbar" role="toolbar" aria-label="Ferramentas de desenho" aria-orientation="vertical">' + F.map(([id, ic, nome]) => {
+      const k = this.TECLAS[id] || '';
+      return '<button class="planta-ft' + (this.ferramenta === id ? ' ativo' : '') + '" aria-pressed="' + (this.ferramenta === id) + '" title="' + nome + (k ? ' (' + k + ')' : '') + '" onclick="VC.planta.setFerramenta(\'' + id + '\')"><i class="fa-solid ' + ic + '" aria-hidden="true"></i><span>' + nome + '</span>' + (k ? '<kbd>' + k + '</kbd>' : '') + '</button>';
+    }).join('') + '</div>';
+    /* zoom: canto inferior direito */
+    h += '<div class="planta-flut planta-zoombar" role="group" aria-label="Zoom"><button class="planta-bt" onclick="VC.planta.zoomBotao(1/1.25)" aria-label="Afastar" title="Afastar (−)">−</button><span id="plantaZoomTxt">' + Math.round((this.zoom || 1) * 100) + '%</span><button class="planta-bt" onclick="VC.planta.zoomBotao(1.25)" aria-label="Aproximar" title="Aproximar (+)">+</button><button class="planta-bt" onclick="VC.planta.ajustar()" title="Mostrar a planta inteira (F)">Ajustar</button><button class="planta-bt" onclick="VC.planta.zoom100()" title="Tamanho real da imagem (0)">100%</button></div>';
+    /* legenda: canto inferior esquerdo */
+    h += '<div class="planta-flut planta-legenda">' + this._legenda().map(([t, c]) => '<span><i style="background:' + c[0] + ';border-color:' + c[1] + '"></i>' + t + '</span>').join('') + '</div>';
+    /* barra de estado */
+    h += '<div class="planta-estado" id="plantaEstado"><span class="pe-ferr"><b>' + nomeF + '</b> · ' + this.DICAS[this.ferramenta] + '</span>'
+      + '<span class="pe-medida" id="plantaMedida"></span><span class="pe-xy" id="plantaXY"></span>'
+      + '<span class="pe-escala">' + (p.escala ? '1 m = ' + fmt(1 / p.escala, 1) + ' px' : '<b>Sem escala</b>') + '</span></div>';
+    h += '</div>';
+    h += '<aside class="planta-painel" id="plantaPainel" aria-label="Espaço e lista"' + (this.painelAberto ? '' : ' hidden') + '>' + this._painel(p) + '</aside>';
     h += '</div>';
     return h;
   },
   _svg(p) {
     const z = this.zoom || 1, fs = 13 / z, sw = 1.5;
-    let s = '<svg id="plantaSVG" width="' + Math.round(p.w * z) + '" height="' + Math.round(p.h * z) + '" viewBox="0 0 ' + p.w + ' ' + p.h + '" role="img" aria-label="Planta de ' + esc(p.nome) + '">';
+    const vb = this.viewBox ? this.viewBox(p) : [0, 0, p.w, p.h];
+    let s = '<svg id="plantaSVG" width="100%" height="100%" viewBox="' + vb.join(' ') + '" preserveAspectRatio="xMinYMin meet" role="img" aria-label="Planta de ' + esc(p.nome) + '">';
     s += '<image href="' + p.imagem + '" x="0" y="0" width="' + p.w + '" height="' + p.h + '" preserveAspectRatio="none"/>';
     this.espacosDoPiso(p).forEach(e => {
       const c = this.cor(e), on = String(this.selecionado) === String(e.id);
@@ -305,9 +317,9 @@ VC.planta = {
   redesenhar() {
     const el = document.getElementById('conteudoPasso');
     if (!el || !el.querySelector('.planta')) return;
-    const tela = document.getElementById('plantaTela'); const sx = tela ? tela.scrollLeft : 0, sy = tela ? tela.scrollTop : 0;
+    const pn = document.getElementById('plantaPainel'), sp = pn ? pn.scrollTop : 0;   // a vista (zoom, posição) está no estado, não no scroll
     el.innerHTML = this.render(); this.ligar();
-    const t2 = document.getElementById('plantaTela'); if (t2) { t2.scrollLeft = sx; t2.scrollTop = sy; }
+    const p2 = document.getElementById('plantaPainel'); if (p2) p2.scrollTop = sp;
   },
   mostrar(el) { el.innerHTML = this.render(); this.ligar(); },
   _ponto(ev) {
@@ -320,7 +332,7 @@ VC.planta = {
   ligar() {
     const p = this.pisoAtual(), tela = document.getElementById('plantaTela'), svg = document.getElementById('plantaSVG');
     if (!p || !tela || !svg) return;
-    if (this.zoom == null) { this.zoom = Math.min(1, Math.max(0.05, (tela.clientWidth - 4) / p.w)); svg.setAttribute('width', Math.round(p.w * this.zoom)); svg.setAttribute('height', Math.round(p.h * this.zoom)); }
+    if (this.prepararVista) this.prepararVista(p);   // 21-planta-vista.js: altura do ecrã, ajustar e viewBox
     let arrasto = null;
     svg.addEventListener('pointerdown', ev => {
       if (ev.button !== 0) return;

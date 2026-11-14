@@ -99,6 +99,8 @@ VC.nav = {
     const passo = VC._passoAtivo || 'setup';
     const meta = (VC.passosCatalogo || []).find(p => p.id === passo) || {};
     const vistas = this.vistasDe(passo);
+    const ws = document.getElementById('workspaceCondutas');   // planta em ecrã cheio só na vista Planta
+    if (ws && !(this.vistaAtiva === 'planta' && VC._modoAtivo === 'condutas')) ws.classList.remove('planta-ativa');
     let h = '<div class="vistas-titulo"><span class="vistas-fase">' + esc(meta.grupoNome || '') + '</span> › <b>' + esc(meta.titulo || passo) + '</b></div>';
     if (vistas.length > 1) {
       h += '<div class="vistas-tabs" role="tablist">' + vistas.map(v => {
