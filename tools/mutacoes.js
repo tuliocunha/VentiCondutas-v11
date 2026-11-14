@@ -163,7 +163,7 @@ const CASOS = [
     return () => { VC6.transferencias._parcelas = o; };
   }],
   ['v11.3 · selecionar uma sala não tira a seleção da transferência (duas seleções)', 'UI.T25', () => {
-    const o = VC.planta.selecionar; VC.planta.selecionar = function (id) { const t = this.trfSel; const r = o.apply(this, arguments); this.trfSel = t; return r; };
+    const o = VC.planta.selecionar; VC.planta.selecionar = function () { const t = this.trfSel; const r = o.apply(this, arguments); this.trfSel = t; return r; };
     return () => { VC.planta.selecionar = o; };
   }],
   ['E3 · sem aviso de ventilador fora da curva', 'N6.T13', () => {
