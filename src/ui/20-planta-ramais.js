@@ -89,8 +89,8 @@ P.aplicarRamal = function (opc) {
   if (opc.ligarTerminais && pr.terminais.length && VC.topologia && VC.topologia._atribuirTerminaisAoRamal) {
     const T = (VC.dados.terminais || []).filter(t => pr.terminais.indexOf(t.id) >= 0);
     const n = VC.topologia._atribuirTerminaisAoRamal(r.nome, T);
-    if (n) mud.push(n + ' terminal' + (n > 1 ? 'is' : '') + ' ligado' + (n > 1 ? 's' : ''));
-    if (n < T.length) mud.push((T.length - n) + ' de outra rede não ligado' + (T.length - n > 1 ? 's' : ''));
+    if (n) mud.push(n + ' terminal' + (n > 1 ? 'is' : '') + ' associado' + (n > 1 ? 's' : ''));
+    if (n < T.length) mud.push((T.length - n) + ' de outra rede não associado' + (T.length - n > 1 ? 's' : ''));
   }
   this.pendenteRamal = null; this.ramalSel = r.id; this.ferramenta = 'sel';
   if (VC.historico && VC.historico.push) VC.historico.push('traçado do ramal ' + r.nome);
@@ -180,7 +180,7 @@ P._painel = function (p) {
       + (pr.terminais.length ? '<p class="planta-meta">Toca ' + pr.terminais.length + ' terminal' + (pr.terminais.length > 1 ? 'is' : '') + '.</p>' : '')
       + '<label class="planta-chk"><input type="checkbox" id="rmUsarL"' + (L ? ' checked' : ' disabled') + '> Usar o L medido</label>'
       + '<label class="planta-chk"><input type="checkbox" id="rmUsarZ"> Usar o ζ sugerido (curvas + derivação)</label>'
-      + (pr.terminais.length ? '<label class="planta-chk"><input type="checkbox" id="rmLigarT" checked> Ligar os terminais tocados a este ramal</label>' : '')
+      + (pr.terminais.length ? '<label class="planta-chk"><input type="checkbox" id="rmLigarT" checked> Associar os terminais tocados a este ramal</label>' : '')
       + '<label for="rmExistente">É o traçado de um ramal que já existe</label><select id="rmExistente"><option value="">— escolher —</option>' + todos.map(r => '<option value="' + esc(r.nome) + '">' + esc(r.nome) + ' · ' + esc(r.rede) + (r.planta ? ' · já desenhado' : '') + '</option>').join('') + '</select>'
       + '<div class="planta-acoes"><button class="btn primario" onclick="VC.planta._aplicarDoPainel(\'existente\')">Usar este traçado</button></div>'
       + '<div class="planta-ou">ou criar um ramal novo</div>'

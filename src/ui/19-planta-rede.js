@@ -159,6 +159,11 @@ P._avisoTermCompensacao = function (ts) {
   return '<p class="planta-aviso">' + falta.map(x => (ts.compensacao.criada ? 'Novo terminal ' : 'Terminal ') + '«' + esc(x.t.nome || x.t.id) + '» (' + fmt(x.t.Q) + ' m³/h): '
     + [x.semPos ? 'coloque-o na sala com a ferramenta Terminal (D)' : '', x.semRamal ? 'ligue-o a um ramal de insuflação' : ''].filter(Boolean).join(' e ') + '.').join('<br>') + '</p>';
 };
+P.inverterTransferencia = function () {
+  const t = this.pendenteTrf; if (!t) return;
+  this.pendenteTrf = Object.assign({}, t, { deId: t.paraId, paraId: t.deId, linha: t.linha ? t.linha.slice().reverse() : t.linha });
+  this.redesenhar();
+};
 P._atualizarImpacto = function () {
   const out = document.getElementById('plantaTrfImpacto'); if (!out) return;
   const q = document.getElementById('plantaTrfQ'), c = document.getElementById('plantaTrfComp');
@@ -168,10 +173,8 @@ P.criarTransferencia = function (Q, tipo, dp, compensar) {
   const t = this.pendenteTrf; if (!t || this._bloqueado()) return;
   Q = VC.utils.num(Q); dp = VC.utils.num(dp) || 2;
   if (!(Q > 0)) { VC.ui.toast('Escreva o caudal a transferir (m³/h).'); return; }
-  const r = VC6.transferencias.criar(Number(t.deId), Number(t.paraId), Q, tipo || 'grelha_transferencia');
+  const r = VC.associacoes.criarTransferencia(Number(t.deId), Number(t.paraId), Q, tipo || 'grelha_transferencia', dp);   // regra de higiene e área pelo ΔP
   if (!r || !r.ok) { VC.ui.toast((r && r.erro) || 'Não foi possível criar a transferência.'); return; }
-  r.transferencia.dP_Pa = dp;
-  if (VC6.transferencias.dimensionarArea) r.transferencia.area_cm2 = VC6.transferencias.dimensionarArea(Q, dp);
   const p = this.pisoAtual(), A = VC.dados.espacos.find(e => String(e.id) === String(t.deId)), B = VC.dados.espacos.find(e => String(e.id) === String(t.paraId));
   if (p && A && A.planta && B && B.planta) {
     const po = this.portaEntre(A, B, t.linha && t.linha[0], t.linha && t.linha[1]);
@@ -258,15 +261,20 @@ P._painel = function (p) {
     const comp = !!(de && (de.definicoes || []).some(d => d.rede === 'insuflacao'));
     const esc0 = Number(p && p.escala) || 0, l = this.pendenteTrf.linha;
     const porta = de && de.planta && para && para.planta ? this.portaEntre(de, para, l && l[0], l && l[1]) : null;
-    h = '<div class="planta-card destaque"><div class="planta-card-t">Nova transferência</div><p><b>' + esc(de && de.nome) + '</b> → <b>' + esc(para && para.nome) + '</b></p>'
+    const dir = de && para && VC6.transferencias.direcaoValida ? VC6.transferencias.direcaoValida(de, para) : { ok: true };
+    const cat = VC6.transferencias.CATALOGO || [], tipo0 = (para && VC6.transferencias.sugerirSolucao ? VC6.transferencias.sugerirSolucao(para.tipo, 'entrada') : '') || 'grelha_transferencia';
+    const t0 = cat.find(t => t.codigo === tipo0) || cat[0] || { codigo: 'grelha_transferencia', dp_tipico: 2 };
+    h = '<div class="planta-card destaque"><div class="planta-card-t">Nova transferência</div>'
+      + '<div class="planta-dir"><span>De</span><b>' + esc(de && de.nome) + '</b><span>→ para</span><b>' + esc(para && para.nome) + '</b><button class="btn btn-mini" onclick="VC.planta.inverterTransferencia()" title="Trocar origem e destino">⇄ Inverter direção</button></div>'
+      + (dir.ok ? '' : '<p class="planta-aviso">' + esc(dir.erro) + '</p>')
       + '<label for="plantaTrfQ">Caudal (m³/h)</label><input id="plantaTrfQ" type="number" min="0" step="1" value="' + (Q || '') + '"' + (Q ? '' : ' placeholder="caudal"') + ' oninput="VC.planta._atualizarImpacto()">'
       + (Q ? '<p class="planta-meta">Sugerido pelo balanço: o que falta no destino.</p>' : '<p class="planta-meta">O balanço não pede caudal entre estas salas; escreva o valor.</p>')
-      + '<label for="plantaTrfTipo">Tipo</label><select id="plantaTrfTipo"><option value="grelha_transferencia">Grelha de transferência</option><option value="fresta_porta">Fresta sob porta</option><option value="abertura_natural">Abertura natural</option></select>'
-      + '<label for="plantaTrfDp">ΔP (Pa)</label><input id="plantaTrfDp" type="number" min="0.5" step="0.5" value="2">'
+      + '<label for="plantaTrfTipo">Tipo</label><select id="plantaTrfTipo" onchange="document.getElementById(\'plantaTrfDp\').value=this.selectedOptions[0].dataset.dp">' + cat.map(t => '<option value="' + t.codigo + '" data-dp="' + t.dp_tipico + '"' + (t === t0 ? ' selected' : '') + '>' + esc(t.nome) + ' · ' + esc(t.aplicacao) + '</option>').join('') + '</select>'
+      + '<label for="plantaTrfDp">ΔP (Pa) <small>típico do tipo; a área da passagem calcula-se com ele</small></label><input id="plantaTrfDp" type="number" min="0.5" step="0.5" value="' + (t0.dp_tipico || 2) + '">'
       + '<label class="planta-check"><input id="plantaTrfComp" type="checkbox"' + (comp ? ' checked' : '') + ' onchange="VC.planta._atualizarImpacto()"><span>Compensar na origem<small>soma o caudal à insuflação de «' + esc(de && de.nome) + '»</small></span></label>'
       + '<div id="plantaTrfImpacto">' + this._impactoTrf(Q, comp) + '</div>'
       + (porta && porta.folga * esc0 > 0.6 ? '<p class="planta-aviso">As salas não se tocam neste ponto (' + fmt(porta.folga * esc0, 1) + ' m entre as paredes). A seta fica a meio; arraste-a para a porta com Selecionar (V).</p>' : '<p class="planta-meta">A seta fica na passagem entre as salas; arraste-a com Selecionar (V) para acertar a porta.</p>')
-      + '<div class="planta-acoes"><button class="btn primario" onclick="VC.planta.criarTransferencia(document.getElementById(\'plantaTrfQ\').value, document.getElementById(\'plantaTrfTipo\').value, document.getElementById(\'plantaTrfDp\').value, document.getElementById(\'plantaTrfComp\').checked)">Criar transferência</button><button class="btn" onclick="VC.planta.cancelar()">Cancelar</button></div></div>' + h;
+      + '<div class="planta-acoes"><button class="btn primario"' + (dir.ok ? '' : ' disabled') + ' onclick="VC.planta.criarTransferencia(document.getElementById(\'plantaTrfQ\').value, document.getElementById(\'plantaTrfTipo\').value, document.getElementById(\'plantaTrfDp\').value, document.getElementById(\'plantaTrfComp\').checked)">Criar transferência</button><button class="btn" onclick="VC.planta.cancelar()">Cancelar</button></div></div>' + h;
   }
   const ts = !this.pendenteTrf && this.trfSel && (VC.dados.transferencias || []).find(x => String(x.id) === String(this.trfSel));
   if (ts) {
@@ -283,7 +291,7 @@ P._painel = function (p) {
   if (e && e.planta) {
     const T = this.terminaisDe(e), fora = T.filter(t => !(t.planta && t.planta.pisoId === p.id));
     const bloco = '<div class="planta-card"><div class="planta-card-t">Terminais de ' + esc(e.nome) + ' (' + T.length + ')</div>'
-      + (T.length ? '<div class="planta-terms">' + T.map(t => '<span class="planta-tchip" style="border-color:' + this._corTerm(t) + '"><b style="background:' + this._corTerm(t) + '">' + this._letra(t) + '</b>' + esc(t.nome || t.id) + ' · ' + fmt(t.Q) + ' m³/h' + (t.planta && t.planta.pisoId === p.id ? '' : ' · <i>por colocar</i>') + '</span>').join('') + '</div>' : '<p class="planta-meta">Sem terminais. Os terminais vêm do passo Terminais.</p>')
+      + (T.length ? '<div class="planta-terms">' + T.map(t => '<span class="planta-tchip" style="border-color:' + this._corTerm(t) + '"><b style="background:' + this._corTerm(t) + '">' + this._letra(t) + '</b>' + esc(t.nome || t.id) + ' · ' + fmt(t.Q) + ' m³/h' + (t.planta && t.planta.pisoId === p.id ? '' : ' · <i>por colocar</i>') + '</span>').join('') + '</div>' : '<p class="planta-meta">Sem terminais. Crie-os aqui com a ferramenta Terminal (D): clique dentro da sala.</p>')
       + (T.length ? '<div class="planta-acoes"><button class="btn" onclick="VC.planta.redistribuir(' + e.id + ')">' + (fora.length ? 'Colocar na sala' : 'Recolocar na sala') + '</button></div>' : '') + '</div>';
     h = h.replace('<div class="planta-lista-t">', bloco + '<div class="planta-lista-t">');
   }

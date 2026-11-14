@@ -358,7 +358,7 @@ window.renderSetup = function () {
 VC.caudalEspacoUI = {
   _filtroTexto: '',
   setFiltro: function(v) { this._filtroTexto = String(v || '').toLowerCase(); if(VC._passoAtivo === 'classificacao') VC.passos.render('classificacao'); },
-  editar: function (idx, campo, valor) { const e = VC.dados.espacos[idx]; if (!e) return; if (['A', 'H', 'V', 'N'].indexOf(campo) >= 0) e[campo] = VC.utils.num(valor); else e[campo] = valor; VC.estado.sincronizar(); },
+  editar: function (idx, campo, valor) { const e = VC.dados.espacos[idx]; if (!e) return; if (campo === 'N' && String(valor == null ? '' : valor).trim() === '') delete e.N; else if (['A', 'H', 'V', 'N'].indexOf(campo) >= 0) e[campo] = VC.utils.num(valor); else e[campo] = valor; VC.estado.sincronizar(); },
   setGrupo: function (idx, valor) {
     const e = VC.dados.espacos[idx]; if (!e) return;
     if (valor === 'auto') { delete e.grupoForcado; }
@@ -432,7 +432,7 @@ window.renderCaudalEspaco = function () {
         h += '<td><input class="num-1d" type="number" step="0.01" value="' + VC.utils.fmt(c.A, 1) + '" onchange="VC.caudalEspacoUI.editar(' + idx + ', \'A\', this.value)" onclick="event.stopPropagation()" style="padding:3px 5px;border:1px solid var(--borda-media);border-radius:4px;font-size:10.5px" ' + dis + '></td>';
         h += '<td><input class="num-2d" type="number" step="0.1" value="' + VC.utils.fmt(c.H, 1) + '" onchange="VC.caudalEspacoUI.editar(' + idx + ', \'H\', this.value)" onclick="event.stopPropagation()" style="padding:3px 5px;border:1px solid var(--borda-media);border-radius:4px;font-size:10.5px" ' + dis + '></td>';
         h += '<td><input class="num-2d-longo" type="number" step="0.1" value="' + VC.utils.fmt(c.V, 1) + '" onchange="VC.caudalEspacoUI.editar(' + idx + ', \'V\', this.value)" onclick="event.stopPropagation()" style="padding:3px 5px;border:1px solid var(--borda-media);border-radius:4px;font-size:10.5px" ' + dis + '></td>';
-        h += '<td><input class="num-int" type="number" value="' + (c.N || 0) + '" onchange="VC.caudalEspacoUI.editar(' + idx + ', \'N\', this.value)" onclick="event.stopPropagation()" style="padding:3px 5px;border:1px solid var(--borda-media);border-radius:4px;font-size:10.5px" ' + dis + '></td>';
+        h += '<td><input class="num-int" type="number" value="' + (VC.calculo.nVazio(e) ? '' : e.N) + '" placeholder="' + (grupoDerivado === 1 ? 'por definir' : '') + '" onchange="VC.caudalEspacoUI.editar(' + idx + ', \'N\', this.value)" onclick="event.stopPropagation()" style="padding:3px 5px;border:1px solid var(--borda-media);border-radius:4px;font-size:10.5px" ' + dis + '></td>';
     h += '<td style="font-size:10px;color:var(--texto-med);white-space:nowrap">' + VC.utils.esc(metodo.length > 18 ? metodo.substring(0, 16) + '…' : metodo) + '</td>';
     h += '<td style="font-family:ui-monospace,monospace;font-size:10.5px;text-align:right">' + (t11 > 0 ? VC.utils.fmt(t11, 1) : '—') + '</td>';
     h += '<td style="font-family:ui-monospace,monospace;font-size:10.5px;text-align:right">' + (t12 > 0 ? VC.utils.fmt(t12, 1) : '—') + '</td>';

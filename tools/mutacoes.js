@@ -166,6 +166,35 @@ const CASOS = [
     const o = VC.planta.selecionar; VC.planta.selecionar = function () { const t = this.trfSel; const r = o.apply(this, arguments); this.trfSel = t; return r; };
     return () => { VC.planta.selecionar = o; };
   }],
+  ['PR 1 · desfazer volta a repor objetos inteiros (como antes da A2)', 'UI.T26', () => {
+    const P = VC.planta, od = P._diferencas, oa = P._aplicar, oi = P._igual;
+    P._diferencas = function (A, B) {   // guarda todos os campos do objeto, não só os que a ação mudou
+      return od.call(this, A, B).map(d => { if (!d.campos) return d; const k = { e: 'e', t: 't', r: 'r', tr: 'tr', pl: 'pl' }[d.col]; const a = (A[k] || []).find(o => 'id:' + o.id === d.id) || {}, b = (B[k] || []).find(o => 'id:' + o.id === d.id) || {}; return Object.assign({}, d, { campos: { antes: Object.assign({}, a), depois: Object.assign({}, b) } }); });
+    };
+    P._aplicar = function () { P._igual = () => true; try { return oa.apply(this, arguments); } finally { P._igual = oi; } };   // sem ver o que mudou depois
+    return () => { P._diferencas = od; P._aplicar = oa; P._igual = oi; };
+  }],
+  ['PR 2 · renomear espaço só muda o nome (terminais ficam órfãos)', 'UI.T27', () => {
+    const o = VC.associacoes.renomearEspaco; VC.associacoes.renomearEspaco = function (e, novo) { e.nome = String(novo).trim(); return { ok: true, n: 0 }; };
+    return () => { VC.associacoes.renomearEspaco = o; };
+  }],
+  ['PR 2 · associar sem verificar a rede', 'UI.T28', () => {
+    const o = VC.redes.compativeis; VC.redes.compativeis = () => true;
+    return () => { VC.redes.compativeis = o; };
+  }],
+  ['PR 2 · transferência de espaço sujo para limpo aceite', 'UI.T29', () => {
+    const o = VC6.transferencias.direcaoValida; VC6.transferencias.direcaoValida = () => ({ ok: true });
+    return () => { VC6.transferencias.direcaoValida = o; };
+  }],
+  ['PR 2 · escala pela área sem a raiz quadrada', 'UI.T30', () => {
+    const o = VC.planta.areaPx; VC.planta.areaPx = function () { return Math.sqrt(o.apply(this, arguments)); };
+    return () => { VC.planta.areaPx = o; };
+  }],
+  ['N vazio volta a valer N = 1 em silêncio', 'UI.T31', () => {
+    const o = VC.calculo.nVazio; VC.calculo.nVazio = () => false;
+    const q = VC.calculo.calcularQ_normas; VC.calculo.calcularQ_normas = function (esp) { return q.call(this, esp.N == null ? Object.assign({}, esp, { N: 1 }) : esp); };
+    return () => { VC.calculo.nVazio = o; VC.calculo.calcularQ_normas = q; };
+  }],
   ['E3 · sem aviso de ventilador fora da curva', 'N6.T13', () => {
     const o = VC.uta.calcularPontoFuncionamento;
     VC.uta.calcularPontoFuncionamento = function () { const r = o.apply(this, arguments); if (r) r.foraDaCurva = false; return r; };
