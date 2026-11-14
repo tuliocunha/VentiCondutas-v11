@@ -24,6 +24,19 @@ VC.planeamento = {
       ],
       hoje: 'Desenhe o último ramal (N3/N4) com a ferramenta Ramal até tocar no terminal: assim o comprimento entra no L.'
     },
+    {
+      id: 'contrato-planta', area: 'Planta e rede', prioridade: 'Alta', registado: '2026-11-14',
+      titulo: 'Método: contrato da planta, auditoria por cenários e gestor único de gestos',
+      porque: 'As falhas de entrada de dados e de representação na planta apareciam uma a uma. O contrato (docs/PLANTA-CONTRATO.md) fixa o que cada ferramenta faz com cada gesto e as regras de coerência dos dados.',
+      passos: [
+        'Fase 1: auditoria com 5 cenários reais feitos só com rato e teclado; relatório com imagens.',
+        'Fase 2: um único gestor de gestos (máquina de estados) no lugar das escutas espalhadas.',
+        'Fase 3: verificador de coerência com avisos no desenho.',
+        'Fase 4: correções aprovadas da auditoria.',
+        'Fase 5: cenários automáticos no CI e testes de ações ao acaso para o desfazer.'
+      ],
+      hoje: ''
+    },
     { id: 'tipologias', area: 'Normas', prioridade: 'Média', registado: '2026-11-11', titulo: 'Tipologias Residencial, Saúde e Indústria', porque: 'Aparecem a cinzento ("em implementação"). Faltam as regras próprias de caudal de cada uma.', passos: [], hoje: 'Usar a tipologia Comércio e Serviços.' },
     { id: 'estanquidade', area: 'Normas', prioridade: 'Média', registado: '2026-11-11', titulo: 'Estanquidade das condutas (EN 12237 / EN 1507)', porque: 'Só existe como texto no caderno de encargos: falta a classe por conduta e o cálculo de fugas.', passos: [], hoje: '' },
     { id: 'corta-fogo', area: 'Normas', prioridade: 'Média', registado: '2026-11-11', titulo: 'Registos corta-fogo', porque: 'Só o nome no menu de Configurações; falta colocá-los na rede e contar o Δp.', passos: [], hoje: '' },

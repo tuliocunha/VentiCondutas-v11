@@ -35,3 +35,7 @@ Ver `docs/inventario-fase4.md`, secção 4: tipologias Residencial/Saúde/Indús
 estanquidade (EN 12237/EN 1507), registos corta-fogo, classe IE do motor,
 recuperador ligado/desligado, ζ dinâmico de tês, ruído da UTA, custo energético
 editável.
+
+## Método da planta (contrato, cenários, gestor de gestos)
+
+Ver [PLANTA-CONTRATO.md](PLANTA-CONTRATO.md): vocabulário, modelo de dados, gestos por ferramenta, regras de coerência, cenários C1–C5, desvios conhecidos e o plano em 5 fases.

@@ -162,6 +162,10 @@ const CASOS = [
     const o = VC6.transferencias._parcelas; VC6.transferencias._parcelas = function () {};
     return () => { VC6.transferencias._parcelas = o; };
   }],
+  ['v11.3 · selecionar uma sala não tira a seleção da transferência (duas seleções)', 'UI.T25', () => {
+    const o = VC.planta.selecionar; VC.planta.selecionar = function (id) { const t = this.trfSel; const r = o.apply(this, arguments); this.trfSel = t; return r; };
+    return () => { VC.planta.selecionar = o; };
+  }],
   ['E3 · sem aviso de ventilador fora da curva', 'N6.T13', () => {
     const o = VC.uta.calcularPontoFuncionamento;
     VC.uta.calcularPontoFuncionamento = function () { const r = o.apply(this, arguments); if (r) r.foraDaCurva = false; return r; };

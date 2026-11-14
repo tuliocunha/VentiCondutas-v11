@@ -520,6 +520,17 @@ VC6.testes = {
         return ok1 && ok2 && ok3;
       } finally { D.espacos = g.esp; D.terminais = g.ter; D.transferencias = g.tr; D.plantas = g.pl; P.piso = g.piso; VC.ui.toast = g.toast; P._pilha = g.pilha; VC.estado.forcarSync = g.sync; if (VC.historico) VC.historico.push = g.hist; P.trfSel = g.sel; P.pendenteTrf = null; }
     } });
+    // contrato da planta P2: uma só seleção de cada vez (sala, ramal ou transferência)
+    self.registar({ id: 'UI.T25', nucleo: 'UI', grupo: 'UI', nome: 'Planta: uma só seleção de cada vez', criterio: 'com uma transferência selecionada, selecionar uma sala ou um ramal tira a seleção da transferência (docs/PLANTA-CONTRATO.md, P2)', fn: () => {
+      const P = VC.planta; if (!P || !P.selecionarRamal) return false;
+      const g = { sel: P.selecionado, r: P.ramalSel, t: P.trfSel, red: P.redesenhar };
+      try {
+        P.redesenhar = () => {};
+        P.trfSel = 'TRF-x'; P.selecionar(1); const ok1 = P.trfSel === null && P.selecionado === 1 && P.ramalSel === null;
+        P.trfSel = 'TRF-x'; P.selecionarRamal(2); const ok2 = P.trfSel === null && P.ramalSel === 2 && P.selecionado === null;
+        return ok1 && ok2;
+      } finally { P.selecionado = g.sel; P.ramalSel = g.r; P.trfSel = g.t; P.redesenhar = g.red; }
+    } });
   },
 
   correr() {
