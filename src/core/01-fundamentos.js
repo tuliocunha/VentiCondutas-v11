@@ -46,6 +46,27 @@ VC.flags = Object.assign({
   layoutV2Lente: 'visual'
 }, VC.flags || {});
 
+/* ── Regra única de compatibilidade de redes (contrato I5 · auditoria A3) ──
+   Decisão do autor: a extração sanitária ("extração suja": casas de banho,
+   G4) tem rede e ventilador próprios. Um terminal só se liga a um ramal da
+   MESMA rede, e um ramal só pertence a uma UTA da mesma rede. Toda a app
+   (Topologia, Associação, planta, verificação) usa estas funções. */
+VC.redes = {
+  LISTA: [['insuflacao', 'insuflação'], ['extracao', 'extração'], ['extracao_suja', 'extração suja']],
+  normalizar(r) { return r || 'insuflacao'; },
+  rotulo(r) { const x = this.LISTA.find(l => l[0] === this.normalizar(r)); return x ? x[1] : String(r); },
+  ehExtracao(r) { return r === 'extracao' || r === 'extracao_suja'; },
+  compativeis(a, b) { return this.normalizar(a) === this.normalizar(b); },
+  /* rede da extração de um espaço (o campo ramalRefExtracao é um só): suja se alguma definição ou terminal de extração for suja */
+  extracaoDe(esp) {
+    if (!esp) return 'extracao';
+    if ((esp.definicoes || []).some(d => d.rede === 'extracao_suja')) return 'extracao_suja';
+    const T = (typeof VC !== 'undefined' && VC.dados && VC.dados.terminais) || [];
+    if (T.some(t => t.rede === 'extracao_suja' && (t.espacos || []).some(x => x.nome === esp.nome || String(x.id) === String(esp.id)))) return 'extracao_suja';
+    return 'extracao';
+  }
+};
+
 VC.utils = {
   fmt(v, d) { d = (d === undefined) ? 0 : d; if (typeof v === 'number' && isFinite(v)) return v.toFixed(d); return '—'; },
   fmtSI(v, d, un) { d = (d === undefined) ? 0 : d; un = un || ''; if (typeof v !== 'number' || !isFinite(v)) return '—'; return v.toFixed(d) + (un ? ' ' + un : ''); },

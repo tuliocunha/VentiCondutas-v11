@@ -320,6 +320,7 @@ html, body, .app { height: 100vh !important; overflow: hidden !important; margin
 .entrega-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
 .entrega-kpi{background:#fff;border:1px solid var(--borda);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:4px}
 .entrega-kpi b{font-size:24px;font-weight:800;font-variant-numeric:tabular-nums}
+.entrega-kpi .entrega-dif{display:block;margin-top:4px;color:var(--coral-esc,#a33);font-weight:600}
 .entrega-kpi span{font-size:13px;color:#475569}
 .entrega-redes{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
 .entrega-rede{background:#fff;border:1px solid var(--borda);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}

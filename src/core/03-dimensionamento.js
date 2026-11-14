@@ -572,7 +572,7 @@ VC.calculo = {
           const c = this.calcularQEspaco(e);
           if (!c.Q_espaco || c.Q_espaco <= 0) return;
           if (c.tipoCaudal === 'EXTRACAO') {
-            if (!e.ramalRefExtracao || !VC.dados.ramais.some(r => r.nome === e.ramalRefExtracao)) e.ramalRefExtracao = inferir(e, 'extracao');
+            if (!e.ramalRefExtracao || !VC.dados.ramais.some(r => r.nome === e.ramalRefExtracao)) e.ramalRefExtracao = inferir(e, VC.redes.extracaoDe(e));
           } else {
             if (!e.ramalRefInsuflacao || !VC.dados.ramais.some(r => r.nome === e.ramalRefInsuflacao)) e.ramalRefInsuflacao = inferir(e, 'insuflacao');
           }
@@ -627,6 +627,21 @@ VC.calculo = {
       const nomesRamais = new Set(VC.dados.ramais.map(r => r.nome));
       VC.dados.ramais.forEach(r => {
         if (r.parente && !nomesRamais.has(r.parente)) findings.push({ severidade: 'ERRO', tipo: 'Ramal órfão', elemento: r.nome, msg: 'Pai "' + r.parente + '" não existe — caudal e Δp deste ramal não são somados ao pai' });
+      });
+
+      // auditoria A1/B2 · contrato I5: a rede tem de chegar a todos os terminais, na mesma rede (VC.redes).
+      // Um terminal sem ramal não entra no caudal de nenhuma UTA: a entrega não pode dizer «sem avisos».
+      const ramalPorNome = new Map(VC.dados.ramais.map(r => [r.nome, r]));
+      const espDesenhado = new Set((VC.dados.espacos || []).filter(e => e.planta && e.planta.pts && e.planta.pts.length >= 3).map(e => e.nome));
+      const temPlantas = (VC.dados.plantas || []).length > 0;
+      VC.dados.terminais.forEach(t => {
+        const nomeT = t.nome || String(t.id), q = VC.utils.fmt(Number(t.Q) || 0, 0), r = t.ramalRef ? ramalPorNome.get(t.ramalRef) : null;
+        if (!r) findings.push({ severidade: 'ERRO', tipo: 'Terminal sem ramal', elemento: nomeT, msg: (t.ramalRef ? 'Ramal «' + t.ramalRef + '» não existe' : 'Não está ligado a nenhum ramal') + ': os ' + q + ' m³/h deste terminal não chegam a nenhuma UTA — ligue-o a um ramal de ' + VC.redes.rotulo(t.rede) });
+        else if (!VC.redes.compativeis(t.rede, r.rede)) findings.push({ severidade: 'ERRO', tipo: 'Terminal noutra rede', elemento: nomeT, msg: 'Terminal de ' + VC.redes.rotulo(t.rede) + ' ligado ao ramal «' + r.nome + '», de ' + VC.redes.rotulo(r.rede) });
+        if (temPlantas && !t.planta && (t.espacos || []).some(x => espDesenhado.has(x.nome))) findings.push({ severidade: 'ATENÇÃO', tipo: 'Terminal fora da planta', elemento: nomeT, msg: 'A sala está desenhada mas o terminal não: coloque-o com a ferramenta Terminal (D)' });
+      });
+      VC.dados.ramais.forEach(r => {
+        if (!(Number(r.Q) > 0)) findings.push({ severidade: 'ATENÇÃO', tipo: 'Ramal sem caudal', elemento: r.nome, msg: 'Q = 0 m³/h: nenhum terminal ligado a este ramal nem aos seus sub-ramais' });
       });
 
       const totalPower = VC.dados.utas.reduce((s, u) => s + (Number(u.P_motor) || 0), 0);
