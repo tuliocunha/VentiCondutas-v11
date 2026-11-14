@@ -100,8 +100,8 @@ P.criarUtaAqui = function (rede, nome) {
 P.definirN = function (id, valor) {
   const e = espPorId(id); if (!e || this._bloqueado()) return;
   const idx = VC.dados.espacos.indexOf(e), antes = this._estado();
-  if (VC.editorEspacos && VC.editorEspacos.editarCampo) VC.editorEspacos.editarCampo(idx, 'N', String(valor));
-  else e.N = VC.utils.num(valor);
+  if (VC.editorEspacos && VC.editorEspacos.editarCampo) VC.editorEspacos.editarCampo(idx, 'N', String(valor == null ? '' : valor));   // vazio = por definir
+  else if (String(valor == null ? '' : valor).trim() === '') delete e.N; else e.N = VC.utils.num(valor);
   this._empilhar('ocupação de «' + e.nome + '»', antes);
   this.redesenhar();
 };
@@ -137,14 +137,15 @@ P._parcelasCaudal = function (e) {
   const ev = Number(VC.dados.eficaciaRemocao) || 1;
   const A = Number(e.A) || 0, V = Number(e.V) || A * (Number(e.H) || 0);
   if (g === 1) {
-    const semN = e.N == null || e.N === '';
-    const N = semN ? 1 : Number(e.N) || 0, t11 = Number(def.t11) || 0, t12 = Number(def.t12) || 0;
-    const q11 = t11 * N, q12 = t12 * A, ganha = q11 >= q12 ? 'T11' : 'T12';
-    const lin = (k, txt, q) => '<tr' + (k === ganha ? ' class="planta-ganha"' : '') + '><th>' + k + '</th><td>' + txt + '</td><td><b>' + fmt(q) + '</b> m³/h</td></tr>';
+    const semN = !!c.nPorDefinir;   // N vazio = por definir: só T12 conta, e a app avisa (por fazer)
+    const N = semN ? 0 : Number(e.N) || 0, t11 = Number(def.t11) || 0, t12 = Number(def.t12) || 0;
+    const q11 = t11 * N, q12 = t12 * A, ganha = !semN && q11 >= q12 ? 'T11' : 'T12';
+    const lin = (k, txt, q) => '<tr' + (k === ganha ? ' class="planta-ganha"' : '') + '><th>' + k + '</th><td>' + txt + '</td><td>' + (q == null ? '<i>por definir</i>' : '<b>' + fmt(q) + '</b> m³/h') + '</td></tr>';
     return '<table class="planta-parcelas"><tbody>'
-      + lin('T11', fmt(t11) + ' × N ' + fmt(N), q11) + lin('T12', fmt(t12) + ' × ' + fmt(A, 2) + ' m²', q12)
-      + '</tbody></table><p class="planta-meta">Ar novo = o maior: <b>' + ganha + '</b>' + (ev !== 1 ? ' ÷ ε_v ' + fmt(ev, 2) : '') + ' = <b>' + fmt(Math.max(q11, q12) / Math.max(ev, 0.1)) + ' m³/h</b>.'
-      + (semN ? ' N não definido: a app usa N = 1.' : (ganha === 'T12' ? ' Com mais ocupação, aumente N.' : '')) + '</p>';
+      + lin('T11', fmt(t11) + ' × N ' + (semN ? '?' : fmt(N)), semN ? null : q11) + lin('T12', fmt(t12) + ' × ' + fmt(A, 2) + ' m²', q12)
+      + '</tbody></table>'
+      + (semN ? '<p class="planta-porfazer">Ocupação (N) por definir: o ar novo é calculado só por T12 × A = <b>' + fmt(q12 / Math.max(ev, 0.1)) + ' m³/h</b>. Escreva N para comparar com T11 × N; aplica-se o maior.</p>'
+        : '<p class="planta-meta">Ar novo = o maior: <b>' + ganha + '</b>' + (ev !== 1 ? ' ÷ ε_v ' + fmt(ev, 2) : '') + ' = <b>' + fmt(Math.max(q11, q12) / Math.max(ev, 0.1)) + ' m³/h</b>.' + (ganha === 'T12' ? ' Com mais ocupação, aumente N.' : '') + '</p>');
   }
   if (g === 3) return '<p class="planta-meta">G3: o maior de T12 × A = ' + fmt((Number(def.t12) || 0) * A) + ' e ACH × V = ' + fmt((Number(def.ach) || 0) * V) + ' m³/h (N não conta).</p>';
   if (g === 2) return '<p class="planta-meta">G2: isento de ar novo (Portaria 138-I); pode receber ar por transferência.</p>';

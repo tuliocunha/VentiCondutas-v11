@@ -627,6 +627,24 @@ VC6.testes = {
         return ok1 && ok2 && ok3;
       } finally { Object.assign(D, { espacos: g.esp, terminais: g.ter, plantas: g.pl, ramais: g.ram }); P.piso = g.piso; VC.ui.toast = g.toast; P._pilha = g.pilha; P.redesenhar = g.red; VC.estado.forcarSync = g.sync; if (VC.historico) VC.historico.push = g.hist; P.pendenteTerm = null; }
     } });
+    // decisão do autor: N vazio = «por definir» — ar novo G1 só por T12 × A, aviso cinzento «por fazer»; N = 0 é uma escolha (sem aviso)
+    self.registar({ id: 'UI.T31', nucleo: 'UI', grupo: 'UI', nome: 'Ocupação (N) por definir', criterio: 'escritório 16,5 m² sem N → Q = 3 × 16,5 = 49,5 (não 24 × 1), aviso POR FAZER; N = 0 sem aviso; apagar N na tabela volta a «por definir»; N = 6 → 144', fn: () => {
+      if (!VC.calculo.nVazio) return false;
+      const D = VC.dados, g = { esp: D.espacos, ev: D.eficaciaRemocao, sinc: VC.estado.sincronizar, hist: VC.historico && VC.historico.push };
+      try {
+        D.eficaciaRemocao = 1; VC.estado.sincronizar = () => {}; if (VC.historico) VC.historico.push = () => {};
+        const e = { id: 701, nome: 'Of T31', tipo: 'Escritório', A: 16.5, H: 3, V: 49.5, geometriaMetodo: 'AH', definicoes: [] };
+        D.espacos = [e];
+        const c1 = VC.calculo.calcularQEspaco(e);
+        const f1 = (VC.calculo.calcularTudo().findings || []).filter(f => f.tipo === 'Ocupação por definir' && f.elemento === 'Of T31');
+        const ok1 = c1.nPorDefinir === true && Math.abs(c1.Q_normas - 49.5) < 1e-9 && f1.length === 1 && f1[0].severidade === 'POR FAZER';
+        e.N = 0;
+        const ok2 = !VC.calculo.calcularQEspaco(e).nPorDefinir && !(VC.calculo.calcularTudo().findings || []).some(f => f.tipo === 'Ocupação por definir');
+        VC.editorEspacos.editarCampo(0, 'N', '6'); const ok3 = e.N === 6 && Math.abs(VC.calculo.calcularQEspaco(e).Q_normas - 144) < 1e-9;
+        VC.editorEspacos.editarCampo(0, 'N', ''); const ok4 = !('N' in e) && VC.calculo.calcularQEspaco(e).nPorDefinir === true;
+        return ok1 && ok2 && ok3 && ok4;
+      } finally { D.espacos = g.esp; D.eficaciaRemocao = g.ev; VC.estado.sincronizar = g.sinc; if (VC.historico) VC.historico.push = g.hist; VC.calculo.calcularTudo(); }
+    } });
   },
 
   correr() {

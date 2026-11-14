@@ -193,7 +193,7 @@ VC.editorEspacos = {
  h += '<td><input class="celula" type="number" step="0.01" data-campo="A" data-idx="' + i + '" value="' + VC.utils.fmt(c.A, 2) + '" onchange="VC.editorEspacos.editarCampo(' + i + ', \'A\', this.value)" ' + dis + '></td>';  
  h += '<td><input class="celula" type="number" step="0.01" data-campo="H" data-idx="' + i + '" value="' + VC.utils.fmt(c.H, 2) + '" onchange="VC.editorEspacos.editarCampo(' + i + ', \'H\', this.value)" ' + dis + '></td>';  
  h += '<td style="position:relative"><input class="celula' + (modoManualV ? ' modo-manual-v' : '') + '" type="number" step="0.01" data-campo="V" data-idx="' + i + '" value="' + VC.utils.fmt(c.V, 2) + '" onchange="VC.editorEspacos.editarCampo(' + i + ', \'V\', this.value)" ' + dis + '>' + (modoManualV ? '<span style="position:absolute;top:1px;right:2px;font-size:8px;color:#9e8256;font-weight:900" title="Volume manual">M</span>' : '') + '</td>';  
- h += '<td><input class="celula" type="number" data-campo="N" data-idx="' + i + '" value="' + (c.N || 0) + '" onchange="VC.editorEspacos.editarCampo(' + i + ', \'N\', this.value)" ' + dis + '></td>';  
+ h += '<td><input class="celula" type="number" data-campo="N" data-idx="' + i + '" value="' + (VC.calculo.nVazio(e) ? '' : e.N) + '" placeholder="' + (c.g === 1 ? 'por definir' : '') + '" onchange="VC.editorEspacos.editarCampo(' + i + ', \'N\', this.value)" ' + dis + '></td>';  
  h += '<td><span class="valor-derivado">' + VC.utils.fmt(c.Q_normas, 0) + '</span></td>';  
  const rphHTML = '<div style="display:flex;gap:3px;align-items:center">' +  
  '<input class="celula" type="number" step="0.1" min="0" value="' + rphAplicado + '" onchange="VC.editorEspacos.editarRPH(' + i + ', this.value)" ' + dis + ' style="width:50px;padding:2px 4px;border:1px solid var(--borda-media);border-radius:3px;font-size:10.5px;font-family:inherit">' +  
@@ -352,7 +352,7 @@ VC.editorEspacos = {
  e.V = VC.utils.num(valor);  
  e.geometriaMetodo = 'V';  
  } else if (campo === 'N') {  
- e.N = VC.utils.num(valor);  
+ if (String(valor == null ? '' : valor).trim() === '') delete e.N; else e.N = Math.max(0, VC.utils.num(valor));   // vazio = por definir  
  } else if (campo === 'nome') {  
  const val = _validarNome(valor, idx);  
  if (!val.ok) {  

@@ -190,6 +190,11 @@ const CASOS = [
     const o = VC.planta.areaPx; VC.planta.areaPx = function () { return Math.sqrt(o.apply(this, arguments)); };
     return () => { VC.planta.areaPx = o; };
   }],
+  ['N vazio volta a valer N = 1 em silêncio', 'UI.T31', () => {
+    const o = VC.calculo.nVazio; VC.calculo.nVazio = () => false;
+    const q = VC.calculo.calcularQ_normas; VC.calculo.calcularQ_normas = function (esp) { return q.call(this, esp.N == null ? Object.assign({}, esp, { N: 1 }) : esp); };
+    return () => { VC.calculo.nVazio = o; VC.calculo.calcularQ_normas = q; };
+  }],
   ['E3 · sem aviso de ventilador fora da curva', 'N6.T13', () => {
     const o = VC.uta.calcularPontoFuncionamento;
     VC.uta.calcularPontoFuncionamento = function () { const r = o.apply(this, arguments); if (r) r.foraDaCurva = false; return r; };

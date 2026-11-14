@@ -108,6 +108,9 @@ VC.calculo = {
      calcularQ_normas — V8.0.7
      ACH so se aplica a G3 e G4 (exceto Sanitorios)
      ──────────────────────────────────────────────── */
+  /* N vazio (null, undefined ou '') = ocupação por definir; 0 é um valor escolhido */
+  nVazio(esp) { return !esp || esp.N == null || String(esp.N).trim() === ''; },
+
   calcularQ_normas(esp) {
     const ev = Number(VC.dados.eficaciaRemocao) || 1.0;
     const met = esp.geometriaMetodo || 'V';
@@ -118,7 +121,9 @@ VC.calculo = {
     if (!A && V) A = V / 3.0;
     const def = VC.normas.getDef(esp.tipo);
     const g = esp.grupoForcado || def.g;
-    const N = (g === 2 || g === 3 || g === 4) ? 0 : (esp.N != null ? Number(esp.N) : 1);
+    // Decisão do autor: N vazio = «por definir» (não N = 1). O ar novo de G1 é então só T12 × A, e a app avisa (por fazer).
+    const nPorDefinir = g === 1 && VC.calculo.nVazio(esp);
+    const N = (g === 2 || g === 3 || g === 4 || nPorDefinir) ? 0 : (Number(esp.N) || 0);
     const isento = VC.regulamento.isencoesArNovo.indexOf(esp.tipo) >= 0;
     let Q_renov = 0, Q_extracao = 0, metodoCaudal = '';
     if (g === 4) {
@@ -137,7 +142,7 @@ VC.calculo = {
     } else {
       const t11 = Number(def.t11) || 0, t12 = Number(def.t12) || 0;
       Q_renov = Math.max(t11 * N, t12 * A) / Math.max(ev, 0.1);
-      metodoCaudal = 'P138 T11/T12';
+      metodoCaudal = nPorDefinir ? 'P138 T12 (N por definir)' : 'P138 T11/T12';
     }
     const qEN = this.qEN16798(esp, def, A);
     const ACH = V ? (Q_renov || Q_extracao) / V : 0;
@@ -164,7 +169,7 @@ VC.calculo = {
     }
 
     return {
-      V, A, H, N,
+      V, A, H, N, nPorDefinir,
       geometriaMetodo: met,
       tipoCaudal: g === 4 ? 'EXTRACAO' : 'RENOVACAO',
       Q_renov, Q_extracao,
@@ -669,6 +674,11 @@ VC.calculo = {
       });
       if (totalPower > VC.constantes.DL101D.SGTC) findings.push({ severidade: 'ATENÇÃO', tipo: 'BACS', elemento: 'Sistema', msg: 'P > ' + VC.constantes.DL101D.SGTC / 1000 + ' kW' });
 
+      // N por definir: aviso cinzento «por fazer» (não é erro; o caudal fica só por T12 × A)
+      VC.dados.espacos.forEach(e => {
+        const c = this.calcularQEspaco(e);
+        if (c.nPorDefinir) findings.push({ severidade: 'POR FAZER', tipo: 'Ocupação por definir', elemento: e.nome, msg: 'N vazio: o ar novo é calculado só por T12 × A (' + VC.utils.fmt(c.Q_normas, 0) + ' m³/h). Escreva o número de pessoas para comparar com T11 × N.' });
+      });
       VC.dados.espacos.forEach(e => {
         const b = this.balancoEspaco(e.nome);
         if (b.estado === 'ORFAO') findings.push({ severidade: 'ERRO', tipo: 'Balanço terminal ↔ espaço', elemento: e.nome, msg: '0 terminais para Q_espaco=' + VC.utils.fmt(b.Q_nec, 0) + ' m³/h' });
@@ -710,6 +720,7 @@ VC.calculo = {
           insuflacao: { maxPerda: vent.porRede.insuflacao ? vent.porRede.insuflacao.maxPerda : 0, Qnom: vent.porRede.insuflacao ? vent.porRede.insuflacao.Qnom : 0 },
           extracao: { maxPerda: vent.porRede.extracao ? vent.porRede.extracao.maxPerda : 0, Qnom: vent.porRede.extracao ? vent.porRede.extracao.Qnom : 0 }
         },
+        // «por fazer» (ex.: N por definir) não é conformidade provada: o estado global fica ATENÇÃO (os ecrãs mostram-no a cinzento)
         overall: findings.some(f => f.severidade === 'ERRO') ? 'NÃO CONFORME' : findings.length ? 'ATENÇÃO' : 'CONFORME'
       };
       this.ultimo = resultado;

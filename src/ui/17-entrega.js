@@ -18,6 +18,7 @@ VC.entrega = {
   /* onde se resolve cada tipo de aviso da auditoria */
   _passoDoAviso(tipo) {
     const t = String(tipo || '');
+    if (/ocupa[cç][aã]o por definir/i.test(t)) return 'levantamento';
     if (/sem ramal|outra rede|ramal sem caudal/i.test(t)) return 'associacao';
     if (/espa[cç]o sujo/i.test(t)) return 'transferencias';
     if (/sec[cç][aã]o|velocidade|di[aâ]metro|conduta|perda/i.test(t)) return 'rede';
@@ -48,7 +49,8 @@ VC.entrega = {
       if (!porTipo[k]) porTipo[k] = { sev: f.severidade, tipo: f.tipo || 'Aviso', n: 0, elementos: [], msg: f.msg || '', passo: this._passoDoAviso(f.tipo) };
       porTipo[k].n++; if (f.elemento) porTipo[k].elementos.push(f.elemento);
     });
-    const pontos = Object.values(porTipo).sort((a, b) => (a.sev === 'ERRO' ? 0 : 1) - (b.sev === 'ERRO' ? 0 : 1) || b.n - a.n);
+    const ordem = s => (s === 'ERRO' ? 0 : (s === 'POR FAZER' ? 2 : 1));   // erros, avisos, e por fim o que está por fazer (cinzento)
+    const pontos = Object.values(porTipo).sort((a, b) => ordem(a.sev) - ordem(b.sev) || b.n - a.n);
     const nErros = avisos.filter(f => f.severidade === 'ERRO').length;
 
     const utas = (D.utas || []).filter(u => !this.ehVEX(u));
@@ -114,7 +116,8 @@ VC.entrega = {
     const m = d.meta;
     let estado, classe;
     if (d.nErros) { estado = 'Por resolver · ' + d.nErros + ' erro' + (d.nErros > 1 ? 's' : '') + ' impede' + (d.nErros > 1 ? 'm' : '') + ' a entrega'; classe = 'erro'; }
-    else if (d.pontos.length) { estado = 'Quase pronto · ' + d.pontos.length + ' ponto' + (d.pontos.length > 1 ? 's' : '') + ' a rever antes de entregar'; classe = 'atencao'; }
+    else if (d.pontos.some(p => p.sev !== 'POR FAZER')) { estado = 'Quase pronto · ' + d.pontos.length + ' ponto' + (d.pontos.length > 1 ? 's' : '') + ' a rever antes de entregar'; classe = 'atencao'; }
+    else if (d.pontos.length) { const n = d.pontos.reduce((s, p) => s + p.n, 0); estado = 'Quase pronto · ' + n + ' dado' + (n > 1 ? 's' : '') + ' por fazer'; classe = 'porfazer'; }
     else { estado = 'Pronto a entregar'; classe = 'ok'; }
 
     let h = '<div class="entrega">';
@@ -123,7 +126,7 @@ VC.entrega = {
     /* 1 · estado */
     h += '<section class="entrega-estado entrega-' + classe + '" aria-label="Estado do projeto"><h2>' + esc(estado) + '</h2>';
     if (d.pontos.length) {
-      h += '<ul class="entrega-pontos">' + d.pontos.map(p => '<li><span class="badge ' + (p.sev === 'ERRO' ? 'erro' : 'atencao') + '">' + p.n + ' ×</span> <b>' + esc(p.tipo) + '</b>'
+      h += '<ul class="entrega-pontos">' + d.pontos.map(p => '<li><span class="badge ' + (p.sev === 'ERRO' ? 'erro' : (p.sev === 'POR FAZER' ? 'porfazer' : 'atencao')) + '">' + p.n + ' ×</span> <b>' + esc(p.tipo) + '</b>'
         + (p.elementos.length ? ' <span class="entrega-el">(' + esc(p.elementos.slice(0, 4).join(', ') + (p.elementos.length > 4 ? '…' : '')) + ')</span>' : '')
         + '<span class="entrega-msg">' + esc(p.msg) + '</span>'
         + '<button class="btn btn-mini" onclick="VC.nav.irPasso(\'' + p.passo + '\')">Resolver <i class="fa-solid fa-arrow-right"></i></button></li>').join('') + '</ul>';

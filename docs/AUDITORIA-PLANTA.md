@@ -119,7 +119,7 @@ Leitura do código do cálculo, das associações e das normas, com sondas no na
 | V4 | Na Tabela, o ΔP da transferência era guardado mas a área era calculada com 2 Pa. Listas de tipos diferentes na Tabela (4) e na planta (3). | cálculo / coerência | corrigido: área com o ΔP escrito; tipos do catálogo normativo; ΔP típico por tipo |
 | V5 | Associar terminal ↔ ramal estava escrito em 7 sítios; 3 não verificavam a rede. | estrutura | corrigido: serviço único `VC.associacoes` |
 | V6 | Um ramal podia pertencer a uma UTA (ou pai) de outra rede, sem aviso. | coerência | corrigido: aviso «Ramal noutra rede» |
-| V7 | N vazio vale N = 1 em silêncio. | clareza | o cartão diz «N não definido: a app usa N = 1». Comportamento do cálculo **por decidir** |
+| V7 | N vazio valia N = 1 em silêncio. | clareza / cálculo | **decidido**: N vazio = «por definir». O ar novo G1 é só T12 × A, com o aviso cinzento «Ocupação por definir» (por fazer, não é erro). N = 0 é uma escolha e não dá aviso. Os exemplos não mudam (todos têm N). |
 | V8 | Dois históricos (desfazer da planta e histórico geral). | estrutura | fica para o PR 3 (gestor único) |
 | V9 | A ligação espaço ↔ ramal é guardada duas vezes (`terminal.ramalRef` conta para o cálculo; `espaco.ramalRef*` é a rede do espaço). | estrutura | só muda pelo serviço único; tirar o campo duplicado exige migração (PR à parte) |
 

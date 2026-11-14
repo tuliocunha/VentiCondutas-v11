@@ -518,3 +518,8 @@ html, body, .app { height: 100vh !important; overflow: hidden !important; margin
 .planta-parcelas tr.planta-ganha{background:var(--primario-soft,#e8f0f8);font-weight:700}
 .planta-dir{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:6px 0;font-size:13px}
 .planta-dir b{padding:2px 6px;border-radius:6px;background:var(--superf2,#f1f5f9)}
+/* «por fazer» (cinzento): trabalho em falta, não é erro nem aviso (decisão do autor: N vazio) */
+.badge.porfazer{background:#eef1f5;color:#475569;border:1px solid #cbd5e1}
+.entrega-porfazer{background:#f4f6f9;border-color:#cbd5e1}
+.selo-porfazer{color:#475569;background:#eef1f5 !important;border-color:#cbd5e1 !important}
+.planta-porfazer{margin:6px 0;padding:6px 9px;border-radius:8px;background:#eef1f5;border:1px solid #cbd5e1;color:#475569;font-size:12.5px}

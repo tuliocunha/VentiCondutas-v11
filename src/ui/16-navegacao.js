@@ -158,10 +158,11 @@ VC.nav = {
   _desenharSelo(x) {
     const bar = document.getElementById('vc-status-bar');
     if (!bar) return;
-    const n = (x && x.findings) ? x.findings.length : 0;
-    const erros = n ? x.findings.filter(f => f.severidade === 'ERRO').length : 0;
-    const est = erros ? 'erro' : (n ? 'atencao' : 'ok');
-    const txt = erros ? erros + ' erro' + (erros > 1 ? 's' : '') : (n ? n + ' aviso' + (n > 1 ? 's' : '') : 'Sem avisos');
+    const F = (x && x.findings) || [];
+    const porFazer = F.filter(f => f.severidade === 'POR FAZER').length, n = F.length - porFazer;   // «por fazer» é cinzento, não é aviso
+    const erros = F.filter(f => f.severidade === 'ERRO').length;
+    const est = erros ? 'erro' : (n ? 'atencao' : (porFazer ? 'porfazer' : 'ok'));
+    const txt = erros ? erros + ' erro' + (erros > 1 ? 's' : '') : (n ? n + ' aviso' + (n > 1 ? 's' : '') : (porFazer ? porFazer + ' por fazer' : 'Sem avisos'));
     bar.className = 'selo-estado selo-' + est;
     bar.setAttribute('role', 'button'); bar.setAttribute('tabindex', '0');
     bar.setAttribute('title', 'Ver o estado do projeto na Entrega');

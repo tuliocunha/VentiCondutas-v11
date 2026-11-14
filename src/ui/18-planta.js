@@ -128,18 +128,19 @@ VC.planta = {
     const A = usarArea ? (this.areaM2(this.pendente, p) || 0) : 0;
     const e = {
       id: VC.dados.nextId.espaco++, nome, tipo: tipo || 'Escritório', zona: p.nome, localizacao: VC.utils.parseZona ? VC.utils.parseZona(p.nome) : {}, geometriaMetodo: 'AH',
-      A: Math.round(A * 100) / 100, H, V: Math.round(A * H * 100) / 100, N: N === undefined || N === '' ? 0 : Math.max(0, VC.utils.num(N) || 0), origem: 'Planta', definicoes: [], ramalRefInsuflacao: '', ramalRefExtracao: '',
+      A: Math.round(A * 100) / 100, H, V: Math.round(A * H * 100) / 100, origem: 'Planta', definicoes: [], ramalRefInsuflacao: '', ramalRefExtracao: '',
       balanco: { Q_in_direto: 0, Q_out_direto: 0, Q_conforto_in: 0, Q_conforto_out: 0, QAI_aplicado: 0, QAI_rede: 'insuflacao', Q_transf_in: 0, Q_transf_out: 0, exfiltracao: 0, residuo: 0, pressao_relativa_Pa: 0, estado: 'PENDENTE' },
       transferencias: [], rphDefault: 0, rphAplicado: 0, rphOrigem: 'norma', Q_ConTerm: 0, QAI_projeto: 0, QAI_projeto_origem: 'norma', QAI_projeto_motivo: '', QAI_projeto_rede: 'auto', Q_total: 0,
       planta: { pisoId: p.id, pts: this.pendente.map(([x, y]) => [Math.round(x * 10) / 10, Math.round(y * 10) / 10]) }
     };
+    if (N != null && String(N).trim() !== '') e.N = Math.max(0, VC.utils.num(N));   // vazio = por definir
     if (VC.rph && VC.rph.aplicarDefaultSeVazio) VC.rph.aplicarDefaultSeVazio(e);
     if (VC.qai && VC.qai.aplicarDefaultSeVazio) VC.qai.aplicarDefaultSeVazio(e);
     VC.dados.espacos.push(e);
     if (VC.editorEspacos) VC.editorEspacos._cacheOrdenacao = { chave: null, lista: null };
     this.pendente = null; this.selecionado = e.id;
     this._guardar('novo espaço «' + nome + '» na planta');
-    VC.ui.toast('Espaço «' + nome + '» criado' + (A ? ' com ' + fmt(A) + ' m²' : '') + (e.N > 0 ? ' · N = ' + e.N : (Number(e.grupoForcado || (VC.normas.getDef(e.tipo) || {}).g) === 1 ? '. Falta a ocupação (N): escreva-a no cartão' : '')) + '.');
+    VC.ui.toast('Espaço «' + nome + '» criado' + (A ? ' com ' + fmt(A) + ' m²' : '') + (VC.calculo.calcularQEspaco(e).nPorDefinir ? '. Ocupação (N) por definir: ar novo só por T12 × A até a escrever no cartão' : (e.N != null ? ' · N = ' + e.N : '')) + '.');
     this.redesenhar();
   },
   usarAreaMedida(idEsp) {
@@ -180,7 +181,7 @@ VC.planta = {
     const m = [];
     if (!(Number(e.A) > 0)) m.push('área');
     if (!(Number(e.H) > 0)) m.push('pé-direito');
-    if (Number(c.g) === 1 && !(Number(e.N) > 0)) m.push('ocupação (N)');
+    if (c.nPorDefinir) m.push('ocupação (N)');   // N vazio = por definir; N = 0 é uma escolha
     return m;
   },
   cor(e) {
@@ -294,7 +295,7 @@ VC.planta = {
         + '<div class="planta-ou">ou criar um espaço novo</div>'
         + '<label for="plantaNovoNome">Nome</label><input id="plantaNovoNome" placeholder="ex.: Sala ' + esc(p.nome.replace('Piso ', 'P')) + '-N1">'
         + '<label for="plantaNovoTipo">Tipo</label><select id="plantaNovoTipo">' + this._opcoesTipo('Escritório') + '</select>'
-        + '<label for="plantaNovoN">Ocupação N (pessoas) <small>conta em T11 nos espaços G1</small></label><input id="plantaNovoN" type="number" min="0" step="1" value="0">'
+        + '<label for="plantaNovoN">Ocupação N (pessoas) <small>conta em T11 nos espaços G1</small></label><input id="plantaNovoN" type="number" min="0" step="1" placeholder="por definir">'
         + '<div class="planta-acoes"><button class="btn primario" onclick="VC.planta.criarEspaco(document.getElementById(\'plantaNovoNome\').value, document.getElementById(\'plantaNovoTipo\').value, (document.getElementById(\'plantaUsarA\')||{}).checked, document.getElementById(\'plantaNovoN\').value)">Criar espaço</button><button class="btn" onclick="VC.planta.cancelar()">Cancelar</button></div></div>';
     }
     const e = !this.pendente && (VC.dados.espacos || []).find(x => String(x.id) === String(this.selecionado));
@@ -306,9 +307,9 @@ VC.planta = {
         + '<div class="planta-renomear"><label for="plantaNomeEsp">Nome</label><input id="plantaNomeEsp" value="' + esc(e.nome) + '" maxlength="60" onkeydown="if(event.key===\'Enter\')VC.planta.renomearEspacoPlanta(' + e.id + ', this.value)"><button class="btn btn-mini" onclick="VC.planta.renomearEspacoPlanta(' + e.id + ', document.getElementById(\'plantaNomeEsp\').value)">Renomear</button></div>'
         + '<div class="planta-kpis"><div><span>Área na tabela</span><b>' + fmt(At) + ' m²</b></div><div><span>Área medida</span><b>' + (A ? fmt(A) + ' m²' : '—') + '</b></div><div><span>Q_total</span><b>' + fmt(c.Q_total, 0) + ' m³/h</b></div></div>'
         + '<p class="planta-meta">' + esc(e.tipo || '—') + ' · G' + (e.grupoForcado || c.g || '?') + ' · ' + esc(e.zona || '') + '</p>'
-        + (g1 ? '<div class="planta-renomear"><label for="plantaN">Ocupação N</label><input id="plantaN" type="number" min="0" step="1" value="' + (e.N == null ? '' : esc(e.N)) + '" onchange="VC.planta.definirN(' + e.id + ', this.value)"></div>' : '')
+        + (g1 ? '<div class="planta-renomear"><label for="plantaN">Ocupação N</label><input id="plantaN" type="number" min="0" step="1" value="' + (VC.calculo.nVazio(e) ? '' : esc(e.N)) + '" placeholder="por definir" onchange="VC.planta.definirN(' + e.id + ', this.value)"></div>' : '')
         + (this._parcelasCaudal ? this._parcelasCaudal(e) : '')
-        + (falta.length ? '<p class="planta-aviso">Falta: ' + falta.join(', ') + '.</p>' : '')
+        + (falta.length ? '<p class="planta-porfazer">Por fazer: ' + falta.join(', ') + '.</p>' : '')
         + '<details class="planta-sub"><summary>Calibrar a escala pela área desta sala</summary><label for="plantaAreaConhS">Área conhecida (m²)</label><input id="plantaAreaConhS" type="number" step="0.01" min="0" value="' + (At ? esc(At) : '') + '"><div class="planta-acoes"><button class="btn" onclick="VC.planta.calibrarSelecionadaPorArea(' + e.id + ', document.getElementById(\'plantaAreaConhS\').value)">Calibrar pela área</button></div></details>'
         + '<div class="planta-acoes">' + (difere ? '<button class="btn primario" onclick="VC.planta.usarAreaMedida(' + e.id + ')">Usar área medida</button>' : '')
         + '<button class="btn" onclick="VC.planta.verNaTabela(' + e.id + ')">Ver na tabela</button><button class="btn" onclick="VC.planta.apagarDesenho(' + e.id + ')">Apagar desenho</button></div></div>';

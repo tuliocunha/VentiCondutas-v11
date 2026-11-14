@@ -162,6 +162,7 @@ cenários e mostradas na app como avisos no objeto.
 | I11 | Os terminais de uma definição somam o `Q_total` da definição. | erro |
 | I12 | Balanço de cada espaço desenhado dentro da tolerância (ou isento: G2 sem conforto). | aviso |
 | I16 | Um ramal tem caudal (Q > 0); um terminal de uma sala desenhada está colocado na planta. | aviso |
+| I19 | Espaço G1 com N vazio: «Ocupação por definir». O ar novo é só T12 × A até o N ser escrito; depois aplica-se o maior de T11 × N e T12 × A (Portaria 138-I). | por fazer (cinzento) |
 | I17 | Um ramal é da rede da sua UTA e do seu pai. | erro |
 | I18 | Mudar um nome (espaço ou ramal) não desliga nada: terminais, transferências e sub-ramais seguem o nome. | erro (só nos testes) |
 | I13 | Desfazer tudo o que se fez numa sessão devolve exatamente o estado inicial; refazer devolve o final. | erro (só nos testes) |
