@@ -38,4 +38,4 @@ editável.
 
 ## Método da planta (contrato, cenários, gestor de gestos)
 
-Ver [PLANTA-CONTRATO.md](PLANTA-CONTRATO.md): vocabulário, modelo de dados, gestos por ferramenta, regras de coerência, cenários C1–C5, desvios conhecidos e o plano em 5 fases.
+Ver [PLANTA-CONTRATO.md](PLANTA-CONTRATO.md) e o resultado da auditoria em [AUDITORIA-PLANTA.md](AUDITORIA-PLANTA.md): vocabulário, modelo de dados, gestos por ferramenta, regras de coerência, cenários C1–C5, desvios conhecidos e o plano em 5 fases.
