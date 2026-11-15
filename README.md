@@ -5,6 +5,11 @@ cima: espaços → terminais → ramais → UTAs. Caudais pela Portaria 138-I/20
 verificação Ecodesign (Reg. (UE) 1253/2014). Funciona no navegador, sem servidor
 nem instalação: basta abrir o `index.html`.
 
+O projeto é gravado automaticamente no navegador (`localStorage`) e recuperado
+quando a página volta a abrir (`src/modulos/14-autoguardar.js`). O «Guardar» em
+JSON continua a ser a cópia de segurança e a forma de levar o projeto para outro
+computador.
+
 ## Estrutura
 
 | Pasta | O quê |

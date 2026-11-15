@@ -369,7 +369,7 @@ VC.editorEspacos = {
  } else { e[campo] = valor; }  
  this._cacheOrdenacao = { chave: null, lista: null };  
  if (VC.historico) VC.historico.push('edicao de ' + campo + ' em «' + e.nome + '»');  
- VC.estado.sincronizar();  
+ VC.estado.forcarSync();   // edição do utilizador: recalcula sempre (a impressão do estado não inclui todos os campos)  
  },  
   
  /* abertura permanente para o exterior (m³/h; + entra, − sai): entra no balanço do espaço */
@@ -1353,12 +1353,12 @@ VC.editorTerminais = VC.editorTerminais || {
  else t[campo] = valor;  
  if (campo === 'fabricante') { t.familia = ''; t.tamanho = ''; }  
  if (campo === 'familia') { t.tamanho = ''; }  
- VC.estado.sincronizar();  
+ VC.estado.forcarSync();   // edição do utilizador: recalcula sempre (a impressão do estado não inclui todos os campos)  
  },  
  eliminarUm(idx) {  
  if (!confirm('Eliminar este terminal?')) return;  
  VC.dados.terminais.splice(idx, 1);  
- VC.estado.sincronizar();  
+ VC.estado.forcarSync();   // edição do utilizador: recalcula sempre (a impressão do estado não inclui todos os campos)  
  }  
 };  
   
@@ -1458,7 +1458,7 @@ VC.editorRamais = VC.editorRamais || {
  else if (campo === 'sPai') { if (valor === '' || valor == null) delete r.sPai; else r.sPai = Math.max(0, VC.utils.num(valor)); }   // Fase 2A  
  else if (campo === 'forma') r.geometriaInput = Object.assign({}, r.geometriaInput || {}, { forma: valor === 'retangular' || valor === 'auto' ? valor : 'circular' });   // v11.1: escolha do utilizador  
  else r[campo] = valor;  
- VC.estado.sincronizar();  
+ VC.estado.forcarSync();   // edição do utilizador: recalcula sempre (a impressão do estado não inclui todos os campos)  
  }  
 };  
 
