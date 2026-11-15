@@ -94,7 +94,7 @@ VC.transferenciasUI = {
     h += '<div class="campo-grupo"><label>\u0394P (Pa)</label><input type="number" id="trfDp" value="2" min="0.1" step="0.1" style="width:100%;padding:8px 10px;border:1px solid var(--borda-media);border-radius:5px;font-size:13px;font-family:inherit;font-weight:700"></div>';
     h += '</div>';
     h += '<div class="campo-grupo" style="margin-bottom:10px"><label>Tipo</label><select id="trfTipo" style="width:100%;padding:8px 10px;border:1px solid var(--borda-media);border-radius:5px;font-size:12px;font-family:inherit">';
-    h += VC6.transferencias.CATALOGO.map(function (t) { return '<option value="' + t.codigo + '">' + VC.utils.esc(t.nome) + '</option>'; }).join('');   // catálogo normativo (o mesmo da planta)
+    h += VC6.transferencias.CATALOGO.map(function (t) { return '<option value="' + t.codigo + '"' + (prefill.tipo === t.codigo ? ' selected' : '') + '>' + VC.utils.esc(t.nome) + ' \u00b7 ' + VC.utils.esc(t.aplicacao || '') + '</option>'; }).join('');   // catálogo normativo (o mesmo da planta)
     h += '</select></div>';
     h += '<div style="padding:8px 12px;background:var(--primario-soft);border-left:3px solid var(--primario);border-radius:5px;font-size:10.5px;color:var(--primario-esc);line-height:1.55">';
     h += '\u00c1rea calculada: <b id="trfArea">\u2014</b> cm\u00b2 (f\u00f3rmula A = Q / (0,36\u00b7\u221a\u0394P))';
@@ -140,7 +140,7 @@ VC.transferenciasUI = {
     if (VC.historico) VC.historico.push('Nova transfer\u00eancia');
     VC.estado.forcarSync();
     VC.ui.fecharModal('modalGenerico');
-    VC.passos.render('transferencias');
+    VC.passos.render(VC._passoAtivo || 'transferencias');   // aberta a partir de Requisitos: fica no mesmo ecr\u00e3
     VC.ui.toast('Transfer\u00eancia criada.');
   },
 

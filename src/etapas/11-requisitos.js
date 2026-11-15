@@ -98,7 +98,9 @@ var locais = Array.from(new Set(espacos.map(function(e) { return (e.localizacao 
       var g = e.grupoForcado || c.g || 1;
       var defs = e.definicoes || [];
       var semDef = defs.length === 0;
-      var somaQ = defs.reduce(function (s, d) { return s + (Number(d.Q_total) || 0); }, 0);
+      // G4: o caudal exigido é de extração; a insuflação direta (opcional, menor) não conta para a cobertura
+      var defsCob = g === 4 ? defs.filter(function (d) { return d.rede !== 'insuflacao'; }) : defs;
+      var somaQ = defsCob.reduce(function (s, d) { return s + (Number(d.Q_total) || 0); }, 0);
       var Qtotal = c.Q_total || 0;
       var cobPct = Qtotal > 0 ? somaQ / Qtotal : 0;
       var estadoConcluido = (cobPct >= 0.95 && cobPct <= 1.05) && !semDef;
@@ -130,8 +132,12 @@ var locais = Array.from(new Set(espacos.map(function(e) { return (e.localizacao 
         + (defs.length > 0 ? ' \u00b7 cobertura ' + Math.round(cobPct * 100) + '%' : '')
         + '</div>';
       h += '</div>';
+      h += '<div style="display:flex;gap:6px;flex-wrap:wrap">';
+      if (g === 4) h += '<button class="btn btn-mini" onclick="VC.requisitos.entradaPorTransferencia(' + idx + ')" title="Passagem de ar de um espa\u00e7o limpo para este (fresta sob a porta, grelha na porta ou na parede)"><i class="fa-solid fa-door-open"></i> Entrada de ar por transfer\u00eancia</button>';
       h += '<button class="btn btn-mini primario" onclick="VC.requisitos.abrirModal(' + idx + ')"><i class="fa-solid fa-plus"></i> Adicionar defini\u00e7\u00e3o</button>';
       h += '</div>';
+      h += '</div>';
+      if (g === 4) h += VC.requisitos._resumoEntradaAr(e);
 
       if (semDef) {
         h += '<div style="padding:8px 10px;background:var(--ambar-soft);border-radius:5px;font-size:11px;color:var(--ambar-esc)">'
@@ -174,9 +180,11 @@ var locais = Array.from(new Set(espacos.map(function(e) { return (e.localizacao 
 
     var tiposPorGrupo = {
       1: ['Difusor', 'Grelha Insufla\u00e7\u00e3o', 'Grelha Extra\u00e7\u00e3o', 'Difusor Linear', 'Jato de Ar', 'V\u00e1lvula'],
-      2: ['Grelha Insufla\u00e7\u00e3o', 'Grelha Extra\u00e7\u00e3o', 'Grelha de Transfer\u00eancia', 'Fresta sob Porta'],
+      // frestas e grelhas de transfer\u00eancia n\u00e3o s\u00e3o terminais de conduta: criam-se como transfer\u00eancias (bot\u00e3o no fim)
+      2: ['Grelha Insufla\u00e7\u00e3o', 'Grelha Extra\u00e7\u00e3o'],
       3: ['Difusor', 'Grelha Extra\u00e7\u00e3o', 'Grelha Insufla\u00e7\u00e3o'],
-      4: ['Boca de Extra\u00e7\u00e3o', 'Grelha Extra\u00e7\u00e3o']
+      // G4: extra\u00e7\u00e3o dedicada e, se o projetista quiser, insufla\u00e7\u00e3o direta menor (o espa\u00e7o fica em depress\u00e3o)
+      4: ['Boca de Extra\u00e7\u00e3o', 'Grelha Extra\u00e7\u00e3o', 'Grelha Insufla\u00e7\u00e3o', 'Difusor', 'V\u00e1lvula']
     };
     var redesPorTipo = {
       'Difusor': 'insuflacao',
@@ -185,10 +193,9 @@ var locais = Array.from(new Set(espacos.map(function(e) { return (e.localizacao 
       'Jato de Ar': 'insuflacao',
       'V\u00e1lvula': 'insuflacao',
       'Grelha Extra\u00e7\u00e3o': 'extracao',
-      'Boca de Extra\u00e7\u00e3o': 'extracao_suja',
-      'Grelha de Transfer\u00eancia': 'extracao',
-      'Fresta sob Porta': 'extracao'
+      'Boca de Extra\u00e7\u00e3o': 'extracao_suja'
     };
+    if (g === 4) redesPorTipo['Grelha Extra\u00e7\u00e3o'] = 'extracao_suja';   // no G4 a extra\u00e7\u00e3o vai para a rede dedicada (VEX)
 
     var listaTipos = tiposPorGrupo[g] || tiposPorGrupo[1];
     if ((c.Q_total || 0) <= 0) {
@@ -225,8 +232,17 @@ var locais = Array.from(new Set(espacos.map(function(e) { return (e.localizacao 
     h += '<div style="padding:8px 12px;background:var(--primario-soft);border-left:3px solid var(--primario);border-radius:5px;font-size:10.5px;color:var(--primario-esc);margin-bottom:10px;line-height:1.55">'
       + '<b>Q_parcela por terminal:</b> <span id="reqQparcela">' + Math.round(c.Q_total) + '</span> m\u00b3/h'
       + '</div>';
+    if (g === 4) {
+      var qG4 = this._caudaisDiretos(e);
+      h += '<div id="reqAvisoG4" style="padding:8px 12px;background:var(--ambar-soft);border-left:3px solid var(--ambar);border-radius:5px;font-size:10.5px;color:var(--ambar-esc);margin-bottom:10px;line-height:1.55" data-qi="' + qG4.qi + '" data-qo="' + qG4.qo + '">'
+        + '<b>G4 em depress\u00e3o</b> (Portaria 138-I, Anexo II, 1.2.2 h): a extra\u00e7\u00e3o tem de ser maior que a insufla\u00e7\u00e3o direta; a diferen\u00e7a entra por transfer\u00eancia (fresta ou grelha na porta). '
+        + 'Atual: extra\u00e7\u00e3o <b>' + VC.utils.fmt(qG4.qo, 0) + '</b> \u00b7 insufla\u00e7\u00e3o <b>' + VC.utils.fmt(qG4.qi, 0) + '</b> m\u00b3/h.'
+        + '<div id="reqAvisoG4Erro" style="display:none;margin-top:4px;color:var(--coral-esc);font-weight:800"></div>'
+        + '</div>';
+    }
     h += '</div>';
     h += '<div class="modal-rodape">'
+      + '<button class="btn" style="margin-right:auto" onclick="VC.requisitos.entradaPorTransferencia(' + idx + ')" title="Fresta sob a porta, grelha na porta ou na parede"><i class="fa-solid fa-door-open"></i> Entrada de ar por transfer\u00eancia</button>'
       + '<button class="btn" onclick="VC.ui.fecharModal(\'modalGenerico\')">Cancelar</button>'
       + '<button class="btn primario" onclick="VC.requisitos.guardarDefinicao(' + idx + ')">Guardar</button>'
       + '</div>';
@@ -247,12 +263,65 @@ var locais = Array.from(new Set(espacos.map(function(e) { return (e.localizacao 
         var q = Number(inpQt.value) || 0;
         var n = Math.max(1, Number(inpQ.value) || 1);
         if (spanParcela) spanParcela.textContent = Math.round(q / n * 10) / 10;
+        var av = document.getElementById('reqAvisoG4'), avErr = document.getElementById('reqAvisoG4Erro');
+        if (av && avErr) {
+          var qi = Number(av.dataset.qi) || 0, qo = Number(av.dataset.qo) || 0;
+          if (selR.value === 'insuflacao') qi += q; else qo += q;
+          var falha = qo <= qi;
+          avErr.style.display = falha ? 'block' : 'none';
+          avErr.textContent = falha ? 'Com esta defini\u00e7\u00e3o: extra\u00e7\u00e3o ' + Math.round(qo) + ' \u2264 insufla\u00e7\u00e3o ' + Math.round(qi) + ' m\u00b3/h \u2014 o espa\u00e7o deixa de estar em depress\u00e3o.' : '';
+        }
       }
+      selR.addEventListener('change', update);
       selT.addEventListener('change', update);
       inpQ.addEventListener('input', update);
       inpQt.addEventListener('input', update);
       update();
     }, 30);
+  },
+
+  /* caudais diretos (defini\u00e7\u00f5es) do espa\u00e7o: insufla\u00e7\u00e3o qi e extra\u00e7\u00e3o qo, em m\u00b3/h */
+  _caudaisDiretos: function (e) {
+    var qi = 0, qo = 0;
+    (e.definicoes || []).forEach(function (d) {
+      var q = Number(d.Q_total) || 0;
+      if (d.rede === 'insuflacao') qi += q; else qo += q;
+    });
+    return { qi: qi, qo: qo };
+  },
+
+  /* linha no cart\u00e3o de um G4: ar que entra por transfer\u00eancia e o que falta */
+  _resumoEntradaAr: function (e) {
+    var q = this._caudaisDiretos(e);
+    var entra = (VC.dados.transferencias || []).filter(function (t) { return String(t.paraId) === String(e.id); });
+    var qTrf = entra.reduce(function (s, t) { return s + (Number(t.Q) || 0); }, 0);
+    var tol = VC.constantes.BALANCO_RESIDUO || 5;
+    var falta = Math.round(q.qo - q.qi - qTrf);
+    var cor = Math.abs(falta) <= tol ? 'var(--verde-esc)' : 'var(--ambar-esc)';
+    var txt = entra.length
+      ? 'Entrada de ar: ' + entra.map(function (t) { var i = VC6.transferencias.tipoInfo(t.tipo); return VC.utils.esc((i && i.nome) || t.tipo) + ' de ' + VC.utils.esc(t.deNome) + ' (' + VC.utils.fmt(t.Q, 0) + ' m\u00b3/h, ' + VC.utils.fmt(t.area_cm2, 0) + ' cm\u00b2)'; }).join(' \u00b7 ')
+      : 'Sem entrada de ar por transfer\u00eancia.';
+    if (q.qo > 0 && falta > tol) txt += ' Faltam ' + falta + ' m\u00b3/h (extra\u00e7\u00e3o \u2212 insufla\u00e7\u00e3o \u2212 transfer\u00eancias).';
+    return '<div style="font-size:10.5px;color:' + cor + ';margin:-2px 0 8px"><i class="fa-solid fa-door-open"></i> ' + txt + '</div>';
+  },
+
+  /* abre \u00abNova transfer\u00eancia\u00bb j\u00e1 preenchida: destino = este espa\u00e7o, Q = extra\u00e7\u00e3o \u2212 insufla\u00e7\u00e3o \u2212 transfer\u00eancias que j\u00e1 entram,
+     origem = um espa\u00e7o que pode ceder ar (Circula\u00e7\u00e3o\u2026), de prefer\u00eancia no mesmo piso; tipo = o sugerido pela app (fresta sob porta no G4) */
+  entradaPorTransferencia: function (idx) {
+    var e = VC.dados.espacos[idx];
+    if (!e || !VC.transferenciasUI) return;
+    var q = this._caudaisDiretos(e);
+    var jaEntra = (VC.dados.transferencias || []).filter(function (t) { return String(t.paraId) === String(e.id); })
+      .reduce(function (s, t) { return s + (Number(t.Q) || 0); }, 0);
+    var Q = Math.max(0, Math.round(q.qo - q.qi - jaEntra));
+    var T = VC6.transferencias;
+    var pisoDe = function (x) { return VC.topologia && VC.topologia._pisoDe ? VC.topologia._pisoDe(x) : null; };
+    var piso = pisoDe(e);
+    var candidatos = (VC.dados.espacos || []).filter(function (x) { return x !== e && T.cedeAr(x); });
+    var mesmoPiso = candidatos.filter(function (x) { return pisoDe(x) === piso; });
+    var preferido = mesmoPiso.find(function (x) { return VC.calculo.grupoDe(x) === 2; }) || mesmoPiso[0] || null;
+    VC.ui.fecharModal('modalGenerico');
+    VC.transferenciasUI.abrirNova({ paraId: e.id, deId: preferido ? preferido.id : null, Q: Q > 0 ? Q : 45, tipo: T.sugerirSolucao(e.tipo, 'entrada') });
   },
 
     _recalcNextIdDefinicao: function () {
@@ -356,7 +425,9 @@ var locais = Array.from(new Set(espacos.map(function(e) { return (e.localizacao 
       var c = VC.calculo.calcularQEspaco(e);
       var g = e.grupoForcado || c.g || 1;
       var defs = e.definicoes || [];
-      var somaQ = defs.reduce(function (s, d) { return s + (Number(d.Q_total) || 0); }, 0);
+      // G4: o caudal exigido é de extração; a insuflação direta (opcional, menor) não conta para a cobertura
+      var defsCob = g === 4 ? defs.filter(function (d) { return d.rede !== 'insuflacao'; }) : defs;
+      var somaQ = defsCob.reduce(function (s, d) { return s + (Number(d.Q_total) || 0); }, 0);
       var Qnec = c.Q_total || 0;
       var nReq = defs.length;
       if (nReq === 0) semReqCount++;

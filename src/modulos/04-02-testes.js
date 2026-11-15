@@ -844,6 +844,38 @@ VC6.testes = {
         return ok1 && ok2;
       } finally { Object.assign(D, { ramais: g.ram, terminais: g.ter, espacos: g.esp, nos: g.nos, trechos: g.tr }); VC.ui.toast = g.toast; VC.estado.forcarSync = g.sync; VC.passos.render = g.render; if (VC.historico) VC.historico.push = g.hist; }
     } });
+    // edições na Tabela: a zona/piso muda o recálculo e «Mezanino» é um piso (antes ficava sem piso e passava a P0)
+    self.registar({ id: 'UI.T41', nucleo: 'UI', grupo: 'UI', nome: 'Zona do espaço: Mezanino e recálculo', criterio: '«Mezanino» → piso MEZ; «Átrio» → ATRIO; «P2 - Norte» → P2/Norte; mudar a zona muda a impressão do estado (senão a edição não recalculava)', fn: () => {
+      const z = VC.utils.parseZona;
+      const ok1 = z('Mezanino').piso === 'MEZ' && z('mezanino - Sul').piso === 'MEZ' && z('Átrio').piso === 'ATRIO' && z('P2 - Norte').piso === 'P2' && z('P2 - Norte').ala === 'Norte' && z('Cobertura').piso === null;
+      const e = (VC.dados.espacos || [])[0]; if (!e) return ok1;
+      const g = { zona: e.zona, loc: e.localizacao };
+      try {
+        const h1 = VC.estado._hashEstado();
+        e.zona = 'Mezanino'; e.localizacao = z('Mezanino');
+        return ok1 && VC.estado._hashEstado() !== h1;
+      } finally { e.zona = g.zona; e.localizacao = g.loc; }
+    } });
+    // WC (G4): insuflação direta menor que a extração + entrada de ar por transferência já preenchida
+    self.registar({ id: 'UI.T42', nucleo: 'UI', grupo: 'UI', nome: 'G4: insuflação direta e entrada de ar pela porta', criterio: 'extração 90 e insuflação 30 → «Entrada de ar» propõe fresta sob porta de 60 m³/h, origem Circulação do mesmo piso (não o arrumo nem outro WC)', fn: () => {
+      if (!VC.requisitos || !VC.requisitos.entradaPorTransferencia || !VC.transferenciasUI) return false;
+      const D = VC.dados, g = { esp: D.espacos, tr: D.transferencias, abrir: VC.transferenciasUI.abrirNova, fechar: VC.ui.fecharModal };
+      let pedido = null;
+      try {
+        D.espacos = [
+          { id: 1, nome: 'WC', tipo: 'Sanitários', zona: 'P1', localizacao: { piso: 'P1' }, definicoes: [{ id: 'E', rede: 'extracao_suja', Q_total: 90, quantidade: 1 }, { id: 'I', rede: 'insuflacao', Q_total: 30, quantidade: 1 }] },
+          { id: 2, nome: 'Arr', tipo: 'Arrumo', zona: 'P1', localizacao: { piso: 'P1' }, definicoes: [] },
+          { id: 3, nome: 'WC2', tipo: 'Sanitários', zona: 'P1', localizacao: { piso: 'P1' }, definicoes: [] },
+          { id: 4, nome: 'Circ P0', tipo: 'Circulação', zona: 'P0', localizacao: { piso: 'P0' }, definicoes: [] },
+          { id: 5, nome: 'Circ P1', tipo: 'Circulação', zona: 'P1', localizacao: { piso: 'P1' }, definicoes: [] }
+        ];
+        D.transferencias = [];
+        VC.transferenciasUI.abrirNova = function (p) { pedido = p; };
+        VC.ui.fecharModal = function () {};
+        VC.requisitos.entradaPorTransferencia(0);
+        return !!pedido && pedido.paraId === 1 && pedido.deId === 5 && pedido.Q === 60 && pedido.tipo === 'fresta_porta';
+      } finally { D.espacos = g.esp; D.transferencias = g.tr; VC.transferenciasUI.abrirNova = g.abrir; VC.ui.fecharModal = g.fechar; VC.calculo.calcularTudo(); }
+    } });
   },
 
   correr() {
