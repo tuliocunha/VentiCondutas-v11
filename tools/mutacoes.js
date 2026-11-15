@@ -227,6 +227,10 @@ const CASOS = [
     const P = VC.planta, o = P.pontoInterior; P.pontoInterior = function (pts) { return this.centro(pts); };
     return () => { P.pontoInterior = o; };
   }],
+  ['Renomear na Topologia sem cascata (sub-ramais órfãos)', 'UI.T40', () => {
+    const A = VC.associacoes, o = A.renomearRamal; A.renomearRamal = function (antigo, novo) { const r = VC.dados.ramais.find(x => x.nome === antigo); if (r) r.nome = String(novo).trim(); return { ok: true, n: 0 }; };
+    return () => { A.renomearRamal = o; };
+  }],
   ['E3 · sem aviso de ventilador fora da curva', 'N6.T13', () => {
     const o = VC.uta.calcularPontoFuncionamento;
     VC.uta.calcularPontoFuncionamento = function () { const r = o.apply(this, arguments); if (r) r.foraDaCurva = false; return r; };
