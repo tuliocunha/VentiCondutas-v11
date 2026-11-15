@@ -242,3 +242,11 @@ Validação: teste UI.T39 e mutação; cenário real (imagem 4000 × 3000 → zo
 - **representação:** zona útil relida a 2400 px, nome dentro da sala em L, Entrega recortada.
 Prova de que apanha falhas: o cenário de representação falha no `main` sem o PR 9.
 
+## PR 11 · Nome do ramal igual em todo o lado
+O nome de um ramal edita-se em **três sítios**, todos com a mesma operação em cascata (`VC.associacoes.renomearRamal`: sub-ramais, terminais, espaços, nós, troços; nome repetido ou vazio recusado):
+- **Topologia dos Ramais** (novo): no construtor visual (vista por omissão) e na vista tabela; Enter ou sair do campo; o campo não arrasta o nó.
+- **Dimensionamento de Condutas** (Tabela): célula do nome.
+- **Planta**: cartão do ramal selecionado (Nome + Renomear).
+
+Validação: teste UI.T40 e mutação (renomear sem cascata); cenário «nomes»: Topologia → Tabela, Tabela → desenho, desenho → Topologia.
+

@@ -526,3 +526,6 @@ html, body, .app { height: 100vh !important; overflow: hidden !important; margin
 /* avisos no objeto (planta) */
 .planta-avisos-lista{list-style:none;margin:6px 0 0;padding:0;display:flex;flex-direction:column;gap:6px;font-size:12.5px}
 .planta-avisos-lista li span:last-child{display:block;color:#475569;margin-top:2px}
+/* nome do ramal editável na Topologia (árvore de ligações) */
+.topo-nome{font:inherit;font-size:12.5px;border:1px solid transparent;border-radius:4px;padding:1px 4px;background:transparent}
+.topo-nome:hover,.topo-nome:focus{border-color:var(--borda-media);background:#fff}

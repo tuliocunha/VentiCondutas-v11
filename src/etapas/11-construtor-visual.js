@@ -227,7 +227,8 @@ VC.construtorVisual = {
     if (temFilhos) h += '<span class="cv-toggle" onclick="VC.construtorVisual.toggleExpandir(\'' + VC.utils.esc(ramal.nome) + '\')">' + (expandido ? '&#9660;' : '&#9654;') + '</span>';
     else h += '<span class="cv-toggle" style="opacity:.3">.</span>';
     h += '<i class="fa-solid fa-code-branch" style="color:' + cor + '"></i> ';
-    h += '<b style="color:' + cor + '">' + VC.utils.esc(ramal.nome) + '</b>';
+    // nome editável (Enter ou sair do campo): a mesma cascata da Tabela e do desenho; não arrasta o nó
+    h += '<input class="ramal-nome topo-nome" style="color:' + cor + ';font-weight:800" value="' + VC.utils.esc(ramal.nome) + '" size="' + Math.max(6, String(ramal.nome).length + 1) + '" title="Renomear: atualiza sub-ramais, terminais, espaços e o desenho" aria-label="Nome do ramal ' + VC.utils.esc(ramal.nome) + '" draggable="false" ondragstart="event.preventDefault();event.stopPropagation()" onmousedown="event.stopPropagation()" onclick="event.stopPropagation()" onkeydown="if(event.key===\'Enter\')this.blur()" onchange="VC.construtorVisual.renomear(' + JSON.stringify(ramal.id).replace(/"/g, '&quot;') + ', this)">';
     h += ' <select class="cv-select-tipo" onclick="event.stopPropagation()" onchange="VC.construtorVisual.alterarTipo(\'' + VC.utils.esc(ramal.nome) + '\', this.value)" style="border-color:' + cor + '">';
     TIPOS_RAMAL_UI.forEach(t => { h += '<option value="' + t.id + '"' + (t.id === ramal.rede ? ' selected' : '') + '>' + t.label + '</option>'; });
     h += '</select>';
@@ -379,6 +380,12 @@ VC.construtorVisual = {
     }
     try { e.dataTransfer.setData('application/vc-slot', JSON.stringify(this._arrastando)); e.dataTransfer.effectAllowed = 'move'; } catch (err) { /* dataTransfer indisponível neste navegador */ }
     e.currentTarget.style.opacity = '0.4';
+  },
+  renomear(id, input) {
+    const r = (VC.dados.ramais || []).find(x => String(x.id) === String(id)); if (!r) return;
+    const antigo = r.nome;
+    if (this._expandidos[antigo] !== undefined) { const v = this._expandidos[antigo]; VC.associacao.renomearRamal(id, input); if (r.nome !== antigo) { this._expandidos[r.nome] = v; delete this._expandidos[antigo]; } return; }
+    VC.associacao.renomearRamal(id, input);
   },
   _onDragStartRamal(e, nome) {
     this._arrastando = { tipo: 'ramal', nome };

@@ -126,13 +126,28 @@ VC.associacao = {
       h += '<div style="padding:2px 0">';
       h += '<span style="color:var(--texto-suave)">' + prefixo + '</span>';
       if (temFilhos) h += '<span style="cursor:pointer;user-select:none;color:' + cor + '" onclick="VC.associacao.toggle(\'' + r.nome + '\')">' + (expandido ? '\u25bc' : '\u25b6') + ' </span>';
-      h += '<b style="color:' + cor + '">' + VC.utils.esc(r.nome) + '</b>';
+      // o nome edita-se aqui (Enter ou sair do campo): muda em cascata, como na Tabela e no desenho
+      h += '<input class="ramal-nome topo-nome" style="color:' + cor + ';font-weight:800" value="' + VC.utils.esc(r.nome) + '" size="' + Math.max(6, String(r.nome).length + 1) + '" title="Renomear: atualiza sub-ramais, terminais, espaços e o desenho" aria-label="Nome do ramal ' + VC.utils.esc(r.nome) + '" onkeydown="if(event.key===\'Enter\')this.blur()" onchange="VC.associacao.renomearRamal(' + JSON.stringify(r.id).replace(/"/g, '&quot;') + ', this)">';
       h += ' <span style="color:var(--texto-suave);font-size:10px">\u00b7 ' + VC.utils.esc(r.rede || '?') + ' \u00b7 Q=' + VC.utils.fmt(r.Q || 0, 0) + ' \u00b7 ' + nTerm + ' term.</span>';
       if (r.utaRef) h += ' <span style="color:var(--texto-suave);font-size:10px">\u00b7 ' + VC.utils.esc(r.utaRef) + '</span>';
       h += '</div>';
       if (expandido && temFilhos) h += self._renderArvore(ramais, r.nome);
     });
     return h;
+  },
+
+  /* renomear na Topologia: a mesma operação em cascata da Tabela e do desenho (VC.associacoes.renomearRamal) */
+  renomearRamal: function (id, input) {
+    var r = (VC.dados.ramais || []).find(function (x) { return String(x.id) === String(id); });
+    if (!r) return;
+    var antigo = r.nome, res = VC.associacoes.renomearRamal(antigo, input.value);
+    if (!res.ok) { VC.ui.toast(res.erro); input.value = antigo; return; }
+    if (r.nome === antigo) return;
+    if (this._expandidos[antigo] !== undefined) { this._expandidos[r.nome] = this._expandidos[antigo]; delete this._expandidos[antigo]; }
+    if (VC.historico) VC.historico.push('Ramal ' + antigo + ' \u2192 ' + r.nome);
+    VC.estado.forcarSync();
+    VC.passos.render('associacao');
+    VC.ui.toast('Ramal ' + antigo + ' \u2192 ' + r.nome + (res.n ? ' (' + res.n + ' refer\u00eancias atualizadas)' : '') + '.');
   },
 
   toggle: function (nome) {

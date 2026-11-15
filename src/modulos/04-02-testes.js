@@ -829,6 +829,21 @@ VC6.testes = {
         return ok1 && ok2 && ok3;
       } finally { Object.assign(D, { espacos: g.esp, plantas: g.pl, terminais: g.ter, ramais: g.ram, transferencias: g.tr }); P.piso = g.piso; VC.calculo.ultimo = g.ult; }
     } });
+    // renomear ramal na Topologia: a mesma cascata da Tabela e do desenho; nome repetido recusado e reposto
+    self.registar({ id: 'UI.T40', nucleo: 'UI', grupo: 'UI', nome: 'Topologia: renomear ramal em cascata', criterio: 'RA → «Norte»: sub-ramal, terminal e espaço seguem; «norte» noutro ramal é recusado e o campo volta ao nome antigo', fn: () => {
+      const A = VC.associacao; if (!A || !A.renomearRamal) return false;
+      const D = VC.dados, g = { ram: D.ramais, ter: D.terminais, esp: D.espacos, nos: D.nos, tr: D.trechos, toast: VC.ui.toast, sync: VC.estado.forcarSync, render: VC.passos.render, hist: VC.historico && VC.historico.push };
+      try {
+        VC.ui.toast = () => {}; VC.estado.forcarSync = () => {}; VC.passos.render = () => {}; if (VC.historico) VC.historico.push = () => {};
+        D.ramais = [{ id: 1, nome: 'RA', parente: '', rede: 'insuflacao' }, { id: 2, nome: 'RA.1', parente: 'RA', rede: 'insuflacao' }, { id: 3, nome: 'RB', parente: '', rede: 'extracao' }];
+        D.terminais = [{ id: 'T', ramalRef: 'RA.1' }, { id: 'U', ramalRef: 'RA' }]; D.espacos = [{ id: 9, ramalRefInsuflacao: 'RA' }]; D.nos = []; D.trechos = [];
+        const inp = { value: 'Norte' }; A.renomearRamal(1, inp);
+        const ok1 = D.ramais[0].nome === 'Norte' && D.ramais[1].parente === 'Norte' && D.terminais[1].ramalRef === 'Norte' && D.espacos[0].ramalRefInsuflacao === 'Norte';
+        const inp2 = { value: 'norte' }; A.renomearRamal(3, inp2);
+        const ok2 = D.ramais[2].nome === 'RB' && inp2.value === 'RB';
+        return ok1 && ok2;
+      } finally { Object.assign(D, { ramais: g.ram, terminais: g.ter, espacos: g.esp, nos: g.nos, trechos: g.tr }); VC.ui.toast = g.toast; VC.estado.forcarSync = g.sync; VC.passos.render = g.render; if (VC.historico) VC.historico.push = g.hist; }
+    } });
   },
 
   correr() {

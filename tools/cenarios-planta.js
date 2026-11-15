@@ -109,6 +109,30 @@ const CENARIOS = {
     ok(await h.v(() => VC.dados.transferencias.some(t => t.deNome === 'Circulação Mez') && VC.dados.terminais.some(t => (t.espacos || []).some(x => x.nome === 'Circulação Mez'))), 'Renomear o espaço leva o nome às transferências e aos terminais');
   },
 
+  /* nome do ramal: o mesmo em todo o lado (Topologia, Tabela, desenho), em cascata */
+  async nomes(pg, ok) {
+    const h = ajudas(pg); await prepararPlanta(pg);
+    await h.tecla('l'); await h.clicar([150, 450]); await h.clicar([400, 450]); await h.tecla('Enter');
+    await pg.selectOption('#rmUtaRede', 'insuflacao'); await pg.fill('#rmUtaNome', 'UTA-N'); await pg.click('button:has-text("Criar UTA")'); await pg.waitForTimeout(250);
+    await pg.click('button:has-text("Criar ramal")'); await pg.waitForTimeout(300);
+    const nome0 = await h.v(() => VC.dados.ramais[VC.dados.ramais.length - 1].nome);
+    // Topologia → Tabela e desenho
+    await h.passo('associacao'); await h.separador('passo');
+    const inT = pg.locator('input.topo-nome[value="' + nome0 + '"]'); await inT.scrollIntoViewIfNeeded(); await inT.fill('Norte-1'); await inT.press('Enter'); await pg.waitForTimeout(400);
+    await h.passo('rede');
+    ok(await h.v(() => [...document.querySelectorAll('#conteudoPasso input.ramal-nome')].some(i => i.value === 'Norte-1')), 'Nome mudado na Topologia aparece na Tabela');
+    // Tabela → desenho
+    await h.v(() => { const i = [...document.querySelectorAll('#conteudoPasso input.ramal-nome')].find(x => x.value === 'Norte-1'); let d = i && i.closest('details'); while (d) { d.open = true; d = d.parentElement.closest('details'); } i && i.scrollIntoView(); });
+    const inR = pg.locator('#conteudoPasso input.ramal-nome[value="Norte-1"]').first(); await inR.fill('Norte-2'); await inR.press('Tab'); await pg.waitForTimeout(400);
+    await h.passo('levantamento'); await h.separador('planta');
+    ok(await h.v(() => [...document.querySelectorAll('.planta-ramal text')].some(t => /^Norte-2/.test(t.textContent))), 'Nome mudado na Tabela aparece no desenho');
+    // desenho → Topologia
+    await h.tecla('v'); await h.clicar([275, 450]);
+    await pg.fill('#rmNome', 'Norte-3'); await pg.click('button:has-text("Renomear")'); await pg.waitForTimeout(300);
+    await h.passo('associacao'); await h.separador('passo');
+    ok(await pg.locator('input.topo-nome[value="Norte-3"]').count() === 1, 'Nome mudado no desenho aparece na Topologia');
+  },
+
   /* PR 6: Esc, Enter e Delete coerentes; sem perder um pendente */
   async gestos(pg, ok) {
     const h = ajudas(pg); await prepararPlanta(pg);
