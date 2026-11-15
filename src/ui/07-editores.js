@@ -369,7 +369,7 @@ VC.editorEspacos = {
  } else { e[campo] = valor; }  
  this._cacheOrdenacao = { chave: null, lista: null };  
  if (VC.historico) VC.historico.push('edicao de ' + campo + ' em «' + e.nome + '»');  
- VC.estado.sincronizar();  
+ VC.estado.forcarSync();   // edição do utilizador: recalcula sempre (a impressão do estado não inclui todos os campos)  
  },  
   
  validarNome(idx, input) {  
@@ -1339,12 +1339,12 @@ VC.editorTerminais = VC.editorTerminais || {
  else t[campo] = valor;  
  if (campo === 'fabricante') { t.familia = ''; t.tamanho = ''; }  
  if (campo === 'familia') { t.tamanho = ''; }  
- VC.estado.sincronizar();  
+ VC.estado.forcarSync();   // edição do utilizador: recalcula sempre (a impressão do estado não inclui todos os campos)  
  },  
  eliminarUm(idx) {  
  if (!confirm('Eliminar este terminal?')) return;  
  VC.dados.terminais.splice(idx, 1);  
- VC.estado.sincronizar();  
+ VC.estado.forcarSync();   // edição do utilizador: recalcula sempre (a impressão do estado não inclui todos os campos)  
  }  
 };  
   
@@ -1431,7 +1431,7 @@ VC.editorRamais = VC.editorRamais || {
  if (['L', 'zeta', 'Q'].indexOf(campo) >= 0) r[campo] = VC.utils.num(valor);  
  else if (campo === 'forma') r.geometriaInput = Object.assign({}, r.geometriaInput || {}, { forma: valor === 'retangular' ? 'retangular' : 'circular' });   // v11.1: escolha do utilizador  
  else r[campo] = valor;  
- VC.estado.sincronizar();  
+ VC.estado.forcarSync();   // edição do utilizador: recalcula sempre (a impressão do estado não inclui todos os campos)  
  }  
 };  
 

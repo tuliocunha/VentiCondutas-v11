@@ -252,7 +252,26 @@ VC.ui.guardar = function () { VC.exportacoes.json(); };
 VC.ui.guardarComo = function () { const base = (VC.dados.metadados && VC.dados.metadados.nome) ? VC.dados.metadados.nome : 'Projeto'; const nome = 'VentCondutas_v' + VC.versaoCurta + '_' + String(base).replace(/[^A-Za-z0-9_-]+/g, '_') + '_' + new Date().toISOString().slice(0, 10) + '.json'; VC.exportacoes.json(nome); };
 VC.ui.validar = function () { const x = VC.calculo.calcularTudo(); VC.ui.toast('Estado: ' + x.overall + ' · ' + (x.findings || []).length + ' findings'); };
 VC.ui.novo = function () { if (!confirm('Criar novo projeto? Todos os dados atuais serão perdidos.')) return; VC.dados.espacos = []; VC.dados.ramais = []; VC.dados.terminais = []; VC.dados.nos = []; VC.dados.trechos = []; VC.dados.elementosRede = []; VC.dados.utas = []; VC.dados.transferencias = []; VC.dados.nextId = { espaco: 1, ramal: 1, terminal: 1, componente: 1, uta: 1, no: 1, trecho: 1, elemento: 1, definicao: 1, transferencia: 1 }; VC.dados.metadados = { nome: 'Novo Projeto', cliente: '', local: 'Portugal', autor: '', revisao: '01', descricao: '' }; VC.perf.cacheFisica.invalidar(); VC.perf.cacheMaterializacao.invalidar(); VC.perf.ordenacaoTopologica.invalidar(); VC.perf.cacheBalanco.invalidar(); VC.calculo.calcularTudo(); if (VC6.balanco) VC6.balanco.propagar(); VC.ui.renderSidebar(); VC.passos.render('setup'); VC.ui.toast('Novo projeto criado.'); };
-VC.ui.abrir = function () { const inp = document.createElement('input'); inp.type = 'file'; inp.accept = '.json'; inp.onchange = e => { const f = e.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = ev => { try { let p = JSON.parse(ev.target.result); p = VC.migrador.prepararParaImportar(p); VC.dados.metadados = p.metadados || VC.dados.metadados; Object.assign(VC.dados, p.dados); if (p.configuracao) { if (p.configuracao.params) Object.assign(VC.dados.params, p.configuracao.params); if (p.configuracao.tipologia) VC.dados.tipologia = p.configuracao.tipologia; if (p.configuracao.restricaoH) VC.dados.restricaoH = p.configuracao.restricaoH; } VC.dados._versao = 'V9'; VC.perf.cacheFisica.invalidar(); VC.perf.cacheMaterializacao.invalidar(); VC.perf.ordenacaoTopologica.invalidar(); VC.perf.cacheBalanco.invalidar(); VC.calculo.__mig = false; VC.calculo.__migEsp = false; VC.calculo._autoAssoc = false; VC.calculo.calcularTudo(); if (VC6.balanco) VC6.balanco.propagar(); VC.ui.renderSidebar(); VC.passos.render(VC._passoAtivo || 'setup'); VC.ui.toast('Projeto carregado.'); } catch (err) { alert('Erro: ' + err.message); } }; r.readAsText(f); }; inp.click(); };
+/* aplica um projeto (o mesmo formato de VC.exportacoes.json) ao estado da app: «Abrir» e a recuperação automática usam isto */
+VC.ui.aplicarProjeto = function (p, opcoes) {
+  opcoes = opcoes || {};
+  p = VC.migrador.prepararParaImportar(p);
+  VC.dados.metadados = p.metadados || VC.dados.metadados;
+  Object.assign(VC.dados, p.dados);
+  if (p.configuracao) {
+    if (p.configuracao.params) Object.assign(VC.dados.params, p.configuracao.params);
+    if (p.configuracao.tipologia) VC.dados.tipologia = p.configuracao.tipologia;
+    if (p.configuracao.restricaoH) VC.dados.restricaoH = p.configuracao.restricaoH;
+    if (p.configuracao.serieDiametros) VC.dados.serieDiametros = p.configuracao.serieDiametros;
+  }
+  VC.dados._versao = 'V9';
+  VC.perf.cacheFisica.invalidar(); VC.perf.cacheMaterializacao.invalidar(); VC.perf.ordenacaoTopologica.invalidar(); VC.perf.cacheBalanco.invalidar();
+  VC.calculo.__mig = false; VC.calculo.__migEsp = false; VC.calculo._autoAssoc = false;
+  VC.estado._ultimoHash = null;
+  VC.calculo.calcularTudo(); if (VC6.balanco) VC6.balanco.propagar();
+  if (opcoes.render !== false) { VC.ui.renderSidebar(); VC.passos.render(VC._passoAtivo || 'setup'); }
+};
+VC.ui.abrir = function () { const inp = document.createElement('input'); inp.type = 'file'; inp.accept = '.json'; inp.onchange = e => { const f = e.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = ev => { try { VC.ui.aplicarProjeto(JSON.parse(ev.target.result)); VC.ui.toast('Projeto carregado.'); } catch (err) { alert('Erro: ' + err.message); } }; r.readAsText(f); }; inp.click(); };
 VC.ui.abrirNormas = function () { const modal = document.getElementById('modalNormas'); const cont = document.getElementById('modalNormasConteudo'); if (!modal || !cont) return; const h = VC.conhecimento.hierarquia; let html = '<div class="modal-cabecalho"><h3><i class="fa-solid fa-scale-balanced"></i> Hierarquia Normativa ' + VC.versao + '</h3><button class="fechar" onclick="VC.ui.fecharModal(\'modalNormas\')">×</button></div><div class="modal-corpo">'; [['nivel1','1 · Legislação PT (obrigatória)'],['nivel2','2 · Normas Europeias'],['nivel3','3 · Normas Internacionais'],['nivel4','4 · Boas Práticas']].forEach(([k, titulo]) => { html += '<h3 style="font-size:12px;margin:12px 0 6px;color:var(--texto-med);text-transform:uppercase;letter-spacing:.4px">' + titulo + '</h3>'; (h[k] || []).forEach(n => { html += '<div style="padding:6px 10px;background:var(--superf2);border-left:3px solid ' + (n.obrigatorio ? 'var(--verde)' : 'var(--texto-suave)') + ';border-radius:5px;margin-bottom:4px;font-size:11px"><b>' + n.codigo + '</b> — ' + n.funcao + '</div>'; }); }); html += '<h3 style="font-size:12px;margin:16px 0 6px;color:var(--texto-med);text-transform:uppercase;letter-spacing:.4px">Princípios de balanço de ar</h3>'; (VC.conhecimento.principiosBalanco || []).forEach(p => { const cor = (p.id === 'P6' || p.id === 'P7' || p.id === 'P8') ? 'var(--primario)' : 'var(--verde)'; const bg = (p.id === 'P6' || p.id === 'P7' || p.id === 'P8') ? 'var(--primario-soft)' : 'var(--verde-soft)'; html += '<div style="padding:6px 10px;background:' + bg + ';border-left:3px solid ' + cor + ';border-radius:5px;margin-bottom:4px;font-size:11px"><b>' + p.id + '</b> — ' + p.texto + ' <span style="color:var(--texto-suave);font-size:10px">(' + p.norma + ')</span></div>'; }); html += '</div>'; cont.innerHTML = html; modal.classList.add('on'); };
 VC.ui.abrirCatalogos = function () { const modal = document.getElementById('modalCatalogos'); const cont = document.getElementById('modalCatalogosConteudo'); if (!modal || !cont) return; const contagem = VC.catalogo.contarPorCatalogo(); const curvas = VC.curvasFabricantes.todas(); let h = '<div class="modal-cabecalho"><h3><i class="fa-solid fa-book"></i> Catálogos</h3><button class="fechar" onclick="VC.ui.fecharModal(\'modalCatalogos\')">×</button></div><div class="modal-corpo">'; h += '<h3 style="font-size:12px;margin:0 0 8px;color:var(--texto-med);text-transform:uppercase;letter-spacing:.4px">Terminais</h3>'; contagem.forEach(c => { h += '<div style="border:1px solid var(--borda);border-radius:6px;padding:10px 12px;margin-bottom:6px"><div style="font-weight:800;font-size:12px">' + VC.utils.esc(c.fabricante) + ' · ' + VC.utils.esc(c.tipo) + '</div><div style="font-size:10.5px;color:var(--texto-suave);margin-top:3px">' + c.produtos + ' produtos</div></div>'; }); h += '<h3 style="font-size:12px;margin:16px 0 8px;color:var(--texto-med);text-transform:uppercase;letter-spacing:.4px">Ventiladores (curvas reais · ' + curvas.length + ')</h3>'; curvas.forEach(c => { h += '<div style="border:1px solid var(--borda);border-radius:6px;padding:10px 12px;margin-bottom:6px"><div style="font-weight:800;font-size:12px">' + VC.utils.esc(c.fabricante) + ' · ' + VC.utils.esc(c.serie) + ' · ' + VC.utils.esc(c.modelo) + '</div><div style="font-size:10.5px;color:var(--texto-suave);margin-top:3px">' + c.aplicacao + ' · Q nom ' + VC.utils.fmt(c.Q_nom, 0) + ' m³/h · Δp nom ' + VC.utils.fmt(c.dP_nom, 0) + ' Pa</div></div>'; }); h += '</div>'; cont.innerHTML = h; modal.classList.add('on'); };
 VC.ui.abrirConfiguracoes = function () { VC.configuracoes.abrir(); };
@@ -358,7 +377,7 @@ window.renderSetup = function () {
 VC.caudalEspacoUI = {
   _filtroTexto: '',
   setFiltro: function(v) { this._filtroTexto = String(v || '').toLowerCase(); if(VC._passoAtivo === 'classificacao') VC.passos.render('classificacao'); },
-  editar: function (idx, campo, valor) { const e = VC.dados.espacos[idx]; if (!e) return; if (campo === 'N' && String(valor == null ? '' : valor).trim() === '') delete e.N; else if (['A', 'H', 'V', 'N'].indexOf(campo) >= 0) e[campo] = VC.utils.num(valor); else e[campo] = valor; VC.estado.sincronizar(); },
+  editar: function (idx, campo, valor) { const e = VC.dados.espacos[idx]; if (!e) return; if (campo === 'N' && String(valor == null ? '' : valor).trim() === '') delete e.N; else if (['A', 'H', 'V', 'N'].indexOf(campo) >= 0) e[campo] = VC.utils.num(valor); else e[campo] = valor; VC.estado.forcarSync(); },
   setGrupo: function (idx, valor) {
     const e = VC.dados.espacos[idx]; if (!e) return;
     if (valor === 'auto') { delete e.grupoForcado; }
@@ -366,15 +385,15 @@ VC.caudalEspacoUI = {
     else { e.grupoForcado = Number(valor); if (e.rphOrigem !== 'utilizador' && VC.rph) VC.rph.reporNorma(e); }
     if (VC.editorEspacos) VC.editorEspacos._cacheOrdenacao = { chave: null, lista: null }; VC.estado.forcarSync(); if (VC._passoAtivo === 'classificacao') VC.passos.render('classificacao');
   },
-  editarRPH: function (idx, valor) { const e = VC.dados.espacos[idx]; if (!e) return; const v = Math.max(0, VC.utils.num(valor)); VC.rph.aplicarUtilizador(e, v); VC.estado.sincronizar(); },
-  reporNorma: function (idx) { const e = VC.dados.espacos[idx]; if (!e) return; VC.rph.reporNorma(e); VC.estado.sincronizar(); VC.ui.toast('RPH de «' + e.nome + '» reposto da norma (📘 · ' + e.rphAplicado + ' h⁻¹)'); },
+  editarRPH: function (idx, valor) { const e = VC.dados.espacos[idx]; if (!e) return; const v = Math.max(0, VC.utils.num(valor)); VC.rph.aplicarUtilizador(e, v); VC.estado.forcarSync(); },
+  reporNorma: function (idx) { const e = VC.dados.espacos[idx]; if (!e) return; VC.rph.reporNorma(e); VC.estado.forcarSync(); VC.ui.toast('RPH de «' + e.nome + '» reposto da norma (📘 · ' + e.rphAplicado + ' h⁻¹)'); },
   editarQAI: function (idx, valor) {
     const e = VC.dados.espacos[idx]; if (!e) return; const v = Math.max(0, VC.utils.num(valor));
-    if (v === 0) { VC.qai.reporNorma(e); VC.estado.sincronizar(); VC.ui.toast('QAI de «' + e.nome + '» reposto (📘 norma · 0 m³/h)'); return; }
+    if (v === 0) { VC.qai.reporNorma(e); VC.estado.forcarSync(); VC.ui.toast('QAI de «' + e.nome + '» reposto (📘 norma · 0 m³/h)'); return; }
     if (!e.QAI_projeto_motivo || !String(e.QAI_projeto_motivo).trim()) { if (VC.popupQAI && VC.popupQAI.abrir) VC.popupQAI.abrir(idx, { valorForcado: v }); return; }
-    const r = VC.qai.aplicarUtilizador(e, v, e.QAI_projeto_motivo, e.QAI_projeto_rede); if (!r.ok) { VC.ui.toast(r.erro); return; } VC.estado.sincronizar(); VC.ui.toast('QAI de «' + e.nome + '» → ' + v + ' m³/h (👷 engenheiro)');
+    const r = VC.qai.aplicarUtilizador(e, v, e.QAI_projeto_motivo, e.QAI_projeto_rede); if (!r.ok) { VC.ui.toast(r.erro); return; } VC.estado.forcarSync(); VC.ui.toast('QAI de «' + e.nome + '» → ' + v + ' m³/h (👷 engenheiro)');
   },
-  reporNormaQAI: function (idx) { const e = VC.dados.espacos[idx]; if (!e) return; VC.qai.reporNorma(e); VC.estado.sincronizar(); VC.ui.toast('QAI de «' + e.nome + '» reposto (📘 norma · 0 m³/h)'); },
+  reporNormaQAI: function (idx) { const e = VC.dados.espacos[idx]; if (!e) return; VC.qai.reporNorma(e); VC.estado.forcarSync(); VC.ui.toast('QAI de «' + e.nome + '» reposto (📘 norma · 0 m³/h)'); },
   ordenarPor: function (campo) { const ui = VC._espacosUI || {}; if (ui.ordenacao === campo) ui.direcao = ui.direcao === 'asc' ? 'desc' : 'asc'; else { ui.ordenacao = campo; ui.direcao = 'asc'; } if (VC.editorEspacos) VC.editorEspacos._cacheOrdenacao = { chave: null, lista: null }; if (VC._passoAtivo === 'classificacao') VC.passos.render('classificacao'); },
   _clicarLinha: function (idx) { if (!VC._espacosUI) VC._espacosUI = {}; VC._espacosUI.linhaAtiva = idx; if (VC._passoAtivo === 'classificacao') VC.passos.render('classificacao'); }
 };
@@ -550,7 +569,9 @@ window.renderConfig = function () {
 function bootstrapFinal() {
   try {
     const inicio = performance.now ? performance.now() : Date.now(); if (!VC.catalogo.hierarquia.length) VC.catalogo.init(); if (VC.exemplos && typeof VC.exemplos.init === 'function') VC.exemplos.init(); VC.atualizarVersaoNaUI();
-    if (!VC.dados.espacos.length) { if (typeof VC.carregarDegradeTorresVedras === 'function') VC.carregarDegradeTorresVedras(); else if (typeof VC.exemploV6 === 'function') VC.exemploV6(); }
+    const recuperado = VC.autoguardar && VC.autoguardar.restaurar ? VC.autoguardar.restaurar() : false;   // projeto da última sessão (gravação automática)
+    if (recuperado) { /* já calculado por VC.ui.aplicarProjeto */ }
+    else if (!VC.dados.espacos.length) { if (typeof VC.carregarDegradeTorresVedras === 'function') VC.carregarDegradeTorresVedras(); else if (typeof VC.exemploV6 === 'function') VC.exemploV6(); }
     else { VC.calculo.migrarRedes(); if (VC.rph && VC.rph.aplicarATodos) VC.rph.aplicarATodos(); if (VC.qai && VC.qai.aplicarATodos) VC.qai.aplicarATodos(); VC.calculo.calcularTudo(); if (VC6.balanco) VC6.balanco.propagar(); }
     VC.ui.renderSidebar(); if (VC.passos && typeof VC.passos.render === 'function') VC.passos.render('setup'); VC.modos.set('condutas'); if (VC.tooltips) VC.tooltips.instalar();
 

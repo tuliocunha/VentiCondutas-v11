@@ -118,6 +118,9 @@ VC.utils = {
     const out = { piso: null, ala: null, compartimento: null };
     const mPiso = s.match(/piso\s*(\d+)|p(\d+)/i);
     if (mPiso) out.piso = 'P' + (mPiso[1] || mPiso[2]);
+    // pisos sem número, com os mesmos códigos da topologia (VC.topologia._pisoDe): Mezanino → MEZ, Átrio → ATRIO
+    else if (/mezz?anin|\bmez\b/i.test(s)) out.piso = 'MEZ';
+    else if (/[áa]trio/i.test(s)) out.piso = 'ATRIO';
     const mAla = s.match(/norte|sul|este|oeste|centro|nascente|poente/i);
     if (mAla) out.ala = mAla[0].charAt(0).toUpperCase() + mAla[0].slice(1).toLowerCase();
     const mComp = s.match(/-\s*(.+)$/);
@@ -723,6 +726,7 @@ VC.estado._hashEstado = function () {
   partes.push('E' + espacos.length);
   partes.push(espacos.map(e =>
     e.id + '|' + e.nome + '|' + e.tipo + '|' + (e.grupoForcado || 'auto') +
+    '|' + (e.zona || '') + '|' + ((e.localizacao && e.localizacao.piso) || '') + '|' + ((e.localizacao && e.localizacao.ala) || '') +   // zona/piso: a associação automática e a topologia dependem deles
     '|' + (e.A || 0) + '|' + (e.H || 0) + '|' + (e.V || 0) + '|' + (e.N || 0) +
     '|' + (e.rphAplicado || 0) + '|' + (e.rphOrigem || 'norma') +
     '|' + (e.QAI_projeto || 0) + '|' + (e.QAI_projeto_rede || 'auto') + '|' + (e.QAI_projeto_motivo || '') + '|' + (e.QAI_projeto_origem || 'norma') +

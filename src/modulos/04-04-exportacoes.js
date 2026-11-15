@@ -417,8 +417,9 @@ VC.exportacoes.csv = async function () {
   else VC.ui.toast('CSV guardado.');
 };
 
-VC.exportacoes.json = async function (nomeSugerido) {
-  const projeto = {
+/* projeto completo, no formato do «Guardar» (também usado pela gravação automática, 14-autoguardar) */
+VC.exportacoes.serializarProjeto = function () {
+  return {
     _versao: 'V9',
     versao: VC.versao,
     versaoCurta: VC.versaoCurta,
@@ -428,6 +429,10 @@ VC.exportacoes.json = async function (nomeSugerido) {
     dados: { espacos: VC.dados.espacos, ramais: VC.dados.ramais, terminais: VC.dados.terminais, transferencias: VC.dados.transferencias || [], utas: VC.dados.utas, nos: VC.dados.nos, trechos: VC.dados.trechos, elementosRede: VC.dados.elementosRede, _mapaRenomeacao: VC.dados._mapaRenomeacao || {}, plantas: VC.dados.plantas || [] },
     flags: VC.flags
   };
+};
+
+VC.exportacoes.json = async function (nomeSugerido) {
+  const projeto = VC.exportacoes.serializarProjeto();
   const nome = nomeSugerido || ('VentCondutas_v' + VC.versaoCurta + '_' + new Date().toISOString().slice(0, 10) + '.json');
   const r = await VC.utils.guardarComEscolha(nome, JSON.stringify(projeto, null, 2), 'application/json', 'json');
   if (r.cancelado) VC.ui.toast('Guardar cancelado.');
