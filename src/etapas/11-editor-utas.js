@@ -78,7 +78,8 @@ VC.editorUtas = {
       h += '<span>Q <b>' + VC.utils.fmt((u.Q || 0) * 3600, 0) + '</b> m\u00b3/h</span>';
       h += '<span>\u0394p ext <b>' + VC.utils.fmt(u.dpExt, 0) + '</b> Pa</span>';
       h += '<span>\u0394p int <b>' + VC.utils.fmt(u.dpInt, 0) + '</b> Pa</span>';
-      h += '<span>SFPint <b>' + VC.utils.fmt(u.sfpInt, 0) + '</b>' + (u.sfpClass ? ' / ' + (u.sfpClass.limite != null ? u.sfpClass.limite : 'sem limite') : '') + '</span>';
+      h += '<span title="SFPint do Reg. (UE) 1253/2014: filtros limpos e recuperador; numa UVB, a soma das duas metades">SFPint Ecodesign <b>' + VC.utils.fmt(u.sfpClass && u.sfpClass.sfpInt != null ? u.sfpClass.sfpInt : u.sfpIntEco, 0) + '</b>' + (u.sfpClass ? ' / ' + (u.sfpClass.limite != null ? u.sfpClass.limite : 'sem limite') : '') + (u.uvbParNome ? ' <small>(UVB com ' + VC.utils.esc(u.uvbParNome) + ')</small>' : '') + '</span>';
+      h += '<span title="EN 16798-3: potência elétrica do ventilador / caudal, com o Δp de projeto">SFP <b>' + VC.utils.fmt(u.sfpE, 0) + '</b>' + (u.sfpCategoria ? ' · ' + u.sfpCategoria : '') + '</span>';
       h += '<span>P <b>' + VC.utils.fmt(u.P_motor, 0) + '</b> W</span>';
       h += '</div>';
 
@@ -97,6 +98,7 @@ VC.editorUtas = {
         h += self._campo('Ativo', u.ativo ? 'sim' : 'n\u00e3o', 'text', '');
         h += '</div>';
         h += self._selectTipoUV(u);
+        h += self._selectParUVB(u);
         if (u.sfpClass && u.sfpClass.nota) h += '<div style="font-size:10.5px;color:var(--texto-suave);margin:-4px 0 10px">' + VC.utils.esc(u.sfpClass.nota) + '</div>';
 
         h += '<div style="margin-bottom:10px"><div style="font-size:10.5px;font-weight:800;color:var(--texto-med);text-transform:uppercase;margin-bottom:4px">Curva do ventilador</div>';
@@ -166,6 +168,18 @@ VC.editorUtas = {
     var h = '<div style="margin-bottom:10px"><label style="display:block;font-size:10px;font-weight:800;color:var(--texto-suave);text-transform:uppercase;margin-bottom:3px">Tipo de unidade (Ecodesign)</label>';
     h += '<select class="input" style="width:100%" onchange="VC.editorUtas.editar(\'' + u.id + '\', \'tipoUV\', this.value)">';
     Object.keys(tipos).forEach(function (k) { h += '<option value="' + k + '"' + (k === atual ? ' selected' : '') + '>' + VC.utils.esc(tipos[k]) + '</option>'; });
+    return h + '</select></div>';
+  },
+
+  /* Fase 3: a outra metade da UVB (Ecodesign avalia a unidade inteira) */
+  _selectParUVB: function (u) {
+    if (!/^BVU/.test(VC.normas.tipoUVPadrao(u)) || (u.rede !== 'insuflacao' && u.rede !== 'extracao')) return '';
+    var outras = (VC.dados.utas || []).filter(function (x) { return x !== u && (x.rede === 'insuflacao' || x.rede === 'extracao') && x.rede !== u.rede; });
+    var auto = VC.calculo.parUVB(u);
+    var h = '<div style="margin-bottom:10px"><label style="display:block;font-size:10px;font-weight:800;color:var(--texto-suave);text-transform:uppercase;margin-bottom:3px">Par UVB (a outra metade da unidade)</label>';
+    h += '<select class="input" style="width:100%" onchange="VC.editorUtas.editar(\'' + u.id + '\', \'uvbPar\', this.value || null)">';
+    h += '<option value="">' + (auto && !u.uvbPar ? 'automático: ' + VC.utils.esc(auto.nome) + ' (mesma zona)' : 'automático (mesma zona)') + '</option>';
+    outras.forEach(function (x) { h += '<option value="' + VC.utils.esc(x.id) + '"' + (u.uvbPar === x.id ? ' selected' : '') + '>' + VC.utils.esc(x.nome) + '</option>'; });
     return h + '</select></div>';
   },
 

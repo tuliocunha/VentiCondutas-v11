@@ -286,7 +286,7 @@ VC.exportacoes.pdf = function () {
     /* 8 · UTAS */
     addPagina(true); y = 22;
     titulo('8 · UTAs e ventiladores', 'Q · Δp · SFPint · P motor');
-    tabelaManual(['UTA', 'Rede', 'Q (m³/h)', 'Δp ext (Pa)', 'Δp int (Pa)', 'SFPint', 'Limite', 'P motor (W)', 'Estado'], VC.dados.utas.map(u => [u.nome, u.rede, VC.utils.fmt(u.Q * 3600, 0), VC.utils.fmt(u.dpExt, 0), VC.utils.fmt(u.dpInt, 0), VC.utils.fmt(u.sfpInt, 0), (u.sfpClass && u.sfpClass.limite != null) ? String(u.sfpClass.limite) : '—', VC.utils.fmt(u.P_motor, 0), u.status]), [3, 1.2, 1.3, 1.1, 1.1, 1, 1, 1.2, 1]);
+    tabelaManual(['UTA', 'Rede', 'Q (m³/h)', 'Δp ext (Pa)', 'Δp int (Pa)', 'SFPint', 'Limite', 'P motor (W)', 'Estado'], VC.dados.utas.map(u => [u.nome, u.rede, VC.utils.fmt(u.Q * 3600, 0), VC.utils.fmt(u.dpExt, 0), VC.utils.fmt(u.dpInt, 0), VC.utils.fmt(u.sfpClass && u.sfpClass.sfpInt != null ? u.sfpClass.sfpInt : u.sfpIntEco, 0), (u.sfpClass && u.sfpClass.limite != null) ? String(u.sfpClass.limite) : '—', VC.utils.fmt(u.P_motor, 0), u.status]), [3, 1.2, 1.3, 1.1, 1.1, 1, 1, 1.2, 1]);
 
     /* 9 · NORMATIVA */
     addPagina(true); y = 22;

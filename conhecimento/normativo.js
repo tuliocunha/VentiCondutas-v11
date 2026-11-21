@@ -210,11 +210,22 @@ VC._normativo = {
     // Reg. (UE) 1253/2014 (Ecodesign), Anexo III, requisitos desde 01-01-2018.
     // BVU com recuperador (não run-around): limite = BVU_BASE_PEQ + E − 300·qnom/2 (qnom < 2 m³/s)
     //                                        limite = BVU_BASE + E              (qnom ≥ 2 m³/s)
-    // E = (η_t − BVU_ETA_REF)·3000 se η_t > BVU_ETA_REF (bónus de eficiência); F = 0 (filtros completos).
+    // E = (η_t − BVU_ETA_REF)·3000 se η_t > BVU_ETA_REF (bónus de eficiência).
+    // Run-around (circuito de água): bases 1600 / 1300, η de referência e mínimo 0,68 (Fase 3).
+    // F = correção dos filtros da configuração de referência (fino na insuflação, médio na extração):
+    //   0 com os dois · 150 sem o médio · 190 sem o fino · 340 sem nenhum (Fase 3).
+    // O SFPint de uma UVB é o da unidade inteira: Δp_int,ins/η_ins + Δp_int,ext/η_ext, com filtros limpos e só
+    // os componentes de ventilação (filtros e recuperador); a bateria não entra (Fase 3).
     // UVU com filtro: limite fixo. UVU sem filtro: o regulamento não fixa SFPint.
-    SFPint: { UVU_FILTER: 230, BVU_BASE: 800, BVU_BASE_PEQ: 1100, BVU_ETA_REF: 0.73, BVU_ETA_MIN: 0.73 },
+    SFPint: { UVU_FILTER: 230, BVU_BASE: 800, BVU_BASE_PEQ: 1100, BVU_ETA_REF: 0.73, BVU_ETA_MIN: 0.73,
+              BVU_RAC_BASE: 1300, BVU_RAC_BASE_PEQ: 1600, BVU_RAC_ETA_REF: 0.68, BVU_RAC_ETA_MIN: 0.68,
+              F: { completo: 0, semMedio: 150, semFino: 190, nenhum: 340 } },
+    // EN 16798-3 (categorias SFP do ventilador completo, W/(m³/s)); igual ao Manual SCE, Tabela 65 (Fase 3)
+    SFP_CATEGORIAS: [ { cat: 'SFP 0', max: 300 }, { cat: 'SFP 1', max: 500 }, { cat: 'SFP 2', max: 750 }, { cat: 'SFP 3', max: 1250 },
+                      { cat: 'SFP 4', max: 2000 }, { cat: 'SFP 5', max: 3000 }, { cat: 'SFP 6', max: 4500 }, { cat: 'SFP 7', max: Infinity } ],
     SFP_TIPOS: {
       BVU_HRS:        'UVB com recuperador (bidirecional)',
+      BVU_RAC:        'UVB com recuperador de circuito (run-around)',
       UVU_FILTER:     'UVU com filtro (unidirecional)',
       UVU_SEM_FILTER: 'UVU sem filtro (unidirecional)'
     },

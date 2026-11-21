@@ -47,7 +47,7 @@ VC.caderno = {
       compsUTA: compsUTA,
       espacosComConforto: comConforto.map(e => ({ nome: e.nome, tipo: e.tipo, g: e.g, H: e.H, rphAplicado: e.rphAplicado, rphOrigem: e.rphOrigem, Q_ConTerm: e.Q_ConTerm })),
       espacosComQAI: comQAI.map(e => ({ nome: e.nome, tipo: e.tipo, g: e.g, QAI_projeto: e.QAI_projeto, QAI_rede: e.QAI_rede || 'auto', QAI_projeto_origem: e.QAI_projeto_origem, QAI_projeto_motivo: e.QAI_projeto_motivo })),
-      utas: utas.map(u => ({ nome: u.nome, rede: u.rede, zona: u.zona, Q: u.Q * 3600, dpExt: u.dpExt, dpInt: u.dpInt, sfpInt: u.sfpInt, Pmotor: u.P_motor, eta: u.eta, etaRec: u.etaRec, classeIE: u.classeIE, curva: u.curvaFabricante ? (u.curvaFabricante.fabricante + ' · ' + u.curvaFabricante.serie + ' · ' + u.curvaFabricante.modelo) : null, componentes: u.componentes || [] })),
+      utas: utas.map(u => ({ nome: u.nome, rede: u.rede, zona: u.zona, Q: u.Q * 3600, dpExt: u.dpExt, dpInt: u.dpInt, sfpInt: u.sfpInt, sfpEco: u.sfpClass && u.sfpClass.sfpInt != null ? u.sfpClass.sfpInt : u.sfpIntEco, sfpE: u.sfpE, sfpCategoria: u.sfpCategoria, uvbParNome: u.uvbParNome, Pmotor: u.P_motor, eta: u.eta, etaRec: u.etaRec, classeIE: u.classeIE, curva: u.curvaFabricante ? (u.curvaFabricante.fabricante + ' · ' + u.curvaFabricante.serie + ' · ' + u.curvaFabricante.modelo) : null, componentes: u.componentes || [] })),
       ramais: ramais.map(r => ({ nome: r.nome, nomeAntigo: r.nomeAntigo || '', tipo: r.tipo, nivel: r.nivel, nivelNumero: r.nivelNumero, rede: r.rede, L: r.L, D: r.Dcom, v: r.v, dp: r.deltaPtotal, material: (r.geometriaInput && r.geometriaInput.material) || 'Aço galvanizado', estanquidade: (VC.dados.estanquidade && VC.dados.estanquidade.classe) || 'B' })),
       terminais: terminais.map(t => ({ nome: t.nome, tipo: t.tipo, espacos: (t.espacos || []).map(e => e.nome).join(', '), ramal: t.ramalRef, Q: t.Q, fabricante: t.fabricante, familia: t.familia, tamanho: t.tamanho })),
       transferencias: transferencias.map(t => ({ de: t.deNome || t.deId, para: t.paraNome || t.paraId, Q: t.Q, tipo: t.tipo, area_cm2: t.area_cm2 })),
@@ -87,7 +87,7 @@ VC.caderno = {
         h += this._subseccao('4.' + (i + 1) + ' · ' + VC.utils.esc(u.nome));
         h += this._par('Rede: <b>' + (u.rede === 'insuflacao' ? 'Insuflação' : (u.rede === 'extracao_suja' ? 'Extração suja' : 'Extração')) + '</b>. Zona: <b>' + VC.utils.esc(u.zona || '—') + '</b>.');
         h += this._par('Caudal nominal: <b>' + VC.utils.fmt(u.Q, 0) + ' m³/h</b>. Δp ext: <b>' + VC.utils.fmt(u.dpExt, 0) + ' Pa</b>. Δp int: <b>' + VC.utils.fmt(u.dpInt, 0) + ' Pa</b>.');
-        h += this._par('SFPint: <b>' + VC.utils.fmt(u.sfpInt, 0) + ' W/(m³/s)</b> · classe <b>' + (u.sfpClass && u.sfpClass.classe != null ? u.sfpClass.classe + ' (limite ' + u.sfpClass.limite + ')' : 'sem limite') + '</b>.');
+        h += this._par('SFPint (Ecodesign' + (u.uvbParNome ? ', UVB com ' + VC.utils.esc(u.uvbParNome) : '') + '): <b>' + VC.utils.fmt(u.sfpEco, 0) + ' W/(m³/s)</b> · SFP do ventilador <b>' + VC.utils.fmt(u.sfpE, 0) + '</b> (' + (u.sfpCategoria || '—') + ', EN 16798-3) · classe <b>' + (u.sfpClass && u.sfpClass.classe != null ? u.sfpClass.classe + ' (limite ' + u.sfpClass.limite + ')' : 'sem limite') + '</b>.');
         h += this._par('Potência motor: <b>' + VC.utils.fmt(u.Pmotor, 0) + ' W</b>.');
       });
     } else h += this._par('Sem UTAs configuradas.');
@@ -103,16 +103,19 @@ VC.caderno = {
     h += this._lista(['Conforme DL 101-D/2020 e VDI 2081.', 'Silenciadores ≥ 15 dB(A) na banda crítica.', 'Apoios antivibráticos em UTAs.']);
 
     h += this._seccao('8', 'Regulação e controlo (SGT / SGTC)');
-    const dl = VC.normas.dl101D(c.kpis.powerW);
+    const pTermW = VC.normas.potenciaTermicaW();   // Fase 3: potência térmica nominal global (Setup), não a dos ventiladores
+    const dl = VC.normas.dl101D(pTermW);
     let textoBacs;
-    if (dl.nivelGestao === 'SGTC') {
-      textoBacs = 'Conforme DL 101-D/2020 e NT-SCE-03 §4.3: <b>SGTC obrigatório</b> (P ≥ 290 kW, P = ' + VC.utils.fmt(c.kpis.powerW, 0) + ' W).';
+    if (dl.porDefinir) {
+      textoBacs = 'Potência térmica nominal global <b>por definir</b>: os requisitos de gestão técnica (≥ 100 kW), SACE (≥ 290 kW, DL 101-D/2020) e inspeção periódica (> 70 kW) dependem dela.';
+    } else if (dl.nivelGestao === 'SGTC') {
+      textoBacs = 'Conforme DL 101-D/2020 e NT-SCE-03 §4.3: <b>SGTC obrigatório</b> (potência térmica ≥ 290 kW, P = ' + VC.utils.fmt((pTermW || 0) / 1000, 0) + ' kW térmicos).';
     } else if (dl.nivelGestao === 'SGT') {
-      textoBacs = 'Conforme DL 101-D/2020 e NT-SCE-03 §4.2: <b>SGT obrigatório</b> (100 kW ≤ P < 290 kW, P = ' + VC.utils.fmt(c.kpis.powerW, 0) + ' W).';
+      textoBacs = 'Conforme DL 101-D/2020 e NT-SCE-03 §4.2: <b>SGT obrigatório</b> (100 kW ≤ potência térmica < 290 kW, P = ' + VC.utils.fmt((pTermW || 0) / 1000, 0) + ' kW térmicos).';
     } else if (dl.inspecaoObrigatoria) {
-      textoBacs = 'Sem requisito SGT/SGTC (P < 100 kW). <b>Inspeção periódica obrigatória</b> (P > 70 kW, P = ' + VC.utils.fmt(c.kpis.powerW, 0) + ' W).';
+      textoBacs = 'Sem requisito SGT/SGTC (P < 100 kW). <b>Inspeção periódica obrigatória</b> (P > 70 kW, P = ' + VC.utils.fmt((pTermW || 0) / 1000, 0) + ' kW térmicos).';
     } else {
-      textoBacs = 'Sem requisitos SGT/SGTC nem inspeção periódica (P = ' + VC.utils.fmt(c.kpis.powerW, 0) + ' W).';
+      textoBacs = 'Sem requisitos SGT/SGTC nem inspeção periódica (P = ' + VC.utils.fmt((pTermW || 0) / 1000, 0) + ' kW térmicos).';
     }
     h += this._par(textoBacs);
 

@@ -54,16 +54,23 @@ VC.normativaUI = {
       estado: sfpConforme ? 'CONFORME' : 'NÃO CONFORME'
     });
 
-    const potencia = x.power || 0;
+    // Fase 3: potência TÉRMICA nominal global (aquecimento ou arrefecimento) do Setup, não a dos ventiladores
+    const potencia = VC.normas.potenciaTermicaW();
     const dl = VC.normas.dl101D(potencia);
     out.push({
-      norma: 'DL 101-D/2020 · NT-SCE-03',
-      item: 'Gestão técnica: SGT (≥ 100 kW) / SGTC (≥ 290 kW)',
-      resultado: dl.nivelGestao
-        ? dl.descricao + ' · P = ' + VC.utils.fmt(potencia, 0) + ' W · verificar implementação no projeto'
-        : 'Não aplicável (P = ' + VC.utils.fmt(potencia, 0) + ' W)',
-      estado: dl.nivelGestao ? 'INFORMATIVO' : 'CONFORME'
+      norma: 'DL 101-D/2020 · Portaria 138-I/2021',
+      item: 'Gestão técnica (≥ 100 kW) · SACE (≥ 290 kW) · inspeção periódica (> 70 kW) — potência térmica',
+      resultado: dl.porDefinir
+        ? 'Escreva no Setup a potência térmica nominal global (aquecimento ou arrefecimento, em kW)'
+        : (dl.descricao + ' · P térmica = ' + VC.utils.fmt(potencia / 1000, 0) + ' kW' + (dl.nivelGestao ? ' · verificar implementação no projeto' : '')),
+      estado: dl.porDefinir ? 'ATENÇÃO' : (dl.nivelGestao || dl.inspecaoObrigatoria ? 'INFORMATIVO' : 'CONFORME')
     });
+    // Fase 3: SFP do ventilador completo (EN 16798-3), à parte do SFPint do Ecodesign
+    const comSfp = (VC.dados.utas || []).filter(u => u.ativo !== false && u.sfpCategoria);
+    if (comSfp.length) {
+      const pior = comSfp.reduce((a, u) => (!a || u.sfpE > a.sfpE) ? u : a, null);
+      out.push({ norma: 'EN 16798-3:2025', item: 'Categoria SFP do ventilador (potência elétrica / caudal)', resultado: comSfp.map(u => VC.utils.esc(u.nome) + ' ' + u.sfpCategoria + ' (' + VC.utils.fmt(u.sfpE, 0) + ')').join(' · ') + ' · mais desfavorável: ' + VC.utils.esc(pior.nome), estado: 'referência' });
+    }
 
     // Fase 2: o balanço de massa vê os resíduos de cada espaço (antes só via os ciclos de transferências)
     const ciclos = VC6.balanco ? VC6.balanco.detetarCiclos() : [];

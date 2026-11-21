@@ -225,6 +225,52 @@ VC6.testes = {
         return x && okSub && p138.estado === 'NÃO CONFORME' && /abaixo do mínimo legal/.test(p138.resultado) && bal.estado === 'NÃO CONFORME' && /resíduo/.test(bal.resultado);
       } finally { Object.assign(D, { espacos: g.esp, terminais: g.ter, ramais: g.ram, utas: g.utas, transferencias: g.tr }); ['ordenacaoTopologica', 'cacheBalanco', 'cacheMaterializacao'].forEach(k => VC.perf[k] && VC.perf[k].invalidar && VC.perf[k].invalidar()); VC.calculo.calcularTudo(); }
     } });
+    // Fase 3 da auditoria: bases legais (Ecodesign da unidade inteira, filtros, run-around, SFP EN 16798-3, DL 101-D)
+    self.registar({ id: 'N6.T15', nucleo: 'N6', grupo: 'UTAs', nome: 'UVB: SFPint da unidade inteira (insuflação + extração)', criterio: 'duas UTAs com recuperador na mesma zona → par; SFPint = soma das duas metades com filtros limpos, sem bateria; limite com F; «Par UVB» escolhido prevalece; UTA sem par → aviso', fn: () => {
+      const D = VC.dados, g = { esp: D.espacos, ter: D.terminais, ram: D.ramais, utas: D.utas, tr: D.transferencias };
+      const comp = (tipo, dp, fin) => ({ tipo, nome: tipo, deltaP: dp, deltaP_final: fin });
+      try {
+        D.espacos = []; D.transferencias = []; D.terminais = []; D.ramais = [];
+        D.utas = [{ id: 'I', nome: 'UI', rede: 'insuflacao', zona: 'Z', eta: 0.7, etaRec: 0.75, fs: 1, transmissao: 1, componentes: [comp('Filtro F7', 55, 160), comp('Recuperador', 115, 130), comp('Bateria Aquec.', 45, 50)] },
+                  { id: 'E', nome: 'UE', rede: 'extracao', zona: 'Z', eta: 0.6, etaRec: 0.75, fs: 1, transmissao: 1, componentes: [comp('Filtro G4', 35, 90), comp('Recuperador', 115, 130)] },
+                  { id: 'E2', nome: 'UE2', rede: 'extracao', zona: 'Y', eta: 0.6, etaRec: 0.75, fs: 1, transmissao: 1, componentes: [comp('Filtro M5', 40, 100), comp('Recuperador', 100, 110)] }];
+        ['ordenacaoTopologica', 'cacheBalanco', 'cacheMaterializacao'].forEach(k => VC.perf[k] && VC.perf[k].invalidar && VC.perf[k].invalidar());
+        let x = VC.calculo.calcularTudo();
+        const [I, E] = D.utas;
+        const soma = (55 + 115) / 0.7 + (35 + 115) / 0.6;
+        const ok1 = Math.abs(I.sfpClass.sfpInt - soma) < 1e-6 && Math.abs(E.sfpClass.sfpInt - soma) < 1e-6 && I.uvbParNome === 'UE' && I.sfpClass.F === 150;
+        const ok2 = (x.findings || []).some(f => f.tipo === 'UVB sem par' && f.elemento === 'UE2') && !(x.findings || []).some(f => f.tipo === 'UVB sem par' && f.elemento === 'UI');
+        I.uvbPar = 'E2'; x = VC.calculo.calcularTudo();
+        const soma2 = (55 + 115) / 0.7 + (40 + 100) / 0.6;
+        const ok3 = I.uvbParNome === 'UE2' && Math.abs(I.sfpClass.sfpInt - soma2) < 1e-6 && I.sfpClass.F === 0 && (x.findings || []).some(f => f.tipo === 'UVB sem par' && f.elemento === 'UE');
+        return ok1 && ok2 && ok3;
+      } finally { Object.assign(D, { espacos: g.esp, terminais: g.ter, ramais: g.ram, utas: g.utas, transferencias: g.tr }); ['ordenacaoTopologica', 'cacheBalanco', 'cacheMaterializacao'].forEach(k => VC.perf[k] && VC.perf[k].invalidar && VC.perf[k].invalidar()); VC.calculo.calcularTudo(); }
+    } });
+    self.registar({ id: 'N6.T16', nucleo: 'N6', grupo: 'UTAs', nome: 'Ecodesign: correção F dos filtros e run-around', criterio: 'F7+M5 → 0; F7+G4 → 150; G4+M5 → 190; sem filtros → 340; limite UVB 0,5 m³/s η 0,80 com F 150 → 1085; run-around η 0,75 → 1735, η 0,65 não conforme', fn: () => {
+      const F = (a, b) => VC.normas.correcaoFiltrosF(a.map(t => ({ tipo: 'Filtro ' + t })), b.map(t => ({ tipo: 'Filtro ' + t })));
+      const c = (t, s, q, e, f) => VC.normas.classificarSFP(t, s, q, e, f);
+      return F(['F7'], ['M5']) === 0 && F(['F7'], ['G4']) === 150 && F(['G4'], ['M5']) === 190 && F([], []) === 340 && F(['ePM1 55%'], ['ePM10 60%']) === 0
+        && c('BVU_HRS', 1000, 0.5, 0.80, 150).limite === 1085 && c('BVU_RAC', 1000, 0.5, 0.75).limite === 1735 && c('BVU_RAC', 1000, 0.5, 0.65).conforme === false && c('BVU_RAC', 1000, 3, 0.75).limite === 1510;
+    } });
+    self.registar({ id: 'N6.T17', nucleo: 'N6', grupo: 'UTAs', nome: 'SFP do ventilador (EN 16798-3)', criterio: 'categorias 0–7 (≤ 300, 500, 750, 1250, 2000, 3000, 4500, > 4500); SFP_E = (Δp int + Δp ext) / η / transmissão em cada UTA', fn: () => {
+      const k = VC.normas.categoriaSFP;
+      const okC = k(300) === 'SFP 0' && k(301) === 'SFP 1' && k(760) === 'SFP 3' && k(1250) === 'SFP 3' && k(1251) === 'SFP 4' && k(2000) === 'SFP 4' && k(4600) === 'SFP 7';
+      const okU = (VC.dados.utas || []).filter(u => u.ativo !== false && u.Q > 0).every(u => Math.abs(u.sfpE - (u.dpInt + u.dpExt) / (u.eta || 0.65) / (u.transmissao || 1)) < 1e-6 && u.sfpCategoria === k(u.sfpE));
+      return okC && okU;
+    } });
+    self.registar({ id: 'N2.T20', nucleo: 'N2', grupo: 'Normas', nome: 'DL 101-D sobre a potência térmica (não a dos ventiladores)', criterio: 'sem potência térmica → «por definir» (ATENÇÃO no quadro legal); 300 kW → SACE e aviso BACS; 80 kW → inspeção periódica', fn: () => {
+      const p = VC.dados.params, o = p.potenciaTermica;
+      try {
+        delete p.potenciaTermica;
+        const L0 = VC.normativaUI.verificacoesLegais(VC.calculo.calcularTudo()).find(l => /DL 101-D/.test(l.norma));
+        const ok0 = VC.normas.potenciaTermicaW() === null && VC.normas.dl101D(null).porDefinir && L0.estado === 'ATENÇÃO';
+        p.potenciaTermica = 300; const x = VC.calculo.calcularTudo();
+        const ok1 = VC.normas.dl101D(VC.normas.potenciaTermicaW()).bacsObrigatorio && (x.findings || []).some(f => f.tipo === 'BACS');
+        p.potenciaTermica = 80; const x2 = VC.calculo.calcularTudo();
+        const ok2 = VC.normas.dl101D(VC.normas.potenciaTermicaW()).inspecaoObrigatoria && !(x2.findings || []).some(f => f.tipo === 'BACS');
+        return ok0 && ok1 && ok2;
+      } finally { if (o === undefined) delete p.potenciaTermica; else p.potenciaTermica = o; VC.calculo.calcularTudo(); }
+    } });
     self.registar({ id: 'N6.T14', nucleo: 'N6', grupo: 'UTAs', nome: 'Estado dos filtros muda o Δp interno', criterio: 'limpo < médio < sujo numa UTA com filtros', fn: () => {
       const u = VC.dados.utas.find(x => (x.componentes || []).some(c => /filtro/i.test(c.tipo || ''))); if (!u) return true;
       const m0 = VC.dados.filtros.modo, dp = {};

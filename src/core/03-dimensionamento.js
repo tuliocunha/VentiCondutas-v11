@@ -641,14 +641,56 @@ VC.calculo = {
       const P_motor = P_eixo * fs / Math.max(trans, 0.01);
       uta.Q = Qms; uta.dpInt = dpInt; uta.dpExt = dpExt;
       uta.sfpInt = sfpInt; uta.P_motor = P_motor;
-      uta.sfpClass = VC.normas.classificarSFP(VC.normas.tipoUVPadrao(uta), sfpInt, Qms, uta.etaRec);
+      // Fase 3 · Ecodesign: Δp interno de conformidade = só filtros (limpos) e recuperador; sem bateria, silenciador, etc.
+      uta.dpIntEco = comps.reduce((s, c) => s + (/filtro|recupera/i.test((c.tipo || '') + ' ' + (c.nome || '')) && !/ventilador/i.test(c.tipo || '') ? (Number(c.deltaP) || 0) : 0), 0);
+      uta.sfpIntEco = eta > 0 ? uta.dpIntEco / eta : Infinity;
+      // Fase 3 · EN 16798-3: SFP_E do ventilador completo = potência elétrica / caudal (sem o fator de serviço)
+      uta.sfpE = Qms > 0 ? (Qms * (dpInt + dpExt) / Math.max(eta, 0.01) / Math.max(trans, 0.01)) / Qms : 0;
+      uta.sfpCategoria = Qms > 0 ? VC.normas.categoriaSFP(uta.sfpE) : null;
+      uta.sfpClass = VC.normas.classificarSFP(VC.normas.tipoUVPadrao(uta), uta.sfpIntEco, Qms, uta.etaRec, VC.normas.correcaoFiltrosF(uta.rede === 'insuflacao' ? comps : null, uta.rede === 'insuflacao' ? null : comps));
       uta.status = uta.sfpClass.conforme ? 'OK' : 'NÃO CONF.';
       if (uta.curva && uta.curva.length >= 2 && VC.uta && VC.uta.calcularPontoFuncionamento) uta.pontoFunc = VC.uta.calcularPontoFuncionamento(uta.rede, uta);
       const chaveRede = (uta.rede === 'insuflacao') ? 'insuflacao' : 'extracao';
       const atual = porRede[chaveRede];
       if (!atual || dpExt > atual.maxPerda) porRede[chaveRede] = { maxPerda: dpExt, Qnom: Qms };
     });
+    this.classificarUVB();
     return { ins, ext, bal: ins - ext, porRede };
+  },
+
+  /* Fase 3 · Reg. (UE) 1253/2014: uma UVB (unidade bidirecional com recuperador) tem as duas metades — insuflação e
+     extração — modeladas como duas UTAs. O SFPint e o limite são da unidade inteira:
+       SFPint = Δp_int,ins / η_ins + Δp_int,ext / η_ext   (filtros limpos, só filtros e recuperador)
+       limite com qnom = o maior dos dois caudais, η do recuperador da insuflação e F dos filtros dos dois lados.
+     Par: uta.uvbPar (id da outra metade) ou, sem ele, a única UTA ativa do outro lado, com recuperador e a mesma zona. */
+  parUVB(u) {
+    const ehUVB = x => x && x.ativo !== false && /^BVU/.test(VC.normas.tipoUVPadrao(x));
+    if (!ehUVB(u)) return null;
+    const lado = x => x.rede === 'insuflacao' ? 'ins' : (x.rede === 'extracao' ? 'ext' : 'outro');
+    const U = VC.dados.utas || [];
+    if (u.uvbPar) { const p = U.find(x => x.id === u.uvbPar); return (p && p !== u && ehUVB(p) && lado(p) !== lado(u)) ? p : null; }
+    const pedidoPorOutra = U.find(x => x !== u && x.uvbPar === u.id && ehUVB(x));
+    if (pedidoPorOutra) return lado(pedidoPorOutra) !== lado(u) ? pedidoPorOutra : null;
+    if (lado(u) === 'outro' || !u.zona) return null;
+    const cands = U.filter(x => x !== u && ehUVB(x) && !x.uvbPar && lado(x) !== 'outro' && lado(x) !== lado(u) && x.zona === u.zona);
+    return cands.length === 1 ? cands[0] : null;
+  },
+  classificarUVB() {
+    (VC.dados.utas || []).forEach(u => { u.uvbParNome = null; u.uvbSemPar = false; });
+    (VC.dados.utas || []).forEach(u => {
+      if (u.ativo === false || !/^BVU/.test(VC.normas.tipoUVPadrao(u))) return;
+      const p = this.parUVB(u);
+      if (!p) { u.uvbSemPar = true; return; }
+      u.uvbSemPar = false;
+      const ins = u.rede === 'insuflacao' ? u : p, ext = ins === u ? p : u;
+      const sfp = (ins.sfpIntEco || 0) + (ext.sfpIntEco || 0);
+      const F = VC.normas.correcaoFiltrosF(ins.componentes || [], ext.componentes || []);
+      const c = VC.normas.classificarSFP(VC.normas.tipoUVPadrao(ins), sfp, Math.max(ins.Q || 0, ext.Q || 0), ins.etaRec, F);
+      c.par = ins.nome + ' + ' + ext.nome;
+      c.nota += ' Unidade inteira: ' + ins.nome + ' (' + Math.round(ins.sfpIntEco || 0) + ') + ' + ext.nome + ' (' + Math.round(ext.sfpIntEco || 0) + ') = ' + Math.round(sfp) + ' W/(m³/s).';
+      u.sfpClass = c; u.uvbParNome = p.nome;
+      u.status = c.conforme ? 'OK' : 'NÃO CONF.';
+    });
   },
 
   calcularTudo() {
@@ -810,7 +852,12 @@ VC.calculo = {
         const pf = u.pontoFunc;
         if (u.ativo !== false && pf && pf.foraDaCurva) findings.push({ severidade: 'ATENÇÃO', tipo: 'Ventilador fora da curva', elemento: u.nome, msg: 'Q de projeto ' + VC.utils.fmt(pf.QprojMh, 0) + ' m³/h > fim da curva ' + VC.utils.fmt(pf.QmaxCurva, 0) + ' m³/h' + (u.curvaFabricante ? ' (' + u.curvaFabricante.modelo + ')' : '') + ' — escolher um ventilador maior' });
       });
-      if (totalPower > VC.constantes.DL101D.SGTC) findings.push({ severidade: 'ATENÇÃO', tipo: 'BACS', elemento: 'Sistema', msg: 'P > ' + VC.constantes.DL101D.SGTC / 1000 + ' kW' });
+      // Fase 3: o DL 101-D (SACE ≥ 290 kW) aplica-se à potência TÉRMICA nominal global, não à dos ventiladores
+      const pTerm = VC.normas.potenciaTermicaW();
+      if (pTerm != null && pTerm >= VC.constantes.DL101D.SGTC) findings.push({ severidade: 'ATENÇÃO', tipo: 'BACS', elemento: 'Sistema', msg: 'Potência térmica ' + VC.utils.fmt(pTerm / 1000, 0) + ' kW ≥ ' + VC.constantes.DL101D.SGTC / 1000 + ' kW: sistema de automatização e controlo (SACE) obrigatório (DL 101-D/2020)' });
+      VC.dados.utas.forEach(u => {
+        if (u.ativo !== false && u.uvbSemPar && /^BVU/.test(VC.normas.tipoUVPadrao(u)) && (u.rede === 'insuflacao' || u.rede === 'extracao')) findings.push({ severidade: 'ATENÇÃO', tipo: 'UVB sem par', elemento: u.nome, msg: 'Unidade bidirecional com recuperador: o SFPint do Ecodesign é da unidade inteira, mas não se encontrou a UTA do outro lado (mesma zona ou campo «Par UVB»). Só esta metade foi verificada.' });
+      });
 
       // instalações sanitárias: regime da Tabela 13 e aparelhos (pública) por definir → «por fazer»
       VC.dados.espacos.forEach(e => {
