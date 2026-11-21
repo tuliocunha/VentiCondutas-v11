@@ -877,6 +877,29 @@ VC.calculo = {
       // Fase 3: o DL 101-D (SACE ≥ 290 kW) aplica-se à potência TÉRMICA nominal global, não à dos ventiladores
       const pTerm = VC.normas.potenciaTermicaW();
       if (pTerm != null && pTerm >= VC.constantes.DL101D.SGTC) findings.push({ severidade: 'ATENÇÃO', tipo: 'BACS', elemento: 'Sistema', msg: 'Potência térmica ' + VC.utils.fmt(pTerm / 1000, 0) + ' kW ≥ ' + VC.constantes.DL101D.SGTC / 1000 + ' kW: sistema de automatização e controlo (SACE) obrigatório (DL 101-D/2020)' });
+      // ── Fase 5 · Portaria 138-I, Anexo II: requisitos dos sistemas ──
+      const PS = VC.constantes.P138_SISTEMAS, ativas = VC.dados.utas.filter(u => u.ativo !== false);
+      const insU = ativas.filter(u => u.rede === 'insuflacao'), QinsTot = insU.reduce((s, u) => s + (Number(u.Q) || 0) * 3600, 0);
+      const temRec = u => (u.componentes || []).some(c => /recupera/i.test((c.tipo || '') + ' ' + (c.nome || ''))) && u.recuperadorAtivo !== false;
+      // 2.3 c) recuperação de energia ≥ 50 % no ar de rejeição quando a potência térmica rejeitada > 80 kW
+      const pRej = VC.normas.potenciaRejeitadaW();
+      if (pRej != null && pRej > PS.REJEICAO_RECUPERACAO_W) ativas.filter(u => VC.redes.ehExtracao(u.rede)).forEach(u => {
+        const etaR = Number(u.etaRec) || 0;
+        if (!temRec(u) || etaR < PS.ETA_RECUPERACAO_MIN) findings.push({ severidade: u.rede === 'extracao_suja' ? 'ATENÇÃO' : 'ERRO', tipo: 'Recuperação de calor obrigatória', elemento: u.nome, msg: 'Potência térmica rejeitada ' + VC.utils.fmt(pRej / 1000, 0) + ' kW > ' + PS.REJEICAO_RECUPERACAO_W / 1000 + ' kW: o ar de rejeição tem de ter recuperação de energia com η ≥ ' + Math.round(PS.ETA_RECUPERACAO_MIN * 100) + ' % no aquecimento (Portaria 138-I, Anexo II, 2.3 c)' + (temRec(u) ? '; η do recuperador = ' + Math.round(etaR * 100) + ' %' : '; esta UTA não tem recuperador') + (u.rede === 'extracao_suja' ? '. Extração sanitária: a recuperação é admitida se o ar novo não for contaminado.' : '') });
+      });
+      // 2.3 b) free-cooling nos sistemas tudo-ar com caudal de insuflação somado > 10 000 m³/h
+      if (QinsTot > PS.FREE_COOLING_M3H) insU.forEach(u => { if (!u.freeCooling && u.tudoAr !== false) findings.push({ severidade: 'ATENÇÃO', tipo: 'Free-cooling', elemento: u.nome, msg: 'Insuflação somada ' + VC.utils.fmt(QinsTot, 0) + ' m³/h > ' + VC.utils.fmt(PS.FREE_COOLING_M3H, 0) + ' m³/h: num sistema tudo-ar o free-cooling é obrigatório (Portaria 138-I, Anexo II, 2.3 b). Marque «Free-cooling» na UTA ou «não é tudo-ar».' }); });
+      // 1.5 b) i) caudal de ar novo variável (CO₂ e/ou presença) com potência de climatização > 100 kW
+      if (pTerm != null && pTerm > PS.CAUDAL_VARIAVEL_W) insU.forEach(u => { if (!u.controloCaudal) findings.push({ severidade: 'ATENÇÃO', tipo: 'Caudal variável de ar novo', elemento: u.nome, msg: 'Potência de climatização ' + VC.utils.fmt(pTerm / 1000, 0) + ' kW > ' + PS.CAUDAL_VARIAVEL_W / 1000 + ' kW: se a ocupação média for < 50 % da máxima, o caudal de ar novo tem de variar com CO₂ e/ou presença (Portaria 138-I, Anexo II, 1.5 b). Indique o controlo na UTA.' }); });
+      // 1.5 c) ventilação com ar novo ≥ 3000 m³/h integrável num sistema de gestão técnica
+      if (QinsTot >= PS.GT_AR_NOVO_M3H && !(VC.dados.params && VC.dados.params.integracaoGT)) findings.push({ severidade: 'ATENÇÃO', tipo: 'Integração em gestão técnica', elemento: 'Sistema', msg: 'Ar novo ' + VC.utils.fmt(QinsTot, 0) + ' m³/h ≥ ' + VC.utils.fmt(PS.GT_AR_NOVO_M3H, 0) + ' m³/h: a ventilação tem de ser integrável num sistema de gestão técnica (Portaria 138-I, Anexo II, 1.5 c). Confirme no Setup.' });
+      // Fase 5 · escadas pressurizadas (RT-SCIE, art. 161.º; EN 12101-13)
+      (VC.dados.espacos || []).filter(e => e.tipo === 'Escadas' && e.pressurizada).forEach(e => {
+        const r = VC.normas.verificarEscadaPressurizada(e);
+        if (e.deltaP === undefined || e.deltaP === null || e.deltaP === '') { findings.push({ severidade: 'POR FAZER', tipo: 'Escada pressurizada por definir', elemento: e.nome, msg: 'Indique a sobrepressão com as portas fechadas (20–80 Pa), a velocidade na porta aberta e a força de abertura da porta.' }); return; }
+        r.falhas.forEach(f => findings.push({ severidade: 'ERRO', tipo: 'Escada pressurizada', elemento: e.nome, msg: f }));
+        if (r.porFazer.length) findings.push({ severidade: 'POR FAZER', tipo: 'Escada pressurizada por definir', elemento: e.nome, msg: 'Falta: ' + r.porFazer.join(' e ') + ' (RT-SCIE, art. 161.º; EN 12101-13).' });
+      });
       VC.dados.utas.forEach(u => {
         if (u.ativo !== false && u.uvbSemPar && /^BVU/.test(VC.normas.tipoUVPadrao(u)) && (u.rede === 'insuflacao' || u.rede === 'extracao')) findings.push({ severidade: 'ATENÇÃO', tipo: 'UVB sem par', elemento: u.nome, msg: 'Unidade bidirecional com recuperador: o SFPint do Ecodesign é da unidade inteira, mas não se encontrou a UTA do outro lado (mesma zona ou campo «Par UVB»). Só esta metade foi verificada.' });
       });

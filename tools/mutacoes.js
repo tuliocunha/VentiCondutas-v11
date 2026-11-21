@@ -207,6 +207,19 @@ const CASOS = [
     const c = VC.conhecimento.tabelas.T13.sanitarios.publico_normal, o = c.min; c.min = 45;
     return () => { c.min = o; };
   }],
+  // Fase 5 da auditoria: requisitos dos sistemas e escadas
+  ['Recuperação de calor: limiar de 80 kW sobe para 800 kW', 'N2.T23', () => {
+    const P = VC.constantes.P138_SISTEMAS, o = P.REJEICAO_RECUPERACAO_W; P.REJEICAO_RECUPERACAO_W = 800000;
+    return () => { P.REJEICAO_RECUPERACAO_W = o; };
+  }],
+  ['Free-cooling: limiar de 10 000 m³/h sobe para 100 000', 'N2.T24', () => {
+    const P = VC.constantes.P138_SISTEMAS, o = P.FREE_COOLING_M3H; P.FREE_COOLING_M3H = 100000;
+    return () => { P.FREE_COOLING_M3H = o; };
+  }],
+  ['Escadas: velocidade na porta aberta deixa de ser verificada', 'N2.T25', () => {
+    const E = VC.constantes.ESCADAS, o = [E.vPortaSemCamara, E.vPortaComCamara]; E.vPortaSemCamara = 0; E.vPortaComCamara = 0;
+    return () => { E.vPortaSemCamara = o[0]; E.vPortaComCamara = o[1]; };
+  }],
   // Fase 4 da auditoria: qualidade de cálculo
   ['ε_v do espaço ignorado (só o do Setup)', 'N2.T21', () => {
     const o = VC.calculo.evDe; VC.calculo.evDe = function () { return Number(VC.dados.eficaciaRemocao) || 1; };

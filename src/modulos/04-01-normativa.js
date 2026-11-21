@@ -65,6 +65,13 @@ VC.normativaUI = {
         : (dl.descricao + ' · P térmica = ' + VC.utils.fmt(potencia / 1000, 0) + ' kW' + (dl.nivelGestao ? ' · verificar implementação no projeto' : '')),
       estado: dl.porDefinir ? 'ATENÇÃO' : (dl.nivelGestao || dl.inspecaoObrigatoria ? 'INFORMATIVO' : 'CONFORME')
     });
+    // Fase 5: requisitos dos sistemas (Portaria 138-I, Anexo II, 2.3 b/c e 1.5 b/c) e escadas pressurizadas (RT-SCIE)
+    const fx = (x.findings || []);
+    const sis = fx.filter(f => /^(Recuperação de calor obrigatória|Free-cooling|Caudal variável de ar novo|Integração em gestão técnica)$/.test(f.tipo));
+    const pRej = VC.normas.potenciaRejeitadaW();
+    out.push({ norma: 'Portaria 138-I/2021 · Anexo II (2.3 b/c, 1.5 b/c)', item: 'Recuperação de calor (> 80 kW rejeitados) · free-cooling (> 10 000 m³/h) · caudal variável (> 100 kW) · gestão técnica (≥ 3000 m³/h)', resultado: (sis.length ? sis.map(f => VC.utils.esc(f.tipo + ' · ' + f.elemento)).join(' · ') : 'Sem requisitos em falta') + (pRej == null ? ' · potência rejeitada por definir (Setup)' : ' · rejeitada ' + VC.utils.fmt(pRej / 1000, 0) + ' kW'), estado: sis.some(f => f.severidade === 'ERRO') ? 'NÃO CONFORME' : (sis.length ? 'ATENÇÃO' : 'CONFORME') });
+    const escF = fx.filter(f => /^Escada pressurizada/.test(f.tipo)), nEsc = (VC.dados.espacos || []).filter(e => e.tipo === 'Escadas' && e.pressurizada).length;
+    if (nEsc) out.push({ norma: 'RT-SCIE (Portaria 1532/2008), art. 161.º · EN 12101-13', item: 'Escadas pressurizadas: 20–80 Pa, velocidade na porta aberta, força de abertura ≤ 100 N', resultado: nEsc + ' escada(s)' + (escF.length ? ' · ' + escF.map(f => VC.utils.esc(f.elemento + ': ' + f.msg)).join(' · ') : ' · conforme'), estado: escF.some(f => f.severidade === 'ERRO') ? 'NÃO CONFORME' : (escF.length ? 'ATENÇÃO' : 'CONFORME') });
     // Fase 3: SFP do ventilador completo (EN 16798-3), à parte do SFPint do Ecodesign
     const comSfp = (VC.dados.utas || []).filter(u => u.ativo !== false && u.sfpCategoria);
     if (comSfp.length) {

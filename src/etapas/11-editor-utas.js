@@ -99,6 +99,7 @@ VC.editorUtas = {
         h += '</div>';
         h += self._selectTipoUV(u);
         h += self._selectParUVB(u);
+        h += self._requisitosP138(u);
         if (u.sfpClass && u.sfpClass.nota) h += '<div style="font-size:10.5px;color:var(--texto-suave);margin:-4px 0 10px">' + VC.utils.esc(u.sfpClass.nota) + '</div>';
 
         h += '<div style="margin-bottom:10px"><div style="font-size:10.5px;font-weight:800;color:var(--texto-med);text-transform:uppercase;margin-bottom:4px">Curva do ventilador</div>';
@@ -169,6 +170,18 @@ VC.editorUtas = {
     h += '<select class="input" style="width:100%" onchange="VC.editorUtas.editar(\'' + u.id + '\', \'tipoUV\', this.value)">';
     Object.keys(tipos).forEach(function (k) { h += '<option value="' + k + '"' + (k === atual ? ' selected' : '') + '>' + VC.utils.esc(tipos[k]) + '</option>'; });
     return h + '</select></div>';
+  },
+
+  /* Fase 5: requisitos da Portaria 138-I que dependem do sistema (free-cooling 2.3 b; caudal variável 1.5 b) */
+  _requisitosP138: function (u) {
+    if (u.rede !== 'insuflacao') return '';
+    var id = VC.utils.esc(u.id), cc = u.controloCaudal || '';
+    var h = '<div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center;font-size:11px;margin-bottom:10px">';
+    h += '<label><input type="checkbox"' + (u.freeCooling ? ' checked' : '') + ' onchange="VC.editorUtas.editar(\'' + id + '\', \'freeCooling\', this.checked)"> Free-cooling</label>';
+    h += '<label><input type="checkbox"' + (u.tudoAr === false ? ' checked' : '') + ' onchange="VC.editorUtas.editar(\'' + id + '\', \'tudoAr\', this.checked ? false : undefined)"> Não é sistema tudo-ar</label>';
+    h += '<label>Caudal de ar novo <select onchange="VC.editorUtas.editar(\'' + id + '\', \'controloCaudal\', this.value || undefined)"><option value="">constante</option>'
+      + ['co2', 'presenca', 'co2_presenca'].map(function (k) { return '<option value="' + k + '"' + (cc === k ? ' selected' : '') + '>' + ({ co2: 'variável por CO₂', presenca: 'variável por presença', co2_presenca: 'CO₂ e presença' })[k] + '</option>'; }).join('') + '</select></label>';
+    return h + '</div>';
   },
 
   /* Fase 3: a outra metade da UVB (Ecodesign avalia a unidade inteira) */
