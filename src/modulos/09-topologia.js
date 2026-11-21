@@ -876,27 +876,34 @@ VC.bom = {
     fonteIteracao.forEach(function (tr) {
       const ramal = ramais.find(function (r) { return r.nome === tr.ramalRef; });
       if (!ramal) return;
-      const D = Number(ramal.Dcom) || 0;
-      if (D <= 0) return;
-      const L = pegarComprimento(tr, ramal) || 0;
+      if (!(Number(ramal.Dcom) > 0)) return;
+      const Ltr = pegarComprimento(tr, ramal) || 0;
       const material = tr.material || (ramal.geometriaInput && ramal.geometriaInput.material) || 'Aço galvanizado';
       const rede = ramal.rede || 'insuflacao';
+      // Fase 2A: um ramal com derivações posicionadas tem vários troços, cada um com o seu Ø
+      const trocos = (ramal.modoTrocos === 'posicionado' && Array.isArray(ramal.trocos) && ramal.trocos.length) ? ramal.trocos : null;
+      const somaL = trocos ? trocos.reduce((s, t) => s + (Number(t.L) || 0), 0) : 0;
+      const partes = trocos && somaL > 0
+        ? trocos.filter(t => t.Q > 0 && t.Dcom > 0).map(t => ({ D: Number(t.Dcom), L: Ltr * (Number(t.L) || 0) / somaL }))
+        : [{ D: Number(ramal.Dcom), L: Ltr }];
 
-      const chave = D + '|' + material + '|' + rede;
-      if (!porDiametro.has(chave)) {
-        porDiametro.set(chave, {
-          diametro: D,
-          material: material,
-          rede: rede,
-          metros: 0,
-          n_trechos: 0,
-          ramais: []
-        });
-      }
-      const item = porDiametro.get(chave);
-      item.metros += L;
-      item.n_trechos++;
-      item.ramais.push(tr.ramalRef);
+      partes.forEach(function (pt) {
+        const chave = pt.D + '|' + material + '|' + rede;
+        if (!porDiametro.has(chave)) {
+          porDiametro.set(chave, {
+            diametro: pt.D,
+            material: material,
+            rede: rede,
+            metros: 0,
+            n_trechos: 0,
+            ramais: []
+          });
+        }
+        const item = porDiametro.get(chave);
+        item.metros += pt.L;
+        item.n_trechos++;
+        item.ramais.push(tr.ramalRef);
+      });
     });
 
     const elementosPorTipo = {};
