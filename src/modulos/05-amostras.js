@@ -458,10 +458,10 @@ VC.exemploDegrade2 = function () {
   });
 };
 
-// Degrade · Parâmetros do Tempo: estudo TGC 19nov26 com caudais e traçado do desenho (gerado por tools/gerar-exemplo-parametros-tempo.js)
-VC.exemploParametrosTempo = function () {
-  return VC._carregarExemploDeFicheiro(['exemplos/parametros-do-tempo.json'], 'Parâmetros do Tempo', function () {
-    VC.ui.toast('Não foi possível abrir exemplos/parametros-do-tempo.json. Abra a app pelo GitHub Pages ou por um servidor local (o navegador bloqueia ficheiros locais).');
+// Degrade 21 nov26: estudo TGC 19nov26 com caudais e traçado do desenho (gerado por tools/gerar-exemplo-degrade-21nov26.js)
+VC.exemploDegrade21nov26 = function () {
+  return VC._carregarExemploDeFicheiro(['exemplos/degrade-21nov26.json'], 'Degrade 21 nov26', function () {
+    VC.ui.toast('Não foi possível abrir exemplos/degrade-21nov26.json. Abra a app pelo GitHub Pages ou por um servidor local (o navegador bloqueia ficheiros locais).');
   });
 };
 
@@ -487,8 +487,8 @@ VC.exemplos = {
       this._lista.push({ id: 'degrade-2', nome: 'Degrade 2 · Torres Vedras', descricao: 'Projeto real · 45 espaços (Piso 0, Piso 1, Mezanino) · 4 UTAs + 7 VEX · 7 transferências', timestamp: new Date().toISOString(), builtin: true });
       this.save({ silencioso: true });
     }
-    if (!this._lista.find(e => e.id === 'parametros-tempo')) {
-      this._lista.push({ id: 'parametros-tempo', nome: 'Degrade · Parâmetros do Tempo', descricao: 'Estudo TGC 19nov26 · caudais e traçado do desenho · Piso 0 e Piso 1 · 8 VAN/VEG + VEISP0 + VCM · 3 grelhas de porta', timestamp: new Date().toISOString(), builtin: true });
+    if (!this._lista.find(e => e.id === 'degrade-21nov26')) {
+      this._lista.push({ id: 'degrade-21nov26', nome: 'Degrade 21 nov26', descricao: 'Estudo TGC 19nov26 (Parâmetros do Tempo) · caudais e traçado do desenho · Piso 0 e Piso 1 · 8 VAN/VEG + VEISP0 + VCM · 3 grelhas de porta', timestamp: new Date().toISOString(), builtin: true });
       this.save({ silencioso: true });
     }
     if (!this._lista.find(e => e.id === 'polune-v8')) {
@@ -524,7 +524,7 @@ VC.exemplos = {
   // exemplos pré-carregados guardados em ficheiro JSON: exportar e duplicar leem o ficheiro (e não o projeto aberto)
   _ficheiroDe(ex) {
     if (!ex || !ex.builtin) return null;
-    return ({ 'degrade-2': 'exemplos/degrade-2.json', 'parametros-tempo': 'exemplos/parametros-do-tempo.json' })[ex.id] || null;
+    return ({ 'degrade-2': 'exemplos/degrade-2.json', 'degrade-21nov26': 'exemplos/degrade-21nov26.json' })[ex.id] || null;
   },
   listar() {
     if (!this._lista) this.init();
@@ -608,8 +608,8 @@ VC.exemplos = {
       else if (ex.builtin && ex.id === 'degrade-2') {
         VC.exemploDegrade2();
       }
-      else if (ex.builtin && ex.id === 'parametros-tempo') {
-        VC.exemploParametrosTempo();
+      else if (ex.builtin && ex.id === 'degrade-21nov26') {
+        VC.exemploDegrade21nov26();
       }
       else if (ex.builtin && ex.id === 'polune-v8') {
         if (typeof VC.exemploV9_2 === 'function') {

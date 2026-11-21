@@ -2,14 +2,14 @@
  "_versao": "V9",
  "versao": "VentiCondutas v11.1.0",
  "versaoCurta": "11.1.0",
- "timestamp": "2026-11-21T21:56:39.356Z",
+ "timestamp": "2026-11-21T22:31:23.714Z",
  "metadados": {
-  "nome": "Degrade · Parâmetros do Tempo",
+  "nome": "Degrade 21 nov26",
   "cliente": "Degrade",
   "local": "Torres Vedras, Portugal",
   "autor": "Tulio Cunha",
   "revisao": "01",
-  "descricao": "Estudo de ventilação TGC 19nov26 (validação de princípio) · Piso 0 e Piso 1 · 8 ventiladores VAN/VEG + VEISP0 + VCM · caudais e traçado do desenho · bloco nordeste e Mezanino fora do cálculo"
+  "descricao": "Parâmetros do Tempo · estudo de ventilação TGC 19nov26 (validação de princípio) · Piso 0 e Piso 1 · 8 ventiladores VAN/VEG + VEISP0 + VCM · caudais e traçado do desenho · bloco nordeste e Mezanino fora do cálculo"
  },
  "configuracao": {
   "tipologia": "comercio",

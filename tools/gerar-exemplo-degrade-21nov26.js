@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /* ============================================================
-   VentiCondutas · gera o exemplo «Degrade · Parâmetros do Tempo»
+   VentiCondutas · gera o exemplo «Degrade 21 nov26»
    ------------------------------------------------------------
    Fonte: desenho TGC «Degrade HVAC Parâmetros do Tempo · Estudo
    Ventilação 19nov26» (Piso 0, Piso 1, Mezanino · sem escala),
@@ -23,8 +23,8 @@
    · prumadas P1 → cobertura: 3,0 m (assumido);
    · ventiladores com parâmetros de referência (sem catálogo).
 
-   Uso:  node tools/gerar-exemplo-parametros-tempo.js
-   Grava exemplos/parametros-do-tempo.json
+   Uso:  node tools/gerar-exemplo-degrade-21nov26.js
+   Grava exemplos/degrade-21nov26.json
    ============================================================ */
 'use strict';
 const http = require('http');
@@ -33,7 +33,7 @@ const path = require('path');
 const { chromium } = require('playwright');
 
 const RAIZ = path.resolve(__dirname, '..');
-const SAIDA = path.join(RAIZ, 'exemplos', 'parametros-do-tempo.json');
+const SAIDA = path.join(RAIZ, 'exemplos', 'degrade-21nov26.json');
 
 /* ── espaços: [nome, piso, ala, tipo, A (m²), extra] ── */
 const ESPACOS = [
@@ -189,8 +189,8 @@ function montarProjeto() {
     Q, tipo: 'grelha_porta', dP_Pa: 2 }));
   return {
     _versao: 'V9',
-    metadados: { nome: 'Degrade · Parâmetros do Tempo', cliente: 'Degrade', local: 'Torres Vedras, Portugal', autor: 'Tulio Cunha', revisao: '01',
-      descricao: 'Estudo de ventilação TGC 19nov26 (validação de princípio) · Piso 0 e Piso 1 · 8 ventiladores VAN/VEG + VEISP0 + VCM · caudais e traçado do desenho · bloco nordeste e Mezanino fora do cálculo' },
+    metadados: { nome: 'Degrade 21 nov26', cliente: 'Degrade', local: 'Torres Vedras, Portugal', autor: 'Tulio Cunha', revisao: '01',
+      descricao: 'Parâmetros do Tempo · estudo de ventilação TGC 19nov26 (validação de princípio) · Piso 0 e Piso 1 · 8 ventiladores VAN/VEG + VEISP0 + VCM · caudais e traçado do desenho · bloco nordeste e Mezanino fora do cálculo' },
     configuracao: { tipologia: 'comercio', restricaoH: 250, serieDiametros: 'S1',
       params: { altitude: 30, temperatura: 20, humidade: 50, rugosidade: 0.15, categoria: 'II', poluicaoEdificio: 'pouco', potenciaTermica: 42, tExtInverno: 3 } },
     dados: { espacos, ramais, terminais, transferencias, utas, nos: [], trechos: [], elementosRede: [], _mapaRenomeacao: {} }
