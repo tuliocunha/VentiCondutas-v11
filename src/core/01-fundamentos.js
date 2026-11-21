@@ -711,7 +711,7 @@ VC.estado._ultimoHash = null;
 VC.estado._hashEstado = function () {
   const partes = [];
   const p = VC.dados && VC.dados.params;
-  if (p) partes.push(p.altitude + '|' + p.temperatura + '|' + p.humidade + '|' + p.rugosidade + '|' + (p.categoria || 'II'));
+  if (p) partes.push(p.altitude + '|' + p.temperatura + '|' + p.humidade + '|' + p.rugosidade + '|' + (p.categoria || 'II') + '|' + (p.potenciaTermica == null ? '' : p.potenciaTermica));
   partes.push(VC.dados && VC.dados.tipologia || '');
   partes.push(VC.dados && VC.dados.restricaoH || 0);
   partes.push(VC.dados && VC.dados.eficaciaRemocao || 1);
@@ -752,6 +752,7 @@ VC.estado._hashEstado = function () {
     u.id + '|' + u.rede + '|' + (u.eta || 0) + '|' + (u.etaRec || 0) + '|' + (u.fs || 0) +
     '|' + (u.transmissao || 1) + '|' + (u.ativo === false ? '0' : '1') + '|' + (u.curvaFabricante ? (u.curvaFabricante.fabricante + '/' + u.curvaFabricante.modelo) : '') +
     '|' + (u.tipoUV || '') + '|' + (u.recuperadorAtivo === false ? '0' : '1')   // v11.1: tipo Ecodesign
+    + '|' + (u.uvbPar || '') + '|' + (u.componentes || []).map(c => (c.tipo || '') + ':' + c.deltaP + ':' + c.deltaP_final).join(',')   // Fase 3: par da UVB e componentes
   ).join('#'));
   partes.push((VC.flags && VC.flags.confortoTermico !== false) ? '1' : '0');
   partes.push((VC.flags && VC.flags.qaiProjeto !== false) ? '1' : '0');
@@ -911,11 +912,12 @@ VC.normas = {
   // v11.1: limites do Reg. (UE) 1253/2014 (Ecodesign) por tipo de unidade de ventilação.
   // qnom em m³/s; etaRec = eficiência térmica do recuperador (0–1).
   // classe 1–3 = ≤ 50 % / ≤ 75 % / ≤ 100 % do limite (escala interna da app); 4 = acima do limite.
-  classificarSFP(uvType, sfpInt, qnom, etaRec) {
+  classificarSFP(uvType, sfpInt, qnom, etaRec, fCorrecao) {
     const lim = VC.conhecimento.tabelas.SFPint;
     const tipo = (VC.conhecimento.tabelas.SFP_TIPOS || {})[uvType] ? uvType : 'BVU_HRS';
     const QnomNum = Math.max(0, Number(qnom) || 0);
     const eta = Number(etaRec) || 0;
+    const F = Math.max(0, Number(fCorrecao) || 0);   // Fase 3: correção dos filtros (0 = configuração de referência completa)
     const ref = 'Reg. (UE) 1253/2014 (Ecodesign)';
     let limite = null, nota, bonusE = 0, etaOK = true;
     if (tipo === 'UVU_FILTER') {
@@ -924,11 +926,14 @@ VC.normas = {
     } else if (tipo === 'UVU_SEM_FILTER') {
       nota = ref + ': UVU sem filtro não tem limite de SFPint (só requisitos do ventilador).';
     } else {
-      bonusE = eta > lim.BVU_ETA_REF ? (eta - lim.BVU_ETA_REF) * 3000 : 0;
-      limite = QnomNum < 2 ? lim.BVU_BASE_PEQ + bonusE - 300 * QnomNum / 2 : lim.BVU_BASE + bonusE;
-      etaOK = eta >= lim.BVU_ETA_MIN;
-      nota = ref + ': UVB com recuperador, qnom ' + QnomNum.toFixed(2) + ' m³/s, bónus E ' + Math.round(bonusE) + ', filtros completos (F = 0).'
-        + (etaOK ? '' : ' η recuperador ' + Math.round(eta * 100) + ' % < ' + Math.round(lim.BVU_ETA_MIN * 100) + ' % exigido.');
+      const rac = tipo === 'BVU_RAC';
+      const etaRef = rac ? lim.BVU_RAC_ETA_REF : lim.BVU_ETA_REF, etaMin = rac ? lim.BVU_RAC_ETA_MIN : lim.BVU_ETA_MIN;
+      const base = rac ? lim.BVU_RAC_BASE : lim.BVU_BASE, basePeq = rac ? lim.BVU_RAC_BASE_PEQ : lim.BVU_BASE_PEQ;
+      bonusE = eta > etaRef ? (eta - etaRef) * 3000 : 0;
+      limite = (QnomNum < 2 ? basePeq + bonusE - 300 * QnomNum / 2 : base + bonusE) - F;
+      etaOK = eta >= etaMin;
+      nota = ref + ': UVB com ' + (rac ? 'recuperador de circuito (run-around)' : 'recuperador') + ', qnom ' + QnomNum.toFixed(2) + ' m³/s, bónus E ' + Math.round(bonusE) + ', correção dos filtros F = ' + Math.round(F) + (F ? '' : ' (filtros da configuração de referência)') + '.'
+        + (etaOK ? '' : ' η recuperador ' + Math.round(eta * 100) + ' % < ' + Math.round(etaMin * 100) + ' % exigido.');
     }
     let classe = null;
     if (limite != null) {
@@ -943,6 +948,7 @@ VC.normas = {
       limiteBase: limite,
       qnom: QnomNum,
       bonusE: Math.round(bonusE),
+      F,
       etaOK,
       conservador: false,
       nota,
@@ -957,6 +963,10 @@ VC.normas = {
   },
   rotuloTipologia(t) { return ({ comercio: 'Comércio e Serviços', residencial: 'Residencial', saude: 'Saúde', industria: 'Indústria' })[t] || t; },
   // Tipo Ecodesign por omissão de uma UTA, quando o utilizador não o escolheu.
+  potenciaTermicaW() {
+    const p = VC.dados && VC.dados.params, kW = p ? p.potenciaTermica : null;
+    return (kW === null || kW === undefined || kW === '' || !isFinite(Number(kW))) ? null : Number(kW) * 1000;
+  },
   tipoUVPadrao(u) {
     if (!u) return 'BVU_HRS';
     if (u.tipoUV && (VC.conhecimento.tabelas.SFP_TIPOS || {})[u.tipoUV]) return u.tipoUV;
@@ -964,7 +974,35 @@ VC.normas = {
     if (u.recuperadorAtivo !== false) return 'BVU_HRS';
     return (u.componentes || []).some(c => /filtro/i.test(c.tipo || '')) ? 'UVU_FILTER' : 'UVU_SEM_FILTER';
   },
+  // Fase 3: categoria SFP da EN 16798-3 (ventilador completo: potência elétrica / caudal)
+  categoriaSFP(sfp) {
+    const t = VC.conhecimento.tabelas.SFP_CATEGORIAS || [];
+    const v = Number(sfp);
+    if (!isFinite(v) || v < 0) return null;
+    const c = t.find(x => v <= x.max);
+    return c ? c.cat : null;
+  },
+  // Fase 3: correção F do Ecodesign a partir dos filtros de cada lado (fino na insuflação, médio na extração)
+  _classeFiltro(c) {
+    const s = String((c && (c.tipo || c.nome)) || '');
+    if (!/filtro|filter/i.test(s)) return null;
+    if (/\bF[7-9]\b|ePM\s*1\b|ePM1\b|\bE1[0-2]\b|\bH1[0-4]\b|HEPA/i.test(s)) return 'fino';
+    if (/\bM[56]\b|\bF[56]\b|ePM\s*10\b|ePM10\b|ePM\s*2[,.]5|ePM2[,.]5/i.test(s)) return 'medio';
+    return 'grosso';
+  },
+  correcaoFiltrosF(componentesIns, componentesExt) {
+    const F = VC.conhecimento.tabelas.SFPint.F;
+    const cls = l => (l || []).map(c => this._classeFiltro(c)).filter(Boolean);
+    const fino = componentesIns == null ? true : cls(componentesIns).indexOf('fino') >= 0;
+    const medio = componentesExt == null ? true : cls(componentesExt).some(k => k === 'medio' || k === 'fino');
+    return fino && medio ? F.completo : (fino ? F.semMedio : (medio ? F.semFino : F.nenhum));
+  },
   dl101D(potenciaW) {
+    // Fase 3: a potência é a TÉRMICA nominal global (aquecimento ou arrefecimento), não a dos ventiladores.
+    // null / vazio = por definir.
+    if (potenciaW === null || potenciaW === undefined || potenciaW === '' || !isFinite(Number(potenciaW))) {
+      return { potencia: null, porDefinir: true, sgtc: false, sgt: false, nivelGestao: null, inspecaoObrigatoria: false, bacsObrigatorio: false, descricao: 'Potência térmica nominal global por definir (Setup)' };
+    }
     const P = Math.max(0, Number(potenciaW) || 0);
     const SGTC_LIMIAR = VC.constantes.DL101D.SGTC;
     const SGT_LIMIAR  = VC.constantes.DL101D.SGT;
@@ -979,6 +1017,7 @@ VC.normas = {
         : (P > INSPECAO_LIMIAR
           ? 'Sem requisito SGT/SGTC (P < 100 kW) · inspeção periódica obrigatória (P > 70 kW)'
           : 'Sem requisito SGT/SGTC (P < 100 kW)'));
+    // potência térmica do Setup em kW → W (usado pela app inteira: quadro legal, caderno, avisos)
     return {
       potencia: P,
       sgtc: P >= SGTC_LIMIAR,

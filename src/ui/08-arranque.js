@@ -316,6 +316,7 @@ window.renderSetup = function () {
        '<option value="IV"' + (catSel==='IV'?' selected':'') + '>Cat. IV (Rp 2.5 · Ra 0.3)</option>' +
        '</select></div>';
 
+  h += '<div class="campo-grupo" style="margin-bottom:8px"><label>Potência térmica nominal global (kW) <span style="font-weight:400;opacity:.7">(DL 101-D: SACE ≥ 290 kW · inspeção &gt; 70 kW)</span></label><input type="number" step="1" min="0" placeholder="por definir" title="Aquecimento ou arrefecimento, isolados ou combinados com ventilação (não é a potência dos ventiladores)" value="' + (p.potenciaTermica != null && p.potenciaTermica !== '' ? p.potenciaTermica : '') + '" onchange="if(this.value===\'\') delete VC.dados.params.potenciaTermica; else VC.dados.params.potenciaTermica=VC.utils.num(this.value); VC.estado.sincronizar();"></div>';
   h += '<div class="campo-grupo" style="margin-bottom:8px"><label>Eficácia de Remoção (εv)</label><input type="number" step="0.1" min="0.1" value="' + (VC.dados.eficaciaRemocao ?? 1.0) + '" onchange="VC.dados.eficaciaRemocao=VC.utils.num(this.value); VC.estado.sincronizar();"></div>';
 
   // v11.2: só Comércio e Serviços (âmbito da Portaria 138-I) está implementado. As outras tipologias aparecem

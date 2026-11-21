@@ -207,6 +207,23 @@ const CASOS = [
     const c = VC.conhecimento.tabelas.T13.sanitarios.publico_normal, o = c.min; c.min = 45;
     return () => { c.min = o; };
   }],
+  // Fase 3 da auditoria: bases legais
+  ['UVB: cada metade volta a ser comparada sozinha com o limite da unidade', 'N6.T15', () => {
+    const o = VC.calculo.classificarUVB; VC.calculo.classificarUVB = function () {};
+    return () => { VC.calculo.classificarUVB = o; };
+  }],
+  ['Ecodesign: correção F dos filtros ignorada', 'N6.T16', () => {
+    const o = VC.normas.classificarSFP; VC.normas.classificarSFP = function (t, s, q, e) { return o.call(this, t, s, q, e, 0); };
+    return () => { VC.normas.classificarSFP = o; };
+  }],
+  ['SFP: categorias da EN 16798-3 trocadas', 'N6.T17', () => {
+    const T = VC.conhecimento.tabelas.SFP_CATEGORIAS, o = T[3].max; T[3].max = 1000;
+    return () => { T[3].max = o; };
+  }],
+  ['DL 101-D volta a usar a potência dos ventiladores', 'N2.T20', () => {
+    const o = VC.normas.potenciaTermicaW; VC.normas.potenciaTermicaW = function () { return (VC.calculo.ultimo && VC.calculo.ultimo.power) || 0; };
+    return () => { VC.normas.potenciaTermicaW = o; };
+  }],
   // Fase 2 da auditoria: encadeamento
   ['Filtro, bateria e recuperador do ramal voltam a somar ao Δp total', 'N4.T23', () => {
     const o = VC.calculo.calcularDeltaPAcumulado;
