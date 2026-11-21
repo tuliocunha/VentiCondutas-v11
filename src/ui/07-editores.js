@@ -1428,7 +1428,7 @@ VC.editorRamais = VC.editorRamais || {
  _trocosTxt(r) {
    const T = (r.trocos || []).filter(t => t.Q > 0);
    if (r.modoTrocos !== 'posicionado' || T.length < 2) return '<span title="Sem derivações posicionadas: um só troço com o caudal total (cálculo conservador)" style="color:var(--texto-suave)">1</span>';
-   const tit = T.map(t => VC.utils.fmt(t.de, 1) + '–' + VC.utils.fmt(t.ate, 1) + ' m · ' + VC.utils.fmt(t.Q, 0) + ' m³/h · ' + (t.secao || ('Ø' + t.Dcom)) + ' · ' + VC.utils.fmt(t.v, 2) + ' m/s · ' + VC.utils.fmt(t.dpLin, 1) + ' Pa').join('\n');
+   const tit = T.map(t => VC.utils.fmt(t.de, 1) + '–' + VC.utils.fmt(t.ate, 1) + ' m · ' + VC.utils.fmt(t.Q, 0) + ' m³/h · ' + (t.secao || ('Ø' + t.Dcom)) + ' · ' + VC.utils.fmt(t.v, 2) + ' m/s · ' + VC.utils.fmt(t.dpLin, 1) + ' Pa' + ((t.dpTe || t.dpReducao) ? ' + derivação ' + VC.utils.fmt((t.dpTe || 0) + (t.dpReducao || 0), 1) + ' Pa' : '')).join('\n');
    return '<b title="' + VC.utils.esc(tit) + '" style="cursor:help">' + T.length + '</b> <small>' + VC.utils.esc(T.map(t => t.secao || ('Ø' + t.Dcom)).join(' → ')) + '</small>';
  },
  /* v11.3: renomear em cascata (sub-ramais, terminais, espaços, nós e troços) */

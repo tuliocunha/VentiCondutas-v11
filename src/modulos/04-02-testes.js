@@ -156,7 +156,7 @@ VC6.testes = {
         return doSetup && proprio;
       } finally { d.restricaoH = h0; d.params.rugosidade = e0; } } });
     // Fase 2A da auditoria: caudal variável ao longo do ramal (troços entre derivações)
-    self.registar({ id: 'N4.T21', nucleo: 'N4', grupo: 'Hidráulico', nome: 'Caudal desce ao longo do ramal (troços entre derivações)', criterio: 'RA 12 m com terminais de 300 m³/h a 4, 8 e 12 m e sub-ramal RB (200 m³/h) a 6 m → troços 1100/800/600/300 m³/h, Ø não cresce para jusante, Δp até RB = Δp de RA até 6 m; sem posições → 1 troço, como antes', fn: () => {
+    self.registar({ id: 'N4.T21', nucleo: 'N4', grupo: 'Hidráulico', nome: 'Caudal desce ao longo do ramal (troços entre derivações)', criterio: 'RA 12 m com terminais de 300 m³/h a 4, 8 e 12 m e sub-ramal RB (200 m³/h) a 6 m → troços 1100/800/600/300 m³/h, Ø não cresce para jusante, Δp até RB = Δp de RA até 6 m; tês (ζ = 0,4·(1 − v_j/v_m)²) e reduções (ζ = 0,05) nas derivações; sem posições → 1 troço, como antes', fn: () => {
       const D = VC.dados, g = { esp: D.espacos, ter: D.terminais, ram: D.ramais, utas: D.utas, tr: D.transferencias };
       const mkT = (id, ramal, Q, s) => ({ id: 'X' + id, nome: 'X' + id, tipo: 'Difusor', rede: 'insuflacao', ramalRef: ramal, espacos: [{ nome: 'EX', Q_parcela: Q }], v_saida: 2, sRamal: s });
       try {
@@ -172,10 +172,14 @@ VC6.testes = {
         const okL = Math.abs(A.deltaPlin - Ts.reduce((s, t) => s + t.R * t.L, 0)) < 1e-9;
         const okB = Math.abs(B.deltaPInicio - VC.calculo.dpAte(A, 6)) < 1e-9 && B.deltaPInicio < A.deltaPTroco - 1e-6;
         const okU = Math.abs(D.utas[0].Q * 3600 - 1100) < 1e-6;
+        // tês e reduções: no início de cada troço i ≥ 1, ζ_tê = 0,4·(1 − v_j/v_m)² (ref. v_m) e, se o Ø reduz, ζ = 0,05 (ref. v_j)
+        const rho = VC.calculo.ultimo.rho, ZD = VC.constantes.ZETA_DERIVACAO, pd = v => 0.5 * rho * v * v;
+        const esperado = Ts.reduce((s, t, i) => i === 0 ? 0 : s + ZD.TE_PASSAGEM * Math.pow(1 - t.v / Ts[i - 1].v, 2) * pd(Ts[i - 1].v) + (t.Dcom < Ts[i - 1].Dcom ? ZD.REDUCAO.contracao * pd(t.v) : 0), 0);
+        const okZ = A.deltaPderiv > 0 && Math.abs(A.deltaPderiv - esperado) < 1e-9 && Math.abs(A.deltaPTroco - (A.deltaPlin + A.deltaPsing + A.deltaPderiv)) < 1e-9 && Ts[1].dpReducao === 0 && Ts[2].dpReducao > 0;
         D.terminais.forEach(t => { delete t.sRamal; }); delete B.sPai;
         VC.calculo.calcularTudo();
-        const okS = A.modoTrocos === 'simplificado' && A.trocos.length === 1 && Math.abs(B.deltaPInicio - A.deltaPTroco) < 1e-9;
-        return okQ && okD && okL && okB && okU && okS;
+        const okS = A.modoTrocos === 'simplificado' && A.trocos.length === 1 && Math.abs(B.deltaPInicio - A.deltaPTroco) < 1e-9 && A.deltaPderiv === 0;
+        return okQ && okD && okL && okB && okU && okZ && okS;
       } finally { Object.assign(D, { espacos: g.esp, terminais: g.ter, ramais: g.ram, utas: g.utas, transferencias: g.tr }); ['ordenacaoTopologica', 'cacheBalanco', 'cacheMaterializacao'].forEach(k => VC.perf[k] && VC.perf[k].invalidar && VC.perf[k].invalidar()); VC.calculo.calcularTudo(); }
     } });
     self.registar({ id: 'N4.T22', nucleo: 'N4', grupo: 'Hidráulico', nome: 'Posição das derivações lida da planta', criterio: 'traçado de 100 px e L = 10 m: terminal em (30, 5) → s = 3 m; sub-ramal que começa em (70, 0) → s = 7 m; noutro piso → fim do ramal; escrita à mão prevalece', fn: () => {

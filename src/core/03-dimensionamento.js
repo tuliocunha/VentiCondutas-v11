@@ -513,15 +513,33 @@ VC.calculo = {
       r.vMaxTrocos = r.trocos.reduce((m, t) => Math.max(m, t.Q > 0 ? (t.v || 0) : 0), Number(r.v) || 0);
       r.deltaPlin = r.trocos.reduce((s, t) => s + t.dpLin, 0);
       r.deltaPsing = (Number(r.zeta) || 0) * 0.5 * rho * (Number(r.v) || 0) * (Number(r.v) || 0);
-      r.deltaPTroco = r.deltaPlin + r.deltaPsing;
+      // perdas nas derivações ao longo do ramal: passagem direta do tê + redução/ampliação, no início de cada troço i ≥ 1
+      const ZD = VC.constantes.ZETA_DERIVACAO, ext = VC.redes.ehExtracao(r.rede);
+      r.trocos.forEach((t, i) => {
+        t.dpTe = 0; t.dpReducao = 0;
+        if (i === 0 || !(t.Q > 0)) return;
+        const m = r.trocos[i - 1], vm = Number(m.v) || 0, vj = Number(t.v) || 0;
+        if (vm > 0) t.dpTe = ZD.TE_PASSAGEM * Math.pow(1 - vj / vm, 2) * 0.5 * rho * vm * vm;
+        const Am = m.Q / 3600 / Math.max(vm, 1e-9), Aj = t.Q / 3600 / Math.max(vj, 1e-9);
+        if (Am > Aj * (1 + 1e-6) && vj > 0) {   // a secção muda: Aj é a menor
+          t.dpReducao = ext ? ZD.REDUCAO.expansao * Math.pow(1 - Aj / Am, 2) * 0.5 * rho * vj * vj
+            : ZD.REDUCAO.contracao * 0.5 * rho * vj * vj;
+        }
+      });
+      r.deltaPderiv = r.trocos.reduce((s, t) => s + (t.dpTe || 0) + (t.dpReducao || 0), 0);
+      r.deltaPTroco = r.deltaPlin + r.deltaPsing + r.deltaPderiv;
     });
   },
 
-  /* Δp do início do ramal até à posição s (perda singular de entrada + troços até s) */
+  /* Δp do início do ramal até à posição s (perda singular de entrada + troços até s + tês e reduções antes de s) */
   dpAte(r, s) {
     const trocos = r.trocos || [{ de: 0, ate: Number(r.L) || 0, dpLin: Number(r.deltaPlin) || 0, L: Number(r.L) || 0 }];
     let dp = Number(r.deltaPsing) || 0;
-    trocos.forEach(t => { const ov = Math.max(0, Math.min(s, t.ate) - t.de); if (ov > 0 && t.L > 0) dp += t.dpLin * ov / t.L; });
+    trocos.forEach(t => {
+      const ov = Math.max(0, Math.min(s, t.ate) - t.de);
+      if (ov > 0 && t.L > 0) dp += t.dpLin * ov / t.L;
+      if (t.de < s - 1e-9) dp += (t.dpTe || 0) + (t.dpReducao || 0);   // a derivação no início do troço fica a montante de s
+    });
     return dp;
   },
 

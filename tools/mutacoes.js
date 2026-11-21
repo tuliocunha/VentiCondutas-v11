@@ -216,6 +216,10 @@ const CASOS = [
     const o = VC.calculo.dpAte; VC.calculo.dpAte = function (r) { return o.call(this, r, Number(r.L) || 0); };
     return () => { VC.calculo.dpAte = o; };
   }],
+  ['Troços: sem perdas nos tês e nas reduções', 'N4.T21', () => {
+    const z = VC.constantes.ZETA_DERIVACAO, o = { t: z.TE_PASSAGEM, c: z.REDUCAO.contracao }; z.TE_PASSAGEM = 0; z.REDUCAO.contracao = 0;
+    return () => { z.TE_PASSAGEM = o.t; z.REDUCAO.contracao = o.c; };
+  }],
   ['Planta: a posição projetada no traçado é ignorada', 'N4.T22', () => {
     const o = VC.calculo._projetarNoTracado; VC.calculo._projetarNoTracado = function () { return null; };
     return () => { VC.calculo._projetarNoTracado = o; };

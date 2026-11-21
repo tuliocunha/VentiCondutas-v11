@@ -816,6 +816,12 @@ VC.constantes = {
   VMAX_NIVEL: { 1: 6.0, 2: 5.0, 3: 4.0, 4: 3.0 },
   // v11.1 (4.7): valores de projeto num só sítio.
   R_ALVO: 1.0,                 // Pa/m · perda de carga linear alvo no método de perda constante (prática ASHRAE/CIBSE)
+  // Fase 2A · perdas localizadas nas derivações ao longo de um ramal (valores típicos, editáveis):
+  //   passagem direta do tê: ζ = TE_PASSAGEM · (1 − v_jusante / v_montante)², referido a v_montante (Idelchik, tê divergente;
+  //     na extração, tê convergente, usa-se a mesma expressão como aproximação conservadora);
+  //   redução cónica (insuflação, fluxo para a secção menor): ζ = REDUCAO.contracao, referido a v na secção menor;
+  //   ampliação cónica (extração, fluxo para a secção maior): ζ = REDUCAO.expansao · (1 − A_menor / A_maior)², referido a v na secção menor.
+  ZETA_DERIVACAO: { TE_PASSAGEM: 0.4, REDUCAO: { contracao: 0.05, expansao: 0.3 } },
   TERMINAL: { vAtencao: 2.2, vMax: 2.5, LwAtencao: 35, LwMax: 40 },   // m/s no colo · dB(A) · critério de conforto (VDI 2081)
   BALANCO_ESPACO: { sub: 0.90, sobre: 1.20 },                          // Q servido / Q necessário · tolerância da app
   BALANCO_RESIDUO: 5,          // m³/h · resíduo aceite no balanço de massa de um espaço (2× = desequilíbrio grave)
