@@ -26,11 +26,22 @@ VC.normativaUI = {
       return c.g !== 2 && (Number(c.Q_normas) || 0) <= 0;
     }).length;
     const espacosComStatusErro = (VC.dados.espacos || []).filter(e => e.status === 'NÃO CONF.').length;
-    const p138OK = espacosSemQNormas === 0 && espacosComStatusErro === 0;
+    // Fase 2: o caudal que os terminais servem tem de chegar ao mínimo legal (Q_normas: T11/T12 em G1 e G3 pela insuflação, T13 em G4 pela extração)
+    let abaixoMinimo = 0, semTerminais = 0;
+    (VC.dados.espacos || []).forEach(e => {
+      const c = VC.calculo.calcularQEspaco(e); if (c.g === 2 || !(Number(c.Q_normas) > 0)) return;
+      const rede = c.tipoCaudal === 'EXTRACAO' ? 'extracao' : 'insuflacao';
+      const n = VC.calculo.terminaisQueServem(e.nome).filter(t => VC.calculo._redeBase(t) === rede).length;
+      if (!n) { semTerminais++; return; }
+      if (VC.calculo.QservidoAoEspaco(e.nome, rede) + VC.constantes.MINIMO_LEGAL_ARREDONDAMENTO < Number(c.Q_normas)) abaixoMinimo++;
+    });
+    const p138OK = espacosSemQNormas === 0 && espacosComStatusErro === 0 && abaixoMinimo === 0;
     let p138Resultado = (VC.dados.espacos || []).length + ' espaços · ' +
       (espacosSemQNormas > 0 ? espacosSemQNormas + ' sem caudal mínimo' : 'todos com caudal');
     if (espacosComStatusErro > 0) p138Resultado += ' · ' + espacosComStatusErro + ' em não conformidade';
-    out.push({ norma: 'Portaria 138-I/2021', item: 'Caudais mínimos P138 (T11/T12/T13)', resultado: p138Resultado, estado: p138OK ? 'CONFORME' : 'NÃO CONFORME' });
+    if (abaixoMinimo > 0) p138Resultado += ' · ' + abaixoMinimo + ' com terminais abaixo do mínimo legal';
+    if (semTerminais > 0) p138Resultado += ' · ' + semTerminais + ' ainda sem terminais';
+    out.push({ norma: 'Portaria 138-I/2021', item: 'Caudais mínimos P138 (T11/T12/T13) servidos pelos terminais', resultado: p138Resultado, estado: p138OK ? (semTerminais ? 'ATENÇÃO' : 'CONFORME') : 'NÃO CONFORME' });
 
     // v11.1: cada UTA tem o seu limite (tipo de unidade e caudal); mostra-se a mais desfavorável.
     const sc = x.sfpClass || {};
@@ -54,8 +65,16 @@ VC.normativaUI = {
       estado: dl.nivelGestao ? 'INFORMATIVO' : 'CONFORME'
     });
 
+    // Fase 2: o balanço de massa vê os resíduos de cada espaço (antes só via os ciclos de transferências)
     const ciclos = VC6.balanco ? VC6.balanco.detetarCiclos() : [];
-    out.push({ norma: 'Balanço de massa · P1', item: 'Σ Q_in = Σ Q_out (±5 m³/h)', resultado: ciclos.length > 0 ? ciclos.length + ' ciclo(s) detetado(s)' : 'Sem ciclos · OK', estado: ciclos.length > 0 ? 'NÃO CONFORME' : 'CONFORME' });
+    const bal = (VC6.balanco && VC6.balanco.propagar) ? VC6.balanco.propagar() : [];
+    const graves = bal.filter(b => b.estado === 'DESEQUILIBRIO_GRAVE'), leves = bal.filter(b => b.estado === 'DESEQUILIBRIO_LEVE');
+    const tol = (VC6.balanco && VC6.balanco.TOLERANCIA) || 5;
+    const partesBal = [];
+    if (graves.length) partesBal.push(graves.length + ' espaço(s) com |resíduo| > ' + (2 * tol) + ' m³/h (ex.: ' + graves.slice(0, 3).map(b => VC.utils.esc(b.nome) + ' ' + VC.utils.fmt(b.residuo, 0)).join(', ') + ')');
+    if (leves.length) partesBal.push(leves.length + ' espaço(s) entre ' + tol + ' e ' + (2 * tol) + ' m³/h');
+    if (ciclos.length) partesBal.push(ciclos.length + ' ciclo(s) de transferências');
+    out.push({ norma: 'Balanço de massa · P1', item: 'Σ Q_in = Σ Q_out (±' + tol + ' m³/h) em cada espaço', resultado: partesBal.length ? partesBal.join(' · ') : bal.length + ' espaços equilibrados · sem ciclos', estado: (graves.length || ciclos.length) ? 'NÃO CONFORME' : (leves.length ? 'ATENÇÃO' : 'CONFORME') });
 
     const velocidadesOK = (VC.dados.ramais || []).every(r => Math.max(Number(r.v) || 0, Number(r.vMaxTrocos) || 0) <= VC.calculo.vMaxDe(r) + 1e-6);   // o mesmo limite por nível do dimensionamento (VMAX_NIVEL)
     out.push({ norma: 'VDI 2081:2018', item: 'Velocidade máxima', resultado: velocidadesOK ? 'Todas dentro do limite' : 'Existem ramais acima do limite', estado: velocidadesOK ? 'CONFORME' : 'NÃO CONFORME' });   // o cálculo dá ERRO «Velocidade excessiva»: a mesma gravidade

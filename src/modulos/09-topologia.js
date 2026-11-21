@@ -528,7 +528,7 @@ VC.topologia._gerarParaUtaExtSuja = function (uta, idxUta, cont) {
       nome, parente: '', nivelNumero: 1, rede: 'extracao_suja',
       utaRef: uta.id, L: 8, zeta: 1.0,
       localizacao: esp.localizacao || { piso: 'P0', ala: null, cota: null },
-      deltaP_registo: 25, deltaP_filtro: 35
+      deltaP_registo: 25   // Fase 2: o filtro é componente da UTA (não se conta no ramal)
     });
     cont.R1++;
 

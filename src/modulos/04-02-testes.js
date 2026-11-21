@@ -189,6 +189,42 @@ VC6.testes = {
       const c = VC.calculo.posicaoNoRamal({ planta: { pisoId: 'p2', x: 30, y: 0 } }, r, true), d = VC.calculo.posicaoNoRamal(Object.assign({ sRamal: 1.5 }, t), r, true);
       return Math.abs(a.s - 3) < 1e-9 && a.origem === 'planta' && Math.abs(b.s - 7) < 1e-9 && c.s === 10 && c.origem === 'fim' && d.s === 1.5 && d.origem === 'utilizador';
     } });
+    // Fase 2 da auditoria: encadeamento
+    self.registar({ id: 'N4.T23', nucleo: 'N4', grupo: 'Hidráulico', nome: 'Δp da UTA não se conta duas vezes no ramal', criterio: 'ramal com deltaP_filtro 35, bateria 65, recuperador 110 e registo 25 → só o registo (25 Pa) entra no Δp total; o filtro conta só no Δp interno da UTA', fn: () => {
+      const D = VC.dados, g = { esp: D.espacos, ter: D.terminais, ram: D.ramais, utas: D.utas, tr: D.transferencias };
+      try {
+        D.espacos = []; D.transferencias = []; D.terminais = [];
+        D.utas = [{ id: 'UX', nome: 'UX', rede: 'extracao', componentes: [{ tipo: 'Filtro G4', deltaP: 35, deltaP_final: 90 }], eta: 0.6, fs: 1, transmissao: 1 }];
+        D.ramais = [{ id: 'A', nome: 'RX', parente: '', nivelNumero: 1, rede: 'extracao', utaRef: 'UX', L: 8, zeta: 1, geometriaInput: { forma: 'circular' }, deltaP_filtro: 35, deltaP_bateria: 65, deltaP_recup: 110, deltaP_registo: 25 }];
+        ['ordenacaoTopologica', 'cacheBalanco'].forEach(k => VC.perf[k] && VC.perf[k].invalidar && VC.perf[k].invalidar());
+        VC.calculo.calcularTudo();
+        const r = D.ramais[0];
+        return Math.abs(r.deltaPtotal - ((r.deltaPAcumulado || 0) + 25)) < 1e-9;
+      } finally { Object.assign(D, { espacos: g.esp, terminais: g.ter, ramais: g.ram, utas: g.utas, transferencias: g.tr }); ['ordenacaoTopologica', 'cacheBalanco', 'cacheMaterializacao'].forEach(k => VC.perf[k] && VC.perf[k].invalidar && VC.perf[k].invalidar()); VC.calculo.calcularTudo(); }
+    } });
+    self.registar({ id: 'N2.T18', nucleo: 'N2', grupo: 'Normas', nome: 'Sono: só critério da ocupação (Portaria 138-I, 1.2.2 b)', criterio: 'Sono 50 m², N = 2 → 32 m³/h (16 × 2), sem T12 × A; Escritório igual → 150 (T12 × A)', fn: () => {
+      const q = t => VC.calculo.calcularQ_normas({ tipo: t, A: 50, H: 2.7, N: 2 }).Q_normas * (Number(VC.dados.eficaciaRemocao) || 1);
+      return Math.abs(q('Sono') - 32) < 1e-9 && Math.abs(q('Internamento') - 32) < 1e-9 && Math.abs(q('Escritório') - 150) < 1e-9;
+    } });
+    self.registar({ id: 'N2.T19', nucleo: 'N2', grupo: 'Normas', nome: 'Balneário pela Tabela 13 não fica NÃO CONFORME por renovações/hora', criterio: 'balneário 20 m², H 2,8 m, 1 duche → 200 m³/h (10 × A), 3,6 renovações/hora < 8 de boa prática → estado OK', fn: () => {
+      const c = VC.calculo.calcularQ_normas({ tipo: 'Balneários', A: 20, H: 2.8, V: 56, numDuches: 1 });
+      return c.Q_normas === 200 && c.status === 'OK';
+    } });
+    self.registar({ id: 'N3.T21', nucleo: 'N3', grupo: 'Balanço', nome: 'G3 e G4: caudal servido comparado com o exigido; quadro legal com resíduos e mínimo legal', criterio: 'sanitário 45 m³/h com grelha de 10 → SUB; escritório com 50 de 96 insuflados e sem extração → P138 e balanço NÃO CONFORME', fn: () => {
+      const D = VC.dados, g = { esp: D.espacos, ter: D.terminais, ram: D.ramais, utas: D.utas, tr: D.transferencias };
+      try {
+        D.transferencias = []; D.ramais = []; D.utas = [];
+        D.espacos = [{ id: 81, nome: 'WCx', tipo: 'Sanitários', A: 3, H: 2.6, V: 7.8, regimeSanitario: 'privado_continuo', definicoes: [] }, { id: 82, nome: 'OFx', tipo: 'Escritório', A: 20, H: 2.6, V: 52, N: 4, definicoes: [] }];
+        D.terminais = [{ id: 'w', nome: 'w', rede: 'extracao_suja', ramalRef: '', espacos: [{ nome: 'WCx', Q_parcela: 10 }] }];
+        ['ordenacaoTopologica', 'cacheBalanco', 'cacheMaterializacao'].forEach(k => VC.perf[k] && VC.perf[k].invalidar && VC.perf[k].invalidar());
+        const x = VC.calculo.calcularTudo();
+        const okSub = VC.calculo.balancoEspaco('WCx').estado === 'SUB';
+        D.espacos[1].definicoes = [{ id: 'd1', rede: 'insuflacao', Q_total: 50, quantidade: 1 }];
+        const L = VC.normativaUI.verificacoesLegais(VC.calculo.calcularTudo());
+        const p138 = L.find(l => /Portaria 138-I/.test(l.norma)), bal = L.find(l => /Balanço de massa/.test(l.norma));
+        return x && okSub && p138.estado === 'NÃO CONFORME' && /abaixo do mínimo legal/.test(p138.resultado) && bal.estado === 'NÃO CONFORME' && /resíduo/.test(bal.resultado);
+      } finally { Object.assign(D, { espacos: g.esp, terminais: g.ter, ramais: g.ram, utas: g.utas, transferencias: g.tr }); ['ordenacaoTopologica', 'cacheBalanco', 'cacheMaterializacao'].forEach(k => VC.perf[k] && VC.perf[k].invalidar && VC.perf[k].invalidar()); VC.calculo.calcularTudo(); }
+    } });
     self.registar({ id: 'N6.T14', nucleo: 'N6', grupo: 'UTAs', nome: 'Estado dos filtros muda o Δp interno', criterio: 'limpo < médio < sujo numa UTA com filtros', fn: () => {
       const u = VC.dados.utas.find(x => (x.componentes || []).some(c => /filtro/i.test(c.tipo || ''))); if (!u) return true;
       const m0 = VC.dados.filtros.modo, dp = {};
@@ -709,7 +745,7 @@ VC6.testes = {
       } finally { D.espacos = g.esp; D.transferencias = g.tr; D.terminais = g.ter; VC.calculo.calcularTudo(); }
     } });
     // coerência com as normas (pontos 1–5): arquivo G3, garagem RT-SCIE, exaustão sanitária independente, recuperação de calor, velocidade
-    self.registar({ id: 'UI.T33', nucleo: 'UI', grupo: 'UI', nome: 'Normas: arquivo, garagem, exaustão sanitária, recuperador', criterio: 'arquivo 100 m² = máx(3×100, 2×300) = 600; garagem sem lugares → POR FAZER, 10 lugares com 2000 → ERRO, 4000 → ATENÇÃO, 6000 → nada; rede com WC + escritório → ERRO; UTA com recuperador e WC → ATENÇÃO', fn: () => {
+    self.registar({ id: 'UI.T33', nucleo: 'UI', grupo: 'UI', nome: 'Normas: arquivo, garagem, exaustão sanitária, recuperador', criterio: 'arquivo 100 m² = máx(3×100, 2×300) = 600; garagem sem lugares → POR FAZER, 10 lugares com 2000 → ERRO, 4000 → ERRO (falta o 2.º patamar), 6000 → nada; rede com WC + escritório → ERRO; UTA com recuperador e WC → ATENÇÃO', fn: () => {
       const D = VC.dados, g = { esp: D.espacos, ter: D.terminais, ram: D.ramais, utas: D.utas, tr: D.transferencias, ev: D.eficaciaRemocao };
       const tipos = () => (VC.calculo.calcularTudo().findings || []).map(f => f.severidade + '|' + f.tipo + '|' + f.elemento);
       try {
@@ -720,7 +756,7 @@ VC6.testes = {
         D.espacos = [gar]; D.terminais = []; D.ramais = []; D.utas = [];
         const ok2a = tipos().includes('POR FAZER|Lugares da garagem por definir|Gar');
         gar.lugares = 10; const ok2b = tipos().includes('ERRO|Garagem abaixo do RT-SCIE|Gar');
-        gar.definicoes[0].Q_total = 4000; const ok2c = tipos().includes('ATENÇÃO|Garagem abaixo do RT-SCIE|Gar');
+        gar.definicoes[0].Q_total = 4000; const ok2c = tipos().includes('ERRO|Garagem abaixo do RT-SCIE|Gar');   // Fase 2: os dois patamares são obrigatórios
         gar.definicoes[0].Q_total = 6000; const ok2d = !tipos().some(t => /Garagem abaixo|Lugares da garagem/.test(t));
         const wc = { id: 3, nome: 'WC', tipo: 'Sanitários', A: 4, H: 3, V: 12, geometriaMetodo: 'AH', definicoes: [] }, of = { id: 4, nome: 'Of', tipo: 'Escritório', A: 20, H: 3, V: 60, N: 2, geometriaMetodo: 'AH', definicoes: [] };
         D.espacos = [wc, of];
