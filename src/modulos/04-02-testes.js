@@ -304,6 +304,51 @@ VC6.testes = {
       const okDp = f({ Q: 400, v_saida: 1 }).dPCalc > VC.constantes.TERMINAL.dpAtencao && ['ATENÇÃO', 'NÃO CONF.'].indexOf(f({ Q: 400, v_saida: 1 }).status) >= 0;
       return okLw && okV && okDp;
     } });
+    // Fase 5 da auditoria: requisitos dos sistemas (Portaria 138-I, Anexo II) e escadas pressurizadas
+    const _cenarioSistemas = (utas, fn) => {
+      const D = VC.dados, g = { esp: D.espacos, ter: D.terminais, ram: D.ramais, utas: D.utas, tr: D.transferencias, p: Object.assign({}, D.params) };
+      try {
+        D.espacos = []; D.transferencias = [];
+        D.utas = utas.map((u, i) => Object.assign({ id: 'U' + i, nome: 'U' + i, eta: 0.6, fs: 1, transmissao: 1, componentes: [] }, u));
+        D.ramais = D.utas.map((u, i) => ({ id: 'R' + i, nome: 'RS' + i, parente: '', nivelNumero: 1, rede: u.rede, utaRef: u.id, L: 5, zeta: 0.5, geometriaInput: { forma: 'circular' } }));
+        D.terminais = D.utas.map((u, i) => ({ id: 'T' + i, nome: 'TS' + i, tipo: 'Difusor', rede: u.rede, ramalRef: 'RS' + i, espacos: [{ nome: 'EZ', Q_parcela: u._Q }], v_saida: 2 }));
+        ['ordenacaoTopologica', 'cacheBalanco', 'cacheMaterializacao'].forEach(k => VC.perf[k] && VC.perf[k].invalidar && VC.perf[k].invalidar());
+        return fn(() => (VC.calculo.calcularTudo().findings || []), D);
+      } finally { Object.assign(D, { espacos: g.esp, terminais: g.ter, ramais: g.ram, utas: g.utas, transferencias: g.tr }); D.params = g.p; ['ordenacaoTopologica', 'cacheBalanco', 'cacheMaterializacao'].forEach(k => VC.perf[k] && VC.perf[k].invalidar && VC.perf[k].invalidar()); VC.perf.cacheFisica.invalidar(); VC.calculo.calcularTudo(); }
+    };
+    self.registar({ id: 'N2.T23', nucleo: 'N2', grupo: 'Normas', nome: 'Recuperação de calor obrigatória acima de 80 kW rejeitados (Portaria 138-I, 2.3 c)', criterio: '100 kW rejeitados: extração sem recuperador → ERRO; com recuperador η 0,75 → nada; η 0,45 → ERRO; estimativa ρ·cp·Q·ΔT a partir da T exterior de inverno', fn: () => _cenarioSistemas([{ rede: 'extracao', _Q: 2000 }], (fx, D) => {
+      const tem = () => fx().some(f => f.tipo === 'Recuperação de calor obrigatória' && f.severidade === 'ERRO');
+      D.params.potenciaRejeitada = 100; const a = tem();
+      D.utas[0].componentes = [{ tipo: 'Recuperador', deltaP: 100 }]; D.utas[0].etaRec = 0.75; const b = !tem();
+      D.utas[0].etaRec = 0.45; const c = tem();
+      delete D.params.potenciaRejeitada; D.params.tExtInverno = 0; VC.calculo.calcularTudo();
+      const rho = VC.fisica.rho(D.params.temperatura, D.params.humidade, D.params.altitude);
+      const est = rho * 1006 * (2000 / 3600) * (D.params.temperatura - 0);
+      const d = Math.abs(VC.normas.potenciaRejeitadaW() - est) < 1e-6;
+      return a && b && c && d;
+    }) });
+    self.registar({ id: 'N2.T24', nucleo: 'N2', grupo: 'Normas', nome: 'Free-cooling, caudal variável e gestão técnica (Portaria 138-I, 2.3 b e 1.5 b/c)', criterio: 'insuflação 12 000 m³/h → free-cooling (some com a marca), gestão técnica (some com a integração); 150 kW térmicos → caudal variável (some com controlo CO₂); 2500 m³/h → nenhum', fn: () => _cenarioSistemas([{ rede: 'insuflacao', _Q: 12000 }], (fx, D) => {
+      const tipos = () => fx().map(f => f.tipo);
+      D.params.potenciaTermica = 150;
+      const t0 = tipos(), a = t0.indexOf('Free-cooling') >= 0 && t0.indexOf('Integração em gestão técnica') >= 0 && t0.indexOf('Caudal variável de ar novo') >= 0;
+      D.utas[0].freeCooling = true; D.params.integracaoGT = true; D.utas[0].controloCaudal = 'co2';
+      const t1 = tipos(), b = ['Free-cooling', 'Integração em gestão técnica', 'Caudal variável de ar novo'].every(k => t1.indexOf(k) < 0);
+      D.utas[0].freeCooling = false; D.params.integracaoGT = false; D.terminais[0].espacos[0].Q_parcela = 2500;
+      const t2 = tipos(), c = ['Free-cooling', 'Integração em gestão técnica'].every(k => t2.indexOf(k) < 0);
+      return a && b && c;
+    }) });
+    self.registar({ id: 'N2.T25', nucleo: 'N2', grupo: 'Normas', nome: 'Escada pressurizada: ΔP, velocidade na porta aberta e força (RT-SCIE 161.º; EN 12101-13)', criterio: '50 Pa, 0,6 m/s, 80 N → OK; 0,4 m/s sem câmara → falha; com câmara exige 1 m/s; 120 N → falha; pressurizada sem ΔP → POR FAZER', fn: () => {
+      const v = e => VC.normas.verificarEscadaPressurizada(Object.assign({ tipo: 'Escadas', deltaP: 50, vPortaAberta: 0.6, forcaPorta: 80 }, e));
+      const ok1 = v({}).ok && !v({ vPortaAberta: 0.4 }).ok && !v({ camaraCortaFogo: true, vPortaAberta: 0.8 }).ok && v({ camaraCortaFogo: true, vPortaAberta: 1.1 }).ok && !v({ forcaPorta: 120 }).ok && !v({ deltaP: 90 }).ok;
+      const D = VC.dados, g = D.espacos;
+      try {
+        D.espacos = [{ id: 71, nome: 'EscX', tipo: 'Escadas', A: 10, H: 3, V: 30, pressurizada: true, definicoes: [] }];
+        const a = (VC.calculo.calcularTudo().findings || []).some(f => f.tipo === 'Escada pressurizada por definir' && f.elemento === 'EscX');
+        Object.assign(D.espacos[0], { deltaP: 50, vPortaAberta: 0.3, forcaPorta: 80 });
+        const b = (VC.calculo.calcularTudo().findings || []).some(f => f.tipo === 'Escada pressurizada' && f.severidade === 'ERRO');
+        return ok1 && a && b;
+      } finally { D.espacos = g; VC.calculo.calcularTudo(); }
+    } });
     self.registar({ id: 'N6.T14', nucleo: 'N6', grupo: 'UTAs', nome: 'Estado dos filtros muda o Δp interno', criterio: 'limpo < médio < sujo numa UTA com filtros', fn: () => {
       const u = VC.dados.utas.find(x => (x.componentes || []).some(c => /filtro/i.test(c.tipo || ''))); if (!u) return true;
       const m0 = VC.dados.filtros.modo, dp = {};

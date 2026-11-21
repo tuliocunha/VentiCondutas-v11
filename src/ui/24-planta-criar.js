@@ -115,6 +115,27 @@ P.definirSanitaria = function (id, campo, valor) {
   VC.estado.forcarSync();
   this.redesenhar();
 };
+/* Fase 5 · escada pressurizada (RT-SCIE, art. 161.º; EN 12101-13) */
+P.definirEscada = function (id, campo, valor) {
+  const e = espPorId(id); if (!e || this._bloqueado() || ['pressurizada', 'camaraCortaFogo', 'deltaP', 'vPortaAberta', 'forcaPorta'].indexOf(campo) < 0) return;
+  const antes = this._estado();
+  if (campo === 'pressurizada' || campo === 'camaraCortaFogo') { if (valor) e[campo] = true; else delete e[campo]; }
+  else if (valor === '' || valor == null) delete e[campo]; else e[campo] = Math.max(0, VC.utils.num(valor));
+  this._empilhar('escada «' + e.nome + '»', antes);
+  VC.estado.forcarSync();
+  this.redesenhar();
+};
+P._cartaoEscada = function (e) {
+  if (e.tipo !== 'Escadas') return '';
+  const r = VC.normas.verificarEscadaPressurizada(e), val = k => (e[k] != null && e[k] !== '' ? e[k] : '');
+  const num = (k, rot, step) => '<label>' + rot + ' <input type="number" min="0" step="' + step + '" style="width:64px" value="' + val(k) + '" onchange="VC.planta.definirEscada(' + e.id + ', \'' + k + '\', this.value)"></label>';
+  let h = '<div class="planta-renomear"><label><input type="checkbox"' + (e.pressurizada ? ' checked' : '') + ' onchange="VC.planta.definirEscada(' + e.id + ', \'pressurizada\', this.checked)"> Escada pressurizada <small>RT-SCIE, art. 161.º</small></label></div>';
+  if (!e.pressurizada) return h;
+  h += '<div class="planta-dir">' + num('deltaP', 'ΔP portas fechadas (Pa)', 1) + num('vPortaAberta', 'v porta aberta (m/s)', 0.1) + num('forcaPorta', 'Força na porta (N)', 1)
+    + '<label><input type="checkbox"' + (e.camaraCortaFogo ? ' checked' : '') + ' onchange="VC.planta.definirEscada(' + e.id + ', \'camaraCortaFogo\', this.checked)"> Com câmara corta-fogo</label></div>';
+  h += '<p class="' + (r.falhas.length ? 'planta-porfazer' : 'planta-meta') + '">20–80 Pa · v ≥ ' + r.vMin + ' m/s · força ≤ ' + VC.constantes.ESCADAS.forcaPortaMax + ' N' + (r.falhas.length ? ' — ' + esc(r.falhas.join('; ')) : '') + '</p>';
+  return h;
+};
 P._cartaoSanitaria = function (e) {
   const T = VC.conhecimento.tabelas.T13.sanitarios, c = VC.calculo.calcularQEspaco(e), pub = /^publico/.test(e.regimeSanitario || '');
   const num = (campo, rot) => '<label>' + rot + ' <input type="number" min="0" step="1" style="width:60px" value="' + (Number(e[campo]) > 0 ? e[campo] : '') + '" onchange="VC.planta.definirSanitaria(' + e.id + ', \'' + campo + '\', this.value)"></label>';

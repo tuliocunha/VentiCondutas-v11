@@ -711,7 +711,7 @@ VC.estado._ultimoHash = null;
 VC.estado._hashEstado = function () {
   const partes = [];
   const p = VC.dados && VC.dados.params;
-  if (p) partes.push(p.altitude + '|' + p.temperatura + '|' + p.humidade + '|' + p.rugosidade + '|' + (p.categoria || 'II') + '|' + (p.potenciaTermica == null ? '' : p.potenciaTermica) + '|' + (p.poluicaoEdificio || '') + '|' + (p.tExtInverno == null ? '' : p.tExtInverno));
+  if (p) partes.push(p.altitude + '|' + p.temperatura + '|' + p.humidade + '|' + p.rugosidade + '|' + (p.categoria || 'II') + '|' + (p.potenciaTermica == null ? '' : p.potenciaTermica) + '|' + (p.poluicaoEdificio || '') + '|' + (p.tExtInverno == null ? '' : p.tExtInverno) + '|' + (p.potenciaRejeitada == null ? '' : p.potenciaRejeitada) + '|' + (p.integracaoGT ? 1 : 0));
   partes.push(VC.dados && VC.dados.tipologia || '');
   partes.push(VC.dados && VC.dados.restricaoH || 0);
   partes.push(VC.dados && VC.dados.eficaciaRemocao || 1);
@@ -752,7 +752,7 @@ VC.estado._hashEstado = function () {
     u.id + '|' + u.rede + '|' + (u.eta || 0) + '|' + (u.etaRec || 0) + '|' + (u.fs || 0) +
     '|' + (u.transmissao || 1) + '|' + (u.ativo === false ? '0' : '1') + '|' + (u.curvaFabricante ? (u.curvaFabricante.fabricante + '/' + u.curvaFabricante.modelo) : '') +
     '|' + (u.tipoUV || '') + '|' + (u.recuperadorAtivo === false ? '0' : '1')   // v11.1: tipo Ecodesign
-    + '|' + (u.uvbPar || '') + '|' + (u.componentes || []).map(c => (c.tipo || '') + ':' + c.deltaP + ':' + c.deltaP_final).join(',')   // Fase 3: par da UVB e componentes
+    + '|' + (u.uvbPar || '') + '|' + (u.freeCooling ? 'fc' : '') + (u.tudoAr === false ? 'nta' : '') + '|' + (u.controloCaudal || '') + '|' + (u.componentes || []).map(c => (c.tipo || '') + ':' + c.deltaP + ':' + c.deltaP_final).join(',')   // Fase 3: par da UVB e componentes
   ).join('#'));
   partes.push((VC.flags && VC.flags.confortoTermico !== false) ? '1' : '0');
   partes.push((VC.flags && VC.flags.qaiProjeto !== false) ? '1' : '0');
@@ -830,6 +830,10 @@ VC.constantes = {
   BALANCO_RESIDUO: 5,          // m³/h · resíduo aceite no balanço de massa de um espaço (2× = desequilíbrio grave)
   EQUILIBRIO_REDE: 0.20,       // desvio máximo de Δp entre ramais após otimização (20 %)
   DL101D: { SGTC: 290000, SGT: 100000, INSPECAO: 70000 },             // W · DL 101-D/2020 (gestão técnica e inspeção)
+  // Fase 5 · Portaria 138-I/2021, Anexo II: recuperação de energia (2.3 c), free-cooling (2.3 b), caudal variável (1.5 b), gestão técnica (1.5 c)
+  P138_SISTEMAS: { REJEICAO_RECUPERACAO_W: 80000, ETA_RECUPERACAO_MIN: 0.5, FREE_COOLING_M3H: 10000, CAUDAL_VARIAVEL_W: 100000, GT_AR_NOVO_M3H: 3000 },
+  // Fase 5 · escadas pressurizadas: RT-SCIE art. 161.º (velocidade na porta aberta) e EN 12101-13 (força de abertura)
+  ESCADAS: { vPortaSemCamara: 0.5, vPortaComCamara: 1.0, forcaPortaMax: 100 },
   COMM_S1: [63, 80, 100, 125, 160, 200, 250, 315, 355, 400, 450, 500, 560, 630, 710, 800, 900, 1000, 1120, 1250, 1400, 1600, 1800, 2000],
   COMM_S2: [100, 125, 160, 200, 250, 315, 400, 500, 630, 800, 1000, 1250, 1600, 2000],
   W1505: [100, 150, 200, 250, 300, 400, 500, 600, 700, 800, 900, 1000, 1200, 1400, 1600, 1800, 2000],
@@ -967,6 +971,16 @@ VC.normas = {
   },
   rotuloTipologia(t) { return ({ comercio: 'Comércio e Serviços', residencial: 'Residencial', saude: 'Saúde', industria: 'Indústria' })[t] || t; },
   // Tipo Ecodesign por omissão de uma UTA, quando o utilizador não o escolheu.
+  // Fase 5 · potência térmica rejeitada no ar de extração (Portaria 138-I, 2.3 c): a escrita no Setup ou, sem ela,
+  // ρ·cp·Q_extração·(T_interior − T_exterior de projeto de inverno). null = por definir.
+  potenciaRejeitadaW() {
+    const p = (VC.dados && VC.dados.params) || {};
+    if (p.potenciaRejeitada !== undefined && p.potenciaRejeitada !== null && p.potenciaRejeitada !== '' && isFinite(Number(p.potenciaRejeitada))) return Number(p.potenciaRejeitada) * 1000;
+    if (p.tExtInverno === undefined || p.tExtInverno === null || p.tExtInverno === '' || !isFinite(Number(p.tExtInverno))) return null;
+    const rho = VC.fisica.rho(p.temperatura, p.humidade, p.altitude), dT = Math.max(0, (Number(p.temperatura) || 20) - Number(p.tExtInverno));
+    const Qext = (VC.dados.utas || []).filter(u => u.ativo !== false && VC.redes.ehExtracao(u.rede)).reduce((s, u) => s + (Number(u.Q) || 0), 0);
+    return rho * VC.fisica.cp() * 1000 * Qext * dT;
+  },
   potenciaTermicaW() {
     const p = VC.dados && VC.dados.params, kW = p ? p.potenciaTermica : null;
     return (kW === null || kW === undefined || kW === '' || !isFinite(Number(kW))) ? null : Number(kW) * 1000;
@@ -1055,8 +1069,19 @@ VC.normas = {
     if (esp.tipo !== 'Escadas') return { ok: true, motivo: 'Não aplicável' };
     // RT-SCIE (Portaria 1532/2008), art. 161.º: entre 20 e 80 Pa face aos espaços adjacentes, com as portas fechadas
     const deltaP = Number(esp.deltaP) || 0;
-    const lim = VC.conhecimento.tabelas.pressaoLimites.Escadas;
-    return { ok: deltaP >= lim.min && deltaP <= lim.max, deltaP, minimo: lim.min, maximo: lim.max, norma: 'RT-SCIE, Portaria 1532/2008, art. 161.º' };
+    const lim = VC.conhecimento.tabelas.pressaoLimites.Escadas, E = VC.constantes.ESCADAS;
+    const falhas = [];
+    if (!(deltaP >= lim.min && deltaP <= lim.max)) falhas.push('ΔP = ' + deltaP + ' Pa fora de ' + lim.min + '–' + lim.max + ' Pa (RT-SCIE, art. 161.º, n.º 1)');
+    // Fase 5: velocidade na porta aberta (art. 161.º, n.º 5) e força de abertura da porta (EN 12101-13)
+    const vMin = esp.camaraCortaFogo ? E.vPortaComCamara : E.vPortaSemCamara;
+    const temV = esp.vPortaAberta !== undefined && esp.vPortaAberta !== null && esp.vPortaAberta !== '';
+    if (temV && Number(esp.vPortaAberta) < vMin) falhas.push('v na porta aberta ' + esp.vPortaAberta + ' m/s < ' + vMin + ' m/s (RT-SCIE, art. 161.º, n.º 5' + (esp.camaraCortaFogo ? ', com câmara corta-fogo' : '') + ')');
+    const temF = esp.forcaPorta !== undefined && esp.forcaPorta !== null && esp.forcaPorta !== '';
+    if (temF && Number(esp.forcaPorta) > E.forcaPortaMax) falhas.push('força de abertura da porta ' + esp.forcaPorta + ' N > ' + E.forcaPortaMax + ' N (EN 12101-13)');
+    const porFazer = [];
+    if (!temV) porFazer.push('velocidade na porta aberta');
+    if (!temF) porFazer.push('força de abertura da porta');
+    return { ok: falhas.length === 0, deltaP, minimo: lim.min, maximo: lim.max, vMin, falhas, porFazer, norma: 'RT-SCIE, Portaria 1532/2008, art. 161.º' };
   }
 };
 
