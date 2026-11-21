@@ -207,6 +207,19 @@ const CASOS = [
     const c = VC.conhecimento.tabelas.T13.sanitarios.publico_normal, o = c.min; c.min = 45;
     return () => { c.min = o; };
   }],
+  // Fase 2A da auditoria: caudal variável ao longo do ramal
+  ['Troços: o caudal total percorre o ramal inteiro (volta o troço único)', 'N4.T21', () => {
+    const o = VC.calculo.trocosDe; VC.calculo.trocosDe = function (r) { return { modo: 'simplificado', trocos: [{ de: 0, ate: Number(r.L) || 0, L: Number(r.L) || 0, Q: Number(r.Q) || 0 }] }; };
+    return () => { VC.calculo.trocosDe = o; };
+  }],
+  ['Troços: o sub-ramal conta o Δp do pai até ao fim (ignora onde sai)', 'N4.T21', () => {
+    const o = VC.calculo.dpAte; VC.calculo.dpAte = function (r) { return o.call(this, r, Number(r.L) || 0); };
+    return () => { VC.calculo.dpAte = o; };
+  }],
+  ['Planta: a posição projetada no traçado é ignorada', 'N4.T22', () => {
+    const o = VC.calculo._projetarNoTracado; VC.calculo._projetarNoTracado = function () { return null; };
+    return () => { VC.calculo._projetarNoTracado = o; };
+  }],
   // Fase 1 da auditoria (dados normativos): cada erro corrigido volta a ser posto e o teste tem de o apanhar
   ['Tabela 13: linha «pública intensiva» (125 × aparelhos) volta a 90', 'N2.T5', () => {
     const c = VC.conhecimento.tabelas.T13.sanitarios.publico_intensivo, o = c.porAparelho; c.porAparelho = 90;

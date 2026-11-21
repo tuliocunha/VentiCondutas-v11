@@ -155,6 +155,36 @@ VC6.testes = {
         const proprio = VC.calculo.hMaxDe(r) === 250 && VC.calculo.rugosidadeDe(r) === 0.15;
         return doSetup && proprio;
       } finally { d.restricaoH = h0; d.params.rugosidade = e0; } } });
+    // Fase 2A da auditoria: caudal variável ao longo do ramal (troços entre derivações)
+    self.registar({ id: 'N4.T21', nucleo: 'N4', grupo: 'Hidráulico', nome: 'Caudal desce ao longo do ramal (troços entre derivações)', criterio: 'RA 12 m com terminais de 300 m³/h a 4, 8 e 12 m e sub-ramal RB (200 m³/h) a 6 m → troços 1100/800/600/300 m³/h, Ø não cresce para jusante, Δp até RB = Δp de RA até 6 m; sem posições → 1 troço, como antes', fn: () => {
+      const D = VC.dados, g = { esp: D.espacos, ter: D.terminais, ram: D.ramais, utas: D.utas, tr: D.transferencias };
+      const mkT = (id, ramal, Q, s) => ({ id: 'X' + id, nome: 'X' + id, tipo: 'Difusor', rede: 'insuflacao', ramalRef: ramal, espacos: [{ nome: 'EX', Q_parcela: Q }], v_saida: 2, sRamal: s });
+      try {
+        D.espacos = []; D.transferencias = []; D.utas = [{ id: 'UX', nome: 'UX', rede: 'insuflacao', componentes: [], eta: 0.6, fs: 1, transmissao: 1 }];
+        D.ramais = [{ id: 'A', nome: 'RA', parente: '', nivelNumero: 1, rede: 'insuflacao', utaRef: 'UX', L: 12, zeta: 0.5, geometriaInput: { forma: 'circular' } },
+                    { id: 'B', nome: 'RB', parente: 'RA', nivelNumero: 2, rede: 'insuflacao', utaRef: 'UX', L: 5, zeta: 0.3, sPai: 6, geometriaInput: { forma: 'circular' } }];
+        D.terminais = [mkT(1, 'RA', 300, 4), mkT(2, 'RA', 300, 8), mkT(3, 'RA', 300, 12), mkT(4, 'RB', 200, 5)];
+        ['ordenacaoTopologica', 'cacheBalanco'].forEach(k => VC.perf[k] && VC.perf[k].invalidar && VC.perf[k].invalidar());
+        VC.calculo.calcularTudo();
+        const A = D.ramais[0], B = D.ramais[1], Ts = A.trocos || [];
+        const okQ = A.modoTrocos === 'posicionado' && Ts.map(t => Math.round(t.Q)).join() === '1100,800,600,300' && Ts.map(t => t.de + '-' + t.ate).join() === '0-4,4-6,6-8,8-12';
+        const okD = Ts.every((t, i) => i === 0 || t.Dcom <= Ts[i - 1].Dcom) && Ts[Ts.length - 1].Dcom < Ts[0].Dcom;
+        const okL = Math.abs(A.deltaPlin - Ts.reduce((s, t) => s + t.R * t.L, 0)) < 1e-9;
+        const okB = Math.abs(B.deltaPInicio - VC.calculo.dpAte(A, 6)) < 1e-9 && B.deltaPInicio < A.deltaPTroco - 1e-6;
+        const okU = Math.abs(D.utas[0].Q * 3600 - 1100) < 1e-6;
+        D.terminais.forEach(t => { delete t.sRamal; }); delete B.sPai;
+        VC.calculo.calcularTudo();
+        const okS = A.modoTrocos === 'simplificado' && A.trocos.length === 1 && Math.abs(B.deltaPInicio - A.deltaPTroco) < 1e-9;
+        return okQ && okD && okL && okB && okU && okS;
+      } finally { Object.assign(D, { espacos: g.esp, terminais: g.ter, ramais: g.ram, utas: g.utas, transferencias: g.tr }); ['ordenacaoTopologica', 'cacheBalanco', 'cacheMaterializacao'].forEach(k => VC.perf[k] && VC.perf[k].invalidar && VC.perf[k].invalidar()); VC.calculo.calcularTudo(); }
+    } });
+    self.registar({ id: 'N4.T22', nucleo: 'N4', grupo: 'Hidráulico', nome: 'Posição das derivações lida da planta', criterio: 'traçado de 100 px e L = 10 m: terminal em (30, 5) → s = 3 m; sub-ramal que começa em (70, 0) → s = 7 m; noutro piso → fim do ramal; escrita à mão prevalece', fn: () => {
+      const r = { nome: 'RP', L: 10, planta: { pisoId: 'p1', pts: [[0, 0], [100, 0]] } };
+      const t = { planta: { pisoId: 'p1', x: 30, y: 5 } }, f = { planta: { pisoId: 'p1', pts: [[70, 0], [70, 40]] } };
+      const a = VC.calculo.posicaoNoRamal(t, r, true), b = VC.calculo.posicaoNoRamal(f, r, false);
+      const c = VC.calculo.posicaoNoRamal({ planta: { pisoId: 'p2', x: 30, y: 0 } }, r, true), d = VC.calculo.posicaoNoRamal(Object.assign({ sRamal: 1.5 }, t), r, true);
+      return Math.abs(a.s - 3) < 1e-9 && a.origem === 'planta' && Math.abs(b.s - 7) < 1e-9 && c.s === 10 && c.origem === 'fim' && d.s === 1.5 && d.origem === 'utilizador';
+    } });
     self.registar({ id: 'N6.T14', nucleo: 'N6', grupo: 'UTAs', nome: 'Estado dos filtros muda o Δp interno', criterio: 'limpo < médio < sujo numa UTA com filtros', fn: () => {
       const u = VC.dados.utas.find(x => (x.componentes || []).some(c => /filtro/i.test(c.tipo || ''))); if (!u) return true;
       const m0 = VC.dados.filtros.modo, dp = {};

@@ -404,65 +404,146 @@ VC.calculo = {
     });
   },
 
+  /* ── Fase 2A: caudal variável ao longo do ramal ─────────────────────────────
+     Cada ramal divide-se em troços entre derivações consecutivas (terminais próprios e sub-ramais).
+     O caudal de cada troço é o que segue para jusante; a secção é escolhida troço a troço.
+     Posição de uma derivação (s, em m desde o início do ramal), por esta ordem:
+       1) escrita pelo utilizador: terminal.sRamal ou subRamal.sPai;
+       2) planta: projeção do terminal (ou do 1.º ponto do sub-ramal) no traçado do ramal, à escala de L;
+       3) sem posição: no fim do ramal (s = L). Sem nenhuma posição o ramal é um só troço, como antes. */
+  _projetarNoTracado(q, pts) {
+    let tot = 0, melhor = null;
+    for (let i = 1; i < pts.length; i++) {
+      const a = pts[i - 1], b = pts[i], dx = b[0] - a[0], dy = b[1] - a[1], l2 = dx * dx + dy * dy, l = Math.sqrt(l2);
+      const t = l2 > 0 ? Math.max(0, Math.min(1, ((q[0] - a[0]) * dx + (q[1] - a[1]) * dy) / l2)) : 0;
+      const d = Math.hypot(q[0] - (a[0] + t * dx), q[1] - (a[1] + t * dy));
+      if (!melhor || d < melhor.d) melhor = { d, s: tot + t * l };
+      tot += l;
+    }
+    return melhor && tot > 0 ? { frac: melhor.s / tot, d: melhor.d } : null;
+  },
+  posicaoNoRamal(x, ramal, ehTerminal) {
+    const L = Math.max(0, Number(ramal && ramal.L) || 0);
+    const escrito = ehTerminal ? x.sRamal : x.sPai;
+    if (escrito !== undefined && escrito !== null && String(escrito).trim() !== '' && isFinite(Number(escrito)) && Number(escrito) >= 0) return { s: Math.min(Number(escrito), L), origem: 'utilizador' };
+    const pr = ramal && ramal.planta, pts = pr && Array.isArray(pr.pts) ? pr.pts : null;
+    const ponto = ehTerminal ? (x.planta && x.planta.pisoId === (pr && pr.pisoId) ? [x.planta.x, x.planta.y] : null)
+      : (x.planta && x.planta.pisoId === (pr && pr.pisoId) && Array.isArray(x.planta.pts) && x.planta.pts.length ? x.planta.pts[0] : null);
+    if (pts && pts.length >= 2 && ponto) { const p = this._projetarNoTracado(ponto, pts); if (p) return { s: p.frac * L, origem: 'planta' }; }
+    return { s: L, origem: 'fim' };
+  },
+  /* derivações de um ramal, ordenadas ao longo do percurso */
+  derivacoesDe(r) {
+    const out = [];
+    (VC.dados.terminais || []).forEach(t => { if (t.ramalRef === r.nome) { const p = this.posicaoNoRamal(t, r, true); out.push({ tipo: 'terminal', ref: t.nome || String(t.id), Q: Number(t.Q) || 0, s: p.s, origem: p.origem, dP: Number(t.dPCalc) || 0 }); } });
+    (VC.dados.ramais || []).forEach(f => { if (f.parente === r.nome && f !== r) { const p = this.posicaoNoRamal(f, r, false); f.sNoPai = p.s; f.sNoPaiOrigem = p.origem; out.push({ tipo: 'ramal', ref: f.nome, Q: Number(f.Q) || 0, s: p.s, origem: p.origem }); } });
+    return out.sort((a, b) => a.s - b.s);
+  },
+  /* troços: [de, ate] com o caudal que passa nesse troço */
+  trocosDe(r, derivs) {
+    const L = Math.max(0, Number(r.L) || 0), Qtot = Number(r.Q) || 0;
+    const posicionado = derivs.some(d => d.origem !== 'fim' && d.s < L - 1e-6);
+    if (!posicionado || !(L > 0)) return { modo: 'simplificado', trocos: [{ de: 0, ate: L, L, Q: Qtot }] };
+    const trocos = []; let prev = 0, Qr = Qtot, i = 0;
+    while (i < derivs.length) {
+      const s = derivs[i].s; let q = 0;
+      while (i < derivs.length && Math.abs(derivs[i].s - s) < 1e-6) { q += derivs[i].Q; i++; }
+      if (s > prev + 1e-6) { trocos.push({ de: prev, ate: s, L: s - prev, Q: Math.max(0, Qr) }); prev = s; }
+      Qr -= q;
+    }
+    if (!trocos.length) trocos.push({ de: 0, ate: L, L, Q: Qtot });
+    return { modo: 'posicionado', trocos };
+  },
+  /* secção e perda linear de um troço com o caudal Q (circular ou retangular, Ø travado ou não) */
+  _seccao(r, Q, rho, nu, Dforcado) {
+    const eps = this.rugosidadeDe(r) / 1000, vMax = this.vMaxDe(r), hMax = this.hMaxDe(r);
+    const o = { aviso: '' };
+    if (Dforcado) {
+      const D = Dforcado / 1000, A = Math.PI * D * D / 4;
+      o.v = A > 0 ? Q / 3600 / A : 0; o.Re = o.v > 0 ? o.v * D / nu : 0;
+      o.f = VC.fisica.fatorAtrito(o.Re, eps / D); o.R = D > 0 ? o.f / D * (0.5 * rho * o.v * o.v) : 0; o.Dcom = Dforcado;
+    } else {
+      const z = this.dimensionarConduta(Q, { rho, nu, vMax, eps });
+      o.v = z.v; o.Re = z.Re; o.f = z.f; o.R = z.R; o.Dcom = z.Dc;
+    }
+    // v11.1 (3.6): a forma da secção é escolha do utilizador (geometriaInput.forma).
+    // A app calcula a secção escolhida e só AVISA quando não cabe na altura disponível.
+    const rect = this.retangular(hMax, 0.5, vMax, Q);
+    if (this.formaDe(r) === 'retangular') {
+      if (rect) {
+        const a = rect.b / 1000, b = rect.h / 1000;
+        const De = 1.30 * Math.pow(a * b, 0.625) / Math.pow(a + b, 0.25);      // diâmetro equivalente (Huebscher)
+        const vDe = Q / 3600 / (Math.PI * De * De / 4);
+        o.v = Q / 3600 / (a * b);                                             // velocidade real na secção
+        o.Re = vDe * De / nu;
+        o.f = VC.fisica.fatorAtrito(o.Re, eps / De);
+        o.R = De > 0 ? o.f / De * (0.5 * rho * vDe * vDe) : 0;
+        o.De = Math.round(De * 1000);
+        o.secaoCalc = rect.b + '×' + rect.h;
+      } else {
+        o.secaoCalc = o.Dcom ? 'Ø' + o.Dcom : '';
+        o.aviso = 'Sem secção retangular com h ≤ ' + hMax + ' mm e v ≤ ' + vMax + ' m/s — calculado como circular Ø' + o.Dcom;
+      }
+    } else {
+      o.secaoCalc = o.Dcom ? 'Ø' + o.Dcom : '';
+      o.De = o.Dcom;
+      if (o.Dcom && o.Dcom > hMax) o.aviso = 'Ø' + o.Dcom + ' mm não cabe na altura disponível (' + hMax + ' mm)' + (rect ? ' — sugestão retangular ' + rect.b + '×' + rect.h : '');
+    }
+    return o;
+  },
+
   calcularCondutas(rho, nu) {
+    const unico = !!(VC.dados.metodoCalculo && VC.dados.metodoCalculo.diametroUnico);   // opção: o mesmo Ø em todo o ramal
     VC.dados.ramais.forEach(r => {
-      const Qef = Number(r.Q) || 0;
-      const eps = this.rugosidadeDe(r) / 1000;     // v11.1: uma só fonte de rugosidade (3.7)
-      const vMax = this.vMaxDe(r);                 // v11.1: limite por nível (3.5)
-      const hMax = this.hMaxDe(r);
-      r.vMax = vMax; r.avisoSecao = '';
-      if (r.lock && r.lock.D && r.Dcom) {
-        const D = r.Dcom / 1000;
-        const A = Math.PI * D * D / 4;
-        const v = A > 0 ? Qef / 3600 / A : 0;
-        const Re = v > 0 ? v * D / nu : 0;
-        r.v = v; r.Re = Re;
-        r.f = VC.fisica.fatorAtrito(Re, eps / D);
-        r.R = D > 0 ? r.f / D * (0.5 * rho * v * v) : 0;
-      } else {
-        const z = this.dimensionarConduta(Qef, { rho, nu, vMax, eps });
-        r.v = z.v; r.Re = z.Re; r.f = z.f; r.R = z.R; r.Dcom = z.Dc;
-      }
-      // v11.1 (3.6): a forma da secção é escolha do utilizador (geometriaInput.forma).
-      // A app calcula a secção escolhida e só AVISA quando não cabe na altura disponível.
-      const rect = this.retangular(hMax, 0.5, vMax, Qef);
+      r.vMax = this.vMaxDe(r); r.avisoSecao = '';
       r.secaoAdotada = this.formaDe(r);
-      if (r.secaoAdotada === 'retangular') {
-        if (rect) {
-          const a = rect.b / 1000, b = rect.h / 1000;
-          const De = 1.30 * Math.pow(a * b, 0.625) / Math.pow(a + b, 0.25);      // diâmetro equivalente (Huebscher)
-          const vDe = Qef / 3600 / (Math.PI * De * De / 4);
-          r.v = Qef / 3600 / (a * b);                                             // velocidade real na secção
-          r.Re = vDe * De / nu;
-          r.f = VC.fisica.fatorAtrito(r.Re, eps / De);
-          r.R = De > 0 ? r.f / De * (0.5 * rho * vDe * vDe) : 0;
-          r.De = Math.round(De * 1000);
-          r.secaoCalc = rect.b + '×' + rect.h;
-        } else {
-          r.secaoCalc = r.Dcom ? 'Ø' + r.Dcom : '';
-          r.avisoSecao = 'Sem secção retangular com h ≤ ' + hMax + ' mm e v ≤ ' + vMax + ' m/s — calculado como circular Ø' + r.Dcom;
-        }
-      } else {
-        r.secaoCalc = r.Dcom ? 'Ø' + r.Dcom : '';
-        r.De = r.Dcom;
-        if (r.Dcom && r.Dcom > hMax) r.avisoSecao = 'Ø' + r.Dcom + ' mm não cabe na altura disponível (' + hMax + ' mm)' + (rect ? ' — sugestão retangular ' + rect.b + '×' + rect.h : '');
-      }
-      r.deltaPlin = (Number(r.R) || 0) * (Number(r.L) || 0);
+      const derivs = this.derivacoesDe(r);
+      const T = this.trocosDe(r, derivs);
+      const travado = (r.lock && r.lock.D && r.Dcom) ? r.Dcom : null;
+      // troço inicial (caudal total do ramal): define o Ø, a v e a perda singular do ramal, como antes
+      const s0 = this._seccao(r, Number(r.Q) || 0, rho, nu, travado);
+      r.v = s0.v; r.Re = s0.Re; r.f = s0.f; r.R = s0.R; r.Dcom = s0.Dcom; r.De = s0.De; r.secaoCalc = s0.secaoCalc; r.avisoSecao = s0.aviso;
+      r.trocos = T.trocos.map((t, i) => {
+        const sec = (i === 0 && Math.abs(t.Q - (Number(r.Q) || 0)) < 1e-9) ? s0 : this._seccao(r, t.Q, rho, nu, travado || (unico ? s0.Dcom : null));
+        if (sec.aviso && !r.avisoSecao) r.avisoSecao = sec.aviso;
+        return { de: t.de, ate: t.ate, L: t.L, Q: t.Q, Dcom: sec.Dcom, De: sec.De, secao: sec.secaoCalc, v: sec.v, Re: sec.Re, R: sec.R, dpLin: (sec.R || 0) * t.L };
+      });
+      r.modoTrocos = T.modo;
+      r.derivacoes = derivs.map(d => ({ tipo: d.tipo, ref: d.ref, Q: d.Q, s: d.s, origem: d.origem, dP: d.dP || 0 }));
+      r.vMaxTrocos = r.trocos.reduce((m, t) => Math.max(m, t.Q > 0 ? (t.v || 0) : 0), Number(r.v) || 0);
+      r.deltaPlin = r.trocos.reduce((s, t) => s + t.dpLin, 0);
       r.deltaPsing = (Number(r.zeta) || 0) * 0.5 * rho * (Number(r.v) || 0) * (Number(r.v) || 0);
       r.deltaPTroco = r.deltaPlin + r.deltaPsing;
     });
   },
 
+  /* Δp do início do ramal até à posição s (perda singular de entrada + troços até s) */
+  dpAte(r, s) {
+    const trocos = r.trocos || [{ de: 0, ate: Number(r.L) || 0, dpLin: Number(r.deltaPlin) || 0, L: Number(r.L) || 0 }];
+    let dp = Number(r.deltaPsing) || 0;
+    trocos.forEach(t => { const ov = Math.max(0, Math.min(s, t.ate) - t.de); if (ov > 0 && t.L > 0) dp += t.dpLin * ov / t.L; });
+    return dp;
+  },
+
   calcularDeltaPAcumulado() {
     const byName = {};
     VC.dados.ramais.forEach(r => { byName[r.nome] = r; });
+    // Δp da UTA até ao ponto onde o ramal sai do pai (sem posições: o fim do pai, como antes)
+    const inicio = (r, guard) => {
+      const pai = byName[r.parente];
+      if (!pai || pai === r || (guard || 0) > 100) return 0;
+      const s = (r.sNoPai != null && isFinite(r.sNoPai)) ? r.sNoPai : (Number(pai.L) || 0);
+      return inicio(pai, (guard || 0) + 1) + this.dpAte(pai, s);
+    };
     VC.dados.ramais.forEach(r => {
-      let acc = r.deltaPTroco || 0;
-      let p = r.parente, guard = 0;
-      while (p && byName[p] && guard++ < 100) { acc += byName[p].deltaPTroco || 0; p = byName[p].parente; }
+      const ini = inicio(r);
+      r.deltaPInicio = ini;
+      const acc = ini + (r.deltaPTroco || 0);
       r.deltaPAcumulado = acc;
-      r.deltaPtotal = Math.max(0, acc
-        + (Number(r.deltaP_terminal) || 0)
+      // terminais ao longo do ramal: Δp até à sua posição + Δp do terminal (o mais desfavorável)
+      const term = (r.derivacoes || []).filter(d => d.tipo === 'terminal').reduce((m, d) => Math.max(m, this.dpAte(r, d.s) + (d.dP || 0)), 0);
+      // (sem posições: todos os terminais no fim → acumulado + Δp do pior terminal, como antes)
+      r.deltaPtotal = Math.max(0, ini + Math.max(r.deltaPTroco || 0, term)
         + (Number(r.deltaP_filtro) || 0)
         + (Number(r.deltaP_bateria) || 0)
         + (Number(r.deltaP_recup) || 0)
@@ -626,7 +707,8 @@ VC.calculo = {
       VC.dados.ramais.forEach(r => {
         if (r.Re >= 2300 && r.Re < 4000) findings.push({ severidade: 'ATENÇÃO', tipo: 'Reynolds crítico', elemento: r.nome, msg: 'Re=' + VC.utils.fmt(r.Re, 0) });
         const vMax = this.vMaxDe(r);   // v11.1: mesmo limite por nível que o dimensionamento
-        if (r.v > vMax + 1e-6) findings.push({ severidade: 'ERRO', tipo: 'Velocidade excessiva', elemento: r.nome, msg: 'v=' + VC.utils.fmt(r.v, 2) + ' m/s > ' + vMax + ' m/s (' + VC.utils.nivelRotulo(r.nivelNumero, true) + ')' });
+        const vPior = Math.max(Number(r.v) || 0, Number(r.vMaxTrocos) || 0);   // Fase 2A: o troço mais rápido do ramal
+        if (vPior > vMax + 1e-6) findings.push({ severidade: 'ERRO', tipo: 'Velocidade excessiva', elemento: r.nome, msg: 'v=' + VC.utils.fmt(vPior, 2) + ' m/s > ' + vMax + ' m/s (' + VC.utils.nivelRotulo(r.nivelNumero, true) + ')' });
         if (r.avisoSecao) findings.push({ severidade: 'ATENÇÃO', tipo: 'Secção da conduta', elemento: r.nome, msg: r.avisoSecao });
       });
 
