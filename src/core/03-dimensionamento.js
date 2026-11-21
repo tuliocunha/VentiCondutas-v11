@@ -712,11 +712,12 @@ VC.calculo = {
 
       // instalações sanitárias: regime da Tabela 13 e aparelhos (pública) por definir → «por fazer»
       VC.dados.espacos.forEach(e => {
-        if (e.tipo === 'Balneários') { if (!(Number(e.numDuches) > 0)) findings.push({ severidade: 'POR FAZER', tipo: 'Duches do balneário por definir', elemento: e.nome, msg: 'Indique o n.º de duches (Tabela 13: Máx(90 × duches; 10 × A)). Até lá conta só 10 × A' }); return; }
-        if (e.tipo !== 'Sanitários') return;
         const nAp = (Number(e.numUrinois) || 0) + (Number(e.numSanitas) || 0) + (Number(e.numDuches) || 0);
-        if (!e.regimeSanitario) findings.push({ severidade: 'POR FAZER', tipo: 'Regime da instalação sanitária por definir', elemento: e.nome, msg: 'Escolha o regime da Tabela 13 (privada contínua, privada não contínua ou pública). Até lá, calcula-se como privada com funcionamento contínuo: Máx(45; 10 × A)' });
-        else if (/^publico/.test(e.regimeSanitario) && !nAp) findings.push({ severidade: 'POR FAZER', tipo: 'Aparelhos sanitários por definir', elemento: e.nome, msg: 'Instalação pública: indique o n.º de urinóis, sanitas e duches (Tabela 13: 90 m³/h por aparelho). Até lá conta só 10 × A' });
+        // balneário = instalação pública da Tabela 13 (normal por omissão; intensiva em teatros, cinemas, escolas, desporto)
+        if (e.tipo === 'Balneários') { if (!nAp) findings.push({ severidade: 'POR FAZER', tipo: 'Aparelhos do balneário por definir', elemento: e.nome, msg: 'Indique o n.º de urinóis, sanitas e duches (Tabela 13, instalação pública: Máx(90 ou 125 × aparelhos; 10 × A)). Até lá conta só 10 × A' }); return; }
+        if (e.tipo !== 'Sanitários') return;
+        if (!e.regimeSanitario) findings.push({ severidade: 'POR FAZER', tipo: 'Regime da instalação sanitária por definir', elemento: e.nome, msg: 'Escolha o regime da Tabela 13 (privada contínua, privada não contínua, pública normal ou pública intensiva). Até lá, calcula-se como privada com funcionamento contínuo: Máx(45; 10 × A)' });
+        else if (/^publico/.test(e.regimeSanitario) && !nAp) findings.push({ severidade: 'POR FAZER', tipo: 'Aparelhos sanitários por definir', elemento: e.nome, msg: 'Instalação pública: indique o n.º de urinóis, sanitas e duches (Tabela 13: 90 m³/h por aparelho, 125 no funcionamento intensivo). Até lá conta só 10 × A' });
       });
       // caudal por boa prática (G4 fora da Tabela 13: cozinha, vestiário, garagem): alerta até o projetista o confirmar
       VC.dados.espacos.forEach(e => {

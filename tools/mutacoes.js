@@ -207,6 +207,28 @@ const CASOS = [
     const c = VC.conhecimento.tabelas.T13.sanitarios.publico_normal, o = c.min; c.min = 45;
     return () => { c.min = o; };
   }],
+  // Fase 1 da auditoria (dados normativos): cada erro corrigido volta a ser posto e o teste tem de o apanhar
+  ['Tabela 13: linha «pública intensiva» (125 × aparelhos) volta a 90', 'N2.T5', () => {
+    const c = VC.conhecimento.tabelas.T13.sanitarios.publico_intensivo, o = c.porAparelho; c.porAparelho = 90;
+    return () => { c.porAparelho = o; };
+  }],
+  ['Balneário volta a contar só os duches', 'N2.T5b', () => {
+    const o = VC.normas.calcExtracaoSanitaria;
+    VC.normas.calcExtracaoSanitaria = function (esp) { return o.call(this, esp && esp.tipo === 'Balneários' ? Object.assign({}, esp, { numSanitas: 0, numUrinois: 0 }) : esp); };
+    return () => { VC.normas.calcExtracaoSanitaria = o; };
+  }],
+  ['Tabela 11: Ginásio volta a 49 m³/(h·ocupante)', 'N2.T5c', () => {
+    const d = VC.conhecimento.tiposEspaco['Ginásio'], o = d.t11; d.t11 = 49;
+    return () => { d.t11 = o; };
+  }],
+  ['Escadas: mínimo volta a 50 Pa', 'N2.T9', () => {
+    const l = VC.conhecimento.tabelas.pressaoLimites.Escadas, o = l.min; l.min = 50;
+    return () => { l.min = o; };
+  }],
+  ['Copa volta a ser «Tabela 13» (sem alerta de boa prática)', 'UI.T35', () => {
+    const d = VC.conhecimento.tiposEspaco['Copa']; d.t13 = true;
+    return () => { delete d.t13; };
+  }],
   ['Confirmação do projetista ignorada (alerta de boa prática nunca sai)', 'UI.T35', () => {
     const o = VC.calculo.grupoDe; VC.calculo.grupoDe = function (e) { const g = o.call(this, e); if (e && e.boaPraticaConfirmada) { delete e.boaPraticaConfirmada; e._mut = 1; } return g; };
     return () => { VC.calculo.grupoDe = o; };

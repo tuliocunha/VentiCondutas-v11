@@ -6,6 +6,16 @@
    - P11: min 45 para todos os regimes de sanitários
    - P14: nota sobre ACH vs RPH no rphDefault
    - P15: ASHRAE tipo 'norma-ashrae'
+
+   ALTERAÇÕES V11.2 (Fase 1 da auditoria · dados normativos):
+   - Tabela 11 conforme o texto publicado da Portaria 138-I (Ginásio 98, Laboratório 35, Sala de aula 24,
+     Auditório/Biblioteca/Sala de espera/Sala de reuniões 20, Restauração 24) + tipos Café/bar (35) e
+     Sala de dança/aeróbica (49). Retirada a tabela duplicada «tabelas.T11», que contradizia esta.
+   - Tabela 13: reposta a linha «pública, funcionamento intensivo» (125 × aparelhos). O balneário é uma
+     instalação pública (urinóis + sanitas + duches), já não uma linha própria só com duches.
+   - Copa, resíduos e cópias/impressão: 10 renovações/hora passa a boa prática (não consta da Tabela 13).
+   - Escadas pressurizadas: 20–80 Pa (RT-SCIE, art. 161.º), em vez de ≥ 50 Pa.
+   - Bibliografia e hierarquia com edições atuais e normas em falta.
    ============================================================ */
 (function () {
 'use strict';
@@ -13,34 +23,42 @@ window.VC = window.VC || {};
 VC._normativo = {
 
   bibliografia: [
-    { codigo: 'Portaria n.º 138-I/2021', titulo: 'Regulamento de desempenho energético', tipo: 'legislacao' },
-    { codigo: 'Decreto-Lei n.º 101-D/2020', titulo: 'Certificação energética', tipo: 'legislacao' },
-    { codigo: 'NP 1037-1/-2', titulo: 'Ventilação residencial', tipo: 'norma-pt' },
-    { codigo: 'EN 16798-1:2019', titulo: 'Energy performance — Ventilation', tipo: 'norma-eu' },
-    { codigo: 'EN 16798-3:2017', titulo: 'Energy performance — SFPint', tipo: 'norma-eu' },
-    { codigo: 'EN 12599:2012', titulo: 'Test procedures', tipo: 'norma-eu' },
+    { codigo: 'Portaria n.º 138-I/2021', titulo: 'Requisitos mínimos da envolvente e dos sistemas técnicos (Anexo II: ventilação 1.2, controlo 1.5, climatização 2.3)', tipo: 'legislacao' },
+    { codigo: 'Decreto-Lei n.º 101-D/2020 (na redação atual)', titulo: 'Desempenho energético dos edifícios e SCE · SACE (≥ 290 kW) e inspeções (> 70 kW)', tipo: 'legislacao' },
+    { codigo: 'Despacho n.º 6476-H/2021 (Manual SCE, na redação atual)', titulo: 'Metodologia: eficácia de remoção (Tabela 68), SFP (Tabela 65), caudais (Tabelas 69–74)', tipo: 'legislacao' },
+    { codigo: 'Portaria n.º 138-G/2021', titulo: 'Qualidade do ar interior em edifícios de comércio e serviços', tipo: 'legislacao' },
+    { codigo: 'NP 1037-1/-2', titulo: 'Ventilação residencial (só habitação; tipologia em implementação)', tipo: 'norma-pt' },
+    { codigo: 'EN 16798-1:2019', titulo: 'Parâmetros do ambiente interior (referência; categorias I–IV)', tipo: 'norma-eu' },
+    { codigo: 'EN 16798-3:2025', titulo: 'Sistemas de ventilação em edifícios não residenciais · categorias SFP (substitui a EN 16798-3:2017)', tipo: 'norma-eu' },
+    { codigo: 'EN 12599:2012', titulo: 'Ensaios e medições na entrega (TAB)', tipo: 'norma-eu' },
     { codigo: 'EN 1505:1998', titulo: 'Dimensões de condutas retangulares', tipo: 'norma-eu' },
     { codigo: 'EN 1506:2007', titulo: 'Dimensões de condutas circulares', tipo: 'norma-eu' },
     { codigo: 'EN 12237:2003', titulo: 'Estanquidade circular', tipo: 'norma-eu' },
     { codigo: 'EN 1507:2006', titulo: 'Estanquidade retangular', tipo: 'norma-eu' },
     { codigo: 'EN 1886:2007', titulo: 'Desempenho mecânico UTA', tipo: 'norma-eu' },
     { codigo: 'ISO 16890:2016', titulo: 'Air filters', tipo: 'norma-iso' },
-    { codigo: 'VDI 2081:2018', titulo: 'Noise generation', tipo: 'norma-de' },
-    { codigo: 'Regulamento (UE) 1253/2014', titulo: 'Ecodesign ventiladores', tipo: 'legislacao-eu' },
+    { codigo: 'VDI 2081:2018', titulo: 'Ruído em instalações AVAC', tipo: 'norma-de' },
+    { codigo: 'Regulamento (UE) 1253/2014', titulo: 'Ecodesign · unidades de ventilação (SFPint, eficiência do recuperador)', tipo: 'legislacao-eu' },
+    { codigo: 'Regulamento (UE) 327/2011', titulo: 'Ecodesign · ventiladores (eficiência mínima)', tipo: 'legislacao-eu' },
     { codigo: 'ISO 2533:1975', titulo: 'Standard Atmosphere', tipo: 'norma-iso' },
-    { codigo: 'DL 220/2008 + Portaria 1532/2008', titulo: 'SCIE', tipo: 'legislacao' },
+    { codigo: 'DL 220/2008 + Portaria 1532/2008 (RT-SCIE, na redação da Portaria 135/2020)', titulo: 'SCIE · escadas pressurizadas (art. 161.º) e parques de estacionamento (arts. 180.º–183.º)', tipo: 'legislacao' },
+    { codigo: 'EN 12101-13:2022', titulo: 'Sistemas de diferencial de pressão · projeto e ensaio (substitui a EN 12101-6:2005)', tipo: 'norma-eu' },
     { codigo: 'ASHRAE 55:2020', titulo: 'Thermal Environmental Conditions', tipo: 'norma-ashrae' }
   ],
 
   hierarquia: {
     nivel1: [
       { codigo: 'Portaria 138-I/2021', funcao: 'SCE · caudais T11 / T12 / T13', obrigatorio: true },
-      { codigo: 'DL 101-D/2020', funcao: 'Desempenho energético · BACS', obrigatorio: true },
-      { codigo: 'NP 1037-1/-2', funcao: 'Ventilação residencial', obrigatorio: true }
+      { codigo: 'DL 101-D/2020', funcao: 'Desempenho energético · SACE (≥ 290 kW de potência térmica) · inspeções (> 70 kW)', obrigatorio: true },
+      { codigo: 'Manual SCE (Despacho 6476-H/2021)', funcao: 'Eficácia de remoção, SFP e caudais (metodologia da Portaria 138-I)', obrigatorio: true },
+      { codigo: 'RT-SCIE (Portaria 1532/2008)', funcao: 'Escadas pressurizadas 20–80 Pa · parques de estacionamento 300/600 m³/h por veículo', obrigatorio: true },
+      { codigo: 'Reg. (UE) 1253/2014 e 327/2011', funcao: 'Ecodesign de unidades de ventilação e de ventiladores', obrigatorio: true },
+      { codigo: 'NP 1037-1/-2', funcao: 'Ventilação residencial (só habitação; tipologia em implementação)', obrigatorio: false }
     ],
     nivel2: [
       { codigo: 'EN 16798-1:2019', funcao: 'QAI — referência informativa' },
-      { codigo: 'EN 16798-3:2017', funcao: 'Categorias SFP do sistema (os limites de SFPint vêm do Reg. (UE) 1253/2014)' },
+      { codigo: 'EN 16798-3:2025', funcao: 'Categorias SFP do sistema (os limites de SFPint vêm do Reg. (UE) 1253/2014)' },
+      { codigo: 'EN 12101-13:2022', funcao: 'Projeto de sistemas de diferencial de pressão (referência; o limite legal é o do RT-SCIE)' },
       { codigo: 'EN 12599:2012', funcao: 'TAB e comissionamento' },
       { codigo: 'EN 1506:2007', funcao: 'Dimensões de condutas circulares' },
       { codigo: 'EN 1505:1998', funcao: 'Dimensões de condutas retangulares' },
@@ -50,8 +68,7 @@ VC._normativo = {
     ],
     nivel3: [
       { codigo: 'ISO 16890:2016', funcao: 'Filtragem de ar' },
-      { codigo: 'VDI 2081:2018', funcao: 'Acústica AVAC' },
-      { codigo: 'UE 1253/2014', funcao: 'Ecodesign ventiladores' }
+      { codigo: 'VDI 2081:2018', funcao: 'Acústica AVAC' }
     ],
     nivel4: [
       { codigo: 'CIBSE Guide B2', funcao: 'Boas práticas — ventilação' },
@@ -65,8 +82,8 @@ VC._normativo = {
     { id: 'P1', texto: 'Em cada espaço: Σ Q_in = Σ Q_out (tolerância ±5 m³/h)', norma: 'Balanço de massa' },
     { id: 'P2', texto: 'G2 (Circulação, Escadas): isentos de renovação mas podem transferir. Exceção: arrecadação (Arrumo) tem extração e não cede ar transferido', norma: 'Portaria 138-I/2021 (Anexo II, 1.2.2 f)' },
     { id: 'P3', texto: 'G3 (Arquivo): mínimo por diluição basal (T12) ou ACH ≥ 2', norma: 'Portaria 138-I/2021' },
-    { id: 'P4', texto: 'G4 (Sanitários, Cozinha, Garagem): extração dedicada, entram por transferência. Caudal pela Tabela 13: instalações sanitárias, balneário (duches), copa, resíduos e cópias/impressão (10/h); cozinha, garagem e vestiário por renovações/hora de boa prática (não constam da Tabela 13)', norma: 'Portaria 138-I (Tabela 13; Anexo II, 1.2.2 h)' },
-    { id: 'P5', texto: 'Escadas pressurizadas: ΔP ≥ 50 Pa em caso de incêndio', norma: 'Portaria 1532/2008' },
+    { id: 'P4', texto: 'G4 (Sanitários, Cozinha, Garagem): extração dedicada, entram por transferência. Caudal pela Tabela 13 só nas instalações sanitárias (privadas, públicas normais ou intensivas; os balneários contam como públicas, com urinóis + sanitas + duches); copa, resíduos, cópias/impressão, cozinha, garagem e vestiário por renovações/hora de boa prática (não constam da Tabela 13)', norma: 'Portaria 138-I (Tabela 13; Anexo II, 1.2.2 h)' },
+    { id: 'P5', texto: 'Escadas pressurizadas: 20 Pa ≤ ΔP ≤ 80 Pa face aos espaços adjacentes, com as portas fechadas', norma: 'RT-SCIE, Portaria 1532/2008, art. 161.º' },
     { id: 'P6', texto: 'RPH de conforto aplicável a todos os grupos (G1-G4): Q_ConTerm = RPH × V', norma: 'F-RPH · EN 16798-1 · ASHRAE 55' },
     { id: 'P7', texto: 'QAI_projeto: caudal adicional definido pelo engenheiro, auditável com motivo', norma: 'V8.0.1 · Boas práticas' },
     { id: 'P8', texto: 'Topologia facetada: cada ramal tem meta derivado (pisoFisico, zona, rede, caminho)', norma: 'V9 · Boas práticas de organização' }
@@ -82,6 +99,11 @@ VC._normativo = {
     { codigo: 'abertura_natural', nome: 'Abertura natural', dp_tipico: 1, aplicacao: 'Espaços abertos', cor: '#8eb8b8' }
   ],
 
+  // T11 = Portaria 138-I/2021, Anexo II, Tabela 11 (m³/(h·ocupante)): sono 16 · descanso 20 (repouso, espera, conferência,
+  // auditórios, bibliotecas) · sedentária 24 (escritórios, salas de aula, cinemas, lojas, museus, refeitórios, convívio) ·
+  // creche/jardim de infância 28 · moderada 35 (laboratórios, oficinas, desenho, cafés, bares, jogos) · ligeiramente alta 49
+  // (dança, aeróbica, ballet) · alta 98 (musculação, ginásios, pavilhões desportivos). Confirmado no Manual SCE, Tabela 69.
+  // T12 = Tabela 12 (m³/(h·m²)): 3 sem atividades poluentes · 5 com atividades poluentes · 2 com > 75 % de materiais de baixa emissão.
   tiposEspaco: {
     'Sono':                { g:1, gn:'Ocupação Permanente', rp:5,  ra:0.5, t11:16, t12:3, ach:2,  desc:'G1 · Dormitórios' },
     'Descanso':            { g:1, gn:'Ocupação Permanente', rp:5,  ra:0.5, t11:20, t12:3, ach:2,  desc:'G1 · Repouso' },
@@ -90,21 +112,23 @@ VC._normativo = {
     'Escritório':          { g:1, gn:'Ocupação Permanente', rp:7,  ra:0.7, t11:24, t12:3, ach:6,  desc:'G1 · Escritórios' },
     'Gabinete':            { g:1, gn:'Ocupação Permanente', rp:7,  ra:0.7, t11:24, t12:3, ach:4,  desc:'G1 · Gabinete' },
     'Receção':             { g:1, gn:'Ocupação Permanente', rp:7,  ra:0.7, t11:24, t12:3, ach:6,  desc:'G1 · Receção' },
-    'Auditório':           { g:1, gn:'Ocupação Permanente', rp:7,  ra:0.7, t11:24, t12:3, ach:8,  desc:'G1 · Auditórios' },
-    'Sala de reuniões':    { g:1, gn:'Ocupação Permanente', rp:7,  ra:0.7, t11:24, t12:3, ach:4,  desc:'G1 · Reuniões' },
+    'Auditório':           { g:1, gn:'Ocupação Permanente', rp:7,  ra:0.7, t11:20, t12:3, ach:8,  desc:'G1 · Auditórios (T11: descanso)' },
+    'Sala de reuniões':    { g:1, gn:'Ocupação Permanente', rp:7,  ra:0.7, t11:20, t12:3, ach:4,  desc:'G1 · Reuniões / conferência (T11: descanso)' },
     'Serviços':            { g:1, gn:'Ocupação Permanente', rp:7,  ra:0.7, t11:24, t12:3, ach:6,  desc:'G1 · Serviços' },
-    'Restauração':         { g:1, gn:'Ocupação Permanente', rp:10, ra:1.0, t11:28, t12:3, ach:8,  desc:'G1 · Restauração' },
-    'Laboratório':         { g:1, gn:'Ocupação Permanente', rp:10, ra:1.0, t11:49, t12:5, ach:8,  desc:'G1 · Laboratório' },
-    'Sala de aula':        { g:1, gn:'Ocupação Permanente', rp:7,  ra:0.7, t11:28, t12:3, ach:6,  desc:'G1 · Salas de aula' },
-    'Jardim de infância':  { g:1, gn:'Ocupação Permanente', rp:7,  ra:0.7, t11:28, t12:3, ach:6,  desc:'G1 · Jardins' },
-    'Ginásio':             { g:1, gn:'Ocupação Permanente', rp:10, ra:1.0, t11:49, t12:3, ach:8,  desc:'G1 · Ginásio' },
-    'Recinto desportivo':  { g:1, gn:'Ocupação Permanente', rp:10, ra:1.0, t11:98, t12:3, ach:8,  desc:'G1 · Desportivo' },
+    'Restauração':         { g:1, gn:'Ocupação Permanente', rp:10, ra:1.0, t11:24, t12:3, ach:8,  desc:'G1 · Restauração / refeitório (T11: sedentária)' },
+    'Café / bar':          { g:1, gn:'Ocupação Permanente', rp:10, ra:1.0, t11:35, t12:3, ach:8,  desc:'G1 · Cafés, bares, salas de jogos (T11: moderada)' },
+    'Laboratório':         { g:1, gn:'Ocupação Permanente', rp:10, ra:1.0, t11:35, t12:5, ach:8,  desc:'G1 · Laboratório, oficina, sala de desenho (T11: moderada)' },
+    'Sala de aula':        { g:1, gn:'Ocupação Permanente', rp:7,  ra:0.7, t11:24, t12:3, ach:6,  desc:'G1 · Salas de aula (T11: sedentária)' },
+    'Jardim de infância':  { g:1, gn:'Ocupação Permanente', rp:7,  ra:0.7, t11:28, t12:3, ach:6,  desc:'G1 · Jardins de infância e creches (T11: 28)' },
+    'Ginásio':             { g:1, gn:'Ocupação Permanente', rp:10, ra:1.0, t11:98, t12:3, ach:8,  desc:'G1 · Ginásio, sala de musculação (T11: alta)' },
+    'Sala de dança / aeróbica': { g:1, gn:'Ocupação Permanente', rp:10, ra:1.0, t11:49, t12:3, ach:8,  desc:'G1 · Pistas de dança, aeróbica, ballet (T11: ligeiramente alta)' },
+    'Recinto desportivo':  { g:1, gn:'Ocupação Permanente', rp:10, ra:1.0, t11:98, t12:3, ach:8,  desc:'G1 · Pavilhões desportivos (T11: alta)' },
     'Cinema':              { g:1, gn:'Ocupação Permanente', rp:7,  ra:0.7, t11:24, t12:3, ach:8,  desc:'G1 · Cinema' },
     'Teatro':              { g:1, gn:'Ocupação Permanente', rp:7,  ra:0.7, t11:24, t12:3, ach:8,  desc:'G1 · Teatro' },
     'Consulta':            { g:1, gn:'Ocupação Permanente', rp:10, ra:1.0, t11:24, t12:3, ach:6,  desc:'G1 · Consulta' },
     'Internamento':        { g:1, gn:'Ocupação Permanente', rp:5,  ra:0.5, t11:16, t12:3, ach:6,  desc:'G1 · Internamento' },
-    'Sala de espera':      { g:1, gn:'Ocupação Permanente', rp:10, ra:1.0, t11:24, t12:3, ach:6,  desc:'G1 · Espera' },
-    'Biblioteca':          { g:1, gn:'Ocupação Permanente', rp:7,  ra:0.7, t11:24, t12:3, ach:6,  desc:'G1 · Biblioteca' },
+    'Sala de espera':      { g:1, gn:'Ocupação Permanente', rp:10, ra:1.0, t11:20, t12:3, ach:6,  desc:'G1 · Espera (T11: descanso)' },
+    'Biblioteca':          { g:1, gn:'Ocupação Permanente', rp:7,  ra:0.7, t11:20, t12:3, ach:6,  desc:'G1 · Biblioteca (T11: descanso)' },
     'Museu':               { g:1, gn:'Ocupação Permanente', rp:7,  ra:0.7, t11:24, t12:3, ach:6,  desc:'G1 · Museu' },
     'Sala de convívio':    { g:1, gn:'Ocupação Permanente', rp:7,  ra:0.7, t11:24, t12:3, ach:6,  desc:'G1 · Convívio' },
     'Sala de operações':   { g:1, gn:'Ocupação Permanente', rp:10, ra:1.0, t11:24, t12:5, ach:8,  desc:'G1 · Bloco operatório' },
@@ -115,18 +139,19 @@ VC._normativo = {
     'Arquivo':             { g:3, gn:'Baixa Emissão', rp:0, ra:0.7, t11:24, t12:3, ach:2, desc:'G3 · Arquivo' },
     'Sala técnica':        { g:3, gn:'Baixa Emissão', rp:0, ra:0.7, t11:0,  t12:3, ach:2, desc:'G3 · Sala técnica' },
     'Sanitários':          { g:4, gn:'Extração Dedicada', rp:0, ra:0, t11:0, t12:0, ach:0,  desc:'G4 · Sanitários' },
-    'Balneários':          { g:4, gn:'Extração Dedicada', rp:0, ra:0, t11:0, t12:0, ach:8,  desc:'G4 · Balneários' },
+    'Balneários':          { g:4, gn:'Extração Dedicada', rp:0, ra:0, t11:0, t12:0, ach:8,  desc:'G4 · Balneários (Tabela 13: instalação pública)' },
     'Vestiário':           { g:4, gn:'Extração Dedicada', rp:0, ra:0, t11:0, t12:0, ach:8,  desc:'G4 · Vestiário' },
     'Cozinha':             { g:4, gn:'Extração Dedicada', rp:0, ra:0, t11:0, t12:0, ach:12, desc:'G4 · Cozinha' },
     'Garagem':             { g:4, gn:'Extração Dedicada', rp:0, ra:0, t11:0, t12:0, ach:6,  desc:'G4 · Garagem' },
-    // Portaria 138-I, Tabela 13: «Copa», «Armazenamento de resíduos» e «Salas de cópias/impressão» — 10 renovações/hora
-    'Copa':                { g:4, gn:'Extração Dedicada', rp:0, ra:0, t11:0, t12:0, ach:10, desc:'G4 · Copa (Tabela 13: 10 renovações/hora)', t13: true },
-    'Armazenamento de resíduos': { g:4, gn:'Extração Dedicada', rp:0, ra:0, t11:0, t12:0, ach:10, desc:'G4 · Resíduos (Tabela 13: 10 renovações/hora)', t13: true },
-    'Sala de cópias/impressão': { g:4, gn:'Extração Dedicada', rp:0, ra:0, t11:0, t12:0, ach:10, desc:'G4 · Cópias/impressão (Tabela 13: 10 renovações/hora)', t13: true }
+    // Copa, resíduos e cópias/impressão não constam da Tabela 13 publicada (só tem instalações sanitárias): 10 renovações/hora
+    // é boa prática de projeto e o projetista confirma-a (como na cozinha). Fonte a citar se vier de uma alteração à Portaria.
+    'Copa':                { g:4, gn:'Extração Dedicada', rp:0, ra:0, t11:0, t12:0, ach:10, desc:'G4 · Copa (boa prática: 10 renovações/hora)' },
+    'Armazenamento de resíduos': { g:4, gn:'Extração Dedicada', rp:0, ra:0, t11:0, t12:0, ach:10, desc:'G4 · Resíduos (boa prática: 10 renovações/hora)' },
+    'Sala de cópias/impressão': { g:4, gn:'Extração Dedicada', rp:0, ra:0, t11:0, t12:0, ach:10, desc:'G4 · Cópias/impressão (boa prática: 10 renovações/hora)' }
   },
 
   categoriasPorGrupo: {
-    1: ['Sono','Descanso','Retalho seco','Loja','Escritório','Gabinete','Receção','Auditório','Sala de reuniões','Serviços','Restauração','Laboratório','Sala de aula','Jardim de infância','Ginásio','Recinto desportivo','Cinema','Teatro','Consulta','Internamento','Sala de espera','Biblioteca','Museu','Sala de convívio','Sala de operações','Sala de recuperação'],
+    1: ['Sono','Descanso','Retalho seco','Loja','Escritório','Gabinete','Receção','Auditório','Sala de reuniões','Serviços','Restauração','Café / bar','Laboratório','Sala de aula','Jardim de infância','Ginásio','Sala de dança / aeróbica','Recinto desportivo','Cinema','Teatro','Consulta','Internamento','Sala de espera','Biblioteca','Museu','Sala de convívio','Sala de operações','Sala de recuperação'],
     2: ['Circulação','Escadas','Arrumo'],
     3: ['Arquivo','Sala técnica'],
     4: ['Sanitários','Balneários','Vestiário','Cozinha','Garagem','Copa','Armazenamento de resíduos','Sala de cópias/impressão']
@@ -165,24 +190,21 @@ VC._normativo = {
   qaiProjetoRedeDefault: { 1: 'insuflacao', 2: 'insuflacao', 3: 'insuflacao', 4: 'extracao' },
 
   tabelas: {
-    T11: {
-      'Sono': 16, 'Descanso': 20, 'Retalho seco': 24, 'Loja': 24, 'Escritório': 24, 'Gabinete': 24, 'Receção': 24, 'Auditório': 24, 'Sala de reuniões': 24, 'Serviços': 24, 'Restauração': 28, 'Laboratório': 49, 'Sala de aula': 28, 'Jardim de infância': 20, 'Ginásio': 40, 'Recinto desportivo': 40, 'Cinema': 20, 'Teatro': 20, 'Consulta': 24, 'Internamento': 16, 'Sala de espera': 24, 'Biblioteca': 24, 'Museu': 24, 'Sala de convívio': 24, 'Sala de operações': 24, 'Sala de recuperação': 24
-    },
     T12: {
       'Sono': 3, 'Descanso': 3, 'Retalho seco': 3, 'Loja': 3, 'Escritório': 3, 'Gabinete': 3, 'Receção': 3, 'Auditório': 3, 'Sala de reuniões': 3, 'Serviços': 3, 'Restauração': 3, 'Laboratório': 5, 'Sala de aula': 3, 'Jardim de infância': 3, 'Ginásio': 3, 'Recinto desportivo': 3, 'Cinema': 3, 'Teatro': 3, 'Consulta': 3, 'Internamento': 3, 'Sala de espera': 3, 'Arquivo': 3, 'Sala técnica': 3, 'Biblioteca': 3, 'Museu': 3, 'Sala de convívio': 3, 'Sala de operações': 5, 'Sala de recuperação': 3
     },
-    // Portaria 138-I/2021, Anexo II, Tabela 13 (texto confirmado pelo autor):
-    //   privada, com funcionamento contínuo: Máx(45; 10 × A_pav) · privada, sem funcionamento contínuo: Máx(90; 10 × A_pav)
-    //   pública, funcionamento normal: Máx(90 × (n.º urinóis + n.º sanitas + n.º duches); 10 × A_pav)
-    // Tabela 13 completa (texto fornecido pelo autor): estas linhas + Balneário Máx(90 × duches; 10 × A_pav) + Copa,
-    // Armazenamento de resíduos e Salas de cópias/impressão a 10 renovações/hora (tipos com t13: true).
-    // O antigo «publico_intensivo» (125/aparelho) não vem da norma: foi retirado.
+    // Portaria 138-I/2021, Anexo II, Tabela 13 (texto publicado; igual à Tabela 74 do Manual SCE). Tem só estas 4 linhas:
+    //   privada (um utilizador de cada vez), com funcionamento contínuo: Máx(45; 10 × A_pav)
+    //   privada, sem funcionamento contínuo: Máx(90; 10 × A_pav)
+    //   pública (vários utilizadores, incluindo balneários), funcionamento normal: Máx(90 × (urinóis + sanitas + duches); 10 × A_pav)
+    //   pública, funcionamento intensivo (ex.: teatros, cinemas, escolas, instalações desportivas): Máx(125 × (urinóis + sanitas + duches); 10 × A_pav)
+    // A eficácia de remoção não se aplica a estes caudais. Um balneário é uma instalação pública: normal ou intensiva.
     T13: {
       sanitarios: {
         privado_continuo:      { base: 45,  porAparelho: 0,   porArea: 10, min: 45, nome: 'Privada · com funcionamento contínuo' },
         privado_nao_continuo:  { base: 90,  porAparelho: 0,   porArea: 10, min: 90, nome: 'Privada · sem funcionamento contínuo' },
-        publico_normal:        { base: 0,   porAparelho: 90,  porArea: 10, min: 0, nome: 'Pública' },
-        balneario:             { base: 0,   porAparelho: 90,  porArea: 10, min: 0, nome: 'Balneário', soDuches: true }
+        publico_normal:        { base: 0,   porAparelho: 90,  porArea: 10, min: 0, nome: 'Pública · funcionamento normal', publico: true },
+        publico_intensivo:     { base: 0,   porAparelho: 125, porArea: 10, min: 0, nome: 'Pública · funcionamento intensivo (teatros, cinemas, escolas, desporto)', publico: true }
       }
     },
     // Reg. (UE) 1253/2014 (Ecodesign), Anexo III, requisitos desde 01-01-2018.
@@ -197,7 +219,7 @@ VC._normativo = {
       UVU_SEM_FILTER: 'UVU sem filtro (unidirecional)'
     },
     pressaoLimites: {
-      'Escadas':    { min: 50, max: 80,  nota: 'Escada pressurizada (incêndio)' },
+      'Escadas':    { min: 20, max: 80,  nota: 'Escada pressurizada (incêndio) · RT-SCIE art. 161.º' },
       'Circulação': { min: -5, max: 5,   nota: 'Zona de transferência' },
       'Sanitários': { min: -15, max: 0,  nota: 'Extração dedicada' },
       'Balneários': { min: -15, max: 0,  nota: 'Extração dedicada' },

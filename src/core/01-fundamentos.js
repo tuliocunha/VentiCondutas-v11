@@ -982,11 +982,15 @@ VC.normas = {
   },
   calcExtracaoSanitaria(esp) {
     const A = Number(esp.A) || 0;
-    // projetos antigos com «publico_intensivo» (não existe na Tabela 13) passam à linha pública da norma
-    // Balneário tem linha própria na Tabela 13 (só duches, sem regime)
-    const regime = esp.tipo === 'Balneários' ? 'balneario' : (esp.regimeSanitario === 'publico_intensivo' ? 'publico_normal' : (esp.regimeSanitario || 'privado_continuo'));
-    const nAp = regime === 'balneario' ? (Number(esp.numDuches) || 0) : (Number(esp.numUrinois) || 0) + (Number(esp.numSanitas) || 0) + (Number(esp.numDuches) || 0);
-    const cfg = VC.conhecimento.tabelas.T13.sanitarios[regime] || VC.conhecimento.tabelas.T13.sanitarios.privado_continuo;
+    // Tabela 13 (Portaria 138-I): 4 linhas. O balneário é uma instalação pública (normal por omissão, ou intensiva),
+    // e contam urinóis + sanitas + duches. Projetos antigos: «balneario» → pública normal.
+    const T = VC.conhecimento.tabelas.T13.sanitarios;
+    const pedido = esp.regimeSanitario === 'balneario' ? 'publico_normal' : esp.regimeSanitario;
+    const regime = esp.tipo === 'Balneários'
+      ? ((T[pedido] && T[pedido].publico) ? pedido : 'publico_normal')
+      : (T[pedido] ? pedido : 'privado_continuo');
+    const nAp = (Number(esp.numUrinois) || 0) + (Number(esp.numSanitas) || 0) + (Number(esp.numDuches) || 0);
+    const cfg = T[regime] || T.privado_continuo;
     const q = Math.max(cfg.base, cfg.porAparelho * nAp, cfg.porArea * A, cfg.min);
     const metodo = 'P138 Tabela 13 · ' + (cfg.nome || regime.replace(/_/g, ' '));
     return { qExtracao: q, metodo, nAparelhos: nAp, regime };
@@ -997,8 +1001,10 @@ VC.normas = {
   },
   verificarEscadaPressurizada(esp) {
     if (esp.tipo !== 'Escadas') return { ok: true, motivo: 'Não aplicável' };
+    // RT-SCIE (Portaria 1532/2008), art. 161.º: entre 20 e 80 Pa face aos espaços adjacentes, com as portas fechadas
     const deltaP = Number(esp.deltaP) || 0;
-    return { ok: deltaP >= 50, deltaP, minimo: 50, norma: 'Portaria 1532/2008' };
+    const lim = VC.conhecimento.tabelas.pressaoLimites.Escadas;
+    return { ok: deltaP >= lim.min && deltaP <= lim.max, deltaP, minimo: lim.min, maximo: lim.max, norma: 'RT-SCIE, Portaria 1532/2008, art. 161.º' };
   }
 };
 
