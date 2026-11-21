@@ -405,7 +405,8 @@ VC._carregarExemploDeFicheiro = async function (urls, rotulo, seFalhar) {
       nos: migrado.dados.nos || [],
       trechos: migrado.dados.trechos || [],
       elementosRede: migrado.dados.elementosRede || [],
-      _mapaRenomeacao: migrado.dados._mapaRenomeacao || {}
+      _mapaRenomeacao: migrado.dados._mapaRenomeacao || {},
+      plantas: migrado.dados.plantas || []   // plantas dos pisos (imagem, escala, desenhos)
     });
 
     VC.dados.nextId.espaco = (VC.dados.espacos.reduce((m, e) => Math.max(m, Number(e.id) || 0), 0)) + 1;
@@ -564,7 +565,7 @@ VC.exemplos = {
       if (migrado.configuracao.restricaoH) VC.dados.restricaoH = migrado.configuracao.restricaoH;
       if (migrado.configuracao.serieDiametros) VC.dados.serieDiametros = migrado.configuracao.serieDiametros;
     }
-    Object.assign(VC.dados, { espacos: migrado.dados.espacos || [], ramais: migrado.dados.ramais || [], terminais: migrado.dados.terminais || [], transferencias: migrado.dados.transferencias || [], utas: migrado.dados.utas || [], nos: migrado.dados.nos || [], trechos: migrado.dados.trechos || [], elementosRede: migrado.dados.elementosRede || [], _mapaRenomeacao: migrado.dados._mapaRenomeacao || {} });
+    Object.assign(VC.dados, { espacos: migrado.dados.espacos || [], ramais: migrado.dados.ramais || [], terminais: migrado.dados.terminais || [], transferencias: migrado.dados.transferencias || [], utas: migrado.dados.utas || [], nos: migrado.dados.nos || [], trechos: migrado.dados.trechos || [], elementosRede: migrado.dados.elementosRede || [], _mapaRenomeacao: migrado.dados._mapaRenomeacao || {}, plantas: migrado.dados.plantas || [] });
     if (migrado.flags) VC.flags = Object.assign(VC.flags || {}, migrado.flags);
     VC.dados._versao = 'V9';
     if (VC.rph && VC.rph.aplicarATodos) VC.rph.aplicarATodos();

@@ -468,6 +468,24 @@ VC6.testes = {
     self.registar({ id: 'N11.T7', nucleo: 'N11', grupo: 'Construtor & Dados', nome: 'Exemplo Degrade 2 disponível', criterio: 'na lista de exemplos (pré-carregado) e com carregador', fn: () => { if (!VC.exemplos) return true; if (!VC.exemplos._lista) VC.exemplos.init(); const e = VC.exemplos._lista.find(x => x.id === 'degrade-2'); return !!e && e.builtin === true && typeof VC.exemploDegrade2 === 'function'; } });
     self.registar({ id: 'N11.T8', nucleo: 'N11', grupo: 'Construtor & Dados', nome: 'Exemplo Degrade 21 nov26 disponível', criterio: 'na lista de exemplos (pré-carregado), com carregador e ficheiro para exportar/duplicar', fn: () => { if (!VC.exemplos) return true; if (!VC.exemplos._lista) VC.exemplos.init(); const e = VC.exemplos._lista.find(x => x.id === 'degrade-21nov26'); return !!e && e.builtin === true && typeof VC.exemploDegrade21nov26 === 'function' && VC.exemplos._ficheiroDe(e) === 'exemplos/degrade-21nov26.json'; } });
     self.registar({ id: 'N11.T9', nucleo: 'N11', grupo: 'Construtor & Dados', nome: 'Exemplo Degrade 21 nov26 · corrigido disponível', criterio: 'na lista de exemplos (pré-carregado), com carregador e ficheiro para exportar/duplicar', fn: () => { if (!VC.exemplos) return true; if (!VC.exemplos._lista) VC.exemplos.init(); const e = VC.exemplos._lista.find(x => x.id === 'degrade-21nov26-corrigido'); return !!e && e.builtin === true && typeof VC.exemploDegrade21nov26Corrigido === 'function' && VC.exemplos._ficheiroDe(e) === 'exemplos/degrade-21nov26-corrigido.json'; } });
+    self.registar({ id: 'N11.T10', nucleo: 'N11', grupo: 'Construtor & Dados', nome: 'Planta: condutas à escala, troço a troço', criterio: 'o traçado divide-se nos troços pela fração do L; cada troço tem a largura do seu Ø na escala do piso', fn: () => {
+      const P = VC.planta; if (!P || !P._subTracado || !P._trocosNoTracado) return true;
+      const pts = [[0, 0], [100, 0], [100, 50]];   // 150 px
+      const a = P._subTracado(pts, 0, 0.5), b = P._subTracado(pts, 0.5, 1);
+      const okDiv = Math.abs(P.comprimentoPx(a) - 75) < 1e-6 && Math.abs(P.comprimentoPx(b) - 75) < 1e-6 && b[b.length - 1][1] === 50;
+      const r = { planta: { pts }, L: 3, trocos: [{ de: 0, ate: 1, Dcom: 250 }, { de: 1, ate: 3, Dcom: 125 }] };
+      const T = P._trocosNoTracado(r);
+      const okT = T.length === 2 && Math.abs(P.comprimentoPx(T[0].pts) - 50) < 1e-6 && Math.abs(P.comprimentoPx(T[1].pts) - 100) < 1e-6;
+      // largura no desenho: Ø/escala (0,25 m a 0,01 m/px = 25 px; 0,125 m = 12,5 px)
+      const piso = { id: 'pt', nome: 'T', imagem: null, w: 200, h: 100, escala: 0.01 }, guard = VC.dados.plantas, guardR = VC.dados.ramais, z = P.zoom;
+      let okW = false;
+      try {
+        VC.dados.plantas = [piso]; VC.dados.ramais = [Object.assign({ id: 9901, nome: 'RT', rede: 'insuflacao', Dcom: 250 }, r, { planta: { pisoId: 'pt', pts } })]; P.zoom = 1;
+        const svg = P._svg(piso), w = [...svg.matchAll(/class="planta-troco"[^>]*stroke-width="([\d.]+)"/g)].map(m => Number(m[1]));
+        okW = w.length === 2 && Math.abs(w[0] - 25) < 1e-6 && Math.abs(w[1] - 12.5) < 1e-6;
+      } finally { VC.dados.plantas = guard; VC.dados.ramais = guardR; P.zoom = z; }
+      return okDiv && okT && okW;
+    } });
   },
 
   initIntegracao() {
