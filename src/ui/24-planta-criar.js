@@ -187,7 +187,7 @@ P.calibrarPendentePorArea = function (m2) { if (this.pendente) this.calibrarPorA
 /* parcelas do caudal de ar novo (Portaria 138-I): o engenheiro define N; aplica-se o maior */
 P._parcelasCaudal = function (e) {
   const def = VC.normas.getDef(e.tipo) || {}, c = VC.calculo.calcularQEspaco(e), g = Number(e.grupoForcado || c.g || def.g) || 0;
-  const ev = Number(VC.dados.eficaciaRemocao) || 1;
+  const ev = VC.calculo.evDe(e);   // Fase 4: por espaço
   const A = Number(e.A) || 0, V = Number(e.V) || A * (Number(e.H) || 0);
   if (g === 1) {
     const semN = !!c.nPorDefinir;   // N vazio = por definir: só T12 conta, e a app avisa (por fazer)

@@ -1323,7 +1323,7 @@ VC.editorTerminais = VC.editorTerminais || {
  '<td><select onchange="VC.editorTerminais.editar(' + i + ', \'tamanho\', this.value)" ' + dis + '><option value="">-</option>' + tams.map(function (x) { return '<option value="' + VC.utils.esc(x) + '"' + (x === t.tamanho ? ' selected' : '') + '>' + VC.utils.esc(x) + '</option>'; }).join('') + '</select></td>' +  
  '<td><span class="valor-derivado">' + VC.utils.fmt(t.Q, 0) + '</span></td>' +  
  '<td><input type="number" step="1" min="0" placeholder="—" value="' + (t.Q_medido != null ? t.Q_medido : '') + '" onchange="VC.editorTerminais.editar(' + i + ', \'Q_medido\', this.value)" title="Caudal medido em comissionamento TAB (m³/h)" style="background:#f0fdf4;border-color:#bbf7d0;font-weight:700;color:#166534" ' + dis + '></td>' +  
- '<td><input type="number" step="0.1" value="' + (t.v_saida || 0) + '" onchange="VC.editorTerminais.editar(' + i + ', \'v_saida\', this.value)" ' + dis + '></td>' +  
+ '<td>' + (/^calculada/.test(v.vOrigem || '') ? '<b title="' + VC.utils.esc('Velocidade ' + v.vOrigem) + '">' + VC.utils.fmt(v.v, 2) + '</b>' : '<input type="number" step="0.1" value="' + (t.v_saida || 0) + '" title="Sem produto do catálogo: velocidade escrita à mão" onchange="VC.editorTerminais.editar(' + i + ', \'v_saida\', this.value)" ' + dis + '>') + '</td>' +  
  '<td><b>' + VC.utils.fmt(v.dPCalc, 1) + '</b></td>' +  
  '<td><b>' + VC.utils.fmt(v.LwCalc, 1) + '</b></td>' +  
  '<td>' + (v.status === 'OK' ? '<span class="badge ok">OK</span>' : (v.status === 'ATENÇÃO' ? '<span class="badge atencao">ATENCAO</span>' : '<span class="badge erro">NAO CONF.</span>')) + '</td>' +  

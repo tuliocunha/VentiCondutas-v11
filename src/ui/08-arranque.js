@@ -317,6 +317,11 @@ window.renderSetup = function () {
        '</select></div>';
 
   h += '<div class="campo-grupo" style="margin-bottom:8px"><label>Potência térmica nominal global (kW) <span style="font-weight:400;opacity:.7">(DL 101-D: SACE ≥ 290 kW · inspeção &gt; 70 kW)</span></label><input type="number" step="1" min="0" placeholder="por definir" title="Aquecimento ou arrefecimento, isolados ou combinados com ventilação (não é a potência dos ventiladores)" value="' + (p.potenciaTermica != null && p.potenciaTermica !== '' ? p.potenciaTermica : '') + '" onchange="if(this.value===\'\') delete VC.dados.params.potenciaTermica; else VC.dados.params.potenciaTermica=VC.utils.num(this.value); VC.estado.sincronizar();"></div>';
+  const polSel = p.poluicaoEdificio || 'pouco';
+  h += '<div class="campo-grupo" style="margin-bottom:8px"><label>Edifício (EN 16798-1, q_B) <span style="font-weight:400;opacity:.7">(comparação)</span></label><select title="Por omissão, a EN 16798-1 considera o edifício pouco poluente" onchange="VC.dados.params.poluicaoEdificio=this.value; if(VC.perf&&VC.perf.cacheCalculo) VC.perf.cacheCalculo.invalidar(); VC.estado.sincronizar();">'
+    + '<option value="muito_pouco"' + (polSel === 'muito_pouco' ? ' selected' : '') + '>Muito pouco poluente</option>'
+    + '<option value="pouco"' + (polSel === 'pouco' ? ' selected' : '') + '>Pouco poluente (omissão)</option>'
+    + '<option value="nao_pouco"' + (polSel === 'nao_pouco' ? ' selected' : '') + '>Não pouco poluente</option></select></div>';
   h += '<div class="campo-grupo" style="margin-bottom:8px"><label>Eficácia de Remoção (εv)</label><input type="number" step="0.1" min="0.1" value="' + (VC.dados.eficaciaRemocao ?? 1.0) + '" onchange="VC.dados.eficaciaRemocao=VC.utils.num(this.value); VC.estado.sincronizar();"></div>';
 
   // v11.2: só Comércio e Serviços (âmbito da Portaria 138-I) está implementado. As outras tipologias aparecem
@@ -358,6 +363,21 @@ window.renderSetup = function () {
 };
 VC.caudalEspacoUI = {
   _filtroTexto: '',
+  /* Fase 4: eficácia de remoção do espaço; vazio = a do Setup */
+  _selectEv: function (idx, e, dis) {
+    const T = (VC.conhecimento.tabelas.EPSILON_V || []);
+    const atual = e.eficaciaRemocaoTipo || '';
+    let h = '<select onclick="event.stopPropagation()" onchange="VC.caudalEspacoUI.setEv(' + idx + ', this.value)" title="Eficácia de remoção (Manual SCE, Tabela 68). Num sistema que aquece e arrefece, escolha o pior caso." style="font-size:10px;max-width:70px" ' + (dis || '') + '>';
+    h += '<option value="">Setup (' + VC.utils.fmt(Number(VC.dados.eficaciaRemocao) || 1, 1) + ')</option>';
+    T.forEach(t => { h += '<option value="' + t.id + '"' + (atual === t.id ? ' selected' : '') + ' title="' + VC.utils.esc(t.nome) + '">' + VC.utils.fmt(t.ev, 1) + ' · ' + VC.utils.esc(t.nome) + '</option>'; });
+    return h + '</select>';
+  },
+  setEv: function (idx, id) {
+    const e = VC.dados.espacos[idx]; if (!e) return;
+    const t = (VC.conhecimento.tabelas.EPSILON_V || []).find(x => x.id === id);
+    if (t) { e.eficaciaRemocao = t.ev; e.eficaciaRemocaoTipo = t.id; } else { delete e.eficaciaRemocao; delete e.eficaciaRemocaoTipo; }
+    VC.estado.sincronizar();
+  },
   setFiltro: function(v) { this._filtroTexto = String(v || '').toLowerCase(); if(VC._passoAtivo === 'classificacao') VC.passos.render('classificacao'); },
   editar: function (idx, campo, valor) { const e = VC.dados.espacos[idx]; if (!e) return; if (campo === 'N' && String(valor == null ? '' : valor).trim() === '') delete e.N; else if (['A', 'H', 'V', 'N'].indexOf(campo) >= 0) e[campo] = VC.utils.num(valor); else e[campo] = valor; VC.estado.sincronizar(); },
   setGrupo: function (idx, valor) {
@@ -417,7 +437,7 @@ window.renderCaudalEspaco = function () {
   h += '<div style="margin-top:10px"></div>';
   h += '<div class="tabela-wrap"><table class="tabela densa"><thead><tr>';
 
-  const colunas = [ { id: 'nome', label: 'Espaço', sortable: true }, { id: 'tipo', label: 'Tipo ' + VC.tabelas.botao('tipo_espaco'), sortable: true, width: '120px' }, { id: 'grupo', label: 'Grupo', sortable: false, width: '110px' }, { id: 'A', label: 'A (m²)', sortable: true, width: '70px' }, { id: 'H', label: 'H (m)', sortable: true, width: '60px' }, { id: 'V', label: 'V (m³)', sortable: true, width: '70px' }, { id: 'N', label: 'N (–)', sortable: true, width: '50px' }, { id: 'metodo', label: 'Método', sortable: false, width: '120px' }, { id: 'T11', label: 'T11', sortable: false, width: '60px' }, { id: 'T12', label: 'T12', sortable: false, width: '60px' }, { id: 'Q', label: 'Q_normas (m³/h) ' + VC.tabelas.botao('Q_normas'), sortable: true, width: '100px' }, { id: 'RPH', label: 'RPH (h⁻¹)', sortable: false, width: '110px' }, { id: 'QConTerm', label: 'Q_ConTerm (m³/h)', sortable: false, width: '100px' }, { id: 'QAI', label: 'QAI_projeto (m³/h)', sortable: false, width: '110px' }, { id: 'Qtotal', label: 'Q_total (m³/h) ' + VC.tabelas.botao('Q_total'), sortable: false, width: '100px' }, { id: 'ACH', label: 'ACH (h⁻¹)', sortable: false, width: '70px' }, { id: 'estado', label: 'Estado', sortable: false, width: '60px' } ];
+  const colunas = [ { id: 'nome', label: 'Espaço', sortable: true }, { id: 'tipo', label: 'Tipo ' + VC.tabelas.botao('tipo_espaco'), sortable: true, width: '120px' }, { id: 'grupo', label: 'Grupo', sortable: false, width: '110px' }, { id: 'A', label: 'A (m²)', sortable: true, width: '70px' }, { id: 'H', label: 'H (m)', sortable: true, width: '60px' }, { id: 'V', label: 'V (m³)', sortable: true, width: '70px' }, { id: 'N', label: 'N (–)', sortable: true, width: '50px' }, { id: 'metodo', label: 'Método', sortable: false, width: '120px' }, { id: 'T11', label: 'T11', sortable: false, width: '60px' }, { id: 'T12', label: 'T12', sortable: false, width: '60px' }, { id: 'ev', label: 'ε_v', sortable: false, width: '70px' }, { id: 'Q', label: 'Q_normas (m³/h) ' + VC.tabelas.botao('Q_normas'), sortable: true, width: '100px' }, { id: 'RPH', label: 'RPH (h⁻¹)', sortable: false, width: '110px' }, { id: 'QConTerm', label: 'Q_ConTerm (m³/h)', sortable: false, width: '100px' }, { id: 'QAI', label: 'QAI_projeto (m³/h)', sortable: false, width: '110px' }, { id: 'Qtotal', label: 'Q_total (m³/h) ' + VC.tabelas.botao('Q_total'), sortable: false, width: '100px' }, { id: 'ACH', label: 'ACH (h⁻¹)', sortable: false, width: '70px' }, { id: 'estado', label: 'Estado', sortable: false, width: '60px' } ];
 
     h += '<th style="text-align:center;color:var(--texto-suave);font-weight:900;user-select:none">#</th>';
   colunas.forEach(col => { const ativa = ui.ordenacao === col.id; const seta = col.sortable ? (ativa ? (ui.direcao === 'asc' ? ' ▲' : ' ▼') : '') : ''; const cor = ativa ? 'color:var(--primario-esc)' : ''; const cursor = col.sortable ? 'cursor:pointer;user-select:none;' : ''; const onclick = col.sortable ? ' onclick="VC.caudalEspacoUI.ordenarPor(\'' + col.id + '\')"' : ''; const classeAttr = (col.classe || col.id === 'nome') ? ' class="col-flex"' : ''; const styleAttr = 'style="' + cursor + cor + '"'; h += '<th' + classeAttr + onclick + ' ' + styleAttr + '>' + col.label + seta + '</th>'; });
@@ -437,6 +457,7 @@ window.renderCaudalEspaco = function () {
     h += '<td style="font-size:10px;color:var(--texto-med);white-space:nowrap">' + VC.utils.esc(metodo.length > 18 ? metodo.substring(0, 16) + '…' : metodo) + '</td>';
     h += '<td style="font-family:ui-monospace,monospace;font-size:10.5px;text-align:right">' + (t11 > 0 ? VC.utils.fmt(t11, 1) : '—') + '</td>';
     h += '<td style="font-family:ui-monospace,monospace;font-size:10.5px;text-align:right">' + (t12 > 0 ? VC.utils.fmt(t12, 1) : '—') + '</td>';
+    h += '<td>' + VC.caudalEspacoUI._selectEv(idx, e, dis) + '</td>';   // Fase 4: ε_v por espaço (Manual SCE, Tabela 68)
     h += '<td><span class="valor-derivado" style="font-weight:900">' + VC.utils.fmt(Q_normas, 0) + '</span></td>';
         const rphHTML = '<div style="display:flex;gap:3px;align-items:center"><input class="num-1d" type="number" step="0.1" min="0" value="' + rphAplicado + '" onchange="VC.caudalEspacoUI.editarRPH(' + idx + ', this.value)" onclick="event.stopPropagation()" ' + dis + ' style="padding:2px 4px;border:1px solid var(--borda-media);border-radius:3px;font-size:10.5px;font-family:inherit">' + (badge ? '<span style="font-size:11px">' + badge + '</span>' : '') + (rphOrigem === 'utilizador' ? '<button class="btn btn-mini" onclick="event.stopPropagation(); VC.caudalEspacoUI.reporNorma(' + idx + ')" ' + dis + ' style="padding:0 3px;font-size:9px" title="Repor norma">↺</button>' : '') + '</div>';
     h += '<td>' + rphHTML + '</td>';

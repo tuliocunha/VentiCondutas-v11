@@ -207,6 +207,27 @@ const CASOS = [
     const c = VC.conhecimento.tabelas.T13.sanitarios.publico_normal, o = c.min; c.min = 45;
     return () => { c.min = o; };
   }],
+  // Fase 4 da auditoria: qualidade de cálculo
+  ['ε_v do espaço ignorado (só o do Setup)', 'N2.T21', () => {
+    const o = VC.calculo.evDe; VC.calculo.evDe = function () { return Number(VC.dados.eficaciaRemocao) || 1; };
+    return () => { VC.calculo.evDe = o; };
+  }],
+  ['EN 16798-1 sem o mínimo de 4 l/s por pessoa', 'N2.T22', () => {
+    const T = VC.conhecimento.tabelas.EN16798_1, o = T.minimoPorPessoa; T.minimoPorPessoa = 0;
+    return () => { T.minimoPorPessoa = o; };
+  }],
+  ['Retangular volta a ignorar a perda alvo', 'N4.T24', () => {
+    const o = VC.calculo.retangular; VC.calculo.retangular = function (h, r, v, q) { return o.call(this, h, r, v, q); };
+    return () => { VC.calculo.retangular = o; };
+  }],
+  ['Ruído do terminal volta a 10·log(Q/Q0)', 'N7.T20', () => {
+    const T = VC.constantes.TERMINAL, o = T.expoenteLw; T.expoenteLw = 10;
+    return () => { T.expoenteLw = o; };
+  }],
+  ['Grelhas de transferência voltam a Cd ≈ 0,78', 'N5.T1', () => {
+    const o = VC.constantes.CD_TRANSFERENCIA; VC.constantes.CD_TRANSFERENCIA = 0.78;
+    return () => { VC.constantes.CD_TRANSFERENCIA = o; };
+  }],
   // Fase 3 da auditoria: bases legais
   ['UVB: cada metade volta a ser comparada sozinha com o limite da unidade', 'N6.T15', () => {
     const o = VC.calculo.classificarUVB; VC.calculo.classificarUVB = function () {};
