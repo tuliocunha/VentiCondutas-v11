@@ -24,7 +24,8 @@
    · ventiladores com parâmetros de referência (sem catálogo).
 
    Uso:  node tools/gerar-exemplo-degrade-21nov26.js
-   Grava exemplos/degrade-21nov26.json
+   Grava exemplos/degrade-21nov26.json (como desenhado) e
+   exemplos/degrade-21nov26-corrigido.json (com as CORRECOES abaixo)
    ============================================================ */
 'use strict';
 const http = require('http');
@@ -33,7 +34,6 @@ const path = require('path');
 const { chromium } = require('playwright');
 
 const RAIZ = path.resolve(__dirname, '..');
-const SAIDA = path.join(RAIZ, 'exemplos', 'degrade-21nov26.json');
 
 /* ── espaços: [nome, piso, ala, tipo, A (m²), extra] ── */
 const ESPACOS = [
@@ -143,7 +143,7 @@ const TRANSF = [
   ['Circulação P0-N2', 'Casa de Banho P0-N2', 50]
 ];
 
-function montarProjeto() {
+function montarProjeto(ESPACOS, REDES, TRANSF, META, PARAMS_EXTRA) {
   const espacos = ESPACOS.map(([nome, piso, ala, tipo, A, extra], i) => {
     const e = { id: 3001 + i, nome, tipo, zona: piso + ' - ' + ala, localizacao: { piso, ala, compartimento: null }, geometriaMetodo: 'AH',
       A, H: 2.6, V: Math.round(A * 2.6 * 1000) / 1000, N: OCUPADOS.includes(tipo) ? Math.ceil(A / 10) : 0,
@@ -189,12 +189,59 @@ function montarProjeto() {
     Q, tipo: 'grelha_porta', dP_Pa: 2 }));
   return {
     _versao: 'V9',
-    metadados: { nome: 'Degrade 21 nov26', cliente: 'Degrade', local: 'Torres Vedras, Portugal', autor: 'Tulio Cunha', revisao: '01',
-      descricao: 'Parâmetros do Tempo · estudo de ventilação TGC 19nov26 (validação de princípio) · Piso 0 e Piso 1 · 8 ventiladores VAN/VEG + VEISP0 + VCM · caudais e traçado do desenho · bloco nordeste e Mezanino fora do cálculo' },
+    metadados: Object.assign({ cliente: 'Degrade', local: 'Torres Vedras, Portugal', autor: 'Tulio Cunha' }, META),
     configuracao: { tipologia: 'comercio', restricaoH: 250, serieDiametros: 'S1',
-      params: { altitude: 30, temperatura: 20, humidade: 50, rugosidade: 0.15, categoria: 'II', poluicaoEdificio: 'pouco', potenciaTermica: 42, tExtInverno: 3 } },
+      params: Object.assign({ altitude: 30, temperatura: 20, humidade: 50, rugosidade: 0.15, categoria: 'II', poluicaoEdificio: 'pouco', potenciaTermica: 42, tExtInverno: 3 }, PARAMS_EXTRA || {}) },
     dados: { espacos, ramais, terminais, transferencias, utas, nos: [], trechos: [], elementosRede: [], _mapaRenomeacao: {} }
   };
+}
+
+/* ── CORREÇÕES (versão «corrigido»): o que muda face ao desenho e porquê ──
+   Cada correção altera só caudais, terminais e um troço novo onde preciso; o traçado do desenho mantém-se. */
+const CORRECOES = [
+  'Garagem P0-N1: extração dedicada VEX Garagem de 600 m³/h (RT-SCIE art. 183.º: 300 e 600 m³/h por veículo, 1 lugar), 2 GE × 300 junto ao pavimento; ar de compensação natural pela porta exterior',
+  'Sala P0-N1 (bastidores): ar novo 60 m³/h (VAN P0 N, tronco prolongado 4,1 m) e extração 60 m³/h (VEG P0 N, tronco prolongado 7,2 m); mínimo 59 m³/h',
+  'Refeitório P0-S1: ar novo da VCM 2 × 100 = 200 m³/h (mínimo 192) e extração nova de 2 × 100 m³/h por derivação do VEG P0 S',
+  'Sanitários (uso público, Tabela 13): VE de 75 para 90 m³/h por sanita; GE azul da CB P0-N2 suprimido (a VE de 90 cumpre)',
+  'CB P0-N2: ar novo de 100 para 60 m³/h; recebe 30 m³/h por transferência e fica em depressão (Anexo II, 1.2.2 h))',
+  'Circulação P0-N2: ar novo 200 m³/h (derivação da Sala Técnica), igual ao ar que transfere para os sanitários (90 + 80 + 30)',
+  'Salas técnicas (bastidores e P0-N2): sem caudal de conforto acrescentado; o caudal do desenho já cobre a renovação',
+  'Escritórios, laboratórios, circulações do P1 e Arrumo P0-N1: extração igual ao ar novo de cada espaço (balanço nulo)',
+  'Sala P1-S2: extração 2 × 200 = 400 m³/h, igual ao ar novo',
+  'Apoio/Serviço P1-S4: extração 100 m³/h por derivação nova do VEG P1 S',
+  'Setup: ventilação integrável em gestão técnica (ar novo ≥ 3000 m³/h, Portaria 138-I, Anexo II, 1.5 c)'
+];
+function corrigir() {
+  const E = JSON.parse(JSON.stringify(ESPACOS)), R = JSON.parse(JSON.stringify(REDES));
+  const rede = id => R.find(n => n.id === id), ramal = (id, nome) => rede(id).ramais.find(r => r.nome === nome);
+  const setQ = (id, nome, esp, Q) => ramal(id, nome).t.filter(t => t[0] === esp).forEach(t => { t[2] = Q; });
+  // bastidores
+  const r11 = ramal('UTA-01', 'R1.1'); r11.L = 29.8; r11.t.push(['Sala P0-N1 (bastidores)', 29.8, 60]);
+  const r21 = ramal('UTA-02', 'R2.1'); r21.L = 28.0; r21.t.push(['Sala P0-N1 (bastidores)', 28.0, 60]);
+  // circulação P0-N2 e CB P0-N2
+  ramal('UTA-01', 'R1.1.1').t.push(['Circulação P0-N2', 1.8, 200]);
+  setQ('UTA-01', 'R1.1.1.1', 'Casa de Banho P0-N2', 60);
+  // salas técnicas: o caudal do desenho já cobre a renovação; sem caudal de conforto (F-RPH) por cima
+  E.filter(e => e[3] === 'Sala técnica').forEach(e => { e[5] = Object.assign({}, e[5], { rphAplicado: 0, rphOrigem: 'utilizador' }); });
+  // extração = ar novo
+  [['Arrumo P0-N1', 100], ['Sala P0-N4', 125], ['Sala P0-N3', 125], ['Sala P0-N2', 100]].forEach(([e, q]) => setQ('UTA-02', 'R2.1', e, q));
+  [['Laboratório P0-S5', 150], ['Sala P0-S4', 150], ['Sala P0-S3', 150], ['Sala P0-S1', 125], ['Sala P0-S2', 125]].forEach(([e, q]) => setQ('UTA-04', 'R4.1', e, q));
+  ramal('UTA-06', 'R6.1').t.forEach(t => { t[2] = 100; });
+  setQ('UTA-08', 'R8.1', 'Sala P1-S2 (open space)', 200);
+  // refeitório
+  rede('UTA-04').ramais.push({ nome: 'R4.1.1', pai: 'R4.1', sPai: 5.9, L: 8.9, zeta: 0.9, t: [['Refeitório P0-S1', 7.5, 100], ['Refeitório P0-S1', 8.9, 100]] });
+  ramal('UTA-10', 'R10.1').t.forEach(t => { t[2] = 100; });
+  // apoio P1-S4
+  rede('UTA-08').ramais.push({ nome: 'R8.1.1', pai: 'R8.1', sPai: 5.7, L: 3.0, zeta: 0.6, t: [['Apoio/Serviço P1-S4', 3.0, 100]] });
+  // sanitários: VE 90, sem GE azul
+  const s9 = rede('UTA-09'); ramal('UTA-09', 'R9.1').t = [];
+  s9.ramais.forEach(r => r.t.forEach(t => { t[2] = 90; }));
+  // garagem: extração dedicada (ar contaminado, rede própria)
+  R.push({ id: 'UTA-11', nome: 'VEX Garagem P0-N1', rede: 'extracao_suja', zona: 'P0 Garagem', piso: 'P0', ala: 'Norte', tipoT: GE,
+    uv: { tipoUV: 'UVU_SEM_FILTER', eta: 0.45, componentes: [C.ventilador, C.grelhaExt] }, ramais: [
+      { nome: 'R11.1', L: 3.0, zeta: 0.6, t: [['Garagem P0-N1', 1.5, 300], ['Garagem P0-N1', 3.0, 300]] }] });
+  const T = [['Circulação P0-N2', 'Casa de Banho esp. P0-N3', 90], ['Circulação P0-N2', 'Casa de Banho P0-N1', 80], ['Circulação P0-N2', 'Casa de Banho P0-N2', 30]];
+  return { E, R, T };
 }
 
 function servidor() {
@@ -210,8 +257,14 @@ function servidor() {
   });
 }
 
+const VERSOES = [
+  { ficheiro: 'degrade-21nov26.json', projeto: () => montarProjeto(ESPACOS, REDES, TRANSF, { nome: 'Degrade 21 nov26', revisao: '01',
+    descricao: 'Parâmetros do Tempo · estudo de ventilação TGC 19nov26 (validação de princípio) · Piso 0 e Piso 1 · 8 ventiladores VAN/VEG + VEISP0 + VCM · caudais e traçado do desenho · bloco nordeste e Mezanino fora do cálculo' }) },
+  { ficheiro: 'degrade-21nov26-corrigido.json', projeto: () => { const c = corrigir(); return montarProjeto(c.E, c.R, c.T, { nome: 'Degrade 21 nov26 · corrigido', revisao: '02',
+    descricao: 'Degrade 21 nov26 com as correções de conformidade (Portaria 138-I, RT-SCIE, balanço de ar): ' + CORRECOES.join(' · ') }, { integracaoGT: true }); } }
+];
+
 (async () => {
-  const projeto = montarProjeto();
   const srv = await servidor();
   const browser = await chromium.launch();
   const page = await browser.newPage();
@@ -220,6 +273,8 @@ function servidor() {
   await page.route(/^https?:\/\/(?!127\.0\.0\.1)/, r => r.abort());   // sem bibliotecas externas: só o motor de cálculo
   await page.goto('http://127.0.0.1:' + srv.address().port + '/index.html');
   await page.waitForFunction(() => window.VC && VC.exemplos && VC.calculo, null, { timeout: 30000 });
+  for (const V of VERSOES) {
+  const projeto = V.projeto();
   const out = await page.evaluate(p => {
     VC.exemplos.aplicarProjeto(p);
     const s = VC.exemplos.serializarAtual();
@@ -230,8 +285,9 @@ function servidor() {
       ramais: VC.dados.ramais.map(r => r.nome + ' Q=' + r.Q + ' ' + (r.trocos || []).map(t => t.secao + '×' + t.L.toFixed(1)).join(' → '))
     } };
   }, projeto);
-  fs.writeFileSync(SAIDA, JSON.stringify(out.projeto, null, 1) + '\n');
-  console.log(JSON.stringify(out.resumo, null, 1));
+  fs.writeFileSync(path.join(RAIZ, 'exemplos', V.ficheiro), JSON.stringify(out.projeto, null, 1) + '\n');
+  console.log(V.ficheiro, JSON.stringify(out.resumo, null, 1));
+  }
   if (erros.length) console.log('Erros JS:', erros);
   await browser.close(); srv.close();
 })().catch(e => { console.error(e); process.exit(1); });
