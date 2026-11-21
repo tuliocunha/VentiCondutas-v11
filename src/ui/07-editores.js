@@ -1294,6 +1294,7 @@ VC.editorTerminais = VC.editorTerminais || {
  h += thClick('tipo', 'Tipo' + ' ' + VC.tabelas.botao('tipo_terminal'));  
  h += '<th class="col-flex">Espaços</th>';  
  h += thClick('ramal', 'Ramal');  
+ h += '<th title="Distância (m) desde o início do ramal até ao terminal. Vazio: da planta, ou o fim do ramal.">Posição (m)</th>';  
  h += '<th>Fabricante</th><th>Família</th><th>Tamanho</th>';  
  h += thClick('Q', 'Q proj. (m³/h)');  
  h += '<th>Q_med TAB (m³/h)</th>';  
@@ -1316,6 +1317,7 @@ VC.editorTerminais = VC.editorTerminais || {
  '<td><input value="' + VC.utils.esc(t.tipo) + '" readonly></td>' +  
  '<td style="font-size:10.5px;color:var(--texto-med)">' + espTxt + '</td>' +  
  '<td><select onchange="VC.editorTerminais.editar(' + i + ', \'ramalRef\', this.value)" ' + dis + '><option value="">-</option>' + VC.dados.ramais.map(function (r) { return '<option value="' + VC.utils.esc(r.nome) + '"' + (r.nome === t.ramalRef ? ' selected' : '') + '>' + VC.utils.esc(r.nome) + '</option>'; }).join('') + '</select></td>' +  
+ '<td><input type="number" step="0.5" min="0" style="width:60px" value="' + (t.sRamal != null && t.sRamal !== '' ? t.sRamal : '') + '" placeholder="auto" onchange="VC.editorTerminais.editar(' + i + ', \'sRamal\', this.value)" ' + dis + '></td>' +  
  '<td><select onchange="VC.editorTerminais.editar(' + i + ', \'fabricante\', this.value)" ' + dis + '><option value="">-</option>' + fabs.map(function (f) { return '<option value="' + VC.utils.esc(f) + '"' + (f === t.fabricante ? ' selected' : '') + '>' + VC.utils.esc(f) + '</option>'; }).join('') + '</select></td>' +  
  '<td><select onchange="VC.editorTerminais.editar(' + i + ', \'familia\', this.value)" ' + dis + '><option value="">-</option>' + fams.map(function (f) { return '<option value="' + VC.utils.esc(f) + '"' + (f === t.familia ? ' selected' : '') + '>' + VC.utils.esc(f) + '</option>'; }).join('') + '</select></td>' +  
  '<td><select onchange="VC.editorTerminais.editar(' + i + ', \'tamanho\', this.value)" ' + dis + '><option value="">-</option>' + tams.map(function (x) { return '<option value="' + VC.utils.esc(x) + '"' + (x === t.tamanho ? ' selected' : '') + '>' + VC.utils.esc(x) + '</option>'; }).join('') + '</select></td>' +  
@@ -1336,6 +1338,7 @@ VC.editorTerminais = VC.editorTerminais || {
  if (!t) return;  
  if (campo === 'v_saida') t[campo] = VC.utils.num(valor);  
  else if (campo === 'Q_medido') t.Q_medido = (valor === '' || valor == null) ? null : VC.utils.num(valor);  
+ else if (campo === 'sRamal') { if (valor === '' || valor == null) delete t.sRamal; else t.sRamal = Math.max(0, VC.utils.num(valor)); }   // Fase 2A  
  else t[campo] = valor;  
  if (campo === 'fabricante') { t.familia = ''; t.tamanho = ''; }  
  if (campo === 'familia') { t.tamanho = ''; }  
@@ -1375,9 +1378,11 @@ VC.editorRamais = VC.editorRamais || {
  h += '<details style="margin-bottom:10px; background:var(--superf); border:1px solid var(--borda); border-radius:8px; padding:4px;"><summary style="cursor:pointer; font-weight:800; font-size:11.5px; color:var(--texto-med); padding:8px; background:var(--superf3); border-radius:6px; list-style:none; display:flex; align-items:center; gap:6px;"><i class="fa-solid fa-gear"></i> Engenharia Avançada</summary>';  
  h += '<div class="tabela-wrap" style="margin-top:10px; border:none"><table class="tabela densa"><thead><tr>' +  
  '<th style="width:30px">#</th><th>Nome</th><th>Nível</th><th>L (m)</th>' +  
+ '<th title="Distância (m) desde o início do ramal pai até onde este ramal sai. Vazio: da planta, ou o fim do pai.">Posição no pai (m)</th>' +  
  '<th>ζ (–)</th>' +  
  '<th>Secção</th>' +  
  '<th>Q (m³/h)</th>' +  
+ '<th title="Troços entre derivações: o caudal desce em cada derivação e a secção reduz-se">Troços</th>' +  
  '<th>v (m/s)</th>' +  
  '<th>Re (–)</th>' +  
  '<th>Δp troço (Pa)</th>' +  
@@ -1398,6 +1403,7 @@ VC.editorRamais = VC.editorRamais || {
  '<td><input class="ramal-nome" value="' + VC.utils.esc(r.nome) + '" title="Renomear: atualiza sub-ramais, terminais e espaços" onclick="event.stopPropagation()" onchange="VC.editorRamais.renomear(' + i + ', this)" ' + dis + '></td>' +  
  '<td><span class="badge nivel-r' + nivelNum + '" title="' + VC.utils.nivelRotulo(nivelNum, true) + '">' + VC.utils.nivelRotulo(nivelNum) + '</span></td>' +  
  '<td><input type="number" step="0.5" value="' + (r.L || 0) + '" onchange="VC.editorRamais.editar(' + i + ', \'L\', this.value)" ' + dis + '></td>' +  
+ '<td>' + (r.parente ? '<input type="number" step="0.5" min="0" style="width:64px" value="' + (r.sPai != null && r.sPai !== '' ? r.sPai : '') + '" placeholder="' + (r.sNoPaiOrigem === 'planta' ? VC.utils.fmt(r.sNoPai, 1) + ' (planta)' : 'fim') + '" onchange="VC.editorRamais.editar(' + i + ', \'sPai\', this.value)" ' + dis + '>' : '<span style="color:var(--texto-suave)">—</span>') + '</td>' +  
  '<td><input type="number" step="0.1" value="' + VC.utils.fmt(r.zeta || 0, 1) + '" onchange="VC.editorRamais.editar(' + i + ', \'zeta\', this.value)" ' + dis + '></td>' +  
  '<td><select onchange="VC.editorRamais.editar(' + i + ', \'forma\', this.value)" ' + dis + ' style="font-size:11px">' +  
    '<option value="circular"' + (r.secaoAdotada !== 'retangular' ? ' selected' : '') + '>Circular</option>' +  
@@ -1405,6 +1411,7 @@ VC.editorRamais = VC.editorRamais || {
    '<b>' + VC.utils.esc(r.secaoCalc || (r.Dcom ? 'Ø' + r.Dcom : '-')) + '</b>' +  
    (r.avisoSecao ? ' <span title="' + VC.utils.esc(r.avisoSecao) + '" style="cursor:help;color:var(--ambar-esc)">⚠</span>' : '') + '</td>' +  
  '<td><span class="valor-derivado">' + VC.utils.fmt(r.Q, 0) + '</span></td>' +  
+ '<td>' + VC.editorRamais._trocosTxt(r) + '</td>' +  
  '<td>' + VC.utils.fmt(r.v, 2) + '</td>' +  
  '<td>' + VC.utils.fmt(r.Re, 0) + '</td>' +  
  '<td>' + VC.utils.fmt(r.deltaPTroco, 1) + '</td>' +  
@@ -1417,6 +1424,13 @@ VC.editorRamais = VC.editorRamais || {
  h += '</tbody></table></div></details>';  
  return h;  
  },  
+ /* Fase 2A: troços do ramal (Q e secção de cada um) */
+ _trocosTxt(r) {
+   const T = (r.trocos || []).filter(t => t.Q > 0);
+   if (r.modoTrocos !== 'posicionado' || T.length < 2) return '<span title="Sem derivações posicionadas: um só troço com o caudal total (cálculo conservador)" style="color:var(--texto-suave)">1</span>';
+   const tit = T.map(t => VC.utils.fmt(t.de, 1) + '–' + VC.utils.fmt(t.ate, 1) + ' m · ' + VC.utils.fmt(t.Q, 0) + ' m³/h · ' + (t.secao || ('Ø' + t.Dcom)) + ' · ' + VC.utils.fmt(t.v, 2) + ' m/s · ' + VC.utils.fmt(t.dpLin, 1) + ' Pa').join('\n');
+   return '<b title="' + VC.utils.esc(tit) + '" style="cursor:help">' + T.length + '</b> <small>' + VC.utils.esc(T.map(t => t.secao || ('Ø' + t.Dcom)).join(' → ')) + '</small>';
+ },
  /* v11.3: renomear em cascata (sub-ramais, terminais, espaços, nós e troços) */
  renomear(idx, input) {
  const r = VC.dados.ramais[idx]; if (!r) return;
@@ -1429,6 +1443,7 @@ VC.editorRamais = VC.editorRamais || {
  const r = VC.dados.ramais[idx];  
  if (!r) return;  
  if (['L', 'zeta', 'Q'].indexOf(campo) >= 0) r[campo] = VC.utils.num(valor);  
+ else if (campo === 'sPai') { if (valor === '' || valor == null) delete r.sPai; else r.sPai = Math.max(0, VC.utils.num(valor)); }   // Fase 2A  
  else if (campo === 'forma') r.geometriaInput = Object.assign({}, r.geometriaInput || {}, { forma: valor === 'retangular' ? 'retangular' : 'circular' });   // v11.1: escolha do utilizador  
  else r[campo] = valor;  
  VC.estado.sincronizar();  

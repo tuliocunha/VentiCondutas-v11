@@ -719,6 +719,7 @@ VC.estado._hashEstado = function () {
   partes.push((VC.dados && VC.dados.serieDiametros) || 'S1');
   partes.push((VC.dados && VC.dados.metodoCalculo && VC.dados.metodoCalculo.metodo) || 'loss');
   partes.push((VC.dados && VC.dados.filtros && VC.dados.filtros.modo) || 'sujo');
+  partes.push((VC.dados && VC.dados.metodoCalculo && VC.dados.metodoCalculo.diametroUnico) ? 'D1' : 'Dt');   // Fase 2A
   const espacos = (VC.dados && VC.dados.espacos) || [];
   partes.push('E' + espacos.length);
   partes.push(espacos.map(e =>
@@ -734,11 +735,12 @@ VC.estado._hashEstado = function () {
     r.id + '|' + r.nome + '|' + (r.parente || '') + '|' + (r.L || 0) + '|' + (r.zeta || 0) +
     '|' + (r.utaRef || '') + '|' + ((r.lock && r.lock.D) ? '1' : '0') + '|' + ((r.geometriaInput && r.geometriaInput.forma) || 'circular')   // v11.1: forma da secção
     + '|' + ((r.geometriaInput && r.geometriaInput.material) || '') + '|' + ((r.geometriaInput && r.geometriaInput.rugosidade) || '') + '|' + ((r.geometriaInput && r.geometriaInput.H_max) || '') + '|' + JSON.stringify((r.geometriaInput && r.geometriaInput.proprio) || {})   // v11.1 (E1) · v11.2: valores próprios
+    + '|' + (r.sPai == null ? '' : r.sPai) + '|' + (r.planta ? r.planta.pisoId + ':' + JSON.stringify(r.planta.pts || []) : '')   // Fase 2A: posição no pai e traçado
   ).join('#'));
   const terminais = (VC.dados && VC.dados.terminais) || [];
   partes.push('Tm' + terminais.length);
   partes.push(terminais.map(t =>
-    t.id + '|' + (t.ramalRef || '') + '|' + (t.Q_medido == null ? '' : t.Q_medido) +
+    t.id + '|' + (t.ramalRef || '') + '|' + (t.Q_medido == null ? '' : t.Q_medido) + '|' + (t.sRamal == null ? '' : t.sRamal) + '|' + (t.planta ? t.planta.pisoId + ':' + t.planta.x + ',' + t.planta.y : '') +   // Fase 2A
     '|' + ((t.espacos || []).map(e => e.nome + ':' + e.Q_parcela).join(','))
   ).join('#'));
   const trf = (VC.dados && VC.dados.transferencias) || [];

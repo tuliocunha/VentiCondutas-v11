@@ -57,7 +57,7 @@ VC.normativaUI = {
     const ciclos = VC6.balanco ? VC6.balanco.detetarCiclos() : [];
     out.push({ norma: 'Balanço de massa · P1', item: 'Σ Q_in = Σ Q_out (±5 m³/h)', resultado: ciclos.length > 0 ? ciclos.length + ' ciclo(s) detetado(s)' : 'Sem ciclos · OK', estado: ciclos.length > 0 ? 'NÃO CONFORME' : 'CONFORME' });
 
-    const velocidadesOK = (VC.dados.ramais || []).every(r => (Number(r.v) || 0) <= VC.calculo.vMaxDe(r) + 1e-6);   // o mesmo limite por nível do dimensionamento (VMAX_NIVEL)
+    const velocidadesOK = (VC.dados.ramais || []).every(r => Math.max(Number(r.v) || 0, Number(r.vMaxTrocos) || 0) <= VC.calculo.vMaxDe(r) + 1e-6);   // o mesmo limite por nível do dimensionamento (VMAX_NIVEL)
     out.push({ norma: 'VDI 2081:2018', item: 'Velocidade máxima', resultado: velocidadesOK ? 'Todas dentro do limite' : 'Existem ramais acima do limite', estado: velocidadesOK ? 'CONFORME' : 'NÃO CONFORME' });   // o cálculo dá ERRO «Velocidade excessiva»: a mesma gravidade
 
     const espacosSemReq = (VC.dados.espacos || []).filter(e => !(e.definicoes || []).length).length;
