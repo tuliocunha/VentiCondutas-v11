@@ -32,11 +32,15 @@ VC6.testes = {
     self.registar({ id: 'N2.T2', nucleo: 'N2', grupo: 'Normas', nome: 'Sanitário → G4, extração T13', criterio: 'conforme tabela', fn: () => VC6.normas.getDef('Sanitários').g === 4 });
     self.registar({ id: 'N2.T3', nucleo: 'N2', grupo: 'Normas', nome: 'Circulação → G2 isento', criterio: 'Q=0', fn: () => { const d = VC6.normas.getDef('Circulação'); return d.g === 2 && d.t11 === 24 && d.t12 === 0; } });
     self.registar({ id: 'N2.T4', nucleo: 'N2', grupo: 'Normas', nome: 'Sanitário privado contínuo ≥ 45', criterio: 'q ≥ 45', fn: () => { const r = VC6.normas.calcExtracaoSanitaria({ A: 5, regimeSanitario: 'privado_continuo' }); return r.qExtracao >= 45; } });
-    self.registar({ id: 'N2.T5', nucleo: 'N2', grupo: 'Normas', nome: 'Sanitário público = Máx(90·aparelhos; 10·A)', criterio: 'Tabela 13: 2 sanitas, 5 m² → 180; o antigo «intensivo» passa à linha pública', fn: () => { const f = o => VC6.normas.calcExtracaoSanitaria(o).qExtracao; return f({ A: 5, regimeSanitario: 'publico_normal', numSanitas: 2 }) === 180 && f({ A: 5, regimeSanitario: 'publico_intensivo', numSanitas: 2 }) === 180 && !VC.conhecimento.tabelas.T13.sanitarios.publico_intensivo; } });
+    self.registar({ id: 'N2.T5', nucleo: 'N2', grupo: 'Normas', nome: 'Sanitário público normal e intensivo (Tabela 13)', criterio: '2 sanitas, 5 m² → 180 (normal, 90/aparelho) e 250 (intensivo, 125/aparelho)', fn: () => { const f = o => VC6.normas.calcExtracaoSanitaria(o).qExtracao; return f({ A: 5, regimeSanitario: 'publico_normal', numSanitas: 2 }) === 180 && f({ A: 5, regimeSanitario: 'publico_intensivo', numSanitas: 2 }) === 250 && VC.conhecimento.tabelas.T13.sanitarios.publico_intensivo.porAparelho === 125; } });
+    // Fase 1 da auditoria: balneário = instalação pública (urinóis + sanitas + duches), normal ou intensiva
+    self.registar({ id: 'N2.T5b', nucleo: 'N2', grupo: 'Normas', nome: 'Balneário conta todos os aparelhos (Tabela 13, pública)', criterio: '3 sanitas + 2 urinóis + 4 duches, 20 m² → 810 (normal) e 1125 (intensivo); sem aparelhos → 10 × A = 200; regime antigo «balneario» → normal', fn: () => { const f = o => VC6.normas.calcExtracaoSanitaria(Object.assign({ tipo: 'Balneários', A: 20 }, o)).qExtracao; const ap = { numSanitas: 3, numUrinois: 2, numDuches: 4 }; return f(ap) === 810 && f(Object.assign({ regimeSanitario: 'publico_intensivo' }, ap)) === 1125 && f({}) === 200 && f(Object.assign({ regimeSanitario: 'balneario' }, ap)) === 810 && f(Object.assign({ regimeSanitario: 'privado_continuo' }, ap)) === 810; } });
+    // Fase 1 da auditoria: Tabela 11 conforme o texto publicado (Portaria 138-I; Manual SCE, Tabela 69)
+    self.registar({ id: 'N2.T5c', nucleo: 'N2', grupo: 'Normas', nome: 'Tabela 11 por atividade (Portaria 138-I)', criterio: 'Ginásio 98 (N = 10 → 980 m³/h); Laboratório 35; Sala de aula 24; Auditório, Biblioteca, Sala de espera, Sala de reuniões 20; Restauração 24; Café/bar 35; Dança 49; Jardim 28; Sono 16', fn: () => { const t = x => VC.normas.getDef(x).t11; const esperado = { 'Ginásio': 98, 'Recinto desportivo': 98, 'Laboratório': 35, 'Sala de aula': 24, 'Auditório': 20, 'Biblioteca': 20, 'Sala de espera': 20, 'Sala de reuniões': 20, 'Descanso': 20, 'Restauração': 24, 'Café / bar': 35, 'Sala de dança / aeróbica': 49, 'Jardim de infância': 28, 'Sono': 16, 'Escritório': 24 }; const okT = Object.keys(esperado).every(k => t(k) === esperado[k]); const q = VC.calculo.calcularQ_normas({ tipo: 'Ginásio', A: 50, H: 3, N: 10 }); const ev = Number(VC.dados.eficaciaRemocao) || 1; return okT && Math.abs(q.Q_normas - 980 / Math.max(ev, 0.1)) < 1e-6 && !VC.conhecimento.tabelas.T11; } });
     self.registar({ id: 'N2.T6', nucleo: 'N2', grupo: 'Normas', nome: 'SFPint=650 → classe 1 ou 2', criterio: 'conforme', fn: () => { const r = VC6.normas.classificarSFP('BVU_HRS', 650, 0, 0.75); return r.classe === 1 || r.classe === 2; } });
     self.registar({ id: 'N2.T7', nucleo: 'N2', grupo: 'Normas', nome: 'SFPint=1500 → NÃO CONFORME', criterio: 'conforme', fn: () => { const r = VC6.normas.classificarSFP('BVU_HRS', 1500, 0, 0.75); return r.classe === 4 && !r.conforme; } });
     self.registar({ id: 'N2.T8', nucleo: 'N2', grupo: 'Normas', nome: 'P=300 kW → BACS obrigatório', criterio: 'conforme', fn: () => { const r = VC6.normas.dl101D(300000); return r.bacsObrigatorio === true; } });
-    self.registar({ id: 'N2.T9', nucleo: 'N2', grupo: 'Normas', nome: 'Escada pressurizada exige ≥ 50 Pa', criterio: 'conforme', fn: () => { const r = VC6.normas.verificarEscadaPressurizada({ tipo: 'Escadas', deltaP: 60 }); return r.ok === true; } });
+    self.registar({ id: 'N2.T9', nucleo: 'N2', grupo: 'Normas', nome: 'Escada pressurizada entre 20 e 80 Pa (RT-SCIE, art. 161.º)', criterio: '30 Pa e 60 Pa → OK; 15 Pa e 90 Pa → não', fn: () => { const v = d => VC6.normas.verificarEscadaPressurizada({ tipo: 'Escadas', deltaP: d }).ok; return v(30) && v(60) && v(20) && v(80) && !v(15) && !v(90); } });
     self.registar({ id: 'N3.T18', nucleo: 'N3', grupo: 'Balanço', nome: 'Balanços identificados (id e nome)', criterio: 'todos', fn: () => { if (VC6.balanco && VC6.balanco.propagar) VC6.balanco.propagar(); return VC6.balanco.todos().every(b => b.id != null && typeof b.nome === 'string' && b.nome.length > 0); } });
     self.registar({ id: 'N3.T19', nucleo: 'N3', grupo: 'Balanço', nome: 'Insuflação/extração pela rede do terminal, não pelo nome', criterio: 'terminal de insuflação chamado "Grelha extração" conta como insuflação', fn: () => {
       const t = { id: 'T-TESTE', nome: 'Grelha extração', tipo: 'Retorno', rede: 'insuflacao', Q: 100, espacos: [] };
@@ -698,20 +702,20 @@ VC6.testes = {
       } finally { Object.assign(D, { espacos: g.esp, terminais: g.ter, ramais: g.ram, utas: g.utas, transferencias: g.tr, eficaciaRemocao: g.ev }); ['ordenacaoTopologica', 'cacheBalanco', 'cacheMaterializacao'].forEach(k => VC.perf[k] && VC.perf[k].invalidar && VC.perf[k].invalidar()); VC.calculo.calcularTudo(); }
     } });
     // Portaria 138-I, Tabela 13 (texto confirmado): fórmulas exatas das três linhas
-    self.registar({ id: 'UI.T34', nucleo: 'UI', grupo: 'UI', nome: 'Tabela 13 completa', criterio: 'privada contínua 3 m² → 45, 8 m² → 80; não contínua 3 m² → 90, 12 m² → 120; pública 2 sanitas + 1 urinol, 3 m² → 270; pública 1 duche, 40 m² → 400; pública sem aparelhos 3 m² → 30; balneário 4 duches 6 m² → 360, sem duches → POR FAZER; copa, resíduos e cópias com V = 30 m³ → 300 (10/h); sanitária sem regime → POR FAZER', fn: () => {
+    self.registar({ id: 'UI.T34', nucleo: 'UI', grupo: 'UI', nome: 'Tabela 13 completa', criterio: 'privada contínua 3 m² → 45, 8 m² → 80; não contínua 3 m² → 90, 12 m² → 120; pública 2 sanitas + 1 urinol, 3 m² → 270; pública 1 duche, 40 m² → 400; pública sem aparelhos 3 m² → 30; pública intensiva 2 sanitas + 1 urinol, 3 m² → 375; balneário 4 duches + 3 sanitas, 6 m² → 630 (todos os aparelhos), sem aparelhos → POR FAZER; copa, resíduos e cópias com V = 30 m³ → 300 (10/h, boa prática); sanitária sem regime → POR FAZER', fn: () => {
       const f = o => VC.normas.calcExtracaoSanitaria(o).qExtracao;
       const ok1 = f({ A: 3, regimeSanitario: 'privado_continuo' }) === 45 && f({ A: 8, regimeSanitario: 'privado_continuo' }) === 80;
       const ok2 = f({ A: 3, regimeSanitario: 'privado_nao_continuo' }) === 90 && f({ A: 12, regimeSanitario: 'privado_nao_continuo' }) === 120;
       const ok3 = f({ A: 3, regimeSanitario: 'publico_normal', numSanitas: 2, numUrinois: 1 }) === 270 && f({ A: 40, regimeSanitario: 'publico_normal', numDuches: 1 }) === 400 && f({ A: 3, regimeSanitario: 'publico_normal' }) === 30;
-      const ok4 = f({ tipo: 'Balneários', A: 6, numDuches: 4, numSanitas: 3 }) === 360 && f({ tipo: 'Balneários', A: 6 }) === 60;   // balneário: só duches contam
+      const ok4 = f({ tipo: 'Balneários', A: 6, numDuches: 4, numSanitas: 3 }) === 630 && f({ tipo: 'Balneários', A: 6 }) === 60 && f({ A: 3, regimeSanitario: 'publico_intensivo', numSanitas: 2, numUrinois: 1 }) === 375;   // balneário: pública, todos os aparelhos contam
       const q10 = t => VC.calculo.calcularQEspaco({ id: 9, nome: 'X', tipo: t, A: 10, H: 3, V: 30, geometriaMetodo: 'V', definicoes: [] });
-      const ok5 = ['Copa', 'Armazenamento de resíduos', 'Sala de cópias/impressão'].every(t => { const c = q10(t); return c.Q_normas === 300 && /Tabela 13/.test(c.metodoCaudal) && c.g === 4; }) && /boa prática/.test(q10('Cozinha').metodoCaudal);
+      const ok5 = ['Copa', 'Armazenamento de resíduos', 'Sala de cópias/impressão'].every(t => { const c = q10(t); return c.Q_normas === 300 && !VC.normas.getDef(t).t13 && /boa prática/.test(c.metodoCaudal) && c.g === 4; }) && /boa prática/.test(q10('Cozinha').metodoCaudal);
       const D = VC.dados, g = { esp: D.espacos, tr: D.transferencias };
       try {
         D.transferencias = [];
         const ff = () => (VC.calculo.calcularTudo().findings || []).map(x => x.severidade + '|' + x.tipo);
         D.espacos = [{ id: 1, nome: 'Bx', tipo: 'Balneários', A: 6, H: 3, V: 18, geometriaMetodo: 'AH', definicoes: [] }];
-        const ok6 = ff().includes('POR FAZER|Duches do balneário por definir') && !ff().some(x => /Regime da instala/.test(x));
+        const ok6 = ff().includes('POR FAZER|Aparelhos do balneário por definir') && !ff().some(x => /Regime da instala/.test(x));
         D.espacos = [{ id: 2, nome: 'Wx', tipo: 'Sanitários', A: 3, H: 3, V: 9, geometriaMetodo: 'AH', definicoes: [] }];
         const ok7 = ff().includes('POR FAZER|Regime da instalação sanitária por definir');
         D.espacos[0].regimeSanitario = 'publico_normal'; const ok8 = ff().includes('POR FAZER|Aparelhos sanitários por definir');
@@ -719,16 +723,16 @@ VC6.testes = {
       } finally { D.espacos = g.esp; D.transferencias = g.tr; VC.calculo.calcularTudo(); }
     } });
     // valores de boa prática (G4 fora da Tabela 13): alerta até o projetista confirmar; a Tabela 13 e as sanitárias não alertam
-    self.registar({ id: 'UI.T35', nucleo: 'UI', grupo: 'UI', nome: 'Caudal de boa prática por confirmar', criterio: 'cozinha, vestiário e garagem → ATENÇÃO; confirmada → sem alerta; copa (Tabela 13) e sanitários → sem alerta', fn: () => {
+    self.registar({ id: 'UI.T35', nucleo: 'UI', grupo: 'UI', nome: 'Caudal de boa prática por confirmar', criterio: 'cozinha, vestiário, garagem e copa → ATENÇÃO (boa prática); confirmada → sem alerta; sanitários (Tabela 13) → sem alerta', fn: () => {
       const D = VC.dados, g = { esp: D.espacos, tr: D.transferencias };
       try {
         D.transferencias = [];
         const mk = (id, tipo) => ({ id, nome: tipo + id, tipo, A: 10, H: 3, V: 30, geometriaMetodo: 'AH', definicoes: [] });
         D.espacos = [mk(1, 'Cozinha'), mk(2, 'Vestiário'), mk(3, 'Garagem'), mk(4, 'Copa'), mk(5, 'Sanitários')];
         const alertas = () => (VC.calculo.calcularTudo().findings || []).filter(f => f.tipo === 'Caudal de boa prática por confirmar').map(f => f.elemento).sort().join();
-        const ok1 = alertas() === 'Cozinha1,Garagem3,Vestiário2';
+        const ok1 = alertas() === 'Copa4,Cozinha1,Garagem3,Vestiário2';
         D.espacos[0].boaPraticaConfirmada = true;
-        const ok2 = alertas() === 'Garagem3,Vestiário2';
+        const ok2 = alertas() === 'Copa4,Garagem3,Vestiário2';
         return ok1 && ok2;
       } finally { D.espacos = g.esp; D.transferencias = g.tr; VC.calculo.calcularTudo(); }
     } });
