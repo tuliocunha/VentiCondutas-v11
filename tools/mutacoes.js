@@ -207,6 +207,30 @@ const CASOS = [
     const c = VC.conhecimento.tabelas.T13.sanitarios.publico_normal, o = c.min; c.min = 45;
     return () => { c.min = o; };
   }],
+  // Fase 2 da auditoria: encadeamento
+  ['Filtro, bateria e recuperador do ramal voltam a somar ao Δp total', 'N4.T23', () => {
+    const o = VC.calculo.calcularDeltaPAcumulado;
+    VC.calculo.calcularDeltaPAcumulado = function () { o.apply(this, arguments); VC.dados.ramais.forEach(r => { r.deltaPtotal += (Number(r.deltaP_filtro) || 0) + (Number(r.deltaP_bateria) || 0) + (Number(r.deltaP_recup) || 0); }); };
+    return () => { VC.calculo.calcularDeltaPAcumulado = o; };
+  }],
+  ['Sono volta a usar T12 × A', 'N2.T18', () => {
+    const d = VC.conhecimento.tiposEspaco['Sono']; delete d.semT12;
+    return () => { d.semT12 = true; };
+  }],
+  ['Balneário volta a ficar NÃO CONFORME por renovações/hora', 'N2.T19', () => {
+    const o = VC.calculo.calcularQ_normas;
+    VC.calculo.calcularQ_normas = function (esp) { const c = o.apply(this, arguments); if (esp && esp.tipo === 'Balneários' && c.ACH < c.achMin) c.status = 'NÃO CONF.'; return c; };
+    return () => { VC.calculo.calcularQ_normas = o; };
+  }],
+  ['G4 volta a ficar isento da comparação servido / exigido', 'N3.T21', () => {
+    const o = VC.calculo.balancoEspaco;
+    VC.calculo.balancoEspaco = function () { const b = o.apply(this, arguments); if (b.g === 3 || b.g === 4) b.estado = 'ISENTO'; return b; };
+    return () => { VC.calculo.balancoEspaco = o; };
+  }],
+  ['Quadro legal do balanço volta a ver só os ciclos', 'N3.T21', () => {
+    const B = VC6.balanco, o = B.propagar; B.propagar = function () { const r = o.apply(this, arguments); return r.map(x => Object.assign({}, x, { estado: 'OK' })); };
+    return () => { B.propagar = o; };
+  }],
   // Fase 2A da auditoria: caudal variável ao longo do ramal
   ['Troços: o caudal total percorre o ramal inteiro (volta o troço único)', 'N4.T21', () => {
     const o = VC.calculo.trocosDe; VC.calculo.trocosDe = function (r) { return { modo: 'simplificado', trocos: [{ de: 0, ate: Number(r.L) || 0, L: Number(r.L) || 0, Q: Number(r.Q) || 0 }] }; };

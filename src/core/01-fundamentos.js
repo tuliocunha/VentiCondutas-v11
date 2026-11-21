@@ -824,6 +824,7 @@ VC.constantes = {
   ZETA_DERIVACAO: { TE_PASSAGEM: 0.4, REDUCAO: { contracao: 0.05, expansao: 0.3 } },
   TERMINAL: { vAtencao: 2.2, vMax: 2.5, LwAtencao: 35, LwMax: 40 },   // m/s no colo · dB(A) · critério de conforto (VDI 2081)
   BALANCO_ESPACO: { sub: 0.90, sobre: 1.20 },                          // Q servido / Q necessário · tolerância da app
+  MINIMO_LEGAL_ARREDONDAMENTO: 0.5,   // m³/h · folga de arredondamento ao m³/h na comparação servido ≥ mínimo legal (Fase 2)
   BALANCO_RESIDUO: 5,          // m³/h · resíduo aceite no balanço de massa de um espaço (2× = desequilíbrio grave)
   EQUILIBRIO_REDE: 0.20,       // desvio máximo de Δp entre ramais após otimização (20 %)
   DL101D: { SGTC: 290000, SGT: 100000, INSPECAO: 70000 },             // W · DL 101-D/2020 (gestão técnica e inspeção)
@@ -905,7 +906,7 @@ VC.normas = {
     const d = VC.conhecimento.tiposEspaco[tipo] || { g: 1, gn: 'Ocupação Permanente', rp: brp, ra: bra, t11: 24, t12: 3, ach: 6, desc: 'Fallback' };
     let rp = d.rp, ra = d.ra;
     if (d.g === 1) { if (rp === 7) rp = brp; if (ra === 0.7) ra = bra; }
-    return { g: d.g, gn: d.gn, rp, ra, t11: d.t11, t12: d.t12, ach: d.ach, desc: d.desc, semArCedido: !!d.semArCedido, t13: !!d.t13 };   // semArCedido: Portaria 138-I, Anexo II, 1.2.2 f)
+    return { g: d.g, gn: d.gn, rp, ra, t11: d.t11, t12: d.t12, ach: d.ach, desc: d.desc, semArCedido: !!d.semArCedido, t13: !!d.t13, semT12: !!d.semT12 };   // semArCedido: Portaria 138-I, Anexo II, 1.2.2 f)
   },
   // v11.1: limites do Reg. (UE) 1253/2014 (Ecodesign) por tipo de unidade de ventilação.
   // qnom em m³/s; etaRec = eficiência térmica do recuperador (0–1).

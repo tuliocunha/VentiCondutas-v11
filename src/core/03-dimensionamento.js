@@ -143,9 +143,10 @@ VC.calculo = {
       Q_renov = Math.max(qT12, qAch) / Math.max(ev, 0.1);
       metodoCaudal = achMin > 0 ? 'P138 T12 + ACH >= ' + achMin + ' (max)' : 'P138 T12 (diluicao basal)';
     } else {
-      const t11 = Number(def.t11) || 0, t12 = Number(def.t12) || 0;
+      // Portaria 138-I, Anexo II, 1.2.2 b): nos espaços de sono aplica-se só o critério da ocupação (sem T12 × A)
+      const t11 = Number(def.t11) || 0, t12 = def.semT12 ? 0 : (Number(def.t12) || 0);
       Q_renov = Math.max(t11 * N, t12 * A) / Math.max(ev, 0.1);
-      metodoCaudal = nPorDefinir ? 'P138 T12 (N por definir)' : 'P138 T11/T12';
+      metodoCaudal = def.semT12 ? (nPorDefinir ? 'P138 T11 (sono; N por definir)' : 'P138 T11 (sono: só ocupação)') : (nPorDefinir ? 'P138 T12 (N por definir)' : 'P138 T11/T12');
     }
     const qEN = this.qEN16798(esp, def, A);
     const ACH = V ? (Q_renov || Q_extracao) / V : 0;
@@ -166,7 +167,8 @@ VC.calculo = {
     }
 
     if (g === 4 && def.ach > 0 && ACH < def.ach) {
-      if (esp.tipo !== 'Sanitários') {
+      // Fase 2: sanitários e balneários seguem a Tabela 13 (legal); as renovações/hora de boa prática não os tornam não conformes
+      if (esp.tipo !== 'Sanitários' && esp.tipo !== 'Balneários') {
         status = 'NÃO CONF.';
       }
     }
@@ -561,10 +563,10 @@ VC.calculo = {
       // terminais ao longo do ramal: Δp até à sua posição + Δp do terminal (o mais desfavorável)
       const term = (r.derivacoes || []).filter(d => d.tipo === 'terminal').reduce((m, d) => Math.max(m, this.dpAte(r, d.s) + (d.dP || 0)), 0);
       // (sem posições: todos os terminais no fim → acumulado + Δp do pior terminal, como antes)
+      // Fase 2: filtro, bateria e recuperador são componentes da UTA (uta.componentes → Δp interno).
+      // Os campos antigos do ramal (deltaP_filtro/_bateria/_recup) já não entram aqui: contavam-se duas vezes.
+      // O registo de regulação do ramal é perda exterior à UTA e continua a contar.
       r.deltaPtotal = Math.max(0, ini + Math.max(r.deltaPTroco || 0, term)
-        + (Number(r.deltaP_filtro) || 0)
-        + (Number(r.deltaP_bateria) || 0)
-        + (Number(r.deltaP_recup) || 0)
         + (Number(r.deltaP_registo) || 0));
       r.status = r.deltaPtotal < 200 ? 'OK' : r.deltaPtotal < 300 ? 'ATENÇÃO' : 'NÃO CONF.';
     });
@@ -779,7 +781,7 @@ VC.calculo = {
         const n = Number(e.lugares) || 0, qo = VC6.balanco && VC6.balanco.QOutDireto ? VC6.balanco.QOutDireto(e) : 0;
         if (!(n > 0)) { findings.push({ severidade: 'POR FAZER', tipo: 'Lugares da garagem por definir', elemento: e.nome, msg: 'Escreva o número de lugares: o RT-SCIE pede 300 m³/h por veículo a 50 ppm de CO e 600 m³/h por veículo a 100 ppm' }); return; }
         if (qo < 300 * n) findings.push({ severidade: 'ERRO', tipo: 'Garagem abaixo do RT-SCIE', elemento: e.nome, msg: 'Extração ' + VC.utils.fmt(qo, 0) + ' m³/h < 300 × ' + n + ' = ' + VC.utils.fmt(300 * n, 0) + ' m³/h (1.º patamar, 50 ppm de CO; Portaria 1532/2008)' });
-        else if (qo < 600 * n) findings.push({ severidade: 'ATENÇÃO', tipo: 'Garagem abaixo do RT-SCIE', elemento: e.nome, msg: 'Extração ' + VC.utils.fmt(qo, 0) + ' m³/h cumpre o 1.º patamar (300 × ' + n + ') mas não o 2.º, a 100 ppm de CO: 600 × ' + n + ' = ' + VC.utils.fmt(600 * n, 0) + ' m³/h (Portaria 1532/2008)' });
+        else if (qo < 600 * n) findings.push({ severidade: 'ERRO', tipo: 'Garagem abaixo do RT-SCIE', elemento: e.nome, msg: 'Extração ' + VC.utils.fmt(qo, 0) + ' m³/h cumpre o 1.º patamar (300 × ' + n + ') mas não o 2.º, a 100 ppm de CO: 600 × ' + n + ' = ' + VC.utils.fmt(600 * n, 0) + ' m³/h. O sistema tem de garantir os dois patamares (RT-SCIE, art. 183.º)' });
       });
       // higiene do ar: nenhuma transferência leva ar de um espaço sujo para um mais limpo (regra de VC6.transferencias)
       if (window.VC6 && VC6.transferencias && VC6.transferencias.direcaoValida) {
@@ -829,7 +831,7 @@ VC.calculo = {
       // N por definir: aviso cinzento «por fazer» (não é erro; o caudal fica só por T12 × A)
       VC.dados.espacos.forEach(e => {
         const c = this.calcularQEspaco(e);
-        if (c.nPorDefinir) findings.push({ severidade: 'POR FAZER', tipo: 'Ocupação por definir', elemento: e.nome, msg: 'N vazio: o ar novo é calculado só por T12 × A (' + VC.utils.fmt(c.Q_normas, 0) + ' m³/h). Escreva o número de pessoas para comparar com T11 × N.' });
+        if (c.nPorDefinir) findings.push({ severidade: 'POR FAZER', tipo: 'Ocupação por definir', elemento: e.nome, msg: (VC.normas.getDef(e.tipo).semT12 ? 'N vazio: num espaço de sono o ar novo vem só de T11 × N (Portaria 138-I, 1.2.2 b), por isso está a 0 m³/h. Escreva o número de pessoas.' : 'N vazio: o ar novo é calculado só por T12 × A (' + VC.utils.fmt(c.Q_normas, 0) + ' m³/h). Escreva o número de pessoas para comparar com T11 × N.') });
       });
       VC.dados.espacos.forEach(e => {
         const b = this.balancoEspaco(e.nome);
@@ -937,7 +939,8 @@ VC.calculo = {
     const nTerminais = this.terminaisQueServem(nomeEspaco).filter(t => this._redeBase(t) === rede).length;
     const delta = Q_servido - Q_nec;
     let estado = 'OK';
-    if (c.g === 2 || c.g === 3 || c.g === 4) estado = 'ISENTO';
+    // Fase 2: só G2 (zona de transferência) fica isento; G3 compara a insuflação e G4 a extração com o caudal exigido
+    if (c.g === 2) estado = 'ISENTO';
     else if (nTerminais === 0 && Q_nec > 0) estado = 'ORFAO';
     else if (Q_nec > 0) {
       const ratio = Q_servido / Q_nec;

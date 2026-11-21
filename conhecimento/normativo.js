@@ -105,7 +105,7 @@ VC._normativo = {
   // (dança, aeróbica, ballet) · alta 98 (musculação, ginásios, pavilhões desportivos). Confirmado no Manual SCE, Tabela 69.
   // T12 = Tabela 12 (m³/(h·m²)): 3 sem atividades poluentes · 5 com atividades poluentes · 2 com > 75 % de materiais de baixa emissão.
   tiposEspaco: {
-    'Sono':                { g:1, gn:'Ocupação Permanente', rp:5,  ra:0.5, t11:16, t12:3, ach:2,  desc:'G1 · Dormitórios' },
+    'Sono':                { g:1, gn:'Ocupação Permanente', rp:5,  ra:0.5, t11:16, t12:3, ach:2,  desc:'G1 · Dormitórios (só critério da ocupação, 1.2.2 b)', semT12: true },
     'Descanso':            { g:1, gn:'Ocupação Permanente', rp:5,  ra:0.5, t11:20, t12:3, ach:2,  desc:'G1 · Repouso' },
     'Retalho seco':        { g:1, gn:'Ocupação Permanente', rp:7,  ra:0.7, t11:24, t12:3, ach:6,  desc:'G1 · Comércio seco' },
     'Loja':                { g:1, gn:'Ocupação Permanente', rp:7,  ra:0.7, t11:24, t12:3, ach:6,  desc:'G1 · Lojas' },
@@ -126,7 +126,7 @@ VC._normativo = {
     'Cinema':              { g:1, gn:'Ocupação Permanente', rp:7,  ra:0.7, t11:24, t12:3, ach:8,  desc:'G1 · Cinema' },
     'Teatro':              { g:1, gn:'Ocupação Permanente', rp:7,  ra:0.7, t11:24, t12:3, ach:8,  desc:'G1 · Teatro' },
     'Consulta':            { g:1, gn:'Ocupação Permanente', rp:10, ra:1.0, t11:24, t12:3, ach:6,  desc:'G1 · Consulta' },
-    'Internamento':        { g:1, gn:'Ocupação Permanente', rp:5,  ra:0.5, t11:16, t12:3, ach:6,  desc:'G1 · Internamento' },
+    'Internamento':        { g:1, gn:'Ocupação Permanente', rp:5,  ra:0.5, t11:16, t12:3, ach:6,  desc:'G1 · Internamento (sono: só critério da ocupação, 1.2.2 b)', semT12: true },
     'Sala de espera':      { g:1, gn:'Ocupação Permanente', rp:10, ra:1.0, t11:20, t12:3, ach:6,  desc:'G1 · Espera (T11: descanso)' },
     'Biblioteca':          { g:1, gn:'Ocupação Permanente', rp:7,  ra:0.7, t11:20, t12:3, ach:6,  desc:'G1 · Biblioteca (T11: descanso)' },
     'Museu':               { g:1, gn:'Ocupação Permanente', rp:7,  ra:0.7, t11:24, t12:3, ach:6,  desc:'G1 · Museu' },
