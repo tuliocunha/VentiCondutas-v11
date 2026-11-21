@@ -224,7 +224,7 @@ const CASOS = [
   }],
   ['G4 volta a ficar isento da comparação servido / exigido', 'N3.T21', () => {
     const o = VC.calculo.balancoEspaco;
-    VC.calculo.balancoEspaco = function (n) { const b = o.apply(this, arguments); if (b.g === 3 || b.g === 4) b.estado = 'ISENTO'; return b; };
+    VC.calculo.balancoEspaco = function () { const b = o.apply(this, arguments); if (b.g === 3 || b.g === 4) b.estado = 'ISENTO'; return b; };
     return () => { VC.calculo.balancoEspaco = o; };
   }],
   ['Quadro legal do balanço volta a ver só os ciclos', 'N3.T21', () => {
