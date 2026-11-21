@@ -102,7 +102,7 @@ VC6.testes = {
 
   initN5() {
     const self = this;
-    self.registar({ id: 'N5.T1', nucleo: 'N5', grupo: 'Transferências', nome: 'A = Q / (0.36·√ΔP)', criterio: 'Q=190, ΔP=2 → A≈373', fn: () => { const A = VC6.transferencias.dimensionarArea(190, 2); return A > 360 && A < 390; } });
+    self.registar({ id: 'N5.T1', nucleo: 'N5', grupo: 'Transferências', nome: 'Orifício: Q = Cd·A·√(2ΔP/ρ), Cd = 0,61', criterio: 'Q=190 m³/h, ΔP=2 Pa → A = Q/(Cd·√(2ΔP/ρ)) ≈ 468 cm² com ρ ≈ 1,17; ida e volta ΔP(A) = 2', fn: () => { const rho = VC.perf.cacheFisica.rhoNu().rho; const A = VC6.transferencias.dimensionarArea(190, 2); const esp = 190 / 3600 / (0.61 * Math.sqrt(2 * 2 / rho)) * 1e4; return Math.abs(A - esp) < 1e-6 && Math.abs(VC6.transferencias.dimensionarDeltaP(190, A) - 2) < 1e-9; } });
     self.registar({ id: 'N5.T2', nucleo: 'N5', grupo: 'Transferências', nome: 'Inverso coerente', criterio: 'ΔP(A(Q)) = ΔP', fn: () => { const Q = 100, dP = 2; const A = VC6.transferencias.dimensionarArea(Q, dP); const dP2 = VC6.transferencias.dimensionarDeltaP(Q, A); return Math.abs(dP2 - dP) < 0.1; } });
     self.registar({ id: 'N5.T3', nucleo: 'N5', grupo: 'Transferências', nome: 'Transf. inválida rejeitada', criterio: 'Q≤0 falha', fn: () => { const r = VC6.transferencias.criar(1, 2, 0, 'grelha_transferencia'); return r.ok === false; } });
     self.registar({ id: 'N5.T4', nucleo: 'N5', grupo: 'Transferências', nome: 'Ciclo A→B→A detetado', criterio: 'DFS encontra', fn: () => { const trf = [{ deId: 1, paraId: 2, Q: 50 }, { deId: 2, paraId: 1, Q: 50 }]; return VC6.balanco.detetarCiclos(trf).length > 0; } });
@@ -270,6 +270,39 @@ VC6.testes = {
         const ok2 = VC.normas.dl101D(VC.normas.potenciaTermicaW()).inspecaoObrigatoria && !(x2.findings || []).some(f => f.tipo === 'BACS');
         return ok0 && ok1 && ok2;
       } finally { if (o === undefined) delete p.potenciaTermica; else p.potenciaTermica = o; VC.calculo.calcularTudo(); }
+    } });
+    // Fase 4 da auditoria: qualidade de cálculo
+    self.registar({ id: 'N2.T21', nucleo: 'N2', grupo: 'Normas', nome: 'Eficácia de remoção por espaço (Manual SCE, Tabela 68)', criterio: 'escritório N = 10: Setup → 240/ε; ε_v do espaço 0,8 → 300 m³/h; a extração sanitária não leva ε_v', fn: () => {
+      const g = Number(VC.dados.eficaciaRemocao) || 1;
+      const e = { tipo: 'Escritório', A: 20, H: 2.7, N: 10 };
+      const a = VC.calculo.calcularQ_normas(e).Q_normas, b = VC.calculo.calcularQ_normas(Object.assign({ eficaciaRemocao: 0.8 }, e)).Q_normas;
+      const w = VC.calculo.calcularQ_normas({ tipo: 'Sanitários', A: 3, H: 2.6, regimeSanitario: 'privado_continuo', eficaciaRemocao: 0.5 }).Q_normas;
+      return Math.abs(a - 240 / Math.max(g, 0.1)) < 1e-9 && Math.abs(b - 300) < 1e-9 && w === 45;
+    } });
+    self.registar({ id: 'N2.T22', nucleo: 'N2', grupo: 'Normas', nome: 'EN 16798-1: q_B por nível de poluição e mínimo de 4 l/s por pessoa', criterio: 'cat. II, 10 pessoas, 20 m²: pouco poluente 302,4; muito pouco 277,2 m³/h; cat. IV, 10 pessoas, 1 m²: 4 l/s/pessoa → 144 m³/h', fn: () => {
+      const P = VC.dados.params, o = { c: P.categoria, p: P.poluicaoEdificio };
+      try {
+        const q = (cat, pol, N, A) => { P.categoria = cat; P.poluicaoEdificio = pol; return VC.calculo.calcularQ_normas({ tipo: 'Escritório', A, H: 2.7, N }).Q_EN16798; };
+        return Math.abs(q('II', 'pouco', 10, 20) - 302.4) < 1e-9 && Math.abs(q('II', 'muito_pouco', 10, 20) - 277.2) < 1e-9 && Math.abs(q('IV', 'pouco', 10, 1) - 144) < 1e-9;
+      } finally { P.categoria = o.c; if (o.p === undefined) delete P.poluicaoEdificio; else P.poluicaoEdificio = o.p; }
+    } });
+    self.registar({ id: 'N4.T24', nucleo: 'N4', grupo: 'Dimensionamento', nome: 'Secção retangular também com R ≤ R_ALVO', criterio: 'Q = 600 m³/h, h ≤ 250 mm, v ≤ 6 m/s: a secção escolhida tem R ≤ 1 Pa/m (antes 150×200 com 2,4 Pa/m)', fn: () => {
+      const rho = VC.perf.cacheFisica.rhoNu().rho, nu = VC.perf.cacheFisica.rhoNu().nu, m = VC.dados.metodoCalculo || (VC.dados.metodoCalculo = {}), o = m.metodo;
+      try {
+        m.metodo = 'loss';
+        const r = VC.calculo.retangular(250, 0.5, 6, 600, { rho, nu, eps: 0.00015 });
+        const a = r.b / 1000, b = r.h / 1000, De = 1.30 * Math.pow(a * b, 0.625) / Math.pow(a + b, 0.25), v = 600 / 3600 / (Math.PI * De * De / 4);
+        const R = VC.fisica.fatorAtrito(v * De / nu, 0.00015 / De) / De * 0.5 * rho * v * v;
+        return R <= VC.constantes.R_ALVO && !(r.b === 150 && r.h === 200);
+      } finally { m.metodo = o; }
+    } });
+    self.registar({ id: 'N7.T20', nucleo: 'N7', grupo: 'Terminais', nome: 'Terminal: v calculada pelo Ø do catálogo, ruído com 50·log(Q/Q0), Δp alto em atenção', criterio: 'sem catálogo: Lw(400) = Lw(200) + 50·log 2; difusor SODECA DR50 Ø150 a 300 m³/h → v = 4,72 m/s (NÃO CONF.); Δp estimado 120 Pa → ATENÇÃO', fn: () => {
+      const f = t => VC.calculo.verificarTerminal(Object.assign({ tipo: 'Difusor', v_saida: 2 }, t));
+      const okLw = Math.abs(f({ Q: 400 }).LwCalc - f({ Q: 200 }).LwCalc - 50 * Math.log10(2)) < 1e-9;
+      const c = f({ Q: 300, fabricante: 'SODECA', familia: 'DR50', tamanho: 'Ø150' });
+      const okV = Math.abs(c.v - 300 / 3600 / (Math.PI * 0.15 * 0.15 / 4)) < 1e-9 && c.status === 'NÃO CONF.' && /calculada/.test(c.vOrigem);
+      const okDp = f({ Q: 400, v_saida: 1 }).dPCalc > VC.constantes.TERMINAL.dpAtencao && ['ATENÇÃO', 'NÃO CONF.'].indexOf(f({ Q: 400, v_saida: 1 }).status) >= 0;
+      return okLw && okV && okDp;
     } });
     self.registar({ id: 'N6.T14', nucleo: 'N6', grupo: 'UTAs', nome: 'Estado dos filtros muda o Δp interno', criterio: 'limpo < médio < sujo numa UTA com filtros', fn: () => {
       const u = VC.dados.utas.find(x => (x.componentes || []).some(c => /filtro/i.test(c.tipo || ''))); if (!u) return true;
@@ -714,14 +747,14 @@ VC6.testes = {
       } finally { D.espacos = g.esp; D.terminais = g.ter; D.ramais = g.ram; }
     } });
     // PR 2 · higiene do ar (EN 16798-3): sem transferências de um espaço sujo para um mais limpo; área com o ΔP dado
-    self.registar({ id: 'UI.T29', nucleo: 'UI', grupo: 'UI', nome: 'Transferências: direção e ΔP do tipo', criterio: 'WC → escritório recusada; escritório → WC aceite; A = Q/(0,36·√ΔP) com o ΔP escrito; sem ΔP usa o típico do tipo (grelha de parede 5 Pa)', fn: () => {
+    self.registar({ id: 'UI.T29', nucleo: 'UI', grupo: 'UI', nome: 'Transferências: direção e ΔP do tipo', criterio: 'WC → escritório recusada; escritório → WC aceite; A do orifício (Cd = 0,61) com o ΔP escrito; sem ΔP usa o típico do tipo (grelha de parede 5 Pa)', fn: () => {
       const T = VC6.transferencias; if (!T || !T.direcaoValida) return false;
       const D = VC.dados, g = { esp: D.espacos, tr: D.transferencias };
       try {
         D.espacos = [{ id: 1, nome: 'Esc', tipo: 'Escritório' }, { id: 2, nome: 'WC', tipo: 'Sanitários' }]; D.transferencias = [];
         const mal = T.criar(2, 1, 30, 'fresta_porta');
         const bem = T.criar(1, 2, 30, 'fresta_porta', 4);
-        const ok1 = !mal.ok && bem.ok && bem.transferencia.dP_Pa === 4 && Math.abs(bem.transferencia.area_cm2 - 30 / (0.36 * 2)) < 1e-9;
+        const ok1 = !mal.ok && bem.ok && bem.transferencia.dP_Pa === 4 && Math.abs(bem.transferencia.area_cm2 - T.dimensionarArea(30, 4)) < 1e-9 && Math.abs(T.dimensionarDeltaP(30, bem.transferencia.area_cm2) - 4) < 1e-9;
         D.transferencias = [];
         const par = T.criar(1, 2, 30, 'grelha_parede');
         return ok1 && par.ok && par.transferencia.dP_Pa === 5;

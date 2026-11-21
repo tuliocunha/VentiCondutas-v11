@@ -711,7 +711,7 @@ VC.estado._ultimoHash = null;
 VC.estado._hashEstado = function () {
   const partes = [];
   const p = VC.dados && VC.dados.params;
-  if (p) partes.push(p.altitude + '|' + p.temperatura + '|' + p.humidade + '|' + p.rugosidade + '|' + (p.categoria || 'II') + '|' + (p.potenciaTermica == null ? '' : p.potenciaTermica));
+  if (p) partes.push(p.altitude + '|' + p.temperatura + '|' + p.humidade + '|' + p.rugosidade + '|' + (p.categoria || 'II') + '|' + (p.potenciaTermica == null ? '' : p.potenciaTermica) + '|' + (p.poluicaoEdificio || '') + '|' + (p.tExtInverno == null ? '' : p.tExtInverno));
   partes.push(VC.dados && VC.dados.tipologia || '');
   partes.push(VC.dados && VC.dados.restricaoH || 0);
   partes.push(VC.dados && VC.dados.eficaciaRemocao || 1);
@@ -725,7 +725,7 @@ VC.estado._hashEstado = function () {
   partes.push(espacos.map(e =>
     e.id + '|' + e.nome + '|' + e.tipo + '|' + (e.grupoForcado || 'auto') +
     '|' + (e.A || 0) + '|' + (e.H || 0) + '|' + (e.V || 0) + '|' + (e.N || 0) +
-    '|' + (e.rphAplicado || 0) + '|' + (e.rphOrigem || 'norma') +
+    '|' + (e.rphAplicado || 0) + '|' + (e.rphOrigem || 'norma') + '|' + (e.eficaciaRemocao == null ? '' : e.eficaciaRemocao) + '|' + (e.pressurizada ? JSON.stringify([e.deltaP, e.vPortaAberta, e.camaraCortaFogo, e.forcaPorta]) : '') +
     '|' + (e.QAI_projeto || 0) + '|' + (e.QAI_projeto_rede || 'auto') + '|' + (e.QAI_projeto_motivo || '') + '|' + (e.QAI_projeto_origem || 'norma') +
     '|' + ((e.definicoes || []).map(d => d.tipo + ':' + d.rede + ':' + d.quantidade + ':' + d.Q_total).join(','))
   ).join('#'));
@@ -823,7 +823,8 @@ VC.constantes = {
   //   redução cónica (insuflação, fluxo para a secção menor): ζ = REDUCAO.contracao, referido a v na secção menor;
   //   ampliação cónica (extração, fluxo para a secção maior): ζ = REDUCAO.expansao · (1 − A_menor / A_maior)², referido a v na secção menor.
   ZETA_DERIVACAO: { TE_PASSAGEM: 0.4, REDUCAO: { contracao: 0.05, expansao: 0.3 } },
-  TERMINAL: { vAtencao: 2.2, vMax: 2.5, LwAtencao: 35, LwMax: 40 },   // m/s no colo · dB(A) · critério de conforto (VDI 2081)
+  TERMINAL: { vAtencao: 2.2, vMax: 2.5, LwAtencao: 35, LwMax: 40, dpAtencao: 60, expoenteLw: 50 },   // m/s no colo · dB(A) · critério de conforto (VDI 2081) · Fase 4: Δp > 60 Pa = atenção (boa prática); sem catálogo, Lw cresce com 50·log(Q/Q0) num tamanho fixo
+  CD_TRANSFERENCIA: 0.61,       // Fase 4 · coeficiente de descarga de grelhas / frestas de transferência (orifício de arestas vivas)
   BALANCO_ESPACO: { sub: 0.90, sobre: 1.20 },                          // Q servido / Q necessário · tolerância da app
   MINIMO_LEGAL_ARREDONDAMENTO: 0.5,   // m³/h · folga de arredondamento ao m³/h na comparação servido ≥ mínimo legal (Fase 2)
   BALANCO_RESIDUO: 5,          // m³/h · resíduo aceite no balanço de massa de um espaço (2× = desequilíbrio grave)
@@ -901,12 +902,15 @@ VC.normas = {
     // v11.1: categoria escolhida no Setup (antes estava fixa em 'II').
     // Valores EN 16798-1 (Anexo B): q por pessoa e q por m² para edifício pouco poluente.
     // A categoria é usada só para COMPARAÇÃO (Q_EN16798); o caudal de projeto segue a Portaria 138-I.
-    const cat = (VC.dados && VC.dados.params && VC.dados.params.categoria) || 'II';
-    const brp = cat === 'I' ? 10 : (cat === 'III' ? 4 : (cat === 'IV' ? 2.5 : 7));
-    const bra = cat === 'I' ? 1.0 : (cat === 'III' ? 0.4 : (cat === 'IV' ? 0.3 : 0.7));
+    // Fase 4: q_p e q_B da EN 16798-1 por categoria e por nível de poluição do edifício (Setup); a norma não os dá por tipo de espaço.
+    const P = (VC.dados && VC.dados.params) || {};
+    const cat = ['I', 'II', 'III', 'IV'].indexOf(P.categoria) >= 0 ? P.categoria : 'II';
+    const EN = VC.conhecimento.tabelas.EN16798_1;
+    const pol = EN.qB[P.poluicaoEdificio] ? P.poluicaoEdificio : 'pouco';
+    const brp = EN.qp[cat], bra = EN.qB[pol][cat];
     const d = VC.conhecimento.tiposEspaco[tipo] || { g: 1, gn: 'Ocupação Permanente', rp: brp, ra: bra, t11: 24, t12: 3, ach: 6, desc: 'Fallback' };
     let rp = d.rp, ra = d.ra;
-    if (d.g === 1) { if (rp === 7) rp = brp; if (ra === 0.7) ra = bra; }
+    if (d.g === 1) { rp = brp; ra = bra; }
     return { g: d.g, gn: d.gn, rp, ra, t11: d.t11, t12: d.t12, ach: d.ach, desc: d.desc, semArCedido: !!d.semArCedido, t13: !!d.t13, semT12: !!d.semT12 };   // semArCedido: Portaria 138-I, Anexo II, 1.2.2 f)
   },
   // v11.1: limites do Reg. (UE) 1253/2014 (Ecodesign) por tipo de unidade de ventilação.

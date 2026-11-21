@@ -78,16 +78,23 @@ VC.calculo = {
     return Object.assign({}, final, { Qmh, idealD: ideal.D * 1000, Dc, metodo, vMax: Vmax });
   },
 
-  retangular(hmax, ratioMin, vMax, Qmh) {
+  retangular(hmax, ratioMin, vMax, Qmh, opts) {
     ratioMin = ratioMin || 0.5;
     const Q = VC.utils.num(Qmh) / 3600;
     const W1505 = VC.constantes.W1505, H1505 = VC.constantes.H1505;
     const candidatos = W1505.reduce((acc, b) => acc.concat(H1505.filter(h => h <= hmax).map(h => ({ b, h }))), [])
       .filter(c => Math.min(c.b, c.h) / Math.max(c.b, c.h) >= ratioMin)
       .sort((a, b) => { const pa = 2 * (a.b + a.h), pb = 2 * (b.b + b.h); return pa !== pb ? pa - pb : a.b * a.h - b.b * b.h; });
+    // Fase 4: no método de perda constante a secção retangular também tem de cumprir R ≤ R_ALVO (como a circular)
+    const comR = opts && opts.rho && opts.nu && ((VC.dados.metodoCalculo && VC.dados.metodoCalculo.metodo) || 'loss') === 'loss';
+    const Rde = c => {
+      const a = c.b / 1000, b = c.h / 1000, De = 1.30 * Math.pow(a * b, 0.625) / Math.pow(a + b, 0.25);
+      const v = Q / (Math.PI * De * De / 4), Re = v * De / opts.nu;
+      return VC.fisica.fatorAtrito(Re, (opts.eps || 0.00015) / De) / De * 0.5 * opts.rho * v * v;
+    };
     for (const c of candidatos) {
       const A = (c.b * c.h) / 1e6;
-      if (Q / A <= vMax) return Object.assign({}, c, { A, v: Q / A });
+      if (Q / A <= vMax && (!comR || !Q || Rde(c) <= VC.constantes.R_ALVO)) return Object.assign({}, c, { A, v: Q / A });
     }
     return null;
   },
@@ -98,8 +105,16 @@ VC.calculo = {
   },
 
   qEN16798(esp, def, A) {
+    // EN 16798-1: q_tot = n·q_p + A·q_B, e nunca menos de 4 l/s por pessoa (Fase 4)
     const N = Number(esp.N) || 0, rp = Number(def.rp) || 0, ra = Number(def.ra) || 0;
-    return (rp * N * 3.6) + (ra * A * 3.6);
+    const mt = (VC.conhecimento.tabelas.EN16798_1 || {}).minimoPorPessoa, min = mt == null ? 4 : Number(mt) || 0;
+    return Math.max((rp * N * 3.6) + (ra * A * 3.6), min * N * 3.6);
+  },
+  /* Fase 4: eficácia de remoção do espaço (Manual SCE, Tabela 68) ou, sem ela, a do Setup */
+  evDe(esp) {
+    const v = esp && esp.eficaciaRemocao;
+    if (v !== undefined && v !== null && v !== '' && Number(v) > 0) return Number(v);
+    return Number(VC.dados.eficaciaRemocao) || 1.0;
   },
 
   qMinimo(esp) { return (Number(esp.N) || 0) * 35; },
@@ -115,7 +130,7 @@ VC.calculo = {
   nVazio(esp) { return !esp || esp.N == null || String(esp.N).trim() === ''; },
 
   calcularQ_normas(esp) {
-    const ev = Number(VC.dados.eficaciaRemocao) || 1.0;
+    const ev = this.evDe(esp);   // Fase 4: por espaço
     const met = esp.geometriaMetodo || 'V';
     let A = Number(esp.A) || 0, H = Number(esp.H) || 0, V = Number(esp.V) || 0;
     if (met === 'LCH') { const L = Number(esp.largura) || 0, C = Number(esp.comprimento) || 0; A = L * C; H = Number(esp.altura) || H || 0; V = A * H; }
@@ -358,14 +373,19 @@ VC.calculo = {
     }
     const fallback = [{ Lw0: 26, dP0: 30, Q0: 200, tipo: 'Difusor' }, { Lw0: 28, dP0: 28, Q0: 200, tipo: 'Grelha Extração' }];
     const fb = fallback.find(f => f.tipo === term.tipo) || fallback[0];
-    if (dP === null) { dP = fb.dP0 * Math.pow(Q / fb.Q0, 2); origem = 'Estimado'; fonte = 'VDI 2081 (fallback)'; }
-    if (Lw === null) Lw = fb.Lw0 + 10 * Math.log10(Math.max(Q, 1) / fb.Q0);
-    const v = Number(term.v_saida) || 0;
-    let status = 'OK';
     const LT = VC.constantes.TERMINAL;
+    if (dP === null) { dP = fb.dP0 * Math.pow(Q / fb.Q0, 2); origem = 'Estimado'; fonte = 'estimativa (sem catálogo)'; }
+    // Fase 4: num terminal de tamanho fixo o ruído cresce cerca de 50·log(Q/Q0) (antes 10·log, que o subestimava)
+    if (Lw === null) Lw = fb.Lw0 + LT.expoenteLw * Math.log10(Math.max(Q, 1) / fb.Q0);
+    // Fase 4: velocidade no colo calculada a partir do Ø do produto do catálogo; sem catálogo fica o valor escrito
+    let v = Number(term.v_saida) || 0, vOrigem = 'escrita';
+    const prod2 = (term.fabricante && term.familia && term.tamanho && VC.catalogo.getProduto) ? VC.catalogo.getProduto(term.tipo, term.fabricante, term.familia, term.tamanho) : null;
+    const dmm = prod2 && Number(prod2.diametro);
+    if (dmm > 0 && Q > 0) { v = Q / 3600 / (Math.PI * Math.pow(dmm / 1000, 2) / 4); vOrigem = 'calculada (Ø' + dmm + ')'; }
+    let status = 'OK';
     if (v > LT.vMax || Lw > LT.LwMax) status = 'NÃO CONF.';
-    else if (v > LT.vAtencao || Lw > LT.LwAtencao) status = 'ATENÇÃO';
-    return Object.assign({}, term, { LwCalc: Lw, dPCalc: dP, throwCalc: throw_ || 0, status, origem, fonte, v });
+    else if (v > LT.vAtencao || Lw > LT.LwAtencao || dP > LT.dpAtencao) status = 'ATENÇÃO';
+    return Object.assign({}, term, { LwCalc: Lw, dPCalc: dP, throwCalc: throw_ || 0, status, origem, fonte, v, vOrigem });
   },
 
   calcularDimensionamentoTerminais() {
@@ -470,7 +490,7 @@ VC.calculo = {
     }
     // v11.1 (3.6): a forma da secção é escolha do utilizador (geometriaInput.forma).
     // A app calcula a secção escolhida e só AVISA quando não cabe na altura disponível.
-    const rect = this.retangular(hMax, 0.5, vMax, Q);
+    const rect = this.retangular(hMax, 0.5, vMax, Q, { rho, nu, eps });
     if (this.formaDe(r) === 'retangular') {
       if (rect) {
         const a = rect.b / 1000, b = rect.h / 1000;
@@ -764,6 +784,8 @@ VC.calculo = {
       this.calcularCondutas(rho, nu);
       this.calcularDeltaPAcumulado();
       const vent = this.calcularVentiladores();
+      // Fase 4: área das grelhas de transferência sempre com o Cd atual (projetos antigos guardavam a área antiga)
+      if (VC6.transferencias && VC6.transferencias.dimensionarArea) (VC.dados.transferencias || []).forEach(t => { if (!t.areaFixa && Number(t.Q) > 0) t.area_cm2 = VC6.transferencias.dimensionarArea(t.Q, t.dP_Pa || 2); });
       const findings = [];
 
       VC.dados.ramais.forEach(r => {

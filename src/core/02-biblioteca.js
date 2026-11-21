@@ -633,16 +633,23 @@ VC6.balanco = {
 VC6.transferencias = {
   CATALOGO: VC.conhecimento.tiposTransferencia || [],
 
+  /* Fase 4: orifício, Q = Cd · A · √(2Δp/ρ), com Cd = VC.constantes.CD_TRANSFERENCIA (0,61). Q em m³/h, A em cm².
+     (Antes: A = Q / (0,36·√Δp), que equivale a Cd ≈ 0,78 e dava áreas cerca de 22 % pequenas.) */
+  _kOrificio() {
+    const cd = (VC.constantes && VC.constantes.CD_TRANSFERENCIA) || 0.61;
+    const rho = (VC.perf && VC.perf.cacheFisica && VC.dados && VC.dados.params) ? VC.perf.cacheFisica.rhoNu().rho : 1.2;
+    return cd * Math.sqrt(2 / rho) * 3600 / 1e4;   // m³/h por (cm² · √Pa)
+  },
   dimensionarArea(Q, dP_Pa) {
     Q = Number(Q) || 0;
     dP_Pa = Math.max(Number(dP_Pa) || 1, 0.01);
-    return Q / (0.36 * Math.sqrt(dP_Pa));
+    return Q / (this._kOrificio() * Math.sqrt(dP_Pa));
   },
 
   dimensionarDeltaP(Q, A) {
     Q = Number(Q) || 0;
     A = Math.max(Number(A) || 1, 0.01);
-    return Math.pow(Q / (0.36 * A), 2);
+    return Math.pow(Q / (this._kOrificio() * A), 2);
   },
 
   sugerirSolucao(tipoEspaco, direcao) {

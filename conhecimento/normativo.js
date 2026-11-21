@@ -239,6 +239,31 @@ VC._normativo = {
       'Garagem':    { min: -25, max: -5, nota: 'Extração de COV' },
       default:      { min: -10, max: 10, nota: 'Ocupação permanente' }
     },
+    // Fase 4 · Manual SCE (Despacho 6476-H/2021), Tabela 68: eficácia de remoção de poluentes ε_v.
+    // Num sistema que aquece e arrefece aplica-se o menor valor dos dois modos.
+    EPSILON_V: [
+      { id: 'teto_frio',             ev: 1.0, nome: 'Insuflação no teto, ar frio' },
+      { id: 'teto_quente_ext_chao',  ev: 1.0, nome: 'Insuflação no teto, ar quente, extração junto ao chão' },
+      { id: 'teto_quente_ext_teto',  ev: 0.8, nome: 'Insuflação no teto de ar quente (≥ 8 °C acima do ambiente), extração no teto' },
+      { id: 'teto_quente_jato',      ev: 1.0, nome: 'Ar quente no teto com jato > 0,8 m/s a alcançar 1,4 m do chão' },
+      { id: 'chao_frio_ext_teto',    ev: 1.0, nome: 'Ar frio junto ao chão, extração no teto, jato 0,8 m/s até ≥ 1,4 m' },
+      { id: 'deslocamento',          ev: 1.2, nome: 'Ventilação por deslocamento, escoamento unidirecional e estratificação' },
+      { id: 'chao_quente_ext_oposta', ev: 1.0, nome: 'Ar quente junto ao chão, extração junto ao chão do lado oposto' },
+      { id: 'chao_quente_ext_teto',  ev: 0.7, nome: 'Ar quente junto ao chão, extração / retorno no teto' },
+      { id: 'natural_oposta',        ev: 0.8, nome: 'Entrada natural do lado oposto à extração mecânica' },
+      { id: 'natural_junto',         ev: 0.5, nome: 'Entrada natural junto ao ponto de extração mecânica' },
+      { id: 'chao_quente_mesmo_lado', ev: 0.5, nome: 'Ar quente junto ao chão, extração no teto do mesmo lado ou próxima' },
+      { id: 'teto_frio_mesmo_lado',  ev: 0.5, nome: 'Ar frio no teto, extração junto ao chão do mesmo lado ou próxima' }
+    ],
+    // Fase 4 · EN 16798-1:2019, Anexo B (referência; o caudal legal é o da Portaria 138-I):
+    //   q_p (l/(s·pessoa)) e q_B (l/(s·m²)) por categoria e nível de poluição do edifício; total ≥ 4 l/(s·pessoa);
+    //   CO₂ acima do exterior para dimensionamento (ppm).
+    EN16798_1: {
+      qp: { I: 10, II: 7, III: 4, IV: 2.5 },
+      qB: { muito_pouco: { I: 0.5, II: 0.35, III: 0.2, IV: 0.15 }, pouco: { I: 1.0, II: 0.7, III: 0.4, IV: 0.3 }, nao_pouco: { I: 2.0, II: 1.4, III: 0.8, IV: 0.6 } },
+      minimoPorPessoa: 4,
+      co2AcimaExterior: { I: 550, II: 800, III: 1350, IV: 1350 }
+    },
     BACS_LIMIAR: 290000,
     ETA_REC_MIN: 0.73
   },
