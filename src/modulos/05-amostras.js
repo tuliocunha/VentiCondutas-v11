@@ -458,6 +458,13 @@ VC.exemploDegrade2 = function () {
   });
 };
 
+// Degrade · Parâmetros do Tempo: estudo TGC 19nov26 com caudais e traçado do desenho (gerado por tools/gerar-exemplo-parametros-tempo.js)
+VC.exemploParametrosTempo = function () {
+  return VC._carregarExemploDeFicheiro(['exemplos/parametros-do-tempo.json'], 'Parâmetros do Tempo', function () {
+    VC.ui.toast('Não foi possível abrir exemplos/parametros-do-tempo.json. Abra a app pelo GitHub Pages ou por um servidor local (o navegador bloqueia ficheiros locais).');
+  });
+};
+
 /* ============================================================
    GESTÃO DE EXEMPLOS
    ============================================================ */
@@ -478,6 +485,10 @@ VC.exemplos = {
     }
     if (!this._lista.find(e => e.id === 'degrade-2')) {   // v11.2
       this._lista.push({ id: 'degrade-2', nome: 'Degrade 2 · Torres Vedras', descricao: 'Projeto real · 45 espaços (Piso 0, Piso 1, Mezanino) · 4 UTAs + 7 VEX · 7 transferências', timestamp: new Date().toISOString(), builtin: true });
+      this.save({ silencioso: true });
+    }
+    if (!this._lista.find(e => e.id === 'parametros-tempo')) {
+      this._lista.push({ id: 'parametros-tempo', nome: 'Degrade · Parâmetros do Tempo', descricao: 'Estudo TGC 19nov26 · caudais e traçado do desenho · Piso 0 e Piso 1 · 8 VAN/VEG + VEISP0 + VCM · 3 grelhas de porta', timestamp: new Date().toISOString(), builtin: true });
       this.save({ silencioso: true });
     }
     if (!this._lista.find(e => e.id === 'polune-v8')) {
@@ -509,6 +520,11 @@ VC.exemplos = {
     if (confirm('O exemplo NÃO foi guardado.\n\n' + motivo + '\n\nPara não perder o trabalho, guarde o projeto como ficheiro JSON (Projeto → Guardar). Para libertar espaço, apague exemplos antigos na lista de Exemplos (pode exportá-los antes).\n\nGuardar agora como ficheiro JSON?')) {
       if (VC.exportacoes && VC.exportacoes.json) VC.exportacoes.json();
     }
+  },
+  // exemplos pré-carregados guardados em ficheiro JSON: exportar e duplicar leem o ficheiro (e não o projeto aberto)
+  _ficheiroDe(ex) {
+    if (!ex || !ex.builtin) return null;
+    return ({ 'degrade-2': 'exemplos/degrade-2.json', 'parametros-tempo': 'exemplos/parametros-do-tempo.json' })[ex.id] || null;
   },
   listar() {
     if (!this._lista) this.init();
@@ -592,6 +608,9 @@ VC.exemplos = {
       else if (ex.builtin && ex.id === 'degrade-2') {
         VC.exemploDegrade2();
       }
+      else if (ex.builtin && ex.id === 'parametros-tempo') {
+        VC.exemploParametrosTempo();
+      }
       else if (ex.builtin && ex.id === 'polune-v8') {
         if (typeof VC.exemploV9_2 === 'function') {
           VC.exemploV9_2().then(function (ok) {
@@ -655,9 +674,11 @@ VC.exemplos = {
     const ex = this._lista.find(e => e.id === id);
     if (!ex) { VC.ui.toast('Exemplo não encontrado.'); return false; }
     // v11.2: o Degrade 2 está num ficheiro; exporta esse ficheiro (e não o projeto aberto)
-    if (ex.builtin && ex.id === 'degrade-2') {
-      fetch('exemplos/degrade-2.json').then(r => r.json()).then(p => { VC.utils.downloadJSON('VC_exemplo_Degrade_2.json', p); VC.ui.toast('Exemplo exportado: VC_exemplo_Degrade_2.json'); })
-        .catch(() => VC.ui.toast('Não foi possível ler exemplos/degrade-2.json.'));
+    const fich = this._ficheiroDe(ex);
+    if (fich) {
+      const nomeF = 'VC_exemplo_' + ex.nome.replace(/[^A-Za-z0-9_-]+/g, '_') + '.json';
+      fetch(fich).then(r => r.json()).then(p => { VC.utils.downloadJSON(nomeF, p); VC.ui.toast('Exemplo exportado: ' + nomeF); })
+        .catch(() => VC.ui.toast('Não foi possível ler ' + fich + '.'));
       return true;
     }
     let projeto;
@@ -702,11 +723,12 @@ VC.exemplos = {
     const ex = this._lista.find(e => e.id === id);
     if (!ex) return false;
     // v11.2: o Degrade 2 está num ficheiro; a cópia guarda o conteúdo desse ficheiro
-    if (ex.builtin && ex.id === 'degrade-2') {
-      fetch('exemplos/degrade-2.json').then(r => r.json()).then(p => {
+    const fich = this._ficheiroDe(ex);
+    if (fich) {
+      fetch(fich).then(r => r.json()).then(p => {
         this._lista.push({ id: 'ex-' + Date.now().toString(36), nome: ex.nome + ' (cópia)', descricao: 'Duplicado de «' + ex.nome + '»', timestamp: new Date().toISOString(), builtin: false, projeto: p });
         if (this.save()) VC.ui.toast('Exemplo duplicado.'); if (this.abrirModal) this.abrirModal();
-      }).catch(() => VC.ui.toast('Não foi possível ler exemplos/degrade-2.json.'));
+      }).catch(() => VC.ui.toast('Não foi possível ler ' + fich + '.'));
       return true;
     }
     let projeto;
