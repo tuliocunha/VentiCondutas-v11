@@ -442,10 +442,19 @@ const CENARIOS = {
     await pg.evaluate(() => { const r = VC.dados.ramais.find(x => x.nome === 'R1.1'); VC.planta.selecionarRamal(r.id); }); await pg.waitForTimeout(300);
     const p1 = await ponto(10.3); await h.clicar(p1);
     ok(await pg.locator('.pn[data-pn="troco"]').count() === 1 && /troço 2 de 6/.test(await pg.locator('.pn-cab').first().textContent()), 'Clicar num troço do ramal selecionado abre o painel do troço (2 de 6)');
-    await pg.selectOption('#pn-troco-Dfixo', '200'); await pg.waitForTimeout(350);
+    await pg.fill('#pn-troco-secFixa', '200'); await pg.press('#pn-troco-secFixa', 'Enter'); await pg.waitForTimeout(350);
     ok(await h.v(() => { const r = VC.dados.ramais.find(x => x.nome === 'R1.1'); return r.trocosFix && r.trocosFix['9.28'] === 200 && r.trocos[1].Dcom === 200; }), 'Ø fixo 200 no troço: fica Ø200 e manda sobre o cálculo');
     await pg.locator('#plantaSVG').hover(); await pg.keyboard.press('Control+z'); await pg.waitForTimeout(350);
     ok(await h.v(() => { const r = VC.dados.ramais.find(x => x.nome === 'R1.1'); return !r.trocosFix && r.trocos[1].Dcom === 250; }), 'Ctrl+Z volta ao Ø calculado (250)');
+    // secção retangular fixa a partir da sugestão do painel; volta à calculada
+    await h.clicar(p1); await pg.waitForTimeout(250);
+    if (await pg.locator('.pn[data-pn="troco"]').count() === 0) { await h.clicar(p1); await pg.waitForTimeout(250); }   // 1.º clique: o ramal; 2.º: o troço
+    const alt = await h.v(() => { const r = VC.dados.ramais.find(x => x.nome === 'R1.1'); const t = r.trocos[1]; return t.sugRect ? t.sugRect.b + '×' + t.sugRect.h : null; });
+    await pg.click('.pn-acoes button:has-text("Usar retangular")'); await pg.waitForTimeout(350);
+    const fx = await h.v(() => { const r = VC.dados.ramais.find(x => x.nome === 'R1.1'); return [(r.trocosFix || {})['9.28'], r.trocos[1].forma, r.trocos[1].secao]; });
+    ok(alt && fx[0] === alt && fx[1] === 'retangular' && fx[2] === alt, '«Usar retangular» fixa a alternativa retangular do troço e recalcula', [alt, fx]);
+    await pg.click('.pn-acoes button:has-text("Voltar à secção calculada")'); await pg.waitForTimeout(350);
+    ok(await h.v(() => { const r = VC.dados.ramais.find(x => x.nome === 'R1.1'); return !r.trocosFix && r.trocos[1].forma === 'circular' && r.trocos[1].Dcom === 250; }), '«Voltar à secção calculada» repõe o Ø250 sugerido');
     const nRed = await pg.locator('.planta-red[data-k="9.28"]').count();
     ok(nRed === 1, 'Há o símbolo da redução Ø315 → Ø250 a 9,28 m');
     await pg.click('.planta-red[data-k="9.28"]'); await pg.waitForTimeout(250); await h.tecla('Delete');

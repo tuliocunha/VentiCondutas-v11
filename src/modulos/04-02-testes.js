@@ -629,10 +629,36 @@ VC6.testes = {
           && Ds(curto) === '315,315,200,200,160,160' && curto.trocos[1].motivo.indexOf('curto') >= 0
           && Ds(salto) === '315,315,200,200,200,100'
           && Ds(max2) === '315,315,200,200,200,100' && max2.reducoesCalc.length === 2
-          && Ds(fixo) === '315,250,250,200,160,100' && fixo.trocos[2].motivo === 'Ø fixo'
+          && Ds(fixo) === '315,250,250,200,160,100' && fixo.trocos[2].motivo === 'secção fixa'
           && Ds(rem) === '315,315,200,200,160,100'
           && Ds(adi) === '315,315,250,200,200,160,100' && Math.abs(adi.trocos[1].de - 9.28) < 1e-9 && Math.abs(adi.trocos[2].de - 10) < 1e-9 && adi.reducoesCalc[0].movida;
       } finally { VC.dados.ramais = gR; }
+    } });
+    self.registar({ id: 'N11.T18', nucleo: 'N3', grupo: 'Condutas', nome: 'Secção sugerida: circular preferida, retangular quando não cabe', criterio: 'calcula sempre as duas sugestões; «automática» escolhe a circular e só passa a retangular se o Ø não couber na altura; secção fixa circular ou retangular; o reajuste funciona também com retangulares', fn: () => {
+      const C = VC.calculo; if (!C.lerSeccao) return true;
+      const { rho, nu } = VC.perf.cacheFisica.rhoNu(), gH = VC.dados.restricaoH, gR = VC.dados.ramais;
+      try {
+        const r = { id: 1, nome: 'RS', rede: 'insuflacao', Q: 1500, L: 10, geometriaInput: {} };
+        VC.dados.ramais = [r];
+        VC.dados.restricaoH = 400; const alto = C._seccao(r, 1500, rho, nu, null);
+        VC.dados.restricaoH = 200; const baixo = C._seccao(r, 1500, rho, nu, null);
+        r.geometriaInput.forma = 'circular'; const forc = C._seccao(r, 1500, rho, nu, null);
+        r.geometriaInput.forma = 'retangular'; VC.dados.restricaoH = 400; const ret = C._seccao(r, 1500, rho, nu, null);
+        const fixa = C._seccao(r, 1500, rho, nu, C.lerSeccao('500x200'));
+        r.especificacao = { Dmin: 400 }; r.geometriaInput.forma = 'circular'; const minimo = C._seccao(r, 1500, rho, nu, null); delete r.especificacao; r.geometriaInput.forma = 'retangular';
+        const ok1 = alto.forma === 'circular' && alto.sugRect && alto.sugCirc.D === alto.Dcom
+          && baixo.forma === 'retangular' && baixo.h <= 200 && /não cabe/.test(forc.aviso) && forc.forma === 'circular'
+          && ret.forma === 'retangular' && fixa.secaoCalc === '500×200' && Math.abs(fixa.v - 1500 / 3600 / 0.1) < 1e-9
+          && C.lerSeccao('250').D === 250 && C.lerSeccao('400 × 200').b === 400 && C.lerSeccao('abc') === null && minimo.Dcom === 400;
+        // reajuste com retangulares: o troço curto mantém a secção anterior
+        let de = 0; const Rr = { id: 2, nome: 'RR', rede: 'insuflacao', Q: 900, L: 9, geometriaInput: { forma: 'retangular' } };
+        const S = [[500, 200], [400, 200], [300, 200]], Lt = [4, 1, 4], Qt = [900, 600, 300];
+        Rr.trocos = S.map((x, i) => { const t = { de, ate: de + Lt[i], L: Lt[i], Q: Qt[i], Dcom: 300, Dnom: 300, key: C.chaveTroco(de), forma: 'retangular', b: x[0], h: x[1], secNom: { forma: 'retangular', b: x[0], h: x[1] } }; de += Lt[i]; return t; });
+        VC.dados.ramais = [Rr];
+        C._aplicarReajuste(Rr, { modo: 'derivacao', minL: 2, maxReducoes: null, minSaltos: 1 }, rho, nu, false);
+        const ok2 = Rr.trocos.map(t => t.b + '×' + t.h).join(',') === '500×200,500×200,300×200' && Rr.reducoesCalc.length === 1 && Rr.reducoesCalc[0].paraTxt === '300×200';
+        return ok1 && ok2;
+      } finally { VC.dados.restricaoH = gH; VC.dados.ramais = gR; }
     } });
     self.registar({ id: 'N11.T14', nucleo: 'N11', grupo: 'Construtor & Dados', nome: 'Planta: textos proporcionais ao desenho', criterio: 'o tamanho segue a escala e o zoom (altura real em m), fica entre o mínimo legível e o máximo, e o fator do utilizador multiplica-o', fn: () => {
       const P = VC.planta; if (!P || !P._pxTexto) return true;
