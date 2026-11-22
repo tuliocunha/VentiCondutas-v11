@@ -316,6 +316,14 @@ const CASOS = [
     const C = VC.calculo, o = C.specDe; C.specDe = function (r, k) { return k === 'isolEsp' ? 0 : o.apply(this, arguments); };
     return () => { C.specDe = o; };
   }],
+  ['Prumada: o L ignora as cotas', 'N11.T25', () => {
+    const C = VC.calculo, o = C.comprimentoPrumada; C.comprimentoPrumada = function (r) { const x = o.call(this, r); return x && x.origem === 'cotas' ? { L: 3, origem: 'cotas' } : x; };
+    return () => { C.comprimentoPrumada = o; };
+  }],
+  ['Prumada: a derivação vai para o fim do ramal-pai', 'N11.T25', () => {
+    const C = VC.calculo, o = C.posicaoNoRamal; C.posicaoNoRamal = function (x, ramal, t) { if (x && x.prumada) { const y = Object.assign({}, x); delete y.prumada; return o.call(this, y, ramal, t); } return o.apply(this, arguments); };
+    return () => { C.posicaoNoRamal = o; };
+  }],
   // Fase 4 da auditoria: qualidade de cálculo
   ['ε_v do espaço ignorado (só o do Setup)', 'N2.T21', () => {
     const o = VC.calculo.evDe; VC.calculo.evDe = function () { return Number(VC.dados.eficaciaRemocao) || 1; };

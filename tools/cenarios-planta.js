@@ -633,6 +633,42 @@ const CENARIOS = {
     ok(await h.v(() => { const r = VC.dados.ramais.find(x => x.nome === 'R1.1'), t = r.termica; return t && !t.risco && t.e > 0; }), 'Com essa espessura deixa de condensar');
   },
 
+  /* PR 59 · Fase 4A: prumadas entre pisos */
+  async prumadas(pg, ok) {
+    const h = ajudas(pg);
+    await pg.evaluate(async () => { await VC._carregarExemploDeFicheiro(['exemplos/degrade-21nov26-corrigido.json'], 'x'); VC.nav.irPasso('rede'); VC.nav.setVista('planta'); VC.planta.setPiso('piso-mez'); });
+    await pg.waitForTimeout(1200);
+    const fim = await h.v(() => { const P = VC.planta, r = VC.dados.ramais.find(x => x.nome === 'R5.1'), q = r.planta.pts[r.planta.pts.length - 1]; VC.dados.plantas.find(p => p.id === 'piso-mez').cota = 3.5; VC.dados.plantas.find(p => p.id === 'piso-p1').cota = 6.6; P.zoom = 1; P.vx = q[0] - 380; P.vy = q[1] - 260; P.aplicarVista(); return q; });
+    await pg.waitForTimeout(400);
+    await h.tecla('k');
+    ok(await h.v(() => VC.planta.ferramenta === 'prumada'), 'K escolhe a ferramenta Prumada');
+    await h.clicar(fim); await pg.waitForTimeout(300);
+    ok(await h.v(() => VC.planta.pendentePrum && VC.planta.pendentePrum.pai === 'R5.1'), 'Clique no fim de R5.1: prumada a sair de R5.1');
+    const txt = await pg.locator('.planta-card.destaque').first().textContent();
+    ok(/Nova prumada/.test(txt) && /R5\.1\.1 · ainda sem desenho/.test(txt), 'O cartão propõe o R5.1.1, que ainda não tem desenho', txt.slice(0, 200));
+    await pg.selectOption('#pmPara', 'piso-p1'); await pg.selectOption('#pmRamal', 'R5.1.1'); await pg.check('#pmUsarL');
+    await pg.click('button:has-text("Criar prumada")'); await pg.waitForTimeout(400);
+    const r = await h.v(() => { const r = VC.dados.ramais.find(x => x.nome === 'R5.1.1'); return [!!r.prumada, r.L, r.prumada && r.prumada.para.pisoId, r.sNoPaiOrigem, VC.planta.prumSel === r.id, !!document.querySelector('.planta-prumada')]; });
+    ok(r[0] && Math.abs(r[1] - 3.1) < 1e-9 && r[2] === 'piso-p1', 'R5.1.1 passa a prumada Mezanino → Piso 1 com L = 6,6 − 3,5 = 3,1 m (cotas)', r);
+    ok(r[3] === 'planta' && r[4] && r[5], 'A derivação em R5.1 lê-se do ponto de saída; círculo desenhado e selecionado', r);
+    ok(/Prumada R5\.1\.1/.test(await pg.locator('.pn').first().textContent()), 'Painel da prumada');
+    // no Piso 1: o círculo está lá e o traçado a partir dele fica sub-ramal da prumada
+    await pg.click('.pn-acoes button:has-text("Ver no Piso 1")'); await pg.waitForTimeout(500);
+    ok(await h.v(() => VC.planta.piso === 'piso-p1' && !!document.querySelector('.planta-prumada[data-lado="para"]')), '«Ver no Piso 1» mostra o círculo de chegada');
+    const q1 = await h.v(() => { const r = VC.dados.ramais.find(x => x.nome === 'R5.1.1'); return [r.prumada.para.x, r.prumada.para.y]; });
+    await h.tecla('Escape'); await h.tecla('l'); await h.clicar([q1[0] + 3, q1[1] + 2]); await h.clicar([q1[0] + 150, q1[1] + 2]); await h.tecla('Enter'); await pg.waitForTimeout(300);
+    ok(await h.v(() => { const pr = VC.planta.pendenteRamal; return pr && pr.pai === 'R5.1.1'; }), 'Traçar a partir do círculo no Piso 1: o ramal sai da prumada R5.1.1');
+    await h.tecla('Escape');
+    // arrastar, Delete, Ctrl+Z
+    await h.tecla('v'); await h.arrastar(q1, [q1[0] - 70, q1[1] - 70]); await pg.waitForTimeout(300);
+    const px = await h.v(() => [VC.dados.ramais.find(x => x.nome === 'R5.1.1').prumada.para.x, VC.planta.prumSel, VC.planta.ferramenta, (() => { const g = document.querySelector('.planta-prumada'); const b = g && g.getBoundingClientRect(); const e = b && document.elementFromPoint(b.x + b.width / 2, b.y + b.height / 2); return e && (e.getAttribute('class') || e.tagName) + '/' + (e.parentNode.getAttribute && e.parentNode.getAttribute('class')); })()]);
+    ok(Math.abs(px[0] - q1[0]) > 30, 'Arrastar o círculo move a chegada da prumada', [q1, px]);
+    await h.tecla('Delete');
+    ok(await h.v(() => !VC.dados.ramais.find(x => x.nome === 'R5.1.1').prumada), 'Delete tira a prumada da planta (o ramal fica)');
+    await pg.locator('#plantaSVG').hover(); await pg.keyboard.press('Control+z'); await pg.waitForTimeout(350);
+    ok(await h.v(() => !!VC.dados.ramais.find(x => x.nome === 'R5.1.1').prumada), 'Ctrl+Z repõe-na');
+  },
+
   /* PR 9: nome legível numa sala em L; zona útil nítida; Entrega recortada */
   async representacao(pg, ok) {
     const h = ajudas(pg);
