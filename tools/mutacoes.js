@@ -348,6 +348,14 @@ const CASOS = [
     const C = VC.calculo, o = C.recirculacaoDe; C.recirculacaoDe = function (u) { return u && u.rede === 'insuflacao' ? o.call(this, u) : 0; };
     return () => { C.recirculacaoDe = o; };
   }],
+  ['Fumo: sem o mínimo de 1,5 m³/s', 'N11.T29', () => {
+    const F = VC.constantes.FUMO, o = F.ATIVA_MIN; F.ATIVA_MIN = 0;
+    return () => { F.ATIVA_MIN = o; };
+  }],
+  ['Fumo: o efetivo > 500 não exige controlo', 'N11.T29', () => {
+    const F = VC.constantes.FUMO, o = F.EFETIVO_RISCO_B; F.EFETIVO_RISCO_B = 1e9;
+    return () => { F.EFETIVO_RISCO_B = o; };
+  }],
   // Fase 4 da auditoria: qualidade de cálculo
   ['ε_v do espaço ignorado (só o do Setup)', 'N2.T21', () => {
     const o = VC.calculo.evDe; VC.calculo.evDe = function () { return Number(VC.dados.eficaciaRemocao) || 1; };
