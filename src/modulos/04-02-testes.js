@@ -762,6 +762,20 @@ VC6.testes = {
         return okTd && ok1 && okE && ok2 && r.termica.risco;
       } finally { VC.dados.ramais = gR; }
     } });
+    self.registar({ id: 'N11.T25', nucleo: 'N4', grupo: 'Hidráulico', nome: 'Prumada entre pisos: L pelas cotas e derivação pelo ponto de saída', criterio: 'L = |cota de chegada − cota de saída| (sem cotas: pé-direito do piso de baixo); a prumada deriva do ramal-pai na projeção do ponto de saída', fn: () => {
+      const C = VC.calculo; if (!C.comprimentoPrumada) return true;
+      const g = VC.dados.plantas;
+      try {
+        VC.dados.plantas = [{ id: 'a', cota: 3.5, H: 3 }, { id: 'b', cota: 6.6 }, { id: 'c', H: 2.8 }, { id: 'd' }];
+        const r = { prumada: { de: { pisoId: 'a', x: 50, y: 0 }, para: { pisoId: 'b', x: 50, y: 0 } } };
+        const c1 = C.comprimentoPrumada(r);
+        r.prumada.de.pisoId = 'c'; r.prumada.para.pisoId = 'd'; const c2 = C.comprimentoPrumada(r);
+        r.prumada.de.pisoId = 'd'; const c3 = C.comprimentoPrumada(r);
+        const pai = { nome: 'P', L: 10, planta: { pisoId: 'a', pts: [[0, 0], [100, 0]] } };
+        r.prumada.de.pisoId = 'a'; const pos = C.posicaoNoRamal(r, pai, false);
+        return Math.abs(c1.L - 3.1) < 1e-9 && c1.origem === 'cotas' && c2.L === 2.8 && c2.origem === 'pé-direito' && c3 === null && Math.abs(pos.s - 5) < 1e-9 && pos.origem === 'planta';
+      } finally { VC.dados.plantas = g; }
+    } });
     self.registar({ id: 'N11.T21', nucleo: 'N11', grupo: 'Construtor & Dados', nome: 'Renomear ramal com o prefixo dos sub-ramais', criterio: 'R1 → A passa R1.1 a A.1 e R1.1.1 a A.1.1 e atualiza terminais; ramais que não descendem ficam; um conflito não muda nada', fn: () => {
       const T = VC.topologia; if (!T.renomearComSubRamais) return true;
       const gR = VC.dados.ramais, gT = VC.dados.terminais, gE = VC.dados.espacos;

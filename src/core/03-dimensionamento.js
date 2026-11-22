@@ -457,9 +457,20 @@ VC.calculo = {
     if (escrito !== undefined && escrito !== null && String(escrito).trim() !== '' && isFinite(Number(escrito)) && Number(escrito) >= 0) return { s: Math.min(Number(escrito), L), origem: 'utilizador' };
     const pr = ramal && ramal.planta, pts = pr && Array.isArray(pr.pts) ? pr.pts : null;
     const ponto = ehTerminal ? (x.planta && x.planta.pisoId === (pr && pr.pisoId) ? [x.planta.x, x.planta.y] : null)
-      : (x.planta && x.planta.pisoId === (pr && pr.pisoId) && Array.isArray(x.planta.pts) && x.planta.pts.length ? x.planta.pts[0] : null);
+      : (x.planta && x.planta.pisoId === (pr && pr.pisoId) && Array.isArray(x.planta.pts) && x.planta.pts.length ? x.planta.pts[0]
+        : x.prumada && x.prumada.de && x.prumada.de.pisoId === (pr && pr.pisoId) ? [x.prumada.de.x, x.prumada.de.y] : null);   // Fase 4A: prumada que sai deste ramal
     if (pts && pts.length >= 2 && ponto) { const p = this._projetarNoTracado(ponto, pts); if (p) return { s: p.frac * L, origem: 'planta' }; }
     return { s: L, origem: 'fim' };
+  },
+  /* Fase 4A · comprimento de uma prumada: diferença das cotas dos dois pisos; sem cotas, o pé-direito do piso de baixo */
+  comprimentoPrumada(r) {
+    const x = r && r.prumada; if (!x || !x.de || !x.para) return null;
+    const P = VC.dados.plantas || [], a = P.find(p => p.id === x.de.pisoId), b = P.find(p => p.id === x.para.pisoId);
+    if (!a || !b) return null;
+    const ca = Number(a.cota), cb = Number(b.cota);
+    if (a.cota != null && b.cota != null && isFinite(ca) && isFinite(cb) && ca !== cb) return { L: Math.abs(cb - ca), origem: 'cotas' };
+    const baixo = a.cota != null && b.cota != null && cb < ca ? b : a, H = Number(baixo.H);
+    return H > 0 ? { L: H, origem: 'pé-direito' } : null;
   },
   /* derivações de um ramal, ordenadas ao longo do percurso */
   derivacoesDe(r) {
