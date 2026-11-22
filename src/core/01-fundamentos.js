@@ -717,7 +717,7 @@ VC.estado._hashEstado = function () {
   if (p) partes.push(p.altitude + '|' + p.temperatura + '|' + p.humidade + '|' + p.rugosidade + '|' + (p.categoria || 'II') + '|' + (p.potenciaTermica == null ? '' : p.potenciaTermica) + '|' + (p.poluicaoEdificio || '') + '|' + (p.tExtInverno == null ? '' : p.tExtInverno) + '|' + (p.potenciaRejeitada == null ? '' : p.potenciaRejeitada) + '|' + (p.integracaoGT ? 1 : 0));
   partes.push(VC.dados && VC.dados.tipologia || '');
   partes.push(VC.dados && VC.dados.restricaoH || 0);
-  partes.push((VC.dados && VC.dados.plantas || []).map(x => x.id + ':' + (x.hTeto || '')).join(','));   // Fase 0B: altura livre do teto falso por piso
+  partes.push((VC.dados && VC.dados.plantas || []).map(x => x.id + ':' + (x.hTeto || '') + ':' + (x.escala || '')).join(','));   // escala: a posição das derivações desenhadas depende dela   // Fase 0B: altura livre do teto falso por piso
   partes.push(VC.dados && VC.dados.eficaciaRemocao || 1);
   // v11.1 (E1): opções que mudam o cálculo e não forçavam o recálculo
   partes.push((VC.dados && VC.dados.serieDiametros) || 'S1');
@@ -833,6 +833,8 @@ VC.constantes = {
   //   ampliação cónica (extração, fluxo para a secção maior): ζ = REDUCAO.expansao · (1 − A_menor / A_maior)², referido a v na secção menor.
   ZETA_DERIVACAO: { TE_PASSAGEM: 0.4, REDUCAO: { contracao: 0.05, expansao: 0.3 } },
   TERMINAL: { vAtencao: 2.2, vMax: 2.5, LwAtencao: 35, LwMax: 40, dpAtencao: 60, expoenteLw: 50 },   // m/s no colo · dB(A) · critério de conforto (VDI 2081) · Fase 4: Δp > 60 Pa = atenção (boa prática); sem catálogo, Lw cresce com 50·log(Q/Q0) num tamanho fixo
+  // um terminal ou sub-ramal a menos disto do traçado do ramal está «em cima» dele: a posição vem do desenho
+  DERIV_TOL_M: 0.5,
   // Fase 0B: ocupação por omissão (m² por pessoa), EN 16798-1:2019, Anexo B (os valores da EN 15251, Tabela B.2).
   // Só propõe o N no painel; o projetista confirma ou escreve outro.
   DENSIDADE_OCUPACAO: { 'Escritório': 10, 'Gabinete': 10, 'Sala de reuniões': 3.5, 'Auditório': 0.75, 'Restauração': 1.5, 'Café / bar': 1.5, 'Sala de aula': 2, 'Jardim de infância': 1.9, 'Loja': 7, 'Retalho seco': 7 },

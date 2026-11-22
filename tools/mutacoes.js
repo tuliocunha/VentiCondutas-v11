@@ -348,6 +348,10 @@ const CASOS = [
     const C = VC.calculo, o = C.recirculacaoDe; C.recirculacaoDe = function (u) { return u && u.rede === 'insuflacao' ? o.call(this, u) : 0; };
     return () => { C.recirculacaoDe = o; };
   }],
+  ['Derivação: o valor escrito volta a mandar sobre o desenho', 'N11.T31', () => {
+    const K = VC.constantes, o = K.DERIV_TOL_M; K.DERIV_TOL_M = -1;
+    return () => { K.DERIV_TOL_M = o; };
+  }],
   ['Paredes grossas: só uma face', 'UI.T44', () => {
     const P = VC.planta, o = P._detetarParedes; P._detetarParedes = function () { const d = o.apply(this, arguments); const um = L => L.filter((s, i) => i % 2 === 0); return { H: um(d.H), V: um(d.V) }; };
     return () => { P._detetarParedes = o; };

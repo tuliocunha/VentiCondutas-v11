@@ -798,6 +798,27 @@ const CENARIOS = {
     ok(await h.v(() => { const i = VC.dados.utas.find(u => /VCM Refeit.*insufla/.test(u.nome)), e = VC.dados.utas.find(u => /VCM Refeit.*extra/.test(u.nome)); i.uvbPar = e.id; e.uvbPar = i.id; i.recirculacao = 50; const f = VC.calculo.calcularTudo().findings || []; delete i.recirculacao; return f.some(x => x.tipo === 'Recirculação de ar sujo' && x.elemento === i.nome); }), 'VCM do refeitório (extração da copa): «Recirculação de ar sujo» é erro');
   },
 
+  /* PR 72 · o desenho manda na posição das derivações (caso R9.1 / VEISP0) */
+  async derivacoes(pg, ok) {
+    const h = ajudas(pg);
+    await pg.evaluate(async () => { await VC._carregarExemploDeFicheiro(['exemplos/degrade-21nov26-corrigido.json'], 'x'); VC.nav.irPasso('rede'); VC.nav.setVista('planta'); VC.planta.setPiso('piso-p0'); });
+    await pg.waitForTimeout(1200);
+    const r = await h.v(() => { const P = VC.planta, u = VC.dados.utas.find(x => x.nome === 'VEISP0'); P.colocarEquipamento([1727, 333], u.id); P.ligarRamaisAoEquip(u.id); VC.calculo.calcularTudo();
+      const R = VC.dados.ramais.find(x => x.nome === 'R9.1'), f = n => VC.dados.ramais.find(x => x.nome === n);
+      return { n: R.planta.pts.length, L: R.L, fim: R.trocos[R.trocos.length - 1].ate, s2: f('R9.1.2').sNoPai, ig: f('R9.1.2').sEscritoIgnorado, id: R.id }; });
+    ok(r.n === 3, 'Ligar ao VEISP0: o início passa para o equipamento, sem o traçado voltar para trás', r);
+    ok(Math.abs(r.fim - r.L) < 0.01 && Math.abs(r.s2 - r.L) < 0.01, 'A conduta do R9.1 vai até à junção do R9.1.2 e R9.1.3, apesar dos 3,42 m escritos na tabela', r);
+    ok(r.ig === 3.42, 'O valor escrito que já não conta fica assinalado', r.ig);
+    await h.v(id => VC.planta.selecionarRamal(id), r.id);
+    await pg.evaluate(id => VC.planta.selecionarRamal(id), r.id); await pg.waitForTimeout(300);
+    const bt = pg.locator('.pn[data-pn="ramal"] .pn-acoes button:has-text("Apagar as posições escritas")');
+    ok(await bt.count() === 1, 'Painel do R9.1: botão «Apagar as posições escritas (vale o desenho)»');
+    await bt.click(); await pg.waitForTimeout(300);
+    ok(await h.v(() => VC.dados.ramais.filter(x => x.parente === 'R9.1').every(x => x.sPai == null)), 'O botão apaga as posições escritas dos sub-ramais');
+    await pg.locator('#plantaSVG').hover(); await pg.keyboard.press('Control+z'); await pg.waitForTimeout(300);
+    ok(await h.v(() => VC.dados.ramais.find(x => x.nome === 'R9.1.2').sPai === 3.42), 'Ctrl+Z repõe-nas');
+  },
+
   /* PR 70 · manual de desenho dentro da app */
   async guia(pg, ok) {
     const h = ajudas(pg);

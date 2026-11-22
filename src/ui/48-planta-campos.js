@@ -117,6 +117,42 @@ if (hmax) {
   hmax.proposto = r => { const o = prB(r), p = r.planta && (VC.dados.plantas || []).find(x => x.id === r.planta.pisoId); return o && o.origem === 'setup' && p && Number(p.hTeto) > 0 ? { v: Number(p.hTeto), origem: 'piso', nota: 'teto falso de ' + p.nome } : o; };
 }
 
+/* ── sub-ramal: posição no pai, resolvida no desenho ── */
+P.usarPosicaoDoDesenho = function (nomePai) {
+  const filhos = (VC.dados.ramais || []).filter(f => f.parente === nomePai && f.sEscritoIgnorado != null), ts = (VC.dados.terminais || []).filter(t => t.ramalRef === nomePai && t.sEscritoIgnorado != null);
+  if ((!filhos.length && !ts.length) || this._bloqueado()) return 0;
+  const antes = this._estado();
+  filhos.forEach(f => { delete f.sPai; delete f.sEscritoIgnorado; }); ts.forEach(t => { delete t.sRamal; delete t.sEscritoIgnorado; });
+  this._empilhar('posições de ' + nomePai + ' passam a vir do desenho', antes);
+  if (VC.estado && VC.estado.forcarSync) VC.estado.forcarSync();
+  VC.ui.toast((filhos.length + ts.length) + ' posição(ões) escrita(s) em ' + nomePai + ' apagada(s): valem as do desenho.');
+  this.redesenhar(); return filhos.length + ts.length;
+};
+if (esq('ramal')) {
+  const fm = v => fmt(v, 2).replace('.', ',');
+  depoisDe('ramal', 'nivel', [
+    { id: 'sPai', rot: 'Posição no pai', un: 'm', tipo: 'num', ess: true, min: 0, passo: 0.1, vis: r => !!r.parente,
+      ler: r => (r.sEscritoIgnorado != null ? '' : r.sPai),
+      proposto: r => (r.sNoPai != null ? { v: Math.round(r.sNoPai * 100) / 100, origem: r.sNoPaiOrigem === 'planta' ? 'medido' : 'calculo', nota: r.sNoPaiOrigem === 'planta' ? 'onde começa no desenho' : r.sNoPaiOrigem === 'fim' ? 'no fim do pai' : '' } : null),
+      escrever: (r, v) => { if (vazio(v)) delete r.sPai; else r.sPai = Math.max(0, VC.utils.num(v)); },
+      ajuda: 'Distância desde o início do ramal pai até onde este sai. Com o sub-ramal desenhado em cima do pai, vale a do desenho: arraste o 1.º ponto para a mudar.' }
+  ]);
+  const pfR = esq('ramal').porFazer, acR = esq('ramal').acoes;
+  esq('ramal').porFazer = (r, p) => {
+    const out = pfR ? pfR(r, p) : [];
+    if (r.sEscritoIgnorado != null) out.push('a posição escrita na tabela (' + fm(r.sEscritoIgnorado) + ' m) não conta: no desenho este ramal sai do ' + r.parente + ' aos ' + fm(r.sNoPai) + ' m');
+    const n = (VC.dados.ramais || []).filter(f => f.parente === r.nome && f.sEscritoIgnorado != null).length + (VC.dados.terminais || []).filter(t => t.ramalRef === r.nome && t.sEscritoIgnorado != null).length;
+    if (n) out.push(n + ' derivação(ões) deste ramal com posição escrita diferente do desenho (vale o desenho)');
+    return out;
+  };
+  esq('ramal').acoes = (r, p) => {
+    const a = acR ? acR(r, p) : [];
+    if (r.sEscritoIgnorado != null && r.parente) a.unshift(['Apagar a posição escrita (vale o desenho)', 'VC.planta.usarPosicaoDoDesenho(\'' + String(r.parente).replace(/'/g, '') + '\')', true]);
+    else if ((VC.dados.ramais || []).some(f => f.parente === r.nome && f.sEscritoIgnorado != null) || (VC.dados.terminais || []).some(t => t.ramalRef === r.nome && t.sEscritoIgnorado != null)) a.unshift(['Apagar as posições escritas (vale o desenho)', 'VC.planta.usarPosicaoDoDesenho(\'' + String(r.nome).replace(/'/g, '') + '\')', true]);
+    return a;
+  };
+}
+
 /* ── terminal: montagem ── */
 if (esq('terminal')) {
   esq('terminal').campos.push({ id: 'montagem', rot: 'Montagem', tipo: 'opcoes',

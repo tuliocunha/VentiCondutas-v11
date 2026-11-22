@@ -627,3 +627,6 @@ details.pn-av>summary{cursor:pointer;list-style:revert}
 .guia-ajuda{width:22px;height:22px;flex:none;margin-left:6px;border:1px solid #cbd5e1;border-radius:50%;background:#fff;color:#475569;font:700 12px/20px system-ui,sans-serif;text-align:center;cursor:pointer;padding:0}
 .guia-ajuda:hover{background:#0f172a;color:#fff;border-color:#0f172a}
 .pfo-cab{display:flex;align-items:center;justify-content:space-between}
+
+/* posição escrita que não conta (o desenho manda) */
+input.s-ignorado{text-decoration:line-through;color:var(--texto-suave,#64748b)}

@@ -237,7 +237,7 @@
   </ol>
   <p class="resultado">Os terminais por onde passa ficam ligados e as setas mostram o sentido do ar.</p>
   <figure class="estreita"><img src="img/ramal.png" width="374" height="829" alt="Painel do ramal R1.1" loading="lazy"><figcaption><span class="m">1</span> o ramal e o estado; <span class="m">2</span> o equipamento; <span class="m">3</span> o nível, que dá a velocidade máxima.</figcaption></figure>
-  <div class="correr-mal"><b>Se correr mal</b><ul><li>Uma seta aponta ao contrário: o ramal foi desenhado do lado errado. Use <span class="ui">Inverter o sentido</span> no painel.</li><li>Aviso «Sub-ramal solto»: arraste o primeiro vértice para cima do ramal-pai.</li></ul></div>
+  <div class="correr-mal"><b>Se correr mal</b><ul><li>Uma seta aponta ao contrário: o ramal foi desenhado do lado errado. Use <span class="ui">Inverter o sentido</span> no painel.</li><li>Aviso «Sub-ramal solto»: arraste o primeiro vértice para cima do ramal-pai.</li><li>A conduta não chega até onde saem os sub-ramais: veja «Por fazer» no painel. Um sub-ramal desenhado em cima do pai sai sempre onde está no desenho; se houver uma posição antiga escrita na tabela, aparece riscada e o botão <span class="ui">Apagar as posições escritas</span> limpa-a.</li></ul></div>
 </section>
 
 <section class="tema" id="por-equipamento">
@@ -246,7 +246,7 @@
   <ol class="passos">
     <li>Escolha <span class="ui">Equipamento</span> (<kbd>U</kbd>).</li>
     <li>Clique junto ao início de um ramal principal <span class="m">1</span>: fica aí o equipamento desse ramal.</li>
-    <li>Se o painel o propuser, clique em <span class="ui">Ligar os ramais ao equipamento</span>.</li>
+    <li>Se o painel o propuser, clique em <span class="ui">Ligar os ramais ao equipamento</span>: o ramal passa a começar no equipamento e os sub-ramais continuam a sair onde estão desenhados.</li>
     <li>Leia o resultado <span class="m">2</span>: caudal, fugas, Δp, potência e SFP.</li>
   </ol>
   <figure><img src="img/equipamento.png" width="1125" height="1046" alt="VAN P0 N na planta e o seu painel" loading="lazy"><figcaption>VAN P0 N no início de R1.1, com o ar exterior ODA a entrar.</figcaption></figure>
@@ -553,6 +553,7 @@
     <tr><td>Equipamento, tipo de sistema</td><td>de onde sai o ramal</td></tr>
     <tr><td>Forma da secção</td><td>automática (circular; retangular se não couber), sempre circular, sempre retangular</td></tr>
     <tr><td>Nível</td><td>N1 a N4: velocidade máxima 6 / 5 / 4 / 3 m/s</td></tr>
+    <tr><td>Posição no pai</td><td>onde o sub-ramal sai do pai; com os dois desenhados, vem do desenho (arraste o 1.º ponto para a mudar)</td></tr>
     <tr><td>Altura disponível no teto</td><td>limite da secção retangular</td></tr>
     <tr><td>Critério</td><td>perda de carga constante ou velocidade máxima do nível</td></tr>
     <tr><td>Série de diâmetros</td><td>S1 (63 a 2000), S2 (100 a 2000) ou a do fornecedor</td></tr>

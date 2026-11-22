@@ -1470,6 +1470,19 @@ VC6.testes = {
         return ok1 && ok2 && ok3 && ok4;
       } finally { D.plantas = g.pl; D.espacos = g.e; D.params.categoria = g.cat; C.calcularTudo(); }
     } });
+    self.registar({ id: 'N11.T31', nucleo: 'N4', grupo: 'Rede', nome: 'Derivação desenhada em cima do ramal: o desenho manda', criterio: 'sub-ramal que começa a 0,2 m do traçado → posição do desenho (6 m), mesmo com 3 m escritos, e o escrito fica assinalado; a 2 m do traçado → vale o escrito (3 m); terminal em cima → desenho', fn: () => {
+      const C = VC.calculo, D = VC.dados, g = D.plantas;
+      try {
+        D.plantas = [{ id: 'pz', escala: 0.1 }];
+        const pai = { nome: 'RP', L: 10, planta: { pisoId: 'pz', pts: [[0, 0], [100, 0]] } };
+        const a = { nome: 'RP.1', parente: 'RP', sPai: 3, planta: { pisoId: 'pz', pts: [[60, 2], [60, 40]] } };
+        const b = { nome: 'RP.2', parente: 'RP', sPai: 3, planta: { pisoId: 'pz', pts: [[60, 20], [60, 40]] } };
+        const t = { nome: 'T', ramalRef: 'RP', sRamal: 1, planta: { pisoId: 'pz', x: 80, y: -3 } };
+        const pa = C.posicaoNoRamal(a, pai, false), pb = C.posicaoNoRamal(b, pai, false), pt = C.posicaoNoRamal(t, pai, true);
+        return Math.abs(pa.s - 6) < 1e-9 && pa.origem === 'planta' && a.sEscritoIgnorado === 3 && pb.s === 3 && pb.origem === 'utilizador' && b.sEscritoIgnorado === undefined
+          && Math.abs(pt.s - 8) < 1e-9 && pt.origem === 'planta';
+      } finally { D.plantas = g; }
+    } });
     self.registar({ id: 'UI.T44', nucleo: 'UI', grupo: 'UI', nome: 'Planta: paredes da imagem (deteção e encaixe)', criterio: 'parede grossa (6 px) → duas faces; linha fina → o eixo; texto curto ignorado; o ponto perto do canto encaixa no canto, perto de uma face encaixa na face', fn: () => {
       const P = VC.planta; if (!P || !P._detetarParedes) return true;
       const W = 300, H = 200, px = new Uint8ClampedArray(W * H * 4).fill(255);

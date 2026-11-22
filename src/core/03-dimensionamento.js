@@ -451,9 +451,12 @@ VC.calculo = {
      Cada ramal divide-se em troços entre derivações consecutivas (terminais próprios e sub-ramais).
      O caudal de cada troço é o que segue para jusante; a secção é escolhida troço a troço.
      Posição de uma derivação (s, em m desde o início do ramal), por esta ordem:
-       1) escrita pelo utilizador: terminal.sRamal ou subRamal.sPai;
-       2) planta: projeção do terminal (ou do 1.º ponto do sub-ramal) no traçado do ramal, à escala de L;
-       3) sem posição: no fim do ramal (s = L). Sem nenhuma posição o ramal é um só troço, como antes. */
+       1) planta, quando o terminal (ou o 1.º ponto do sub-ramal) está em cima do traçado do ramal
+          (a menos de DERIV_TOL_M): o desenho manda, mesmo que haja um valor escrito na tabela;
+       2) escrita pelo utilizador: terminal.sRamal ou subRamal.sPai (o que não está desenhado no ramal);
+       3) planta, projeção de um ponto afastado do traçado;
+       4) sem posição: no fim do ramal (s = L). Sem nenhuma posição o ramal é um só troço, como antes.
+     Quando o desenho manda e há um valor escrito diferente, fica em x.sEscritoIgnorado (o painel mostra-o). */
   _projetarNoTracado(q, pts) {
     let tot = 0, melhor = null;
     for (let i = 1; i < pts.length; i++) {
@@ -468,12 +471,22 @@ VC.calculo = {
   posicaoNoRamal(x, ramal, ehTerminal) {
     const L = Math.max(0, Number(ramal && ramal.L) || 0);
     const escrito = ehTerminal ? x.sRamal : x.sPai;
-    if (escrito !== undefined && escrito !== null && String(escrito).trim() !== '' && isFinite(Number(escrito)) && Number(escrito) >= 0) return { s: Math.min(Number(escrito), L), origem: 'utilizador' };
+    const temEscrito = escrito !== undefined && escrito !== null && String(escrito).trim() !== '' && isFinite(Number(escrito)) && Number(escrito) >= 0;
     const pr = ramal && ramal.planta, pts = pr && Array.isArray(pr.pts) ? pr.pts : null;
+    delete x.sEscritoIgnorado;
     const ponto = ehTerminal ? (x.planta && x.planta.pisoId === (pr && pr.pisoId) ? [x.planta.x, x.planta.y] : null)
       : (x.planta && x.planta.pisoId === (pr && pr.pisoId) && Array.isArray(x.planta.pts) && x.planta.pts.length ? x.planta.pts[0]
         : x.prumada && x.prumada.de && x.prumada.de.pisoId === (pr && pr.pisoId) ? [x.prumada.de.x, x.prumada.de.y] : null);   // Fase 4A: prumada que sai deste ramal
-    if (pts && pts.length >= 2 && ponto) { const p = this._projetarNoTracado(ponto, pts); if (p) return { s: p.frac * L, origem: 'planta' }; }
+    const p = pts && pts.length >= 2 && ponto ? this._projetarNoTracado(ponto, pts) : null;
+    const piso = p && (VC.dados.plantas || []).find(z => z.id === pr.pisoId), esc = piso && Number(piso.escala) > 0 ? Number(piso.escala) : 0;
+    const emCima = p && esc && p.d * esc <= VC.constantes.DERIV_TOL_M;
+    if (emCima) {
+      const s = p.frac * L;
+      if (temEscrito && Math.abs(Number(escrito) - s) > 0.05) x.sEscritoIgnorado = Number(escrito);
+      return { s, origem: 'planta' };
+    }
+    if (temEscrito) return { s: Math.min(Number(escrito), L), origem: 'utilizador' };
+    if (p) return { s: p.frac * L, origem: 'planta' };
     return { s: L, origem: 'fim' };
   },
   /* Fase 4A · comprimento de uma prumada: diferença das cotas dos dois pisos; sem cotas, o pé-direito do piso de baixo */
