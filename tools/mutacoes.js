@@ -220,6 +220,10 @@ const CASOS = [
     const E = VC.constantes.ESCADAS, o = [E.vPortaSemCamara, E.vPortaComCamara]; E.vPortaSemCamara = 0; E.vPortaComCamara = 0;
     return () => { E.vPortaSemCamara = o[0]; E.vPortaComCamara = o[1]; };
   }],
+  ['Garagem: limiar de UT II (200 m²) deixa de existir', 'UI.T33', () => {
+    const C = VC.constantes, o = C.GARAGEM_UT2_AREA_MIN; C.GARAGEM_UT2_AREA_MIN = 0;
+    return () => { C.GARAGEM_UT2_AREA_MIN = o; };
+  }],
   // Fase 4 da auditoria: qualidade de cálculo
   ['ε_v do espaço ignorado (só o do Setup)', 'N2.T21', () => {
     const o = VC.calculo.evDe; VC.calculo.evDe = function () { return Number(VC.dados.eficaciaRemocao) || 1; };
