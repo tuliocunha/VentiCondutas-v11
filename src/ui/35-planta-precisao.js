@@ -10,7 +10,7 @@
      (ex.: 3,5) e Enter: o ponto seguinte fica a essa distância, na direção
      do rato. Backspace corrige, Esc apaga o número.
    · Grelha (G): pontos de 0,50 m (só com a escala calibrada).
-   · Medir (M): clique pontos; mostra cada troço e o total. Enter ou duplo
+   · Medir (T, como a fita métrica do SketchUp): clique pontos; mostra cada troço e o total. Enter ou duplo
      clique termina; Esc limpa. Não cria nada.
    · Duplicar a sala (Ctrl+D) e rodar 90° (sala ou ramal), no painel.
    ============================================================ */
@@ -97,13 +97,14 @@ P._pontoBruto = function (ev) { return pontoBase.call(this, ev); };
 P._ponto = function (ev) {
   const raw = pontoBase.call(this, ev);
   this._ultEncaixe = null;
-  const o = this._opcoesEncaixe(); if (!o || (ev && ev.altKey) || this._espaco) return raw;
+  const o = this._opcoesEncaixe(); if (!o || this._espaco) return raw;
   const ant = this._pontoAnterior();
-  if (ev && ev.shiftKey && ant && this.ferramenta !== 'sel') {   // ângulo reto com o ponto anterior
+  if (ev && (ev.shiftKey || this.orto) && ant && this.ferramenta !== 'sel') {   // ângulo reto com o ponto anterior (Shift, ou F8 ligado)
     const q = Math.abs(raw[0] - ant[0]) >= Math.abs(raw[1] - ant[1]) ? [raw[0], ant[1]] : [ant[0], raw[1]];
     this._ultEncaixe = { q, tipo: 'orto', rot: 'ângulo reto' };
     return q;
   }
+  if ((ev && ev.altKey) || this.encaixeDesligado) return raw;   // Alt (enquanto premido) ou F3
   const e = this.encaixe(raw, o);
   if (e.tipo) { this._ultEncaixe = e; return e.q; }
   return raw;
@@ -125,7 +126,7 @@ P._medidaHTML = function (p) {
   const pts = this.medida.concat(!this.medidaFim && this.ponteiroMedir && this.medida.length ? [this.ponteiroMedir] : []);
   if (!pts.length || !p) return '';
   const z = this.zoom || 1, m = (a, b) => (p.escala ? Math.hypot(b[0] - a[0], b[1] - a[1]) * p.escala : null);
-  let h = '<g id="plantaMedida" pointer-events="none"><polyline points="' + pts.map(q => q.join(',')).join(' ') + '" fill="none" stroke="#e05a00" stroke-width="' + 2 / z + '" stroke-dasharray="' + 6 / z + ' ' + 4 / z + '"/>';
+  let h = '<g id="plantaMedicao" pointer-events="none"><polyline points="' + pts.map(q => q.join(',')).join(' ') + '" fill="none" stroke="#e05a00" stroke-width="' + 2 / z + '" stroke-dasharray="' + 6 / z + ' ' + 4 / z + '"/>';
   h += pts.map(q => '<circle cx="' + q[0] + '" cy="' + q[1] + '" r="' + 3.5 / z + '" fill="#e05a00"/>').join('');
   let tot = 0;
   for (let i = 1; i < pts.length; i++) {
@@ -262,7 +263,7 @@ P.ligar = function () {
     desenharMarcador(this._ultEncaixe);
     if (this.ferramenta === 'medir' && this.medida.length && !this.medidaFim) {
       this.ponteiroMedir = q;
-      const g = svg.querySelector('#plantaMedida'), p = this.pisoAtual();
+      const g = svg.querySelector('#plantaMedicao'), p = this.pisoAtual();
       const tmp = document.createElementNS('http://www.w3.org/2000/svg', 'g'); tmp.innerHTML = this._medidaHTML(p);
       if (g && tmp.firstChild) g.replaceWith(tmp.firstChild); else if (tmp.firstChild) svg.appendChild(tmp.firstChild);
     }
