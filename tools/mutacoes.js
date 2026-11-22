@@ -340,6 +340,14 @@ const CASOS = [
     const C = VC.calculo, o = C.alcanceTerminal; C.alcanceTerminal = function (t, v) { return o.call(this, Object.assign({}, t, { throwCalc: 0 }), v); };
     return () => { C.alcanceTerminal = o; };
   }],
+  ['Recirculação: a sala conta o ar insuflado como ar novo', 'N11.T28', () => {
+    const C = VC.calculo, o = C.QarNovoAoEspaco; C.QarNovoAoEspaco = function (n) { return C.QservidoAoEspaco(n, 'insuflacao'); };
+    return () => { C.QarNovoAoEspaco = o; };
+  }],
+  ['Recirculação: a rejeição do par não desconta o RCA', 'N11.T28', () => {
+    const C = VC.calculo, o = C.recirculacaoDe; C.recirculacaoDe = function (u) { return u && u.rede === 'insuflacao' ? o.call(this, u) : 0; };
+    return () => { C.recirculacaoDe = o; };
+  }],
   // Fase 4 da auditoria: qualidade de cálculo
   ['ε_v do espaço ignorado (só o do Setup)', 'N2.T21', () => {
     const o = VC.calculo.evDe; VC.calculo.evDe = function () { return Number(VC.dados.eficaciaRemocao) || 1; };

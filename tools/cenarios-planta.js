@@ -775,6 +775,27 @@ const CENARIOS = {
     ok(await pg.evaluate(id => { const t = VC.dados.terminais.find(x => x.id === id); return t.alcance.vias === 2 && !!document.querySelector('.planta-linear') && VC.planta.jatosDe(t, VC.planta.pisoAtual()).length === 2; }, id), 'Difusor linear de 2 m: desenhado com o comprimento e 2 jatos');
   },
 
+  /* PR 64 · Fase 6A: retorno e recirculação */
+  async retorno(pg, ok) {
+    const h = ajudas(pg);
+    await pg.evaluate(async () => { await VC._carregarExemploDeFicheiro(['exemplos/degrade-21nov26-corrigido.json'], 'x'); VC.nav.irPasso('rede'); VC.nav.setVista('planta'); VC.planta.setPiso('piso-p0'); });
+    await pg.waitForTimeout(1200);
+    // VAN P0 N + VEG P0 N como UTA de duplo fluxo com caixa de mistura
+    const ids = await h.v(() => { const P = VC.planta; VC.ui.toast = () => {}; const i = VC.dados.utas.find(u => u.nome === 'VAN P0 N'), e = VC.dados.utas.find(u => u.nome === 'VEG P0 N'); i.uvbPar = e.id; e.uvbPar = i.id; const r = VC.dados.ramais.find(x => x.nome === 'R1.1'), a = r.planta.pts[0]; P.colocarEquipamento([a[0] - 40, a[1]], i.id); e.planta = Object.assign({}, i.planta); P.selecionarEquip(i.id); P.zoom = 1.4; P.vx = a[0] - 380 / 1.4; P.vy = a[1] - 250 / 1.4; P.aplicarVista(); VC.calculo.calcularTudo(); P.redesenhar(); return [i.id, e.id, Math.round(i.Q * 3600), Math.round(e.Q * 3600)]; });
+    await pg.waitForTimeout(400);
+    ok(await pg.isVisible('#pn-equipamento-recirculacao'), 'O painel do equipamento de insuflação com par tem «Recirculação»');
+    const rca = Math.round(ids[2] * 0.25);
+    await pg.fill('#pn-equipamento-recirculacao', String(rca)); await pg.press('#pn-equipamento-recirculacao', 'Enter'); await pg.waitForTimeout(400);
+    const r = await pg.evaluate(id => { const u = VC.dados.utas.find(x => x.id === id); return [u.fracaoArNovo, u.Q_rca_mh]; }, ids[0]);
+    ok(Math.abs(r[0] - (1 - rca / ids[2])) < 0.01 && r[1] === rca, 'Recirculação de 25 %: ar novo 75 %', r);
+    ok(/Ar novo/.test(await pg.locator('.pn').first().textContent()) && await h.v(() => !!document.querySelector('.planta-rca')), 'O painel mostra o ar novo e a caixa mostra a seta RCA');
+    ok(await h.v(() => { const e = VC.dados.espacos.find(x => VC.calculo.QservidoAoEspaco(x.nome, 'insuflacao') > 0 && VC.calculo.QarNovoAoEspaco(x.nome) < VC.calculo.QservidoAoEspaco(x.nome, 'insuflacao') - 1); return !!e; }), 'Nas salas servidas, o ar novo passa a ser menor do que a insuflação');
+    await pg.locator('#plantaSVG').hover(); await pg.keyboard.press('Control+z'); await pg.waitForTimeout(350);
+    ok(await pg.evaluate(id => !VC.dados.utas.find(x => x.id === id).recirculacao, ids[0]), 'Ctrl+Z tira a recirculação');
+    // ar sujo não se recircula
+    ok(await h.v(() => { const i = VC.dados.utas.find(u => /VCM Refeit.*insufla/.test(u.nome)), e = VC.dados.utas.find(u => /VCM Refeit.*extra/.test(u.nome)); i.uvbPar = e.id; e.uvbPar = i.id; i.recirculacao = 50; const f = VC.calculo.calcularTudo().findings || []; delete i.recirculacao; return f.some(x => x.tipo === 'Recirculação de ar sujo' && x.elemento === i.nome); }), 'VCM do refeitório (extração da copa): «Recirculação de ar sujo» é erro');
+  },
+
   /* PR 9: nome legível numa sala em L; zona útil nítida; Entrega recortada */
   async representacao(pg, ok) {
     const h = ajudas(pg);

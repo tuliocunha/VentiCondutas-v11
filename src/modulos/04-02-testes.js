@@ -813,6 +813,23 @@ VC6.testes = {
       }
       return okG && okD && okL && okC && okP;
     } });
+    self.registar({ id: 'N11.T28', nucleo: 'N6', grupo: 'UTAs', nome: 'Recirculação: ar novo, tomada e rejeição', criterio: 'fração de ar novo = 1 − Q_RCA/Q_SUP; a sala conta só o ar novo; a extração em par rejeita Q_ETA − Q_RCA; a tomada vê só o ar novo', fn: () => {
+      const C = VC.calculo; if (!C.recirculacaoDe) return true;
+      const g = { u: VC.dados.utas, r: VC.dados.ramais, t: VC.dados.terminais, pl: VC.dados.plantas };
+      try {
+        const I = { id: 'I', nome: 'UTA-I', rede: 'insuflacao', uvbPar: 'E', recirculacao: 900, componentes: [], eta: 0.6, exterior: { pisoId: 'x', x: 0, y: 0 } };
+        const E = { id: 'E', nome: 'UTA-E', rede: 'extracao', uvbPar: 'I', componentes: [], eta: 0.6, exterior: { pisoId: 'x', x: 0, y: 0 } };
+        VC.dados.plantas = []; VC.dados.utas = [I, E];
+        VC.dados.ramais = [{ id: 1, nome: 'RI', utaRef: 'I', Q: 3600, deltaPtotal: 50 }, { id: 2, nome: 'RE', utaRef: 'E', Q: 3000, deltaPtotal: 50 }];
+        VC.dados.terminais = [{ id: 't', nome: 't', rede: 'insuflacao', ramalRef: 'RI', espacos: [{ nome: 'S', Q_parcela: 400 }] }];
+        C.calcularVentiladores();
+        const ok1 = Math.abs(I.fracaoArNovo - 0.75) < 1e-9 && E.Q_rca_mh === 900 && E.fracaoArNovo === 1;
+        const ok2 = Math.abs(C.QarNovoAoEspaco('S') - 300) < 1e-9 && Math.abs(C.QservidoAoEspaco('S', 'insuflacao') - 400) < 1e-9;
+        const ok3 = Math.abs(I.ext.Q * 3600 - 2700) < 1e-6 && Math.abs(E.ext.Q * 3600 - 2100) < 1e-6;
+        delete I.recirculacao; C.calcularVentiladores();
+        return ok1 && ok2 && ok3 && I.fracaoArNovo === 1 && Math.abs(C.QarNovoAoEspaco('S') - 400) < 1e-9;
+      } finally { VC.dados.utas = g.u; VC.dados.ramais = g.r; VC.dados.terminais = g.t; VC.dados.plantas = g.pl; }
+    } });
     self.registar({ id: 'N11.T21', nucleo: 'N11', grupo: 'Construtor & Dados', nome: 'Renomear ramal com o prefixo dos sub-ramais', criterio: 'R1 → A passa R1.1 a A.1 e R1.1.1 a A.1.1 e atualiza terminais; ramais que não descendem ficam; um conflito não muda nada', fn: () => {
       const T = VC.topologia; if (!T.renomearComSubRamais) return true;
       const gR = VC.dados.ramais, gT = VC.dados.terminais, gE = VC.dados.espacos;
