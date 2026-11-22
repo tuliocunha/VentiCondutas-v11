@@ -669,6 +669,32 @@ const CENARIOS = {
     ok(await h.v(() => !!VC.dados.ramais.find(x => x.nome === 'R5.1.1').prumada), 'Ctrl+Z repõe-na');
   },
 
+  /* PR 61 · Fase 4B: acessórios e curvas pela planta */
+  async acessorios(pg, ok) {
+    const h = ajudas(pg);
+    await pg.evaluate(async () => { await VC._carregarExemploDeFicheiro(['exemplos/degrade-21nov26-corrigido.json'], 'x'); VC.nav.irPasso('rede'); VC.nav.setVista('planta'); VC.planta.setPiso('piso-p0'); });
+    await pg.waitForTimeout(1200);
+    const q = await h.v(() => { const P = VC.planta, r = VC.dados.ramais.find(x => x.nome === 'R1.1'), a = r.planta.pts[0], b = r.planta.pts[1]; P.zoom = 1.3; P.vx = a[0] - 300 / 1.3; P.vy = a[1] - 250 / 1.3; P.aplicarVista(); const k = Math.min(1, 60 / Math.hypot(b[0] - a[0], b[1] - a[1])); return [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k, r.deltaPTroco, r.deltaPtotal]; });
+    await pg.waitForTimeout(400);
+    await h.tecla('a');
+    ok(await h.v(() => VC.planta.ferramenta === 'acess') && /Acessório a colocar/.test(await pg.locator('.planta-card.destaque').first().textContent()), 'A escolhe Acessório e o painel mostra os tipos');
+    await pg.click('.acess-tipos button:has-text("Registo corta-fogo")'); await pg.waitForTimeout(250);
+    await h.v(() => { const t = VC.ui.toast; window.__t2 = []; VC.ui.toast = function (m) { window.__t2.push(m); return t.apply(this, arguments); }; });
+    await h.clicar([q[0], q[1]]); await pg.waitForTimeout(400);
+    const c = await h.v(() => { const r = VC.dados.ramais.find(x => x.nome === 'R1.1'); return [(r.acessorios || []).length, r.acessorios && r.acessorios[0].tipo, r.deltaPacess, r.deltaPTroco, !!document.querySelector('.planta-acess')]; });
+    ok(c[0] === 1 && c[1] === 'cortafogo' && c[2] > 0 && Math.abs(c[3] - q[2] - c[2]) < 1e-6 && c[4], 'Clique no ramal: corta-fogo colocado; o seu Δp soma ao ramal', [q[2], c, await h.v(() => [VC.planta.ferramenta, VC.planta.acessTipo, window.__t2])]);
+    ok(/Registo corta-fogo · R1\.1/.test(await pg.locator('.pn').first().textContent()), 'Fica selecionado com o seu painel');
+    await pg.fill('#pn-acessorio-dpFab', '12'); await pg.press('#pn-acessorio-dpFab', 'Enter'); await pg.waitForTimeout(350);
+    ok(await h.v(() => Math.abs(VC.dados.ramais.find(x => x.nome === 'R1.1').deltaPacess - 12) < 1e-9), 'Δp do catálogo (12 Pa) usado em vez do ζ');
+    await h.tecla('Delete');
+    ok(await h.v(() => !VC.dados.ramais.find(x => x.nome === 'R1.1').acessorios), 'Delete tira o acessório');
+    await pg.locator('#plantaSVG').hover(); await pg.keyboard.press('Control+z'); await pg.waitForTimeout(350);
+    ok(await h.v(() => (VC.dados.ramais.find(x => x.nome === 'R1.1').acessorios || []).length === 1), 'Ctrl+Z repõe-no');
+    // curvas pela planta
+    const cv = await h.v(() => { const r = VC.dados.ramais.find(x => x.planta && VC.calculo.curvasDoTracado(x).length && Math.abs((Number(x.zeta) || 0) - 0.3) > 0.05); const antes = r.deltaPsing; r.especificacao = Object.assign({}, r.especificacao, { curvas: 'planta' }); VC.calculo.calcularTudo(); return [antes, r.deltaPsing, (r.curvasCalc || []).length, r.deltaPcurvas, VC.calculo.curvasDoTracado(r).length]; });
+    ok(cv[2] === cv[4] && cv[2] > 0 && cv[3] > 0 && cv[1] !== cv[0], 'Curvas pela planta: cada curva do desenho conta e o ζ global sai', cv);
+  },
+
   /* PR 60 · barra por grupos com sub-ícones e menu de contexto */
   async barra(pg, ok) {
     const h = ajudas(pg);

@@ -776,6 +776,20 @@ VC6.testes = {
         return Math.abs(c1.L - 3.1) < 1e-9 && c1.origem === 'cotas' && c2.L === 2.8 && c2.origem === 'pé-direito' && c3 === null && Math.abs(pos.s - 5) < 1e-9 && pos.origem === 'planta';
       } finally { VC.dados.plantas = g; }
     } });
+    self.registar({ id: 'N11.T26', nucleo: 'N4', grupo: 'Hidráulico', nome: 'Acessórios e curvas pela planta', criterio: 'Δp = ζ·½ρv² na velocidade do troço onde está (ou o do catálogo); flexível = R·(fator − 1)·L; curvas do desenho a 0,25·ângulo/90 substituem o ζ global; os sub-ramais a jusante somam o que está antes da derivação', fn: () => {
+      const C = VC.calculo; if (!C.calcularAcessorios) return true;
+      const { rho } = VC.perf.cacheFisica.rhoNu(), K = VC.constantes.ACESSORIOS;
+      const r = { nome: 'A', L: 10, v: 4, zeta: 1, trocos: [{ de: 0, ate: 5, L: 5, v: 4, R: 1, key: 'k0' }, { de: 5, ate: 10, L: 5, v: 2, R: 0.5, key: 'k1' }],
+        acessorios: [{ id: 'a', tipo: 'registo', s: 2 }, { id: 'b', tipo: 'flexivel', s: 8, L: 1.5 }, { id: 'c', tipo: 'silenciador', s: 6, dpFab: 20 }],
+        planta: { pisoId: 'p', pts: [[0, 0], [40, 0], [40, 60]] }, especificacao: { curvas: 'planta' } };
+      C.calcularAcessorios(r, rho);
+      const pv = v => 0.5 * rho * v * v, a = r.acessCalc;
+      const ok1 = Math.abs(a[0].dp - K.registo.zeta * pv(4)) < 1e-9 && Math.abs(a[1].dp - (K.flexivel.fatorR - 1) * 0.5 * 1.5) < 1e-9 && a[2].dp === 20 && Math.abs(r.deltaPacess - a[0].dp - a[1].dp - 20) < 1e-9;
+      const ok2 = r.curvasCalc.length === 1 && r.curvasCalc[0].ang === 90 && Math.abs(r.curvasCalc[0].s - 4) < 1e-9 && Math.abs(r.curvasCalc[0].dp - 0.25 * pv(4)) < 1e-9 && Math.abs(r.deltaPsing - 0.3 * pv(4)) < 1e-9;
+      r.deltaPsing = 0; r.deltaPlin = 0; r.trocos.forEach(t => { t.dpLin = 0; });
+      const ok3 = Math.abs(C.dpAte(r, 7) - a[0].dp - a[2].dp - r.curvasCalc[0].dp) < 1e-9;
+      return ok1 && ok2 && ok3;
+    } });
     self.registar({ id: 'N11.T21', nucleo: 'N11', grupo: 'Construtor & Dados', nome: 'Renomear ramal com o prefixo dos sub-ramais', criterio: 'R1 → A passa R1.1 a A.1 e R1.1.1 a A.1.1 e atualiza terminais; ramais que não descendem ficam; um conflito não muda nada', fn: () => {
       const T = VC.topologia; if (!T.renomearComSubRamais) return true;
       const gR = VC.dados.ramais, gT = VC.dados.terminais, gE = VC.dados.espacos;
