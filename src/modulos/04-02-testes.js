@@ -1470,6 +1470,29 @@ VC6.testes = {
         return ok1 && ok2 && ok3 && ok4;
       } finally { D.plantas = g.pl; D.espacos = g.e; D.params.categoria = g.cat; C.calcularTudo(); }
     } });
+    self.registar({ id: 'UI.T44', nucleo: 'UI', grupo: 'UI', nome: 'Planta: paredes da imagem (deteção e encaixe)', criterio: 'parede grossa (6 px) → duas faces; linha fina → o eixo; texto curto ignorado; o ponto perto do canto encaixa no canto, perto de uma face encaixa na face', fn: () => {
+      const P = VC.planta; if (!P || !P._detetarParedes) return true;
+      const W = 300, H = 200, px = new Uint8ClampedArray(W * H * 4).fill(255);
+      const pinta = (x0, y0, x1, y1) => { for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) { const j = (y * W + x) * 4; px[j] = px[j + 1] = px[j + 2] = 0; } };
+      pinta(20, 40, 280, 46);    // parede horizontal grossa: faces em y = 40 e 46
+      pinta(100, 46, 106, 180);  // parede vertical grossa: faces em x = 100 e 106
+      pinta(20, 150, 90, 151);   // linha fina: eixo em y = 150,5
+      pinta(200, 100, 210, 101); // traço curto (texto): ignorado
+      const d = P._detetarParedes(px, W, H);
+      const temH = y => d.H.some(s => Math.abs(s.y - y) < 0.01), temV = x => d.V.some(s => Math.abs(s.x - x) < 0.01);
+      const ok1 = temH(40) && temH(46) && temV(100) && temV(106) && temH(150.5) && !d.H.some(s => Math.abs(s.y - 100.5) < 2);
+      const g = { piso: P.pisoAtual, par: P.paredesDaImagem, base: VC.dados.params.encaixeImagem, z: P.zoom };
+      try {
+        P.pisoAtual = () => ({ id: 'tw', w: W, h: H, imagem: 'x' }); P.paredesDaImagem = () => Object.assign({ pronto: true }, d); P.zoom = 1; delete VC.dados.params.encaixeImagem;
+        const esp = P.espacosDoPiso; P.espacosDoPiso = () => [];
+        try {
+          const c = P.encaixe([103, 50], { salas: true }), f = P.encaixe([60, 44], { salas: true }), n = P.encaixe([60, 120], { salas: true });
+          VC.dados.params.encaixeImagem = false; const off = P.encaixe([60, 44], { salas: true });
+          return ok1 && c.tipo === 'cantoImg' && Math.abs(c.q[1] - 46) < 0.01 && (Math.abs(c.q[0] - 100) < 0.01 || Math.abs(c.q[0] - 106) < 0.01)
+            && f.tipo === 'paredeImg' && Math.abs(f.q[1] - 46) < 0.01 && n.tipo !== 'paredeImg' && n.tipo !== 'cantoImg' && off.tipo !== 'paredeImg';
+        } finally { P.espacosDoPiso = esp; }
+      } finally { P.pisoAtual = g.piso; P.paredesDaImagem = g.par; P.zoom = g.z; if (g.base === undefined) delete VC.dados.params.encaixeImagem; else VC.dados.params.encaixeImagem = g.base; }
+    } });
     self.registar({ id: 'UI.T43', nucleo: 'UI', grupo: 'UI', nome: 'Planta: janela de seleção (dentro / a tocar)', criterio: 'esq → dir apanha só a sala toda dentro; dir → esq apanha também a sala e o ramal que a janela toca; uma janela vazia não apanha nada', fn: () => {
       const P = VC.planta; if (!P || !P.objetosNaJanela) return true;
       const p = { id: 'pT' }, g = { esp: P.espacosDoPiso, ram: P.ramaisDoPiso };

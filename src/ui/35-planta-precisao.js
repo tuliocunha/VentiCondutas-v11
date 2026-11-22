@@ -114,7 +114,7 @@ P._ponto = function (ev) {
 P._marcadorHTML = function (e) {
   if (!e || !e.tipo) return '';
   const z = this.zoom || 1, [x, y] = e.q, s = 6 / z, sw = 1.8 / z;
-  const forma = e.tipo === 'vertice' || e.tipo === 'terminal' ? '<rect x="' + (x - s) + '" y="' + (y - s) + '" width="' + 2 * s + '" height="' + 2 * s + '"/>'
+  const forma = e.tipo === 'vertice' || e.tipo === 'terminal' || e.tipo === 'cantoImg' ? '<rect x="' + (x - s) + '" y="' + (y - s) + '" width="' + 2 * s + '" height="' + 2 * s + '"/>'
     : e.tipo === 'meio' ? '<path d="M' + x + ',' + (y - s * 1.2) + ' L' + (x + s * 1.1) + ',' + (y + s * 0.8) + ' L' + (x - s * 1.1) + ',' + (y + s * 0.8) + ' z"/>'
     : e.tipo === 'grelha' ? '<path d="M' + (x - s) + ',' + y + ' H' + (x + s) + ' M' + x + ',' + (y - s) + ' V' + (y + s) + '"/>'
     : e.tipo === 'orto' ? '<path d="M' + (x - s) + ',' + (y + s) + ' V' + (y - s) + ' H' + (x + s) + '"/>'
