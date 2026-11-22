@@ -69,7 +69,7 @@ ER.resultado = function (r, p) {
   out.push(['Superfície de conduta', fmt(r.superficie_m2, 2) + ' m²', 'perímetro × comprimento, troço a troço']);
   out.push(['Fugas (estanquidade)', r.Q_fugas != null ? fmt(r.Q_fugas, 1) + ' m³/h' : '—', r.Q_fugas != null ? 'classe ' + r.classeEstanquidade + ' a ' + fmt(r.p_fugas, 0) + ' Pa' + (Number(r.Q) > 0 ? ' · ' + fmt(100 * r.Q_fugas / r.Q, 1) + ' % do caudal' : '') : 'defina a classe de estanquidade (Avançado)']);
   const u = !r.parente && r.utaRef && porId('utas', r.utaRef);
-  if (u && u.Q_fugas > 0) out.push(['Fugas da rede de ' + u.nome, fmt(u.Q_fugas, 1) + ' m³/h', 'ventilador: ' + fmt(u.Q * 3600, 0) + ' + ' + fmt(u.Q_fugas, 0) + ' = ' + fmt(u.Q_ventilador_mh, 0) + ' m³/h' + (u.fugasDefinidas < u.fugasRamais ? ' (' + (u.fugasRamais - u.fugasDefinidas) + ' ramais sem classe)' : '')]);
+  if (u && u.Q_fugas > 0) out.push(['Fugas da rede de ' + u.nome, fmt(u.Q_fugas, 1) + ' m³/h', 'ventilador: ' + fmt(u.Q * 3600, 0) + ' + ' + fmt(u.Q_fugas, 0) + ' = ' + fmt(u.Q_ventilador_mh, 0) + ' m³/h; potência e SFP com este caudal' + (u.fugasDefinidas < u.fugasRamais ? ' (' + (u.fugasRamais - u.fugasDefinidas) + ' ramais sem classe)' : '')]);
   if (r.sugCirc) out.splice(4, 0, ['Sugestão no início', 'Ø' + r.sugCirc.D + (r.sugRect ? ' · ou ' + r.sugRect.b + '×' + r.sugRect.h : ''), r.secaoAdotada === 'retangular' ? 'adotada a retangular' + (r.sugCirc.cabe ? '' : ' (a circular não cabe)') : 'adotada a circular (mais barata)']);
   out.push(['Reduções', R.length ? R.map(x => (x.deTxt || 'Ø' + x.de) + '→' + (x.paraTxt || x.para) + ' a ' + fmt(x.s, 1) + ' m').join(' · ') : 'nenhuma', F ? F + ' troço(s) com Ø fixo' : 'clique num troço para o ver']);
   return out;

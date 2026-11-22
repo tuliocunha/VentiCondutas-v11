@@ -292,6 +292,14 @@ const CASOS = [
     const T = VC.topologia, o = T.subRamaisComPrefixo; T.subRamaisComPrefixo = function () { return []; };
     return () => { T.subRamaisComPrefixo = o; };
   }],
+  ['Ventilador: as fugas não entram na potência', 'N11.T22', () => {
+    const C = VC.calculo, o = C.calcularVentiladores; C.calcularVentiladores = function () { const f = (VC.dados.utas || []).map(u => u.Q_fugas); VC.dados.utas.forEach(u => { u.Q_fugas = 0; }); try { return o.apply(this, arguments); } finally { VC.dados.utas.forEach((u, i) => { u.Q_fugas = f[i]; }); } };
+    return () => { C.calcularVentiladores = o; };
+  }],
+  ['Equipamento: a VCM não leva a outra metade', 'N11.T22', () => {
+    const P = VC.planta, o = P.metadePar; P.metadePar = function () { return null; };
+    return () => { P.metadePar = o; };
+  }],
   // Fase 4 da auditoria: qualidade de cálculo
   ['ε_v do espaço ignorado (só o do Setup)', 'N2.T21', () => {
     const o = VC.calculo.evDe; VC.calculo.evDe = function () { return Number(VC.dados.eficaciaRemocao) || 1; };

@@ -533,6 +533,54 @@ const CENARIOS = {
     ok(await h.v(() => VC.dados.ramais.some(x => x.nome === 'Piso 0 · loja') && VC.dados.ramais.find(x => x.nome === 'R1.1.1').parente === 'Piso 0 · loja'), 'Sem o prefixo: só o ramal muda de nome; o sub-ramal R1.1.1 passa a apontar para «Piso 0 · loja»');
   },
 
+  /* PR 57 · Fase 3A: equipamentos na planta */
+  async equipamentos(pg, ok) {
+    const h = ajudas(pg);
+    await pg.evaluate(async () => { await VC._carregarExemploDeFicheiro(['exemplos/degrade-21nov26-corrigido.json'], 'x'); VC.nav.irPasso('rede'); VC.nav.setVista('planta'); VC.planta.setPiso('piso-p0'); });
+    await pg.waitForTimeout(1200);
+    const ini = await h.v(() => { const r = VC.dados.ramais.find(x => x.nome === 'R1.1'), a = r.planta.pts[0], b = r.planta.pts[1], l = Math.hypot(b[0] - a[0], b[1] - a[1]); const P = VC.planta; P.zoom = 1.1; P.vx = a[0] - 300 / 1.1; P.vy = a[1] - 250 / 1.1; P.aplicarVista(); return [a[0] - (b[0] - a[0]) / l * 45, a[1] - (b[1] - a[1]) / l * 45]; });
+    await pg.waitForTimeout(400);
+    ok(await h.v(() => document.querySelectorAll('.planta-equip').length > 0 && !document.querySelector('.planta-eq')), 'Sem posição, o equipamento aparece só como marca no início do ramal');
+    await h.tecla('u');
+    ok(await h.v(() => VC.planta.ferramenta === 'equip'), 'U escolhe a ferramenta Equipamento');
+    await h.clicar(ini); await pg.waitForTimeout(300);
+    const u1 = await h.v(() => { const u = VC.dados.utas.find(x => x.nome === 'VAN P0 N'); return u.planta && [u.planta.x, u.planta.y, String(VC.planta.equipSel) === String(u.id)]; });
+    ok(u1 && u1[2], 'Clique junto ao início de R1.1: o VAN P0 N fica nesse ponto e selecionado', u1);
+    ok(await h.v(() => document.querySelectorAll('.planta-eq').length === 1 && !!document.querySelector('.planta-eq-solto')), 'Desenha a caixa do equipamento e a ligação solta ao ramal');
+    ok(/Ligar os ramais ao equipamento/.test(await pg.locator('.pn[data-pn="equipamento"]').textContent()), 'O painel do equipamento propõe «Ligar os ramais ao equipamento»');
+    await pg.click('.pn-acoes button:has-text("Ligar os ramais ao equipamento")'); await pg.waitForTimeout(400);
+    ok(await h.v(() => { const r = VC.dados.ramais.find(x => x.nome === 'R1.1'), u = VC.dados.utas.find(x => x.nome === 'VAN P0 N'); return r.planta.pts[0][0] === u.planta.x && r.planta.pts[0][1] === u.planta.y && !document.querySelector('.planta-eq-solto'); }), 'R1.1 passa a começar no equipamento');
+    // arrastar com Selecionar
+    await h.tecla('Escape'); await h.tecla('v');
+    await h.arrastar(ini, [ini[0], ini[1] + 40]); await pg.waitForTimeout(300);
+    const yMov = await h.v(() => VC.dados.utas.find(x => x.nome === 'VAN P0 N').planta.y);
+    ok(Math.abs(yMov - ini[1]) > 30, 'Arrastar a caixa com Selecionar move o equipamento', [ini[1], yMov, await h.v(() => [VC.planta.ferramenta, VC.planta.equipSel, (window.__t || []).slice(-2)])]);
+    await pg.locator('#plantaSVG').hover(); await pg.keyboard.press('Control+z'); await pg.waitForTimeout(350);
+    ok(Math.abs(await h.v(() => VC.dados.utas.find(x => x.nome === 'VAN P0 N').planta.y) - ini[1]) < 1, 'Ctrl+Z devolve-o ao sítio');
+    // Delete tira da planta; Ctrl+Z repõe
+    await h.clicar(ini); await pg.waitForTimeout(200);
+    ok(await h.v(() => VC.paineis.selecao() && VC.paineis.selecao().tipo === 'equipamento'), 'Clique na caixa seleciona o equipamento');
+    await h.tecla('Delete');
+    ok(await h.v(() => !VC.dados.utas.find(x => x.nome === 'VAN P0 N').planta), 'Delete tira o equipamento da planta (os dados ficam)');
+    await pg.locator('#plantaSVG').hover(); await pg.keyboard.press('Control+z'); await pg.waitForTimeout(350);
+    ok(await h.v(() => !!VC.dados.utas.find(x => x.nome === 'VAN P0 N').planta), 'Ctrl+Z repõe-no');
+    // selecionar uma sala larga o equipamento
+    await h.v(() => { const u = VC.dados.utas.find(x => x.nome === 'VAN P0 N'); VC.planta.selecionarEquip(u.id); VC.planta.selecionar(VC.dados.espacos.find(e => e.planta).id); });
+    ok(await h.v(() => VC.planta.equipSel == null && VC.paineis.selecao().tipo === 'sala'), 'Escolher uma sala larga o equipamento (uma seleção de cada vez)');
+    // VCM: juntar as metades
+    await h.v(() => { const P = VC.planta, i = VC.dados.utas.find(u => /VCM Refeit.*insufla/.test(u.nome)), r = VC.dados.ramais.find(x => x.utaRef === i.id && x.planta); const a = r.planta.pts[0]; P.colocarEquipamento([a[0] - 30, a[1]], i.id); });
+    await pg.waitForTimeout(300);
+    await pg.click('.pn-acoes button:has-text("Juntar com")'); await pg.waitForTimeout(350);
+    ok(await h.v(() => { const i = VC.dados.utas.find(u => /VCM Refeit.*insufla/.test(u.nome)), e = VC.dados.utas.find(u => /VCM Refeit.*extra/.test(u.nome)); return i.uvbPar === e.id && e.uvbPar === i.id && e.planta && e.planta.x === i.planta.x && document.querySelectorAll('.planta-eq[data-par]').length === 1 && document.querySelectorAll('.planta-eq[data-par] .planta-eq-ext').length === 2; }), 'VCM: «Juntar com…» faz uma caixa com 4 ligações (ODA e EHA para fora)');
+    // traçar um ramal a partir do equipamento propõe-no
+    const q0 = await h.v(() => { const u = VC.dados.utas.find(x => x.nome === 'VAN P0 N'); return [u.planta.x, u.planta.y]; });
+    await h.tecla('Escape'); await h.tecla('l');
+    await h.clicar([q0[0] + 4, q0[1] + 3]); await h.clicar([q0[0] + 4, q0[1] + 120]); await h.tecla('Enter'); await pg.waitForTimeout(300);
+    ok(await h.v(() => { const pr = VC.planta.pendenteRamal, u = VC.dados.utas.find(x => x.nome === 'VAN P0 N'); return pr && String(pr.equip) === String(u.id) && pr.pts[0][0] === u.planta.x; }), 'Traçar a partir do equipamento: o ramal encaixa nele e fica proposto esse equipamento');
+    ok(/Começa no equipamento/.test(await pg.locator('#plantaPainel, .planta-painel').first().textContent()), 'O cartão do traçado diz «Começa no equipamento»');
+    await h.tecla('Escape');
+  },
+
   /* PR 9: nome legível numa sala em L; zona útil nítida; Entrega recortada */
   async representacao(pg, ok) {
     const h = ajudas(pg);

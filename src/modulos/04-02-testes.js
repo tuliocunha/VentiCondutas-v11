@@ -671,7 +671,7 @@ VC6.testes = {
         VC.dados.utas = [u]; VC.dados.ramais = [a, b, c]; C.calcularFugas();
         const f = (cc, S) => cc * Math.exp(0.65 * Math.log(200)) * 1e-3 * S * 3600;   // 200^0,65 sem Math.pow (a mutação troca-o)
         return Math.abs(a.Q_fugas - f(0.009, 20)) < 1e-6 && Math.abs(b.Q_fugas - f(0.003, 10)) < 1e-6 && c.Q_fugas === null
-          && Math.abs(u.Q_fugas - a.Q_fugas - b.Q_fugas) < 1e-9 && u.fugasDefinidas === 2 && u.fugasRamais === 3 && Math.abs(u.Q_ventilador_mh - 1000 - u.Q_fugas) < 1e-9;
+          && Math.abs(u.Q_fugas - a.Q_fugas - b.Q_fugas) < 1e-9 && u.fugasDefinidas === 2 && u.fugasRamais === 3;
       } finally { VC.dados.ramais = gR; VC.dados.utas = gU; }
     } });
     self.registar({ id: 'N11.T20', nucleo: 'N3', grupo: 'Condutas', nome: 'Regras do ramal: tipo de redução, só nos pontos marcados, série própria, relação de lados, saltos nas retangulares', criterio: 'a brusca perde mais do que a gradual; «marcados» só reduz onde o utilizador marcou; a série do fornecedor arredonda para os seus Ø; relação 1:1 dá secção quadrada; o salto mínimo conta tamanhos EN 1505', fn: () => {
@@ -698,6 +698,32 @@ VC6.testes = {
         const okW = VC.constantes.W1505.indexOf(450) < 0 || w.trocos[1].b === 500;
         return okZ && okS && okM && okL && okW;
       } finally { VC.dados.ramais = gR; VC.dados.restricaoH = gH; }
+    } });
+    self.registar({ id: 'N11.T22', nucleo: 'N6', grupo: 'UTAs', nome: 'Ventilador com as fugas e equipamento na planta', criterio: 'a potência usa o caudal servido + as fugas; o equipamento fica no ponto do clique e a VCM leva as duas metades; «Ligar os ramais» faz o ramal começar no equipamento; Delete tira-o da planta e Ctrl+Z repõe', fn: () => {
+      const C = VC.calculo, P = VC.planta; if (!P || !P.colocarEquipamento) return true;
+      const g = { u: VC.dados.utas, r: VC.dados.ramais, t: VC.dados.terminais, pl: VC.dados.plantas, piso: P.piso, pilha: P._pilha.slice(), ref: P._refeitas.slice(), sel: P.equipSel };
+      const fs = VC.estado.forcarSync, rd = P.redesenhar, toast = VC.ui.toast; VC.estado.forcarSync = () => {}; P.redesenhar = () => {}; VC.ui.toast = () => {};   // sem efeitos fora do teste
+      try {
+        const u = { id: 'U1', nome: 'VI1', rede: 'insuflacao', componentes: [], eta: 0.5, fs: 1, transmissao: 1, Q_fugas: 360 };
+        VC.dados.utas = [u]; VC.dados.terminais = []; VC.dados.ramais = [{ id: 1, nome: 'A', utaRef: 'U1', Q: 3600, deltaPtotal: 100 }];
+        C.calcularVentiladores();
+        const okV = Math.abs(u.Q_ventilador_mh - 3960) < 1e-6 && Math.abs(u.P_motor - 1.1 * 100 / 0.5) < 1e-6 && Math.abs(u.Q - 1) < 1e-9;
+        // planta
+        const p = { id: 'pz', nome: 'PZ', escala: 0.01, w: 1000, h: 800 };
+        const I = { id: 'I', nome: 'VCM X (insuflação)', rede: 'insuflacao', tipoSistema: 'VCM', uvbPar: 'E' }, E = { id: 'E', nome: 'VCM X (extração)', rede: 'extracao', tipoSistema: 'VCM', uvbPar: 'I' };
+        const R = { id: 9, nome: 'R9', utaRef: 'I', rede: 'insuflacao', L: 3, planta: { pisoId: 'pz', pts: [[200, 100], [500, 100]] } };
+        VC.dados.plantas = [p]; VC.dados.utas = [I, E]; VC.dados.ramais = [R]; P.piso = 'pz';
+        P.colocarEquipamento([100, 100], 'I');
+        const okC = I.planta && E.planta && I.planta.x === 100 && E.planta.y === 100 && String(P.equipSel) === 'I' && !P._ligadoAoEquip(R, I);
+        P.ligarRamaisAoEquip('I');
+        const okL = R.planta.pts.length === 3 && R.planta.pts[0][0] === 100 && P._ligadoAoEquip(R, I) && Math.abs(R.L - 4) < 1e-9;
+        P.retirarEquipamento('I');
+        const okD = !I.planta && !E.planta;
+        P.desfazer(); const okU = !!(I.planta && E.planta);
+        return okV && okC && okL && okD && okU;
+      } finally { VC.dados.utas = g.u; VC.dados.ramais = g.r; VC.dados.terminais = g.t; VC.dados.plantas = g.pl; P.piso = g.piso; P._pilha = g.pilha; P._refeitas = g.ref; P.equipSel = g.sel; VC.estado.forcarSync = fs; P.redesenhar = rd; VC.ui.toast = toast;
+        if (VC.perf) ['cacheFisica', 'cacheMaterializacao', 'ordenacaoTopologica', 'cacheBalanco'].forEach(k => { if (VC.perf[k] && VC.perf[k].invalidar) VC.perf[k].invalidar(); });   // o desfazer recalculou com os dados do teste
+        VC.calculo.calcularTudo(); }
     } });
     self.registar({ id: 'N11.T21', nucleo: 'N11', grupo: 'Construtor & Dados', nome: 'Renomear ramal com o prefixo dos sub-ramais', criterio: 'R1 → A passa R1.1 a A.1 e R1.1.1 a A.1.1 e atualiza terminais; ramais que não descendem ficam; um conflito não muda nada', fn: () => {
       const T = VC.topologia; if (!T.renomearComSubRamais) return true;
