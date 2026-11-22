@@ -13,7 +13,8 @@
     "regressao": "node tools/fotografia.js --comparar tests/fotografia-referencia.json",
     "mutacoes": "node tools/mutacoes.js",
     "cenarios": "node tools/cenarios-planta.js",
-    "testes": "npm run verificar && npm run regressao && npm run mutacoes && npm run cenarios"
+    "testes": "npm run verificar && npm run regressao && npm run cenarios",
+    "pr": "eslint . && node tools/verificar.js --sem-percurso"
   },
   "devDependencies": {
     "@eslint/js": "9.15.0",

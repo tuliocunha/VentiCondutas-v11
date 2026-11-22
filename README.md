@@ -54,6 +54,36 @@ npm install
 npx playwright install chromium
 ```
 
+A verificação está dividida em três níveis, para um PR não esperar por testes que
+quase nunca encontram nada:
+
+| Quando | O que corre | Onde | Tempo |
+|---|---|---|---|
+| Durante a alteração | `npm run pr` (lint + testes internos) e só os cenários e mutações do que mudou | no computador | ~5 min |
+| Em cada PR e em cada push para `main` | lint, `verificar`, `regressao` e todos os `cenarios` | GitHub (`verificar.yml`) | ~10 min |
+| Semanalmente e a pedido | todas as `mutacoes` | GitHub (`mutacoes.yml`) | ~20 min |
+
+**Um PR só se aprova com a verificação do GitHub a verde.** O resultado aparece no
+próprio PR (separador *Checks*).
+
+```bash
+npm run pr
+```
+
+Lint e testes internos, sem o percurso pelos ecrãs.
+
+```bash
+npm run cenarios -- --so multi,fumo
+```
+
+Só os cenários da planta indicados (os dos módulos alterados).
+
+```bash
+npm run mutacoes -- --so N11.T30
+```
+
+Só as mutações que vigiam os testes indicados (os testes novos do PR).
+
 ```bash
 npm run verificar
 ```
@@ -78,15 +108,14 @@ npm run referencia
 npm run mutacoes
 ```
 
-Volta a pôr na app, um a um, os 17 erros corrigidos na v11.1 e confirma que o teste
-que vigia cada um passa a falhar. Um teste que não reage ao seu erro não protege nada.
+Estraga a app de propósito, um erro de cada vez, e confirma que o teste que vigia
+cada erro passa a falhar. Um teste que não reage ao seu erro não protege nada.
 
 ```bash
 npm run testes
 ```
 
-Corre os três: verificar, regressão e mutações. É o que o GitHub corre em cada pull
-request (`.github/workflows/verificar.yml`).
+Corre o mesmo que o GitHub em cada PR: verificar, regressão e cenários.
 
 Para comparar só durante uma alteração local, sem mexer na referência:
 
@@ -96,10 +125,6 @@ npm run fotografia
 
 ```bash
 npm run comparar
-```
-
-```bash
-npm run lint
 ```
 
 ## Manual de desenho

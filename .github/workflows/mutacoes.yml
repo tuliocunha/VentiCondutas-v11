@@ -1,0 +1,30 @@
+# Testes de mutação: estraga o código de propósito, um erro de cada vez, e confirma que o teste
+# que o vigia falha (~20 min). Não corre em cada PR: semanalmente (segunda às 06:17 UTC),
+# a pedido (Actions → Mutações → Run workflow) e antes de uma versão.
+# Num PR que acrescenta testes, correm-se só as mutações desses testes: npm run mutacoes -- --so N11.T30
+name: Mutações
+
+on:
+  schedule:
+    - cron: '17 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  mutacoes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Instalar dependências
+        run: npm install --no-audit --no-fund
+      - name: Instalar o Chromium do Playwright
+        run: npx playwright install --with-deps chromium
+      - name: Testes de mutação
+        run: npm run mutacoes
