@@ -46,12 +46,15 @@ const spec = (id, rot, tipo, extra) => Object.assign({
   escrever: (r, v) => { const e = r.especificacao = Object.assign({}, r.especificacao); if (vazio(v)) delete e[id]; else e[id] = tipo === 'num' ? VC.utils.num(v) : v; if (!Object.keys(e).length) delete r.especificacao; }
 }, extra || {});
 const camposSpec = [
-  spec('serie', 'Série de diâmetros', 'opcoes', { opcoes: () => [['', '—'], ['S1', 'S1 · comercial (63 a 2000)'], ['S2', 'S2 · reduzida (100 a 2000)']], omissao: () => ({ v: VC.dados.serieDiametros || 'S1', origem: 'setup' }) }),
+  spec('criterio', 'Critério de dimensionamento', 'opcoes', { opcoes: () => [['', '—'], ['loss', 'perda de carga constante (' + VC.constantes.R_ALVO + ' Pa/m)'], ['velocidade', 'velocidade máxima do nível']], omissao: () => ({ v: (VC.dados.metodoCalculo && VC.dados.metodoCalculo.metodo) || 'loss', origem: 'setup' }) }),
+  spec('serie', 'Série de diâmetros', 'opcoes', { opcoes: () => [['', '—'], ['S1', 'S1 · comercial (63 a 2000)'], ['S2', 'S2 · reduzida (100 a 2000)'], ['propria', 'própria (lista do fornecedor)']], omissao: () => ({ v: VC.dados.serieDiametros || 'S1', origem: 'setup' }) }),
+  spec('serieLista', 'Diâmetros disponíveis', 'texto', { vis: r => C.specDe(r, 'serie', '') === 'propria', ajuda: 'Em mm, separados por vírgulas (ex.: 100, 125, 160, 200, 250, 315).' }),
+  spec('ladosMax', 'Relação de lados máxima (retangular)', 'num', { un: ': 1', min: 1, passo: 0.5, omissao: () => ({ v: 4, origem: 'norma', nota: 'prática corrente' }) }),
   spec('estanquidade', 'Estanquidade (EN 12237 / EN 1507)', 'opcoes', { opcoes: () => ESTANQ }),
   spec('isolamento', 'Isolamento', 'opcoes', { opcoes: () => ISOL }),
   spec('isolEsp', 'Espessura do isolamento', 'num', { un: 'mm', min: 0, passo: 5, vis: r => !!C.specDe(r, 'isolamento', '') }),
   spec('Dmin', 'Ø mínimo', 'num', { un: 'mm', min: 0, passo: 5, omissao: () => ({ v: '', origem: 'norma', nota: 'sem mínimo' }), ajuda: 'O Ø calculado nunca fica abaixo deste (ex.: 125 mm por limpeza ou montagem).' }),
-  spec('reajuste', 'Reajuste do Ø', 'opcoes', { opcoes: () => [['', '—'], ['derivacao', 'reduzir em cada derivação'], ['unico', 'Ø único em todo o ramal']], omissao: () => ({ v: 'derivacao', origem: 'norma', nota: 'perda constante' }), ajuda: 'As regras abaixo passam aos sub-ramais.' }),
+  spec('reajuste', 'Reajuste do Ø', 'opcoes', { opcoes: () => [['', '—'], ['derivacao', 'reduzir em cada derivação'], ['marcados', 'reduzir só nos pontos marcados'], ['unico', 'Ø único em todo o ramal']], omissao: () => ({ v: 'derivacao', origem: 'norma', nota: 'perda constante' }), ajuda: 'As regras abaixo passam aos sub-ramais.' }),
   spec('minL', 'Troço mínimo para reduzir', 'num', { un: 'm', min: 0, passo: 0.5, vis: r => C.regrasReajuste(r).modo !== 'unico', omissao: () => ({ v: 0, origem: 'norma', nota: 'sem mínimo' }) }),
   spec('minSaltos', 'Reduzir só se descer', 'num', { un: 'tamanhos', min: 1, passo: 1, vis: r => C.regrasReajuste(r).modo !== 'unico', omissao: () => ({ v: 1, origem: 'norma' }) }),
   spec('maxReducoes', 'Máximo de reduções no ramal', 'num', { min: 0, passo: 1, vis: r => C.regrasReajuste(r).modo !== 'unico', omissao: () => ({ v: '', origem: 'norma', nota: 'sem limite' }) })
@@ -64,6 +67,9 @@ const resR = ER.resultado;
 ER.resultado = function (r, p) {
   const out = resR.call(this, r, p), R = r.reducoesCalc || [], F = Object.keys(r.trocosFix || {}).length;
   out.push(['Superfície de conduta', fmt(r.superficie_m2, 2) + ' m²', 'perímetro × comprimento, troço a troço']);
+  out.push(['Fugas (estanquidade)', r.Q_fugas != null ? fmt(r.Q_fugas, 1) + ' m³/h' : '—', r.Q_fugas != null ? 'classe ' + r.classeEstanquidade + ' a ' + fmt(r.p_fugas, 0) + ' Pa' + (Number(r.Q) > 0 ? ' · ' + fmt(100 * r.Q_fugas / r.Q, 1) + ' % do caudal' : '') : 'defina a classe de estanquidade (Avançado)']);
+  const u = !r.parente && r.utaRef && porId('utas', r.utaRef);
+  if (u && u.Q_fugas > 0) out.push(['Fugas da rede de ' + u.nome, fmt(u.Q_fugas, 1) + ' m³/h', 'ventilador: ' + fmt(u.Q * 3600, 0) + ' + ' + fmt(u.Q_fugas, 0) + ' = ' + fmt(u.Q_ventilador_mh, 0) + ' m³/h' + (u.fugasDefinidas < u.fugasRamais ? ' (' + (u.fugasRamais - u.fugasDefinidas) + ' ramais sem classe)' : '')]);
   if (r.sugCirc) out.splice(4, 0, ['Sugestão no início', 'Ø' + r.sugCirc.D + (r.sugRect ? ' · ou ' + r.sugRect.b + '×' + r.sugRect.h : ''), r.secaoAdotada === 'retangular' ? 'adotada a retangular' + (r.sugCirc.cabe ? '' : ' (a circular não cabe)') : 'adotada a circular (mais barata)']);
   out.push(['Reduções', R.length ? R.map(x => (x.deTxt || 'Ø' + x.de) + '→' + (x.paraTxt || x.para) + ' a ' + fmt(x.s, 1) + ' m').join(' · ') : 'nenhuma', F ? F + ' troço(s) com Ø fixo' : 'clique num troço para o ver']);
   return out;
@@ -93,10 +99,16 @@ PN.esquemas.troco = {
         else { const sc = C.lerSeccao(v); if (!sc) { VC.ui.toast('Escreva um Ø (ex.: 250) ou largura × altura (ex.: 400×200).'); return; } F[o.key] = sc.forma === 'circular' ? sc.D : sc.b + '×' + sc.h; }
         if (!Object.keys(F).length) delete o.r.trocosFix;
       },
-      ajuda: 'Ø (ex.: 250) ou largura × altura em mm (ex.: 400×200). Manda sobre o cálculo e as regras; vazio volta ao calculado.' }
+      ajuda: 'Ø (ex.: 250) ou largura × altura em mm (ex.: 400×200). Manda sobre o cálculo e as regras; vazio volta ao calculado.' },
+    { id: 'tipoReducao', rot: 'Tipo da redução no início', tipo: 'opcoes', ess: true, vis: o => (o.r.reducoesCalc || []).some(x => x.key === o.key),
+      opcoes: () => [['', '—'], ['gradual', 'gradual (concêntrica ou excêntrica, ~30°)'], ['brusca', 'brusca (sem cone)']],
+      ler: o => ((o.r.reducoes || {})[o.key] || {}).tipo || '', proposto: () => ({ v: 'gradual', origem: 'norma', nota: 'ζ da biblioteca' }),
+      escrever: (o, v) => { const R = o.r.reducoes = Object.assign({}, o.r.reducoes), x = Object.assign({}, R[o.key]); if (vazio(v)) delete x.tipo; else x.tipo = v; if (Object.keys(x).length) R[o.key] = x; else delete R[o.key]; if (!Object.keys(R).length) delete o.r.reducoes; },
+      ajuda: 'A excêntrica mantém a face de cima encostada ao teto; o ζ é o da gradual.' }
   ],
   resultado: o => {
     const T = trocosDaChave(o.r, o.key), t = T[0], u = T[T.length - 1];
+    const rd = T.find(x => x.dpReducao > 0);
     const L = T.reduce((s, x) => s + x.L, 0), dp = T.reduce((s, x) => s + (x.dpLin || 0) + (x.dpTe || 0) + (x.dpReducao || 0), 0);
     const vmax = Math.max.apply(null, T.map(x => Number(x.v) || 0)), lim = C.vMaxDe(o.r);
     return [
@@ -108,13 +120,18 @@ PN.esquemas.troco = {
       ['Velocidade', fmt(vmax, 2) + ' m/s', vmax > lim + 1e-9 ? 'acima do limite de ' + fmt(lim, 1) + ' m/s' : 'limite ' + fmt(lim, 1) + ' m/s'],
       ['Perda linear R', fmt(t.R, 2) + ' Pa/m'],
       ['Superfície de conduta', fmt(T.reduce((s, x) => s + (x.area_m2 || 0), 0), 2) + ' m²'],
-      ['Δp do troço', fmt(dp, 1) + ' Pa', 'linear + tê + redução']
+      ['Δp do troço', fmt(dp, 1) + ' Pa', 'linear + tê + redução'],
+      rd ? ['Redução', (rd.tipoReducao || 'gradual') + ' · ζ ' + fmt(rd.zetaReducao, 2), fmt(rd.dpReducao, 1) + ' Pa'] : null
     ].filter(Boolean);
   },
   porFazer: o => { const T = trocosDaChave(o.r, o.key); const v = Math.max.apply(null, T.map(x => Number(x.v) || 0)); return v > C.vMaxDe(o.r) + 1e-9 ? ['velocidade acima do limite: aumente o Ø fixo ou volte ao calculado'] : []; },
   acoes: o => {
     const red = (o.r.reducoes || {})[o.key], calc = (o.r.reducoesCalc || []).some(x => x.key === o.key), a = [];
-    if (o.i > 0 && calc) a.push(['Remover a redução no início (Delete)', "VC.planta.removerReducao('" + esc(o.r.id) + "','" + o.key + "')"]);
+    if (o.i > 0 && calc && C.regrasReajuste(o.r).modo !== 'marcados') a.push(['Remover a redução no início (Delete)', "VC.planta.removerReducao('" + esc(o.r.id) + "','" + o.key + "')"]);
+    if (o.i > 0 && C.regrasReajuste(o.r).modo === 'marcados') {
+      if (red && red.marcada) a.push(['Tirar a redução marcada (Delete)', "VC.planta.marcarReducao('" + esc(o.r.id) + "','" + o.key + "', false)"]);
+      else a.push(['Reduzir no início deste troço', "VC.planta.marcarReducao('" + esc(o.r.id) + "','" + o.key + "', true)", true]);
+    }
     if (red && red.removida) a.push(['Repor a redução', "VC.planta.reporReducao('" + esc(o.r.id) + "','" + o.key + "')", true]);
     if (red && red.s) a.push(['Reduzir logo na derivação', "VC.planta.reporReducao('" + esc(o.r.id) + "','" + o.key + "')"]);
     const t = o.t, def = "VC.paineis.definir('troco','" + esc(o.id) + "','secFixa',";
@@ -126,9 +143,10 @@ PN.esquemas.troco = {
     return a;
   }
 };
-P.removerReducao = function (rid, key) { const r = porId('ramais', rid); return this._mudarRamal(r, x => { x.reducoes = Object.assign({}, x.reducoes, { [key]: { removida: true } }); }, 'redução removida em «' + (r && r.nome) + '»'); };
+P.removerReducao = function (rid, key) { const r = porId('ramais', rid); return this._mudarRamal(r, x => { const R = Object.assign({}, x.reducoes), y = Object.assign({}, R[key]); delete y.s; delete y.marcada; y.removida = true; R[key] = y; x.reducoes = R; }, 'redução removida em «' + (r && r.nome) + '»'); };
 P.reporReducao = function (rid, key) { const r = porId('ramais', rid); return this._mudarRamal(r, x => { const R = Object.assign({}, x.reducoes); delete R[key]; if (Object.keys(R).length) x.reducoes = R; else delete x.reducoes; }, 'redução reposta em «' + (r && r.nome) + '»'); };
-P.adiarReducao = function (rid, key, s) { const r = porId('ramais', rid); return this._mudarRamal(r, x => { x.reducoes = Object.assign({}, x.reducoes, { [key]: { s: n2(s) } }); }, 'redução movida em «' + (r && r.nome) + '»'); };
+P.marcarReducao = function (rid, key, on) { const r = porId('ramais', rid); return this._mudarRamal(r, x => { const R = Object.assign({}, x.reducoes), y = Object.assign({}, R[key]); if (on) { y.marcada = true; delete y.removida; } else delete y.marcada; if (Object.keys(y).length) R[key] = y; else delete R[key]; if (Object.keys(R).length) x.reducoes = R; else delete x.reducoes; }, (on ? 'redução marcada' : 'redução desmarcada') + ' em «' + (r && r.nome) + '»'); };
+P.adiarReducao = function (rid, key, s) { const r = porId('ramais', rid); return this._mudarRamal(r, x => { const R = Object.assign({}, x.reducoes), y = Object.assign({}, R[key]); delete y.removida; y.s = n2(s); R[key] = y; x.reducoes = R; }, 'redução movida em «' + (r && r.nome) + '»'); };
 
 /* objeto do painel e seleção */
 const obterBase = PN._obter.bind(PN);
@@ -186,6 +204,17 @@ const ligarBase = P.ligar;
 P.ligar = function () {
   ligarBase.apply(this, arguments);
   const palco = document.getElementById('plantaTela'), svg = document.getElementById('plantaSVG'); if (!palco || !svg) return;
+  /* duplo clique no nome do ramal (o texto que não é «Ø…»): seleciona-o e foca o campo Nome */
+  palco.addEventListener('dblclick', ev => {
+    if (this.ferramenta !== 'sel') return;
+    // os textos não recebem o rato (pointer-events: none): procura o nome de ramal debaixo do ponteiro
+    const tx = [...svg.querySelectorAll('.planta-ramal > text')].find(t => { if (/^Ø|^\d/.test(t.textContent)) return false; const b = t.getBoundingClientRect(); return ev.clientX >= b.left - 3 && ev.clientX <= b.right + 3 && ev.clientY >= b.top - 3 && ev.clientY <= b.bottom + 3; });
+    if (!tx) return;
+    const g = tx.closest('.planta-ramal'), id = g && Number(g.dataset.r); if (!id) return;
+    ev.stopPropagation(); ev.preventDefault();
+    if (String(this.ramalSel) !== String(id)) this.selecionarRamal(id);
+    this.focarNome();
+  }, true);
   let arr = null;
   palco.addEventListener('pointerdown', ev => {
     if (ev.button !== 0 || this.ferramenta !== 'sel' || this._espaco) return;

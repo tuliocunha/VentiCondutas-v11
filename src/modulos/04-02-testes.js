@@ -660,6 +660,61 @@ VC6.testes = {
         return ok1 && ok2;
       } finally { VC.dados.restricaoH = gH; VC.dados.ramais = gR; }
     } });
+    self.registar({ id: 'N11.T19', nucleo: 'N3', grupo: 'Condutas', nome: 'Fugas pela classe de estanquidade (EN 12237)', criterio: 'f = c·p^0,65·10⁻³ m³/(s·m²) × superfície; o sub-ramal herda a classe; sem classe não há fugas; o ventilador soma as fugas dos ramais que serve', fn: () => {
+      const C = VC.calculo; if (!C.calcularFugas) return true;
+      const gR = VC.dados.ramais, gU = VC.dados.utas;
+      try {
+        const u = { id: 9, nome: 'VI1', Q: 1000 / 3600 };   // m³/s
+        const a = { id: 1, nome: 'A', utaRef: 9, deltaPCritico: 200, superficie_m2: 20, especificacao: { estanquidade: 'B' } };
+        const b = { id: 2, nome: 'B', parente: 'A', deltaPCritico: 200, superficie_m2: 10, especificacao: { estanquidade: 'C' } };
+        const c = { id: 3, nome: 'Cx', utaRef: 9, deltaPCritico: 200, superficie_m2: 5 };   // outro ramal do mesmo equipamento, sem classe
+        VC.dados.utas = [u]; VC.dados.ramais = [a, b, c]; C.calcularFugas();
+        const f = (cc, S) => cc * Math.exp(0.65 * Math.log(200)) * 1e-3 * S * 3600;   // 200^0,65 sem Math.pow (a mutação troca-o)
+        return Math.abs(a.Q_fugas - f(0.009, 20)) < 1e-6 && Math.abs(b.Q_fugas - f(0.003, 10)) < 1e-6 && c.Q_fugas === null
+          && Math.abs(u.Q_fugas - a.Q_fugas - b.Q_fugas) < 1e-9 && u.fugasDefinidas === 2 && u.fugasRamais === 3 && Math.abs(u.Q_ventilador_mh - 1000 - u.Q_fugas) < 1e-9;
+      } finally { VC.dados.ramais = gR; VC.dados.utas = gU; }
+    } });
+    self.registar({ id: 'N11.T20', nucleo: 'N3', grupo: 'Condutas', nome: 'Regras do ramal: tipo de redução, só nos pontos marcados, série própria, relação de lados, saltos nas retangulares', criterio: 'a brusca perde mais do que a gradual; «marcados» só reduz onde o utilizador marcou; a série do fornecedor arredonda para os seus Ø; relação 1:1 dá secção quadrada; o salto mínimo conta tamanhos EN 1505', fn: () => {
+      const C = VC.calculo; if (!C.zetaReducao || !C.listaSerie) return true;
+      const { rho, nu } = VC.perf.cacheFisica.rhoNu(), gR = VC.dados.ramais, gH = VC.dados.restricaoH;
+      try {
+        const okZ = C.zetaReducao('brusca', false, 0.5) > C.zetaReducao('gradual', false, 0.5) && C.zetaReducao('brusca', true, 0.5) > C.zetaReducao('gradual', true, 0.5) && C.zetaReducao('brusca', true, 1) === 0;
+        const okS = C.diametroComercial(170, '100, 150, 200, 300') === 200 && C.listaSerie('200;100').join() === '100,200' && C.serieDe({ especificacao: { serie: 'propria', serieLista: '100,200' } }) === '100,200';
+        // marcados
+        let de = 0; const r = { id: 1, nome: 'RM', rede: 'insuflacao', Q: 900, L: 12, geometriaInput: {} };
+        const D = [400, 315, 250], Lt = [4, 4, 4];
+        r.trocos = D.map((d, i) => { const t = { de, ate: de + Lt[i], L: Lt[i], Q: 900 - 300 * i, Dcom: d, Dnom: d, key: C.chaveTroco(de), forma: 'circular', secNom: { forma: 'circular', D: d } }; de += Lt[i]; return t; });
+        r.reducoes = { [r.trocos[2].key]: { marcada: true } }; VC.dados.ramais = [r];
+        C._aplicarReajuste(r, { modo: 'marcados', minL: 0, maxReducoes: null, minSaltos: 1 }, rho, nu, false);
+        const okM = r.trocos.map(t => t.Dcom).join() === '400,400,250' && r.trocos[1].motivo === 'sem redução marcada';
+        // relação de lados 1:1 → quadrada
+        const q = { id: 2, nome: 'RQ', rede: 'insuflacao', Q: 1500, L: 5, geometriaInput: { forma: 'retangular' }, especificacao: { ladosMax: 1 } };
+        VC.dados.ramais = [q]; VC.dados.restricaoH = 600; const sq = C._seccao(q, 1500, rho, nu, null);
+        const okL = sq.sugRect && sq.sugRect.b === sq.sugRect.h;
+        // saltos nas retangulares: 500×200 → 450×200 é 1 tamanho; com mínimo 2 não reduz
+        de = 0; const w = { id: 3, nome: 'RW', rede: 'insuflacao', Q: 900, L: 8, geometriaInput: { forma: 'retangular' } };
+        w.trocos = [[500, 200], [450, 200]].map((x, i) => { const t = { de, ate: de + 4, L: 4, Q: 900 - 300 * i, Dcom: 300, Dnom: 300, key: C.chaveTroco(de), forma: 'retangular', b: x[0], h: x[1], secNom: { forma: 'retangular', b: x[0], h: x[1] } }; de += 4; return t; });
+        VC.dados.ramais = [w]; C._aplicarReajuste(w, { modo: 'derivacao', minL: 0, maxReducoes: null, minSaltos: 2 }, rho, nu, false);
+        const okW = VC.constantes.W1505.indexOf(450) < 0 || w.trocos[1].b === 500;
+        return okZ && okS && okM && okL && okW;
+      } finally { VC.dados.ramais = gR; VC.dados.restricaoH = gH; }
+    } });
+    self.registar({ id: 'N11.T21', nucleo: 'N11', grupo: 'Construtor & Dados', nome: 'Renomear ramal com o prefixo dos sub-ramais', criterio: 'R1 → A passa R1.1 a A.1 e R1.1.1 a A.1.1 e atualiza terminais; ramais que não descendem ficam; um conflito não muda nada', fn: () => {
+      const T = VC.topologia; if (!T.renomearComSubRamais) return true;
+      const gR = VC.dados.ramais, gT = VC.dados.terminais, gE = VC.dados.espacos;
+      try {
+        VC.dados.ramais = [{ id: 1, nome: 'R1' }, { id: 2, nome: 'R1.1', parente: 'R1' }, { id: 3, nome: 'R1.1.1', parente: 'R1.1' }, { id: 4, nome: 'R10' }, { id: 5, nome: 'X', parente: 'R1' }];
+        VC.dados.terminais = [{ id: 1, ramalRef: 'R1.1.1' }]; VC.dados.espacos = [];
+        const res = T.renomearComSubRamais('R1', 'A', { subRamais: true });
+        const nomes = VC.dados.ramais.map(r => r.nome + (r.parente ? '<' + r.parente : '')).join(',');
+        const ok1 = res.ok && res.sub === 2 && nomes === 'A,A.1<A,A.1.1<A.1,R10,X<A' && VC.dados.terminais[0].ramalRef === 'A.1.1';
+        VC.dados.ramais.push({ id: 6, nome: 'B.1' });
+        const res2 = T.renomearComSubRamais('A', 'B', { subRamais: true });
+        const ok2 = !res2.ok && VC.dados.ramais[0].nome === 'A' && VC.dados.ramais[1].nome === 'A.1';
+        const res3 = T.renomearComSubRamais('A', 'Z', { subRamais: false });
+        return ok1 && ok2 && res3.ok && VC.dados.ramais[0].nome === 'Z' && VC.dados.ramais[1].nome === 'A.1' && VC.dados.ramais[1].parente === 'Z';
+      } finally { VC.dados.ramais = gR; VC.dados.terminais = gT; VC.dados.espacos = gE; }
+    } });
     self.registar({ id: 'N11.T14', nucleo: 'N11', grupo: 'Construtor & Dados', nome: 'Planta: textos proporcionais ao desenho', criterio: 'o tamanho segue a escala e o zoom (altura real em m), fica entre o mínimo legível e o máximo, e o fator do utilizador multiplica-o', fn: () => {
       const P = VC.planta; if (!P || !P._pxTexto) return true;
       const gz = P.zoom, gf = VC.dados.params.escalaTextos, p = { escala: 0.01 };   // 1 m = 100 px da imagem

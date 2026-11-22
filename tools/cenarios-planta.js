@@ -472,6 +472,67 @@ const CENARIOS = {
     ok(await h.v(() => { const f = VC.dados.ramais.find(x => x.parente === 'R1.1'); return f && VC.calculo.regrasReajuste(f).maxReducoes === 2; }), 'Os sub-ramais herdam a regra');
   },
 
+  /* PR 56 · Fase 2C: fugas, reduções marcadas, tipo da redução, renomear ramais */
+  async fase2c(pg, ok) {
+    const h = ajudas(pg);
+    await pg.evaluate(async () => { await VC._carregarExemploDeFicheiro(['exemplos/degrade-21nov26-corrigido.json'], 'x'); VC.nav.irPasso('rede'); VC.nav.setVista('planta'); VC.planta.setPiso('piso-p0'); });
+    await pg.waitForTimeout(1200);
+    await pg.evaluate(() => { const P = VC.planta; P.zoom = 1.1; P.vx = 600; P.vy = 120; P.aplicarVista(); }); await pg.waitForTimeout(600);
+    const R = n => `VC.dados.ramais.find(x => x.nome === '${n}')`;
+    await pg.evaluate(() => { const r = VC.dados.ramais.find(x => x.nome === 'R1.1'); VC.planta.selecionarRamal(r.id); VC.paineis.abertos.ramal = true; VC.planta.redesenhar(); }); await pg.waitForTimeout(300);
+    await pg.selectOption('#pn-ramal-esp_estanquidade', 'B'); await pg.waitForTimeout(400);
+    const fug = await h.v(() => { const r = VC.dados.ramais.find(x => x.nome === 'R1.1'), f = VC.dados.ramais.find(x => x.nome === 'R1.1.1'); return [r.Q_fugas, f.Q_fugas, r.classeEstanquidade, f.classeEstanquidade]; });
+    ok(fug[0] > 0 && fug[1] > 0 && fug[3] === 'B', 'Classe B no ramal: fugas calculadas (m³/h) e herdadas pelo sub-ramal', fug);
+    ok(/Fugas \(estanquidade\)[\s\S]*m³\/h/.test(await pg.locator('.pn[data-pn="ramal"]').textContent()), 'O painel do ramal mostra as fugas e a % do caudal');
+    ok(await h.v(() => { const r = VC.dados.ramais.find(x => x.nome === 'R1.1'), u = VC.dados.utas.find(x => x.id === r.utaRef); return u && u.Q_fugas > 0 && Math.abs(u.Q_ventilador_mh - u.Q * 3600 - u.Q_fugas) < 1e-6 && u.Q > 0; }), 'O equipamento soma as fugas ao caudal do ventilador');
+    // reduzir só nos pontos marcados
+    await pg.selectOption('#pn-ramal-esp_reajuste', 'marcados'); await pg.waitForTimeout(400);
+    ok(await h.v(new Function('return ' + R('R1.1') + '.trocos.every(t => t.Dcom === ' + R('R1.1') + '.trocos[0].Dcom)')), 'Reajuste «só nos pontos marcados» sem marcas: Ø único em todo o ramal');
+    const p1 = await h.v(() => { const r = VC.dados.ramais.find(x => x.nome === 'R1.1'); return VC.planta._subTracado(r.planta.pts, 10.3 / r.L, 10.3 / r.L + 0.0005)[0]; });
+    await h.clicar(p1); await pg.waitForTimeout(250);
+    if (await pg.locator('.pn[data-pn="troco"]').count() === 0) { await h.clicar(p1); await pg.waitForTimeout(250); }
+    await pg.click('.pn-acoes button:has-text("Reduzir no início deste troço")'); await pg.waitForTimeout(400);
+    const mk = await h.v(() => { const r = VC.dados.ramais.find(x => x.nome === 'R1.1'); return [r.reducoes && r.reducoes['9.28'] && r.reducoes['9.28'].marcada, r.trocos[0].Dcom, r.trocos[1].Dcom, r.reducoesCalc.length]; });
+    ok(mk[0] && mk[2] < mk[1] && mk[3] === 1, '«Reduzir no início deste troço» marca a redução a 9,28 m e só aí reduz', mk);
+    // tipo da redução: brusca perde mais
+    const dp0 = await h.v(() => VC.dados.ramais.find(x => x.nome === 'R1.1').trocos[1].dpReducao);
+    await pg.selectOption('#pn-troco-tipoReducao', 'brusca'); await pg.waitForTimeout(400);
+    const dp1 = await h.v(() => { const t = VC.dados.ramais.find(x => x.nome === 'R1.1').trocos[1]; return [t.dpReducao, t.tipoReducao]; });
+    ok(dp1[0] > dp0 && dp1[1] === 'brusca', 'Redução brusca no painel do troço: mais perda de carga que a gradual', [dp0, dp1]);
+    await pg.locator('#plantaSVG').hover(); await pg.keyboard.press('Control+z'); await pg.waitForTimeout(300);
+    ok(await h.v(() => VC.dados.ramais.find(x => x.nome === 'R1.1').trocos[1].tipoReducao === 'gradual'), 'Ctrl+Z volta à redução gradual');
+    await h.tecla('Escape'); await h.tecla('Escape');
+    // renomear: duplo clique no nome do ramal foca o campo; o prefixo passa aos sub-ramais
+    // põe o nome à vista (fora da legenda e do painel) antes do duplo clique
+    await pg.evaluate(async () => {
+      const P = VC.planta, alvo = () => { const r = VC.dados.ramais.find(x => x.nome === 'R1.1'); return [...document.querySelectorAll('.planta-ramal[data-r="' + r.id + '"] > text')].find(x => x.textContent.trim() === 'R1.1'); };
+      for (const [dx, dy] of [[0, 0], [300, 0], [-300, 0], [0, 250], [0, -250], [300, 250], [-300, -250], [600, 0], [-600, 0]]) {
+        const vx = P.vx, vy = P.vy; P.vx += dx; P.vy += dy; P.aplicarVista(); await new Promise(f => setTimeout(f, 80));
+        const t = alvo(), b = t && t.getBoundingClientRect(), e = b && document.elementFromPoint(b.x + b.width / 2, b.y + b.height / 2); if (e && e.closest('#plantaSVG')) return;
+        P.vx = vx; P.vy = vy;
+      }
+    }); await pg.waitForTimeout(200);
+    const nm = await h.v(() => { const r = VC.dados.ramais.find(x => x.nome === 'R1.1'), t = [...document.querySelectorAll('.planta-ramal[data-r="' + r.id + '"] > text')].find(x => x.textContent.trim() === 'R1.1'); if (!t) return null; const b = t.getBBox(); return [b.x + b.width / 2, b.y + b.height / 2]; });
+    ok(!!nm, 'O nome «R1.1» está desenhado na planta');
+    if (nm) await h.clicar(nm, 2);
+    await pg.waitForTimeout(300);
+    ok(await h.v(() => document.activeElement && document.activeElement.id === 'pn-ramal-nome'), 'Duplo clique no nome do ramal: seleciona-o e foca o campo «Nome»');
+    ok(await pg.locator('#pn-ramal-prefixoSub').count() === 1, 'O painel oferece «mudar também o prefixo dos sub-ramais»');
+    await pg.fill('#pn-ramal-nome', 'INS1'); await pg.press('#pn-ramal-nome', 'Enter'); await pg.waitForTimeout(450);
+    const nomes = await h.v(() => VC.dados.ramais.filter(x => /^INS1|^R1\.1/.test(x.nome)).map(x => x.nome + '<' + (x.parente || '')).join(','));
+    ok(nomes === 'INS1<,INS1.1<INS1,INS1.1.1<INS1.1,INS1.1.1.1<INS1.1.1', 'R1.1 → INS1 e os sub-ramais R1.1.x → INS1.x', nomes);
+    ok(await h.v(() => VC.dados.terminais.filter(t => /^R1\.1/.test(t.ramalRef || '')).length === 0 && VC.dados.terminais.some(t => t.ramalRef === 'INS1.1')), 'Os terminais seguem os novos nomes');
+    await pg.locator('#plantaSVG').hover(); await pg.keyboard.press('Control+z'); await pg.waitForTimeout(400);
+    ok(await h.v(() => ['R1.1', 'R1.1.1', 'R1.1.1.1.1'].every(n => VC.dados.ramais.some(x => x.nome === n))), 'Um Ctrl+Z repõe o ramal e todos os sub-ramais');
+    // F2 com o ramal selecionado foca o nome; sem o prefixo, só o ramal muda
+    await pg.evaluate(() => { const r = VC.dados.ramais.find(x => x.nome === 'R1.1'); VC.planta.selecionarRamal(r.id); }); await pg.waitForTimeout(250);
+    await h.tecla('F2'); await pg.waitForTimeout(200);
+    ok(await h.v(() => document.activeElement && document.activeElement.id === 'pn-ramal-nome'), 'F2 foca o campo «Nome» do ramal selecionado');
+    await pg.uncheck('#pn-ramal-prefixoSub'); await pg.waitForTimeout(250);
+    await pg.fill('#pn-ramal-nome', 'Piso 0 · loja'); await pg.press('#pn-ramal-nome', 'Enter'); await pg.waitForTimeout(450);
+    ok(await h.v(() => VC.dados.ramais.some(x => x.nome === 'Piso 0 · loja') && VC.dados.ramais.find(x => x.nome === 'R1.1.1').parente === 'Piso 0 · loja'), 'Sem o prefixo: só o ramal muda de nome; o sub-ramal R1.1.1 passa a apontar para «Piso 0 · loja»');
+  },
+
   /* PR 9: nome legível numa sala em L; zona útil nítida; Entrega recortada */
   async representacao(pg, ok) {
     const h = ajudas(pg);

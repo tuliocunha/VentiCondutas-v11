@@ -1039,3 +1039,27 @@ VC.topologia.renomearRamal = function (antigo, novo) {
   if (VC.perf) ['cacheMaterializacao', 'ordenacaoTopologica', 'cacheBalanco'].forEach(k => { if (VC.perf[k] && VC.perf[k].invalidar) VC.perf[k].invalidar(); });
   return { ok: true, n };
 };
+/* Fase 2C: sub-ramais que herdam o nome do ramal como prefixo («R1» → «R1.1», «R1-A»…).
+   Devolve [[antigo, novo], …] para o novo prefixo; só descendentes (pela cadeia parente). */
+VC.topologia.subRamaisComPrefixo = function (antigo, novo) {
+  const R = VC.dados.ramais || [], out = [], vistos = {};
+  const desc = nome => R.filter(x => x.parente === nome).forEach(x => { if (vistos[x.nome]) return; vistos[x.nome] = 1; if (x.nome.indexOf(antigo) === 0 && x.nome.length > antigo.length) out.push([x.nome, novo + x.nome.slice(antigo.length)]); desc(x.nome); });
+  desc(antigo);
+  return out;
+};
+/* renomeia o ramal e, com opts.subRamais, troca o prefixo nos sub-ramais — tudo ou nada */
+VC.topologia.renomearComSubRamais = function (antigo, novo, opts) {
+  novo = String(novo == null ? '' : novo).trim();
+  const lista = opts && opts.subRamais && novo && novo !== antigo ? this.subRamaisComPrefixo(antigo, novo) : [];
+  const R = VC.dados.ramais || [], saem = {}; lista.forEach(([a]) => { saem[a.toLowerCase()] = 1; }); saem[antigo.toLowerCase()] = 1;
+  for (const [, b] of lista) {
+    if (b.length > 40) return { ok: false, erro: 'O sub-ramal «' + b + '» ficaria com mais de 40 caracteres.' };
+    if (R.some(x => x.nome.toLowerCase() === b.toLowerCase() && !saem[b.toLowerCase()])) return { ok: false, erro: 'Já existe um ramal «' + b + '».' };
+  }
+  const res = this.renomearRamal(antigo, novo); if (!res.ok) return res;
+  let n = res.n, k = 0;
+  // os nomes que saem podem coincidir com os que entram: passa primeiro por nomes temporários
+  const tmp = lista.map(([a], i) => { const t = '\u0001' + i + '\u0001'; const r = this.renomearRamal(a, t); n += r.n || 0; return t; });
+  lista.forEach(([, b], i) => { const r = this.renomearRamal(tmp[i], b); if (r.ok) k++; });
+  return { ok: true, n, sub: k };
+};
