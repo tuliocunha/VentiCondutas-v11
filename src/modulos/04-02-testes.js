@@ -468,6 +468,14 @@ VC6.testes = {
     self.registar({ id: 'N11.T7', nucleo: 'N11', grupo: 'Construtor & Dados', nome: 'Exemplo Degrade 2 disponível', criterio: 'na lista de exemplos (pré-carregado) e com carregador', fn: () => { if (!VC.exemplos) return true; if (!VC.exemplos._lista) VC.exemplos.init(); const e = VC.exemplos._lista.find(x => x.id === 'degrade-2'); return !!e && e.builtin === true && typeof VC.exemploDegrade2 === 'function'; } });
     self.registar({ id: 'N11.T8', nucleo: 'N11', grupo: 'Construtor & Dados', nome: 'Exemplo Degrade 21 nov26 disponível', criterio: 'na lista de exemplos (pré-carregado), com carregador e ficheiro para exportar/duplicar', fn: () => { if (!VC.exemplos) return true; if (!VC.exemplos._lista) VC.exemplos.init(); const e = VC.exemplos._lista.find(x => x.id === 'degrade-21nov26'); return !!e && e.builtin === true && typeof VC.exemploDegrade21nov26 === 'function' && VC.exemplos._ficheiroDe(e) === 'exemplos/degrade-21nov26.json'; } });
     self.registar({ id: 'N11.T9', nucleo: 'N11', grupo: 'Construtor & Dados', nome: 'Exemplo Degrade 21 nov26 · corrigido disponível', criterio: 'na lista de exemplos (pré-carregado), com carregador e ficheiro para exportar/duplicar', fn: () => { if (!VC.exemplos) return true; if (!VC.exemplos._lista) VC.exemplos.init(); const e = VC.exemplos._lista.find(x => x.id === 'degrade-21nov26-corrigido'); return !!e && e.builtin === true && typeof VC.exemploDegrade21nov26Corrigido === 'function' && VC.exemplos._ficheiroDe(e) === 'exemplos/degrade-21nov26-corrigido.json'; } });
+    self.registar({ id: 'N3.T30', nucleo: 'N3', grupo: 'Balanço', nome: 'Abertura para o exterior fecha o balanço', criterio: 'garagem com extração 600 e entrada natural de 600 m³/h: resíduo 0, sem «G4 sem depressão»; a área livre a 2 m/s é 600/3600/2', fn: () => {
+      const B = VC6.balanco; if (!B || !B.QExterior) return true;
+      const e = { id: 99001, nome: 'Gar T', tipo: 'Garagem', g: 4, A: 26, definicoes: [{ id: 'D', rede: 'extracao_suja', Q_total: 600, quantidade: 2 }] };
+      const r0 = B.residuo(e, []);
+      e.Q_exterior = 600;
+      const r1 = B.residuo(e, []), dep = B.QOutDireto(e) > B.QInDireto(e);
+      return Math.abs(r0 + 600) < 1e-9 && Math.abs(r1) < 1e-9 && dep && Math.abs(B.areaAberturaExterior(600) - 600 / 3600 / 2) < 1e-12;
+    } });
     self.registar({ id: 'N11.T10', nucleo: 'N11', grupo: 'Construtor & Dados', nome: 'Planta: condutas à escala, troço a troço', criterio: 'o traçado divide-se nos troços pela fração do L; cada troço tem a largura do seu Ø na escala do piso', fn: () => {
       const P = VC.planta; if (!P || !P._subTracado || !P._trocosNoTracado) return true;
       const pts = [[0, 0], [100, 0], [100, 50]];   // 150 px

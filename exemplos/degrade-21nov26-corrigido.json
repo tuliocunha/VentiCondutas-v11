@@ -2,14 +2,14 @@
  "_versao": "V9",
  "versao": "VentiCondutas v11.1.0",
  "versaoCurta": "11.1.0",
- "timestamp": "2026-11-22T00:29:00.172Z",
+ "timestamp": "2026-11-22T00:50:46.412Z",
  "metadados": {
   "cliente": "Degrade",
   "local": "Torres Vedras, Portugal",
   "autor": "Tulio Cunha",
   "nome": "Degrade 21 nov26 · corrigido",
   "revisao": "02",
-  "descricao": "Degrade 21 nov26 com as correções de conformidade (Portaria 138-I, RT-SCIE, balanço de ar): Garagem P0-N1: extração dedicada VEX Garagem de 600 m³/h (RT-SCIE art. 183.º: 300 e 600 m³/h por veículo, 1 lugar), 2 GE × 300 junto ao pavimento; ar de compensação natural pela porta exterior · Sala P0-N1 (bastidores): ar novo 60 m³/h (VAN P0 N, tronco prolongado) e extração 60 m³/h (VEG P0 N, tronco prolongado); mínimo 59 m³/h · Refeitório P0-S1: ar novo da VCM 2 × 100 = 200 m³/h (mínimo 192) e extração de ar sujo da copa pela VCM de 2 × 70 para 2 × 100 m³/h (balanço nulo) · Sanitários (uso público, Tabela 13): VE de 75 para 90 m³/h por sanita; GE azul da CB P0-N2 suprimido (a VE de 90 cumpre) · CB P0-N2: ar novo de 100 para 60 m³/h; recebe 30 m³/h por transferência e fica em depressão (Anexo II, 1.2.2 h)) · Circulação P0-N2: ar novo 200 m³/h (derivação da Sala Técnica), igual ao ar que transfere para os sanitários (90 + 80 + 30) · Salas técnicas (bastidores e P0-N2): sem caudal de conforto acrescentado; o caudal do desenho já cobre a renovação · Escritórios, laboratórios, circulações do P1 e Arrumo P0-N1: extração igual ao ar novo de cada espaço (balanço nulo) · Sala P1-S2: extração 2 × 200 = 400 m³/h, igual ao ar novo · Apoio/Serviço P1-S4: extração 100 m³/h por derivação nova do VEG P1 S · Setup: ventilação integrável em gestão técnica (ar novo ≥ 3000 m³/h, Portaria 138-I, Anexo II, 1.5 c)"
+  "descricao": "Degrade 21 nov26 com as correções de conformidade (Portaria 138-I, RT-SCIE, balanço de ar): Garagem P0-N1: sistema dedicado de insuflação e extração mecânicas (variante b). Extração VEX Garagem de 600 m³/h em dois patamares comandados por deteção de CO (RT-SCIE art. 183.º: 300 e 600 m³/h por veículo, 1 lugar), 2 GE × 300 junto ao pavimento; insuflação VIN Garagem de 540 m³/h (90 %) a partir do exterior, 2 GI × 270 em cota alta; os 60 m³/h que faltam entram por grelha permanente na porta (≈ 0,008 m² livres a 2 m/s), registados no balanço como abertura para o exterior; a garagem fica em depressão face ao edifício · Sala P0-N1 (bastidores): ar novo 60 m³/h (VAN P0 N, tronco prolongado) e extração 60 m³/h (VEG P0 N, tronco prolongado); mínimo 59 m³/h · Refeitório P0-S1: ar novo da VCM 2 × 100 = 200 m³/h (mínimo 192) e extração de ar sujo da copa pela VCM de 2 × 70 para 2 × 100 m³/h (balanço nulo) · Sanitários (uso público, Tabela 13): VE de 75 para 90 m³/h por sanita; GE azul da CB P0-N2 suprimido (a VE de 90 cumpre) · CB P0-N2: ar novo de 100 para 60 m³/h; recebe 30 m³/h por transferência e fica em depressão (Anexo II, 1.2.2 h)) · Circulação P0-N2: ar novo 200 m³/h (derivação da Sala Técnica), igual ao ar que transfere para os sanitários (90 + 80 + 30) · Salas técnicas (bastidores e P0-N2): sem caudal de conforto acrescentado; o caudal do desenho já cobre a renovação · Escritórios, laboratórios, circulações do P1 e Arrumo P0-N1: extração igual ao ar novo de cada espaço (balanço nulo) · Sala P1-S2: extração 2 × 200 = 400 m³/h, igual ao ar novo · Apoio/Serviço P1-S4: extração 100 m³/h por derivação nova do VEG P1 S · Setup: ventilação integrável em gestão técnica (ar novo ≥ 3000 m³/h, Portaria 138-I, Anexo II, 1.5 c)"
  },
  "configuracao": {
   "tipologia": "comercio",
@@ -124,6 +124,7 @@
      "QAI_rede": "insuflacao",
      "Q_transf_in": 0,
      "Q_transf_out": 0,
+     "Q_exterior": 0,
      "exfiltracao": 0,
      "residuo": 0,
      "pressao_relativa_Pa": 0,
@@ -154,6 +155,14 @@
       "quantidade": 2,
       "Q_total": 600,
       "origem": "Desenho"
+     },
+     {
+      "id": "DEF-54",
+      "tipo": "Grelha Insuflação",
+      "rede": "insuflacao",
+      "quantidade": 2,
+      "Q_total": 540,
+      "origem": "Desenho"
      }
     ],
     "transferencias": [],
@@ -179,7 +188,9 @@
      ]
     },
     "lugares": 1,
+    "Q_exterior": 60,
     "ramalRefExtracao": "R12.1",
+    "ramalRefInsuflacao": "R13.1",
     "rphDefault": 0,
     "rphAplicado": 0,
     "rphOrigem": "norma",
@@ -209,7 +220,7 @@
      "id": 3002,
      "nome": "Garagem P0-N1",
      "g": 4,
-     "Q_in_direto": 0,
+     "Q_in_direto": 540,
      "Q_out_direto": 600,
      "Q_conforto_in": 0,
      "Q_conforto_out": 0,
@@ -217,10 +228,11 @@
      "QAI_rede": "extracao",
      "Q_transf_in": 0,
      "Q_transf_out": 0,
+     "Q_exterior": 60,
      "exfiltracao": 0,
-     "residuo": -600,
-     "pressao_relativa_Pa": -46.39185118907534,
-     "estado": "DESEQUILIBRIO_GRAVE"
+     "residuo": 0,
+     "pressao_relativa_Pa": 0,
+     "estado": "OK"
     }
    },
    {
@@ -318,6 +330,7 @@
      "QAI_rede": "insuflacao",
      "Q_transf_in": 0,
      "Q_transf_out": 0,
+     "Q_exterior": 0,
      "exfiltracao": 0,
      "residuo": 0,
      "pressao_relativa_Pa": 0,
@@ -419,6 +432,7 @@
      "QAI_rede": "insuflacao",
      "Q_transf_in": 0,
      "Q_transf_out": 0,
+     "Q_exterior": 0,
      "exfiltracao": 0,
      "residuo": 0,
      "pressao_relativa_Pa": 0,
@@ -520,6 +534,7 @@
      "QAI_rede": "insuflacao",
      "Q_transf_in": 0,
      "Q_transf_out": 0,
+     "Q_exterior": 0,
      "exfiltracao": 0,
      "residuo": 0,
      "pressao_relativa_Pa": 0,
@@ -621,6 +636,7 @@
      "QAI_rede": "insuflacao",
      "Q_transf_in": 0,
      "Q_transf_out": 0,
+     "Q_exterior": 0,
      "exfiltracao": 0,
      "residuo": 0,
      "pressao_relativa_Pa": 0,
@@ -762,6 +778,7 @@
      "QAI_rede": "insuflacao",
      "Q_transf_in": 0,
      "Q_transf_out": 200,
+     "Q_exterior": 0,
      "exfiltracao": 0,
      "residuo": 0,
      "pressao_relativa_Pa": 0,
@@ -863,6 +880,7 @@
      "QAI_rede": "insuflacao",
      "Q_transf_in": 0,
      "Q_transf_out": 0,
+     "Q_exterior": 0,
      "exfiltracao": 0,
      "residuo": 0,
      "pressao_relativa_Pa": 0,
@@ -974,6 +992,7 @@
      "QAI_rede": "extracao",
      "Q_transf_in": 90,
      "Q_transf_out": 0,
+     "Q_exterior": 0,
      "exfiltracao": 0,
      "residuo": 0,
      "pressao_relativa_Pa": 0,
@@ -1102,6 +1121,7 @@
      "QAI_rede": "extracao",
      "Q_transf_in": 80,
      "Q_transf_out": 0,
+     "Q_exterior": 0,
      "exfiltracao": 0,
      "residuo": 0,
      "pressao_relativa_Pa": 0,
@@ -1222,6 +1242,7 @@
      "QAI_rede": "extracao",
      "Q_transf_in": 30,
      "Q_transf_out": 0,
+     "Q_exterior": 0,
      "exfiltracao": 0,
      "residuo": 0,
      "pressao_relativa_Pa": 0,
@@ -1331,6 +1352,7 @@
      "QAI_rede": "insuflacao",
      "Q_transf_in": 0,
      "Q_transf_out": 0,
+     "Q_exterior": 0,
      "exfiltracao": 0,
      "residuo": 0,
      "pressao_relativa_Pa": 0,
@@ -1413,6 +1435,7 @@
      "QAI_rede": "insuflacao",
      "Q_transf_in": 0,
      "Q_transf_out": 0,
+     "Q_exterior": 0,
      "exfiltracao": 0,
      "residuo": 0,
      "pressao_relativa_Pa": 0,
@@ -1495,6 +1518,7 @@
      "QAI_rede": "insuflacao",
      "Q_transf_in": 0,
      "Q_transf_out": 0,
+     "Q_exterior": 0,
      "exfiltracao": 0,
      "residuo": 0,
      "pressao_relativa_Pa": 0,
@@ -1577,6 +1601,7 @@
      "QAI_rede": "insuflacao",
      "Q_transf_in": 0,
      "Q_transf_out": 0,
+     "Q_exterior": 0,
      "exfiltracao": 0,
      "residuo": 0,
      "pressao_relativa_Pa": 0,
@@ -1659,6 +1684,7 @@
      "QAI_rede": "insuflacao",
      "Q_transf_in": 0,
      "Q_transf_out": 0,
+     "Q_exterior": 0,
      "exfiltracao": 0,
      "residuo": 0,
      "pressao_relativa_Pa": 0,
@@ -1741,6 +1767,7 @@
      "QAI_rede": "insuflacao",
      "Q_transf_in": 0,
      "Q_transf_out": 0,
+     "Q_exterior": 0,
      "exfiltracao": 0,
      "residuo": 0,
      "pressao_relativa_Pa": 0,
@@ -1842,6 +1869,7 @@
      "QAI_rede": "insuflacao",
      "Q_transf_in": 0,
      "Q_transf_out": 0,
+     "Q_exterior": 0,
      "exfiltracao": 0,
      "residuo": 0,
      "pressao_relativa_Pa": 0,
@@ -1943,6 +1971,7 @@
      "QAI_rede": "insuflacao",
      "Q_transf_in": 0,
      "Q_transf_out": 0,
+     "Q_exterior": 0,
      "exfiltracao": 0,
      "residuo": 0,
      "pressao_relativa_Pa": 0,
@@ -2044,6 +2073,7 @@
      "QAI_rede": "insuflacao",
      "Q_transf_in": 0,
      "Q_transf_out": 0,
+     "Q_exterior": 0,
      "exfiltracao": 0,
      "residuo": 0,
      "pressao_relativa_Pa": 0,
@@ -2145,6 +2175,7 @@
      "QAI_rede": "insuflacao",
      "Q_transf_in": 0,
      "Q_transf_out": 0,
+     "Q_exterior": 0,
      "exfiltracao": 0,
      "residuo": 0,
      "pressao_relativa_Pa": 0,
@@ -2246,6 +2277,7 @@
      "QAI_rede": "insuflacao",
      "Q_transf_in": 0,
      "Q_transf_out": 0,
+     "Q_exterior": 0,
      "exfiltracao": 0,
      "residuo": 0,
      "pressao_relativa_Pa": 0,
@@ -2347,6 +2379,7 @@
      "QAI_rede": "insuflacao",
      "Q_transf_in": 0,
      "Q_transf_out": 0,
+     "Q_exterior": 0,
      "exfiltracao": 0,
      "residuo": 0,
      "pressao_relativa_Pa": 0,
@@ -2448,6 +2481,7 @@
      "QAI_rede": "insuflacao",
      "Q_transf_in": 0,
      "Q_transf_out": 0,
+     "Q_exterior": 0,
      "exfiltracao": 0,
      "residuo": 0,
      "pressao_relativa_Pa": 0,
@@ -2549,6 +2583,7 @@
      "QAI_rede": "insuflacao",
      "Q_transf_in": 0,
      "Q_transf_out": 0,
+     "Q_exterior": 0,
      "exfiltracao": 0,
      "residuo": 0,
      "pressao_relativa_Pa": 0,
@@ -2650,6 +2685,7 @@
      "QAI_rede": "insuflacao",
      "Q_transf_in": 0,
      "Q_transf_out": 0,
+     "Q_exterior": 0,
      "exfiltracao": 0,
      "residuo": 0,
      "pressao_relativa_Pa": 0,
@@ -2751,6 +2787,7 @@
      "QAI_rede": "insuflacao",
      "Q_transf_in": 0,
      "Q_transf_out": 0,
+     "Q_exterior": 0,
      "exfiltracao": 0,
      "residuo": 0,
      "pressao_relativa_Pa": 0,
@@ -2852,6 +2889,7 @@
      "QAI_rede": "insuflacao",
      "Q_transf_in": 0,
      "Q_transf_out": 0,
+     "Q_exterior": 0,
      "exfiltracao": 0,
      "residuo": 0,
      "pressao_relativa_Pa": 0,
@@ -2953,6 +2991,7 @@
      "QAI_rede": "insuflacao",
      "Q_transf_in": 0,
      "Q_transf_out": 0,
+     "Q_exterior": 0,
      "exfiltracao": 0,
      "residuo": 0,
      "pressao_relativa_Pa": 0,
@@ -3035,6 +3074,7 @@
      "QAI_rede": "insuflacao",
      "Q_transf_in": 0,
      "Q_transf_out": 0,
+     "Q_exterior": 0,
      "exfiltracao": 0,
      "residuo": 0,
      "pressao_relativa_Pa": 0,
@@ -3117,6 +3157,7 @@
      "QAI_rede": "insuflacao",
      "Q_transf_in": 0,
      "Q_transf_out": 0,
+     "Q_exterior": 0,
      "exfiltracao": 0,
      "residuo": 0,
      "pressao_relativa_Pa": 0,
@@ -3199,6 +3240,7 @@
      "QAI_rede": "insuflacao",
      "Q_transf_in": 0,
      "Q_transf_out": 0,
+     "Q_exterior": 0,
      "exfiltracao": 0,
      "residuo": 0,
      "pressao_relativa_Pa": 0,
@@ -3308,6 +3350,7 @@
      "QAI_rede": "insuflacao",
      "Q_transf_in": 0,
      "Q_transf_out": 0,
+     "Q_exterior": 0,
      "exfiltracao": 0,
      "residuo": 0,
      "pressao_relativa_Pa": 0,
@@ -3390,6 +3433,7 @@
      "QAI_rede": "insuflacao",
      "Q_transf_in": 0,
      "Q_transf_out": 0,
+     "Q_exterior": 0,
      "exfiltracao": 0,
      "residuo": 0,
      "pressao_relativa_Pa": 0,
@@ -3491,6 +3535,7 @@
      "QAI_rede": "insuflacao",
      "Q_transf_in": 0,
      "Q_transf_out": 0,
+     "Q_exterior": 0,
      "exfiltracao": 0,
      "residuo": 0,
      "pressao_relativa_Pa": 0,
@@ -3592,6 +3637,7 @@
      "QAI_rede": "insuflacao",
      "Q_transf_in": 0,
      "Q_transf_out": 0,
+     "Q_exterior": 0,
      "exfiltracao": 0,
      "residuo": 0,
      "pressao_relativa_Pa": 0,
@@ -3693,6 +3739,7 @@
      "QAI_rede": "insuflacao",
      "Q_transf_in": 0,
      "Q_transf_out": 0,
+     "Q_exterior": 0,
      "exfiltracao": 0,
      "residuo": 0,
      "pressao_relativa_Pa": 0,
@@ -7306,6 +7353,122 @@
     "deltaPtotal": 67.98838643141859,
     "status": "OK",
     "deltaPCritico": 67.98838643141859
+   },
+   {
+    "id": 27,
+    "nome": "R13.1",
+    "parente": "",
+    "tipo": "Principal",
+    "nivel": "primario",
+    "nivelNumero": 1,
+    "rede": "insuflacao",
+    "utaRef": "UTA-13",
+    "L": 4.65,
+    "zeta": 0.3,
+    "localizacao": {
+     "piso": "P0",
+     "ala": "Norte",
+     "cota": null
+    },
+    "geometriaInput": {
+     "material": "Aço galvanizado",
+     "forma": "circular"
+    },
+    "lock": {
+     "D": false
+    },
+    "deltaP_registo": 0,
+    "deltaP_filtro": 0,
+    "deltaP_bateria": 0,
+    "deltaP_recup": 0,
+    "planta": {
+     "pisoId": "piso-p0",
+     "pts": [
+      [
+       89.14,
+       233.14
+      ],
+      [
+       342.86,
+       233.14
+      ]
+     ]
+    },
+    "Q_proprio": 540,
+    "Q_filhos": 0,
+    "Q": 540,
+    "deltaP_terminal": 54.675000000000004,
+    "vMax": 6,
+    "avisoSecao": "",
+    "secaoAdotada": "circular",
+    "v": 3.0557749073643903,
+    "Re": 50326.08917664681,
+    "f": 0.022846989968294464,
+    "R": 0.5096927787642215,
+    "Dcom": 250,
+    "De": 250,
+    "secaoCalc": "Ø250",
+    "trocos": [
+     {
+      "de": 0,
+      "ate": 2.14,
+      "L": 2.14,
+      "Q": 540,
+      "Dcom": 250,
+      "De": 250,
+      "secao": "Ø250",
+      "v": 3.0557749073643903,
+      "Re": 50326.08917664681,
+      "R": 0.5096927787642215,
+      "dpLin": 1.0907425465554341,
+      "dpTe": 0,
+      "dpReducao": 0
+     },
+     {
+      "de": 2.14,
+      "ate": 4.65,
+      "L": 2.5100000000000002,
+      "Q": 270,
+      "Dcom": 200,
+      "De": 200,
+      "secao": "Ø200",
+      "v": 2.38732414637843,
+      "Re": 31453.80573540426,
+      "R": 0.42845173587089946,
+      "dpLin": 1.0754138570359577,
+      "dpTe": 0.1067518998900121,
+      "dpReducao": 0.1702039220185142
+     }
+    ],
+    "modoTrocos": "posicionado",
+    "derivacoes": [
+     {
+      "tipo": "terminal",
+      "ref": "GI-GarP0-N1-1",
+      "Q": 270,
+      "s": 2.14,
+      "origem": "utilizador",
+      "dP": 54.675000000000004
+     },
+     {
+      "tipo": "terminal",
+      "ref": "GI-GarP0-N1-2",
+      "Q": 270,
+      "s": 4.65,
+      "origem": "utilizador",
+      "dP": 54.675000000000004
+     }
+    ],
+    "vMaxTrocos": 3.0557749073643903,
+    "deltaPlin": 2.166156403591392,
+    "deltaPsing": 1.6731726350108018,
+    "deltaPderiv": 0.2769558219085263,
+    "deltaPTroco": 4.11628486051072,
+    "deltaPInicio": 0,
+    "deltaPAcumulado": 4.11628486051072,
+    "deltaPtotal": 58.79128486051072,
+    "status": "OK",
+    "deltaPCritico": 58.79128486051072
    }
   ],
   "terminais": [
@@ -9260,6 +9423,70 @@
     "LwCalc": 36.80456295278406,
     "throwCalc": 0,
     "status": "ATENÇÃO"
+   },
+   {
+    "id": 62,
+    "nome": "GI-GarP0-N1-1",
+    "tipo": "Grelha Insuflação",
+    "rede": "insuflacao",
+    "espacos": [
+     {
+      "nome": "Garagem P0-N1",
+      "Q_parcela": 270
+     }
+    ],
+    "ramalRef": "R13.1",
+    "sRamal": 2.14,
+    "planta": {
+     "pisoId": "piso-p0",
+     "x": 205.71,
+     "y": 233.14
+    },
+    "fabricante": "",
+    "familia": "",
+    "tamanho": "",
+    "v_saida": 2,
+    "Q": 270,
+    "definicaoRef": {
+     "espacoId": 3002,
+     "definicaoId": "DEF-54"
+    },
+    "dPCalc": 54.675000000000004,
+    "LwCalc": 32.516688424750306,
+    "throwCalc": 0,
+    "status": "OK"
+   },
+   {
+    "id": 63,
+    "nome": "GI-GarP0-N1-2",
+    "tipo": "Grelha Insuflação",
+    "rede": "insuflacao",
+    "espacos": [
+     {
+      "nome": "Garagem P0-N1",
+      "Q_parcela": 270
+     }
+    ],
+    "ramalRef": "R13.1",
+    "sRamal": 4.65,
+    "planta": {
+     "pisoId": "piso-p0",
+     "x": 342.86,
+     "y": 233.14
+    },
+    "fabricante": "",
+    "familia": "",
+    "tamanho": "",
+    "v_saida": 2,
+    "Q": 270,
+    "definicaoRef": {
+     "espacoId": 3002,
+     "definicaoId": "DEF-54"
+    },
+    "dPCalc": 54.675000000000004,
+    "LwCalc": 32.516688424750306,
+    "throwCalc": 0,
+    "status": "OK"
    }
   ],
   "transferencias": [
@@ -10128,6 +10355,77 @@
     "status": "OK",
     "uvbParNome": null,
     "uvbSemPar": false
+   },
+   {
+    "id": "UTA-13",
+    "nome": "VIN Garagem P0-N1",
+    "rede": "insuflacao",
+    "zona": "P0 Garagem",
+    "curva": [],
+    "curvaFabricante": null,
+    "etaRec": 0,
+    "fs": 1.15,
+    "transmissao": 1,
+    "classeIE": "IE3",
+    "recuperadorAtivo": false,
+    "ativo": true,
+    "tipoUV": "UVU_FILTER",
+    "eta": 0.45,
+    "componentes": [
+     {
+      "id": "COMP-UTA-13-1",
+      "nome": "Grelha exterior + rede de proteção",
+      "tipo": "Outro",
+      "deltaP": 20,
+      "deltaP_final": 20,
+      "zeta": 0,
+      "obs": "referência"
+     },
+     {
+      "id": "COMP-UTA-13-2",
+      "nome": "Pré-filtro G4",
+      "tipo": "Filtro G4",
+      "deltaP": 35,
+      "deltaP_final": 90,
+      "zeta": 2,
+      "obs": "ISO 16890 · limpo"
+     },
+     {
+      "id": "COMP-UTA-13-3",
+      "nome": "Ventilador (motor EC)",
+      "tipo": "Ventilador",
+      "deltaP": 0,
+      "deltaP_final": 0,
+      "zeta": 0,
+      "obs": "IE3 · referência"
+     }
+    ],
+    "Q": 0.15,
+    "dpInt": 110,
+    "dpExt": 58.79128486051072,
+    "sfpInt": 244.44444444444443,
+    "P_motor": 64.70332586319577,
+    "dpIntEco": 35,
+    "sfpIntEco": 77.77777777777777,
+    "sfpE": 375.0917441344683,
+    "sfpCategoria": "SFP 1",
+    "sfpClass": {
+     "tipo": "UVU_FILTER",
+     "classe": 1,
+     "sfpInt": 77.77777777777777,
+     "limite": 230,
+     "limiteBase": 230,
+     "qnom": 0.15,
+     "bonusE": 0,
+     "F": 190,
+     "etaOK": true,
+     "conservador": false,
+     "nota": "Reg. (UE) 1253/2014 (Ecodesign): UVU com filtro, limite fixo.",
+     "conforme": true
+    },
+    "status": "OK",
+    "uvbParNome": null,
+    "uvbSemPar": false
    }
   ],
   "nos": [
@@ -10144,7 +10442,8 @@
      "NO-10",
      "NO-12",
      "NO-18",
-     "NO-26"
+     "NO-26",
+     "NO-30"
     ],
     "rede": "insuflacao",
     "utaRef": "UTA-01"
@@ -10583,6 +10882,21 @@
      "NO-3"
     ],
     "rede": "extracao_suja",
+    "nivel": "primario",
+    "nivelNumero": 1
+   },
+   {
+    "id": "NO-30",
+    "nome": "Nó R13.1",
+    "tipo": "Derivação",
+    "ramalRef": "R13.1",
+    "x": 0,
+    "y": 0,
+    "Q_acumulado": 0,
+    "ligacoes": [
+     "NO-1"
+    ],
+    "rede": "insuflacao",
     "nivel": "primario",
     "nivelNumero": 1
    }
@@ -11133,6 +11447,27 @@
     "dp_elementos": 0,
     "dp_total_calculado": 0,
     "nElementos": 0
+   },
+   {
+    "id": "TR-27",
+    "nome": "R13.1",
+    "ramalRef": "R13.1",
+    "noA": "NO-1",
+    "noB": "NO-30",
+    "rede": "insuflacao",
+    "L_reto": 4.65,
+    "L_elementos": 0,
+    "L_total": 4.65,
+    "secao": "Ø250",
+    "material": "Aço galvanizado",
+    "rugosidade": 0.15,
+    "Q_adotado": 540,
+    "elementos": [],
+    "origem": "Decomposição automática",
+    "dp_linear": 0,
+    "dp_elementos": 0,
+    "dp_total_calculado": 0,
+    "nElementos": 0
    }
   ],
   "elementosRede": [
@@ -11414,6 +11749,17 @@
    {
     "id": "EL-26",
     "trechoId": "TR-26",
+    "tipo": "Outro",
+    "descricao": "Singularidades agregadas",
+    "zeta": 0.3,
+    "modo": "zeta",
+    "deltaP_manual": 0,
+    "ativo": true,
+    "origemZeta": "biblioteca"
+   },
+   {
+    "id": "EL-27",
+    "trechoId": "TR-27",
     "tipo": "Outro",
     "descricao": "Singularidades agregadas",
     "zeta": 0.3,

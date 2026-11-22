@@ -372,6 +372,17 @@ VC.editorEspacos = {
  VC.estado.sincronizar();  
  },  
   
+ /* abertura permanente para o exterior (m³/h; + entra, − sai): entra no balanço do espaço */
+ definirExterior(id, valor) {
+ const e = (VC.dados.espacos || []).find(x => String(x.id) === String(id));
+ if (!e || VC.dados.congelado) return;
+ const q = String(valor).trim() === '' ? 0 : VC.utils.num(valor);
+ if (q) e.Q_exterior = q; else delete e.Q_exterior;
+ if (VC.perf && VC.perf.cacheBalanco) VC.perf.cacheBalanco.invalidar();
+ if (VC.historico) VC.historico.push('abertura para o exterior em «' + e.nome + '»');
+ VC.estado.sincronizar();
+ },
+
  validarNome(idx, input) {  
  const val = _validarNome(input.value, idx);  
  if (!val.ok) {  
@@ -1614,8 +1625,9 @@ h += '<th style="width:30px; text-align:center">#</th><th style="width:75px; tex
     const qai = Number(b.QAI_aplicado)||0;
     const qaiIn = b.QAI_rede==='insuflacao' ? qai : 0;
     const qaiOut = (b.QAI_rede==='extracao'||b.QAI_rede==='extracao_suja') ? qai : 0;
-    const qInTotal = (b.Q_in_direto||0) + (b.Q_conforto_in||0) + qaiIn + (b.Q_transf_in||0);
-    const qOutTotal = (b.Q_out_direto||0) + (b.Q_conforto_out||0) + qaiOut + (b.Q_transf_out||0);
+    const qExt = Number(b.Q_exterior) || 0;
+    const qInTotal = (b.Q_in_direto||0) + (b.Q_conforto_in||0) + qaiIn + (b.Q_transf_in||0) + Math.max(0, qExt);
+    const qOutTotal = (b.Q_out_direto||0) + (b.Q_conforto_out||0) + qaiOut + (b.Q_transf_out||0) + Math.max(0, -qExt);
     const corResiduo = Math.abs(b.residuo) <= 5 ? 'var(--verde-esc)' : (Math.abs(b.residuo) <= 10 ? 'var(--ambar-esc)' : 'var(--coral-esc)');
     
 h += `<tr class="linha-balanco" onclick="this.closest('tbody').querySelectorAll('tr').forEach(r=>r.classList.remove('linha-destaque'));this.classList.add('linha-destaque'); document.getElementById('det-balc-${idx}').classList.toggle('oculto')" style="cursor:pointer">`;  
@@ -1638,14 +1650,22 @@ h += `<tr class="linha-balanco" onclick="this.closest('tbody').querySelectorAll(
     if (b.Q_conforto_in) h += `<div style="display:flex; justify-content:space-between"><span>F-RPH (Conforto):</span> <span style="font-family:ui-monospace">${VC.utils.fmt(b.Q_conforto_in,1)} m³/h</span></div>`;
     if (qaiIn) h += `<div style="display:flex; justify-content:space-between"><span>QAI Projeto:</span> <span style="font-family:ui-monospace; color:#b88a4a">${VC.utils.fmt(qaiIn,1)} m³/h</span></div>`;
     if (b.Q_transf_in) h += `<div style="display:flex; justify-content:space-between"><span>Transferências (Entrada):</span> <span style="font-family:ui-monospace; color:var(--ambar-esc)">${VC.utils.fmt(b.Q_transf_in,1)} m³/h</span></div>`;
+    if (qExt > 0) h += `<div style="display:flex; justify-content:space-between"><span>Pelo exterior (abertura):</span> <span style="font-family:ui-monospace; color:var(--primario-esc)">${VC.utils.fmt(qExt,1)} m³/h</span></div>`;
     h += `</div>`;
     h += `<div><b style="color:var(--verde-esc); text-transform:uppercase; font-size:9.5px; display:block; margin-bottom:4px">Saídas (Q_out)</b>`;
     h += `<div style="display:flex; justify-content:space-between"><span>Extração Direta:</span> <span style="font-family:ui-monospace">${VC.utils.fmt(b.Q_out_direto,1)} m³/h</span></div>`;
     if (b.Q_conforto_out) h += `<div style="display:flex; justify-content:space-between"><span>F-RPH (Conforto):</span> <span style="font-family:ui-monospace">${VC.utils.fmt(b.Q_conforto_out,1)} m³/h</span></div>`;
     if (qaiOut) h += `<div style="display:flex; justify-content:space-between"><span>QAI Projeto:</span> <span style="font-family:ui-monospace; color:#b88a4a">${VC.utils.fmt(qaiOut,1)} m³/h</span></div>`;
     if (b.Q_transf_out) h += `<div style="display:flex; justify-content:space-between"><span>Transferências (Saída):</span> <span style="font-family:ui-monospace; color:var(--ambar-esc)">${VC.utils.fmt(b.Q_transf_out,1)} m³/h</span></div>`;
+    if (qExt < 0) h += `<div style="display:flex; justify-content:space-between"><span>Para o exterior (abertura):</span> <span style="font-family:ui-monospace; color:var(--primario-esc)">${VC.utils.fmt(-qExt,1)} m³/h</span></div>`;
     h += `</div>`;
     h += `</div>`;
+    // abertura permanente para o exterior: fecha o balanço de um espaço com admissão (ou saída) natural
+    const aLivre = VC6.balanco.areaAberturaExterior ? VC6.balanco.areaAberturaExterior(qExt) : 0;
+    h += `<div style="margin-top:8px; padding-top:8px; border-top:1px dashed var(--borda-media); display:flex; gap:10px; align-items:center; flex-wrap:wrap" onclick="event.stopPropagation()">`
+      + `<label style="font-weight:700">Abertura para o exterior (m³/h, + entra / − sai):</label>`
+      + `<input type="number" step="10" style="width:90px" value="${qExt || ''}" placeholder="0" onchange="VC.editorEspacos && VC.editorEspacos.definirExterior ? VC.editorEspacos.definirExterior(${b.id}, this.value) : null">`
+      + `<span style="color:var(--texto-suave)">${qExt ? 'grelha permanente com ≈ ' + VC.utils.fmt(aLivre, 3) + ' m² livres a ' + VC.utils.fmt(VC.constantes.V_ABERTURA_EXTERIOR, 1) + ' m/s (porta ou fachada; as frinchas da porta não contam)' : 'Ex.: garagem com extração mecânica e admissão natural por grelha na fachada ou na porta.'}</span></div>`;
     h += `</td></tr>`;
   });
   h += '</tbody></table></div>';

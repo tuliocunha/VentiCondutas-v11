@@ -250,7 +250,7 @@ R.balanco = function () {
    h += '</div>';
   }
  h += R.secao('2', 'Detalhe');
- h += R.tabela(['Espaço', 'G', 'Q_in dir.', 'Q_conf_in', 'QAI_in', 'Q_out dir.', 'Q_conf_out', 'QAI_out', 'Q_transf_in', 'Q_transf_out', 'Resíduo', 'Estado'],
+ h += R.tabela(['Espaço', 'G', 'Q_in dir.', 'Q_conf_in', 'QAI_in', 'Q_out dir.', 'Q_conf_out', 'QAI_out', 'Q_transf_in', 'Q_transf_out', 'Q_exterior', 'Resíduo', 'Estado'],
    balancos.map(b => {
      const esp = (VC.dados.espacos || []).find(e => e.id === b.id);
      const icone = esp && (Number(esp.Q_ConTerm) || 0) > 0 ? (esp.rphOrigem === 'utilizador' ? '👤 ' : '📘 ') : '';
@@ -264,7 +264,7 @@ R.balanco = function () {
        'G' + (b.g || (esp ? esp.g : '?') || '?'),
        VC.utils.fmt(b.Q_in_direto, 1), VC.utils.fmt(b.Q_conforto_in || 0, 1), VC.utils.fmt(qaiIn, 1),
        VC.utils.fmt(b.Q_out_direto, 1), VC.utils.fmt(b.Q_conforto_out || 0, 1), VC.utils.fmt(qaiOut, 1),
-       VC.utils.fmt(b.Q_transf_in, 1), VC.utils.fmt(b.Q_transf_out, 1),
+       VC.utils.fmt(b.Q_transf_in, 1), VC.utils.fmt(b.Q_transf_out, 1), VC.utils.fmt(b.Q_exterior || 0, 1),
        '<b>' + (b.residuo >= 0 ? '+' : '') + VC.utils.fmt(b.residuo, 1) + '</b>',
        b.estado
      ];
@@ -283,8 +283,9 @@ R.pressoes = function () {
  h += '<p style="font-size:11.5px;color:var(--texto-med);margin-bottom:12px">Abaixo apresenta-se o diferencial estimado e o resíduo de caudal (ΔQ) para cada compartimento, permitindo identificar sobrepressões ou depressões excessivas.</p>';  
  h += R.tabela(['#', 'Espaço', 'Grupo', 'Q_in (m³/h)', 'Q_out (m³/h)', 'Resíduo (ΔQ)', 'Estado / Diagnóstico'],  
  balancos.map((b, idx) => {  
- const qIn = (b.Q_in_direto || 0) + (b.Q_conforto_in || 0) + (b.QAI_rede === 'insuflacao' ? Number(b.QAI_aplicado)||0 : 0) + (b.Q_transf_in || 0);  
- const qOut = (b.Q_out_direto || 0) + (b.Q_conforto_out || 0) + ((b.QAI_rede === 'extracao' || b.QAI_rede === 'extracao_suja') ? Number(b.QAI_aplicado)||0 : 0) + (b.Q_transf_out || 0);  
+ const qX = Number(b.Q_exterior) || 0;
+ const qIn = (b.Q_in_direto || 0) + (b.Q_conforto_in || 0) + (b.QAI_rede === 'insuflacao' ? Number(b.QAI_aplicado)||0 : 0) + (b.Q_transf_in || 0) + Math.max(0, qX);  
+ const qOut = (b.Q_out_direto || 0) + (b.Q_conforto_out || 0) + ((b.QAI_rede === 'extracao' || b.QAI_rede === 'extracao_suja') ? Number(b.QAI_aplicado)||0 : 0) + (b.Q_transf_out || 0) + Math.max(0, -qX);  
  const residuo = b.residuo || (qIn - qOut);  
  const badgeEstado = b.estado === 'OK' ? '<span class="badge ok">ESTANQUE / OK</span>' : (b.estado === 'DESEQUILIBRIO_LEVE' ? '<span class="badge atencao">DESENVOLVIDO (LEVE)</span>' : '<span class="badge erro">DESEQUILÍBRIO GRAVE</span>');  
  return [  
