@@ -97,6 +97,7 @@ VC.editorUtas = {
         h += self._campo('Transmiss\u00e3o', u.transmissao || 1, 'number', 'VC.editorUtas.editar(\'' + u.id + '\', \'transmissao\', Number(this.value))');
         h += self._campo('Ativo', u.ativo ? 'sim' : 'n\u00e3o', 'text', '');
         h += '</div>';
+        h += self._selectTipoSistema(u);
         h += self._selectTipoUV(u);
         h += self._selectParUVB(u);
         h += self._requisitosP138(u);
@@ -159,6 +160,23 @@ VC.editorUtas = {
   setFiltros: function (modo) {
     if (!VC.dados.filtros) VC.dados.filtros = {};
     VC.dados.filtros.modo = (modo === 'medio' || modo === 'limpo') ? modo : 'sujo';
+    VC.estado.forcarSync();
+    VC.passos.render('utas');
+  },
+
+  /* Fase 1 do desenho: tipo de sistema (VMC, VAN, VIN, VEG, VEX, VEI) */
+  _selectTipoSistema: function (u) {
+    var T = VC.constantes.TIPOS_SISTEMA || [], prop = u.tipoSistema || '', ded = VC.uta.tipoSistemaDe(u);
+    var h = '<div style="margin-bottom:10px"><label style="display:block;font-size:10px;font-weight:800;color:var(--texto-suave);text-transform:uppercase;margin-bottom:3px">Tipo de sistema</label>';
+    h += '<select class="input" style="width:100%" onchange="VC.editorUtas.definirTipoSistema(\'' + u.id + '\', this.value)">';
+    h += '<option value="">' + (ded && !prop ? 'pelo nome: ' + VC.utils.esc(ded.codigo) : '— por definir —') + '</option>';
+    T.forEach(function (t) { if (t.redes.indexOf(u.rede) >= 0) h += '<option value="' + t.codigo + '"' + (prop === t.codigo ? ' selected' : '') + '>' + VC.utils.esc(t.nome) + '</option>'; });
+    return h + '</select></div>';
+  },
+  definirTipoSistema: function (utaId, codigo) {
+    var u = (VC.dados.utas || []).find(function (x) { return x.id === utaId; });
+    if (!u || !VC.uta.definirTipoSistema(u, codigo)) return;
+    if (VC.historico && VC.historico.push) VC.historico.push('Tipo de sistema de ' + u.nome + ': ' + (codigo || 'pelo nome'));
     VC.estado.forcarSync();
     VC.passos.render('utas');
   },

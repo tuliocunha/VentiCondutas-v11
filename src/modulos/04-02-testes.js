@@ -524,6 +524,40 @@ VC6.testes = {
         P._pilha = guard.pilha; P._refeitas = guard.ref; P.piso = guard.piso; P.selecionado = guard.sel; P.ramalSel = guard.rs;
       }
     } });
+    self.registar({ id: 'N11.T12', nucleo: 'N11', grupo: 'Construtor & Dados', nome: 'Planta: editar vértices e tipo de sistema', criterio: 'Shift dá ângulo reto; a área acompanha o desenho; uma sala não fica com menos de 3 vértices nem a cruzar-se; VMC cria o par UVB; o tipo lê-se do nome', fn: () => {
+      const P = VC.planta; if (!P || !P._aplicarGeometria || !VC.uta.criarDeTipo) return true;
+      // tipo de sistema
+      const nomeOk = (VC.uta.tipoSistemaDe({ nome: 'VEG P0 N' }) || {}).codigo === 'VEG' && (VC.uta.tipoSistemaDe({ nome: 'VEISP0' }) || {}).codigo === 'VEI' && !VC.uta.tipoSistemaDe({ nome: 'VEGETAL' }) && (VC.uta.tipoSistemaDe({ nome: 'X', tipoSistema: 'VEI' }) || {}).codigo === 'VEI';
+      const recusa = VC.uta.definirTipoSistema({ rede: 'insuflacao' }, 'VEG') === false;
+      const gU = VC.dados.utas, gN = JSON.stringify(VC.dados.nextId);
+      let par = false;
+      try { VC.dados.utas = []; const u = VC.uta.criarDeTipo('VMC', 'VMC-T', 'extracao', ''); const o = VC.dados.utas.find(x => x !== u); par = VC.dados.utas.length === 2 && u.rede === 'extracao' && o.rede === 'insuflacao' && u.uvbPar === o.id && o.uvbPar === u.id && u.tipoUV === 'BVU_HRS'; }
+      finally { VC.dados.utas = gU; VC.dados.nextId = JSON.parse(gN); }
+      // Shift: canto com os dois vizinhos, ou alinhado com o anterior
+      const z = P.zoom; P.zoom = 1;
+      const canto = P._ortogonal([98, 205], [0, 200], [100, 0]), alin = P._ortogonal([300, 20], [0, 0], null);
+      P.zoom = z;
+      const orto = canto[0] === 100 && canto[1] === 200 && alin[0] === 300 && alin[1] === 0;
+      // geometria: área acompanha; recusa de polígono cruzado e de menos de 3 vértices
+      const guard = { pl: VC.dados.plantas, E: VC.dados.espacos, pilha: P._pilha, ref: P._refeitas, piso: P.piso, sel: P.selecionado, vs: P.vertSel, f: P.ferramenta };
+      let geo = false;
+      try {
+        VC.dados.plantas = [{ id: 'pt', nome: 'T', imagem: null, w: 1000, h: 1000, escala: 0.01 }]; P.piso = 'pt'; P._pilha = []; P._refeitas = []; P.ferramenta = 'sel';
+        const e = { id: 9701, nome: 'SE', tipo: 'Escritório', A: 12, H: 2.5, N: 1, planta: { pisoId: 'pt', pts: [[100, 100], [500, 100], [500, 400], [100, 400]] } };
+        VC.dados.espacos = [e]; P.selecionado = e.id;
+        const ed = P._emEdicao();
+        P._aplicarGeometria(ed, [[100, 100], [500, 100], [500, 500], [100, 500]], 't', P._estado());
+        const segue = Math.abs(e.A - 16) < 1e-6 && Math.abs(e.V - 40) < 1e-6;
+        const cruz = P._aplicarGeometria(P._emEdicao(), [[100, 100], [500, 500], [500, 100], [100, 500]], 't', P._estado()) === false && e.planta.pts[2][1] === 500;
+        P.vertSel = { tipo: 'sala', id: e.id, i: 0 }; P.apagarVertice(); const tres = e.planta.pts.length === 3;
+        P.vertSel = { tipo: 'sala', id: e.id, i: 0 }; const min = P.apagarVertice() === false && e.planta.pts.length === 3;
+        P.desfazer(); P.desfazer();
+        geo = segue && cruz && tres && min && e.planta.pts.length === 4 && e.planta.pts[2][1] === 400 && Math.abs(e.A - 12) < 1e-6;
+      } finally {
+        VC.dados.plantas = guard.pl; VC.dados.espacos = guard.E; P._pilha = guard.pilha; P._refeitas = guard.ref; P.piso = guard.piso; P.selecionado = guard.sel; P.vertSel = guard.vs; P.ferramenta = guard.f;
+      }
+      return nomeOk && recusa && par && orto && geo;
+    } });
   },
 
   initIntegracao() {
