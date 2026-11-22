@@ -9,7 +9,7 @@
    · Comprimento escrito: com um ponto já posto, escreva o comprimento
      (ex.: 3,5) e Enter: o ponto seguinte fica a essa distância, na direção
      do rato. Backspace corrige, Esc apaga o número.
-   · Grelha (G): pontos de 0,50 m (só com a escala calibrada).
+   · Grelha (F9): pontos de 0,50 m (só com a escala calibrada).
    · Medir (T, como a fita métrica do SketchUp): clique pontos; mostra cada troço e o total. Enter ou duplo
      clique termina; Esc limpa. Não cria nada.
    · Duplicar a sala (Ctrl+D) e rodar 90° (sala ou ramal), no painel.
@@ -184,7 +184,7 @@ P.teclaDesenho = function (ev) {
   if (mod && (k === 'd' || k === 'D') && this.ferramenta === 'sel' && this.selecionado != null) { this.duplicarSala(this.selecionado); return true; }   // em vez de «marcador» do navegador
   if (mod || ev.altKey) return false;
   if (k === 'Escape' && !this._comprimento && this.ferramenta === 'medir' && this.medida.length) { this.medida = []; this.medidaFim = false; this.ponteiroMedir = null; this.redesenhar(); return true; }   // a medição não é um desenho pendente: Esc só a limpa
-  if ((k === 'g' || k === 'G') && !this._comprimento) { this.grelha = !this.grelha; VC.ui.toast(this.grelha ? 'Grelha de ' + String(this.PASSO_GRELHA).replace('.', ',') + ' m ligada (G desliga).' : 'Grelha desligada.'); return true; }
+  // Fase 3B: a grelha de desenho fica só no F9 (AutoCAD); G passa a ser a tomada / rejeição exterior
   const podeEscrever = !!this._pontoAnterior() && this.ferramenta !== 'escala';
   if (/^[0-9]$/.test(k) || ((k === ',' || k === '.') && this._comprimento)) {
     if (!podeEscrever) return false;

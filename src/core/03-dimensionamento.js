@@ -668,6 +668,91 @@ VC.calculo = {
     });
   },
 
+  /* Fase 3B · tomada de ar exterior (insuflação: ODA) ou rejeição (extração: EHA) de um equipamento.
+     u.exterior = { pisoId, x, y, tipo, b, h, L, dpFab }. Proposta: tomada a 2 m/s na face, rejeição a 5 m/s
+     (b = 2h, passos de 50 mm). Δp = Δp da grelha (ζ·½ρv² na área livre, ou o do catálogo) + conduta até ela. */
+  ladoExterior(u) { return VC.redes.ehExtracao(u.rede) ? 'EHA' : 'ODA'; },
+  propostaGrelha(Q, lado, tipo) {
+    const E = VC.constantes.EXTERIOR, T = E.TIPOS[tipo] || E.TIPOS.grelha;
+    const A = lado === 'ODA' ? Q / E.V_TOMADA_MAX : Q / E.V_REJEICAO_MIN;   // área de face, m²
+    const passo = 50, hRaw = Math.sqrt(Math.max(A, 1e-6) / 2) * 1000;
+    let h = lado === 'ODA' ? Math.ceil(hRaw / passo) * passo : Math.floor(hRaw / passo) * passo;
+    h = Math.max(100, h);
+    let b = lado === 'ODA' ? Math.ceil(A * 1e6 / h / passo) * passo : Math.max(100, Math.floor(A * 1e6 / h / passo) * passo);
+    b = Math.max(b, h);
+    return { b, h, livre: T.livre };
+  },
+  exteriorDe(u, Qms, rho) {
+    const x = u && u.exterior; if (!x || !(Qms > 0)) return null;
+    const E = VC.constantes.EXTERIOR, tipo = E.TIPOS[x.tipo] ? x.tipo : 'grelha', T = E.TIPOS[tipo], lado = this.ladoExterior(u);
+    const pr = this.propostaGrelha(Qms, lado, tipo);
+    const b = Number(x.b) > 0 ? Number(x.b) : pr.b, h = Number(x.h) > 0 ? Number(x.h) : pr.h;
+    const A = b * h / 1e6, Al = A * T.livre, vFace = Qms / A, vLivre = Qms / Al;
+    const dpGrelha = Number(x.dpFab) > 0 ? Number(x.dpFab) : T.zeta * 0.5 * rho * vLivre * vLivre;
+    // conduta equipamento → grelha: medida na planta (mesmo piso) ou escrita
+    let L = Number(x.L) > 0 ? Number(x.L) : 0, Lorig = L ? 'escrito' : '';
+    const pl = (VC.dados.plantas || []).find(p => p.id === x.pisoId);
+    if (!L && u.planta && pl && pl.escala && u.planta.pisoId === x.pisoId) { L = Math.hypot(x.x - u.planta.x, x.y - u.planta.y) * pl.escala; Lorig = 'planta'; }
+    const { nu } = VC.perf && VC.perf.cacheFisica ? VC.perf.cacheFisica.rhoNu() : { nu: 1.5e-5 };
+    const c = this.dimensionarConduta(Qms * 3600, { rho, nu, vMax: VC.constantes.VMAX_NIVEL[1] });
+    const dpLig = L > 0 ? c.R * L + E.ZETA_LIGACAO * 0.5 * rho * c.v * c.v : 0;
+    return { lado, tipo, b, h, proposta: pr, bProposto: !(Number(x.b) > 0), A, Alivre: Al, vFace, vLivre, dpGrelha, dpFab: Number(x.dpFab) > 0,
+      L, Lorig, D: c.Dc, vLig: c.v, dpLig, dp: dpGrelha + dpLig, Q: Qms, avisos: [] };
+  },
+  /* distâncias entre rejeições e tomadas (na planta, no mesmo piso) e as regras de cada abertura */
+  verificarExteriores() {
+    const E = VC.constantes.EXTERIOR, U = (VC.dados.utas || []).filter(u => u.ativo !== false && u.ext && u.exterior);
+    const pl = id => (VC.dados.plantas || []).find(p => p.id === id);
+    U.forEach(u => {
+      const x = u.ext, av = x.avisos = [];
+      x.distMin = null; x.outro = null; x.distLim = null;
+      if (x.lado === 'ODA' && x.vFace > E.V_TOMADA_MAX + 1e-6) av.push('tomada a ' + VC.utils.fmt(x.vFace, 1) + ' m/s na face (máximo ' + E.V_TOMADA_MAX + ' m/s): aumente a grelha');
+      if (x.lado === 'EHA' && x.tipo !== 'cobertura') {
+        if (u.rede === 'extracao_suja') av.push('ar sujo (EHA 3/4) rejeitado na fachada: deve sair acima da cobertura');
+        if (x.Q > E.Q_REJEICAO_FACHADA_MAX + 1e-9) av.push('rejeição na fachada com ' + VC.utils.fmt(x.Q, 2) + ' m³/s (máximo ' + E.Q_REJEICAO_FACHADA_MAX + ' m³/s por abertura): divida ou leve à cobertura');
+        if (x.vFace < E.V_REJEICAO_MIN - 1e-6) av.push('rejeição a ' + VC.utils.fmt(x.vFace, 1) + ' m/s na face (mínimo ' + E.V_REJEICAO_MIN + ' m/s): reduza a grelha');
+      }
+    });
+    // pares rejeição → tomada no mesmo piso
+    U.filter(u => u.ext.lado === 'EHA').forEach(r => {
+      const p = pl(r.exterior.pisoId); if (!p || !p.escala) return;
+      const lim = r.rede === 'extracao_suja' ? E.DIST_MIN_SUJO : E.DIST_MIN;
+      U.filter(t => t.ext.lado === 'ODA' && t.exterior.pisoId === r.exterior.pisoId).forEach(t => {
+        const d = Math.hypot(t.exterior.x - r.exterior.x, t.exterior.y - r.exterior.y) * p.escala;
+        [r, t].forEach(o => { if (o.ext.distMin == null || d < o.ext.distMin) { o.ext.distMin = d; o.ext.outro = (o === r ? t : r).nome; o.ext.distLim = lim; } });
+        if (d < lim - 1e-6) {
+          const m = 'rejeição de ' + r.nome + ' a ' + VC.utils.fmt(d, 1) + ' m da tomada de ' + t.nome + ' (mínimo ' + lim + ' m' + (lim > E.DIST_MIN ? ', ar sujo' : '') + ', medido na planta)';
+          r.ext.avisos.push(m); t.ext.avisos.push(m);
+        }
+      });
+    });
+  },
+
+  /* Fase 3B · ganhos / perdas térmicas pela parede da conduta e risco de condensação (insuflação).
+     Ar na conduta a tAr, envolvente (teto falso, cobertura) a tEnv com HR hrEnv; isolamento de espessura e (λ 0,035).
+       U = 1/(1/hi + e/λ + 1/he) · Φ = U·S·(tEnv − tAr) · ΔT = Φ/(ρ·cp·Q) · ts = tEnv − U·(tEnv − tAr)/he
+     Condensação se ts < ponto de orvalho da envolvente (+0,5 K); eMin é a espessura que a evita. */
+  pontoOrvalho(t, hr) { const g = Math.log(Math.max(1, hr) / 100) + 17.62 * t / (243.12 + t); return 243.12 * g / (17.62 - g); },
+  calcularTermica(rho) {
+    const K = VC.constantes.TERMICA;
+    (VC.dados.ramais || []).forEach(r => {
+      r.termica = null;
+      if (VC.redes.ehExtracao(r.rede) || !(Number(r.Q) > 0) || !(Number(r.superficie_m2) > 0)) return;
+      const tAr = Number(this.specDe(r, 'tAr', K.T_AR)), tEnv = Number(this.specDe(r, 'tEnv', K.T_ENV)), hr = Number(this.specDe(r, 'hrEnv', K.HR_ENV));
+      const isol = this.specDe(r, 'isolamento', ''), e = isol && isol !== 'acustico' ? (Number(this.specDe(r, 'isolEsp', 0)) || 0) / 1000 : 0;
+      const U = 1 / (1 / K.HI + e / K.LAMBDA + 1 / K.HE), S = Number(r.superficie_m2), dT0 = tEnv - tAr;
+      const phi = U * S * dT0, dT = phi / (rho * K.CP * Number(r.Q) / 3600);
+      const ts = tEnv - U * dT0 / K.HE, td = this.pontoOrvalho(tEnv, hr);
+      const risco = dT0 > 0 && ts < td + K.MARGEM_ORVALHO;
+      let eMin = null;
+      if (risco) {
+        const Umax = K.HE * (tEnv - td - K.MARGEM_ORVALHO) / dT0;
+        eMin = Umax > 0 ? Math.ceil(Math.max(0, K.LAMBDA * (1 / Umax - 1 / K.HI - 1 / K.HE)) * 1000 / 5) * 5 : null;
+      }
+      r.termica = { tAr, tEnv, hr, e: e * 1000, U, phi, dT, ts, td, risco, eMin };
+    });
+  },
+
   /* Fase 2C: fugas nas condutas pela classe de estanquidade (EN 12237 / EN 1507; EN 16798-3 ATC):
        f = c · p^0,65 · 10⁻³  m³/(s·m²),  c = 0,027 (A) · 0,009 (B) · 0,003 (C) · 0,001 (D)
      p = pressão do percurso crítico que passa no ramal (majorante: é a pressão à saída do equipamento).
@@ -818,7 +903,11 @@ VC.calculo = {
       const nomesServidos = new Set(ramaisServidos.map(r => r.nome));
       const raizes = ramaisServidos.filter(r => !r.parente || !nomesServidos.has(r.parente));
       const Qms = raizes.reduce((s, r) => s + (Number(r.Q) || 0), 0) / 3600;
-      const dpExt = ramaisServidos.reduce((m, r) => Math.max(m, Number(r.deltaPtotal) || 0), 0);
+      const dpRede = ramaisServidos.reduce((m, r) => Math.max(m, Number(r.deltaPtotal) || 0), 0);
+      // Fase 3B: tomada / rejeição na fachada e a conduta até ela (só se estiver desenhada)
+      uta.ext = this.exteriorDe(uta, Qms + (Number(uta.Q_fugas) || 0) / 3600, rho);
+      const dpExt = dpRede + (uta.ext ? uta.ext.dp : 0);
+      uta.dpRede = dpRede;
       const comps = uta.componentes || [];
       let dpInt = 0;
       comps.forEach(c => {
@@ -853,6 +942,7 @@ VC.calculo = {
       if (!atual || dpExt > atual.maxPerda) porRede[chaveRede] = { maxPerda: dpExt, Qnom: Qms };
     });
     this.classificarUVB();
+    this.verificarExteriores();
     return { ins, ext, bal: ins - ext, porRede };
   },
 
@@ -962,6 +1052,7 @@ VC.calculo = {
       this.calcularDeltaPTerminalPorRamal();
       this.calcularCondutas(rho, nu);
       this.calcularDeltaPAcumulado();
+      this.calcularTermica(rho);
       this.calcularFugas();   // antes dos ventiladores: o ventilador move o caudal servido + as fugas da rede
       const vent = this.calcularVentiladores();
       // Fase 4: área das grelhas de transferência sempre com o Cd atual (projetos antigos guardavam a área antiga)
@@ -1091,6 +1182,8 @@ VC.calculo = {
         r.falhas.forEach(f => findings.push({ severidade: 'ERRO', tipo: 'Escada pressurizada', elemento: e.nome, msg: f }));
         if (r.porFazer.length) findings.push({ severidade: 'POR FAZER', tipo: 'Escada pressurizada por definir', elemento: e.nome, msg: 'Falta: ' + r.porFazer.join(' e ') + ' (RT-SCIE, art. 161.º; EN 12101-13).' });
       });
+      VC.dados.utas.forEach(u => { if (u.ativo !== false && u.ext) u.ext.avisos.forEach(m => findings.push({ severidade: 'ATENÇÃO', tipo: u.ext.lado === 'ODA' ? 'Tomada de ar exterior' : 'Rejeição para o exterior', elemento: u.nome, msg: m + ' (EN 13779, A.2; EN 16798-3).' })); });
+      VC.dados.ramais.forEach(r => { if (r.termica && r.termica.risco) findings.push({ severidade: 'ATENÇÃO', tipo: 'Risco de condensação', elemento: r.nome, msg: 'superfície a ' + VC.utils.fmt(r.termica.ts, 1) + ' °C, abaixo do ponto de orvalho ' + VC.utils.fmt(r.termica.td, 1) + ' °C da envolvente: isolamento térmico ≥ ' + r.termica.eMin + ' mm.' }); });
       VC.dados.utas.forEach(u => {
         if (u.ativo !== false && u.uvbSemPar && /^BVU/.test(VC.normas.tipoUVPadrao(u)) && (u.rede === 'insuflacao' || u.rede === 'extracao')) findings.push({ severidade: 'ATENÇÃO', tipo: 'UVB sem par', elemento: u.nome, msg: 'Unidade bidirecional com recuperador: o SFPint do Ecodesign é da unidade inteira, mas não se encontrou a UTA do outro lado (mesma zona ou campo «Par UVB»). Só esta metade foi verificada.' });
         // ar sujo (copa, IS) a passar num recuperador: só sem transferência entre circuitos
