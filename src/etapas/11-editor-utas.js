@@ -77,6 +77,7 @@ VC.editorUtas = {
 
       h += '<div style="display:flex;gap:10px;flex-wrap:wrap;font-size:11px;margin-top:6px;color:var(--texto-med)">';
       h += '<span>Q <b>' + VC.utils.fmt((u.Q || 0) * 3600, 0) + '</b> m\u00b3/h</span>';
+      if (u.Q_fugas > 0) h += '<span title="Fugas das condutas pela classe de estanquidade (EN 12237): o ventilador move o caudal servido + as fugas">fugas <b>' + VC.utils.fmt(u.Q_fugas, 0) + '</b> \u2192 ventilador <b>' + VC.utils.fmt(u.Q_ventilador_mh, 0) + '</b> m\u00b3/h</span>';
       h += '<span>\u0394p ext <b>' + VC.utils.fmt(u.dpExt, 0) + '</b> Pa</span>';
       h += '<span>\u0394p int <b>' + VC.utils.fmt(u.dpInt, 0) + '</b> Pa</span>';
       h += '<span title="SFPint do Reg. (UE) 1253/2014: filtros limpos e recuperador; numa UVB, a soma das duas metades">SFPint Ecodesign <b>' + VC.utils.fmt(u.sfpClass && u.sfpClass.sfpInt != null ? u.sfpClass.sfpInt : u.sfpIntEco, 0) + '</b>' + (u.sfpClass ? ' / ' + (u.sfpClass.limite != null ? u.sfpClass.limite : 'sem limite') : '') + (u.uvbParNome ? ' <small>(UVB com ' + VC.utils.esc(u.uvbParNome) + ')</small>' : '') + '</span>';

@@ -691,7 +691,6 @@ VC.calculo = {
       const u = (VC.dados.utas || []).find(x => x.id === (raiz(r) || {}).utaRef);
       if (u) { u.fugasRamais++; if (r.Q_fugas != null) { u.Q_fugas += r.Q_fugas; u.fugasDefinidas++; } }
     });
-    (VC.dados.utas || []).forEach(u => { u.Q_ventilador_mh = (Number(u.Q) || 0) * 3600 + (u.Q_fugas || 0); });   // m³/h
   },
 
   /* Δp do início do ramal até à posição s (perda singular de entrada + troços até s + tês e reduções antes de s) */
@@ -833,7 +832,10 @@ VC.calculo = {
       const fs = uta.fs || 1.15;
       const trans = uta.transmissao || 1.0;
       const sfpInt = eta > 0 ? dpInt / eta : Infinity;
-      const P_eixo = Qms * (dpInt + dpExt) / Math.max(eta, 0.01);
+      // Fase 3 · o ventilador move o caudal servido + as fugas da rede (classe de estanquidade, calcularFugas)
+      const Qvent = Qms + (Number(uta.Q_fugas) || 0) / 3600;
+      uta.Q_ventilador_mh = Qvent * 3600;
+      const P_eixo = Qvent * (dpInt + dpExt) / Math.max(eta, 0.01);
       const P_motor = P_eixo * fs / Math.max(trans, 0.01);
       uta.Q = Qms; uta.dpInt = dpInt; uta.dpExt = dpExt;
       uta.sfpInt = sfpInt; uta.P_motor = P_motor;
@@ -841,7 +843,7 @@ VC.calculo = {
       uta.dpIntEco = comps.reduce((s, c) => s + (/filtro|recupera/i.test((c.tipo || '') + ' ' + (c.nome || '')) && !/ventilador/i.test(c.tipo || '') ? (Number(c.deltaP) || 0) : 0), 0);
       uta.sfpIntEco = eta > 0 ? uta.dpIntEco / eta : Infinity;
       // Fase 3 · EN 16798-3: SFP_E do ventilador completo = potência elétrica / caudal (sem o fator de serviço)
-      uta.sfpE = Qms > 0 ? (Qms * (dpInt + dpExt) / Math.max(eta, 0.01) / Math.max(trans, 0.01)) / Qms : 0;
+      uta.sfpE = Qvent > 0 ? (dpInt + dpExt) / Math.max(eta, 0.01) / Math.max(trans, 0.01) : 0;   // P/Q com o caudal do ventilador
       uta.sfpCategoria = Qms > 0 ? VC.normas.categoriaSFP(uta.sfpE) : null;
       uta.sfpClass = VC.normas.classificarSFP(VC.normas.tipoUVPadrao(uta), uta.sfpIntEco, Qms, uta.etaRec, VC.normas.correcaoFiltrosF(uta.rede === 'insuflacao' ? comps : null, uta.rede === 'insuflacao' ? null : comps));
       uta.status = uta.sfpClass.conforme ? 'OK' : 'NÃO CONF.';
@@ -960,8 +962,8 @@ VC.calculo = {
       this.calcularDeltaPTerminalPorRamal();
       this.calcularCondutas(rho, nu);
       this.calcularDeltaPAcumulado();
+      this.calcularFugas();   // antes dos ventiladores: o ventilador move o caudal servido + as fugas da rede
       const vent = this.calcularVentiladores();
-      this.calcularFugas();   // depois dos ventiladores: soma as fugas ao caudal do equipamento (u.Q em m³/s)
       // Fase 4: área das grelhas de transferência sempre com o Cd atual (projetos antigos guardavam a área antiga)
       if (VC6.transferencias && VC6.transferencias.dimensionarArea) (VC.dados.transferencias || []).forEach(t => { if (!t.areaFixa && Number(t.Q) > 0) t.area_cm2 = VC6.transferencias.dimensionarArea(t.Q, t.dP_Pa || 2); });
       const findings = [];
