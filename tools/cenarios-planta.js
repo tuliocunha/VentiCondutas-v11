@@ -101,11 +101,12 @@ const CENARIOS = {
     await pg.click('button:has-text("Criar ramal")'); await pg.waitForTimeout(300);
     const r = await h.v(() => { const r = VC.dados.ramais[VC.dados.ramais.length - 1]; return { nome: r.nome, uta: !!r.utaRef, term: VC.dados.terminais.some(t => t.ramalRef === r.nome) }; });
     ok(r.uta && r.term, 'Ramal com UTA criada no cartão e o terminal associado', r);
-    await pg.fill('#rmNome', 'Mez-P'); await pg.click('button:has-text("Renomear")'); await pg.waitForTimeout(300);
+    await h.tecla('v'); await h.clicar([200, 400]);
+    await pg.fill('#pn-ramal-nome', 'Mez-P'); await pg.press('#pn-ramal-nome', 'Enter'); await pg.waitForTimeout(300);
     await h.passo('rede');
     ok(await h.v(() => [...document.querySelectorAll('#conteudoPasso input.ramal-nome')].some(i => i.value === 'Mez-P')), 'Nome do ramal mudado no desenho aparece na Tabela');
     await h.passo('levantamento'); await h.separador('planta'); await h.tecla('v'); await h.clicar([300, 350]);
-    await pg.fill('#plantaNomeEsp', 'Circulação Mez'); await pg.click('.planta-renomear button:has-text("Renomear")'); await pg.waitForTimeout(300);
+    await pg.fill('#pn-sala-nome', 'Circulação Mez'); await pg.press('#pn-sala-nome', 'Enter'); await pg.waitForTimeout(300);
     ok(await h.v(() => VC.dados.transferencias.some(t => t.deNome === 'Circulação Mez') && VC.dados.terminais.some(t => (t.espacos || []).some(x => x.nome === 'Circulação Mez'))), 'Renomear o espaço leva o nome às transferências e aos terminais');
   },
 
@@ -128,7 +129,7 @@ const CENARIOS = {
     ok(await h.v(() => [...document.querySelectorAll('.planta-ramal text')].some(t => /^Norte-2/.test(t.textContent))), 'Nome mudado na Tabela aparece no desenho');
     // desenho → Topologia
     await h.tecla('v'); await h.clicar([275, 450]);
-    await pg.fill('#rmNome', 'Norte-3'); await pg.click('button:has-text("Renomear")'); await pg.waitForTimeout(300);
+    await pg.fill('#pn-ramal-nome', 'Norte-3'); await pg.press('#pn-ramal-nome', 'Enter'); await pg.waitForTimeout(300);
     await h.passo('associacao'); await h.separador('passo');
     ok(await pg.locator('input.topo-nome[value="Norte-3"]').count() === 1, 'Nome mudado no desenho aparece na Topologia');
   },
@@ -166,11 +167,49 @@ const CENARIOS = {
     await h.separador('planta');
     ok(await aviso(), 'Área mudada na Tabela (15 m² vs 12 desenhados) → aviso');
     await h.tecla('v'); await h.clicar([300, 250]);
-    ok(await h.v(() => !!document.querySelector('.planta-aviso-sala[data-sev="atencao"]')) && await pg.locator('.planta-avisos-card').count() > 0, 'O aviso aparece na sala (marca) e no cartão');
+    ok(await h.v(() => !!document.querySelector('.planta-aviso-sala[data-sev="atencao"]')) && await pg.locator('.pn-falta li:has-text("Área desenhada")').count() > 0, 'O aviso aparece na sala (marca) e no painel');
     await pg.click('button:has-text("Aceitar a diferença")'); await pg.waitForTimeout(250);
     ok(!(await aviso()), 'Aceitar a diferença tira o aviso');
     await pg.locator('#plantaSVG').hover(); await pg.keyboard.press('Control+z'); await pg.waitForTimeout(250);
     ok(await aviso(), 'Ctrl+Z repõe o aviso');
+  },
+
+  /* Fase 0: painel único — seleção, edição com desfazer, herança do material, terminal */
+  async painel(pg, ok) {
+    const h = ajudas(pg); await prepararPlanta(pg);
+    ok(await pg.locator('.pn[data-pn="piso"]').count() === 1, 'Sem seleção: painel do piso');
+    await pg.fill('#pn-piso-H', '2.8'); await pg.press('#pn-piso-H', 'Enter'); await pg.waitForTimeout(250);
+    await h.tecla('r'); await h.arrastar([100, 100], [500, 400]); await h.criarSala('Sala P', 'Escritório', 3);
+    await h.tecla('v'); await h.clicar([300, 250]);
+    ok(await pg.locator('.pn[data-pn="sala"] .pn-cab b:has-text("Sala P")').count() === 1, 'Clicar na sala abre o painel da sala');
+    const ph = await pg.getAttribute('#pn-sala-H', 'placeholder');
+    ok(ph === '2,8', 'Pé-direito vazio: proposto pelo piso (2,8 m)', ph);
+    await pg.selectOption('#pn-sala-tipo', 'Sala de reuniões'); await pg.waitForTimeout(300);
+    ok(await h.v(() => VC.dados.espacos.find(e => e.nome === 'Sala P').tipo === 'Sala de reuniões'), 'Tipo mudado no painel fica nos dados');
+    await pg.locator('#plantaSVG').hover(); await pg.keyboard.press('Control+z'); await pg.waitForTimeout(300);
+    ok(await h.v(() => VC.dados.espacos.find(e => e.nome === 'Sala P').tipo === 'Escritório'), 'Ctrl+Z desfaz a alteração feita no painel');
+    // ramal e sub-ramal: o material passa ao sub-ramal
+    await h.tecla('l'); await h.clicar([150, 450]); await h.clicar([600, 450]); await h.tecla('Enter');
+    await pg.selectOption('#rmUtaRede', 'insuflacao'); await pg.fill('#rmUtaNome', 'UTA-P'); await pg.click('button:has-text("Criar UTA")'); await pg.waitForTimeout(250);
+    await pg.click('button:has-text("Criar ramal")'); await pg.waitForTimeout(300);
+    await h.tecla('l'); await h.clicar([400, 450]); await h.clicar([400, 550]); await h.tecla('Enter');
+    await pg.click('button:has-text("Criar ramal")'); await pg.waitForTimeout(300);
+    const nomes = await h.v(() => VC.dados.ramais.map(r => [r.nome, r.parente || '']));
+    await h.tecla('v'); await h.clicar([250, 450]);
+    ok(await pg.locator('.pn[data-pn="ramal"]').count() === 1, 'Clicar no ramal abre o painel do ramal');
+    await pg.selectOption('#pn-ramal-material', 'Alumínio'); await pg.waitForTimeout(300);
+    const filho = await h.v(() => { const f = VC.dados.ramais.find(r => r.parente); return f ? VC.calculo.rugosidadeDe(f) : null; });
+    ok(filho === 0.05, 'O sub-ramal herda o material do ramal-pai (0,05 mm)', { filho, nomes });
+    await h.clicar([400, 520]);
+    ok(await pg.locator('.pn[data-pn="ramal"] .pn-origem:has-text("herdado")').count() > 0, 'No sub-ramal o material aparece como herdado');
+    // terminal
+    await h.tecla('d'); await h.clicar([200, 300]); await pg.fill('#ptQ', '90'); await pg.click('#ptCriar'); await pg.waitForTimeout(300);
+    await h.tecla('v'); await h.clicar([200, 300]);
+    ok(await pg.locator('.pn[data-pn="terminal"]').count() === 1, 'Clicar no terminal abre o painel do terminal');
+    await pg.fill('#pn-terminal-Q', '120'); await pg.press('#pn-terminal-Q', 'Enter'); await pg.waitForTimeout(300);
+    ok(await h.v(() => { const t = VC.dados.terminais.find(x => x.planta && Math.abs(x.planta.x - 200) < 2); return t && t.Q === 120 && t.espacos[0].Q_parcela === 120; }), 'Caudal do terminal mudado no painel (120 m³/h)');
+    await h.tecla('Escape');
+    ok(await pg.locator('.pn[data-pn="piso"]').count() === 1, 'Esc volta ao painel do piso');
   },
 
   /* PR 9: nome legível numa sala em L; zona útil nítida; Entrega recortada */

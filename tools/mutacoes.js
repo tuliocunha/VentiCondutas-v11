@@ -224,6 +224,10 @@ const CASOS = [
     const C = VC.constantes, o = C.GARAGEM_UT2_AREA_MIN; C.GARAGEM_UT2_AREA_MIN = 0;
     return () => { C.GARAGEM_UT2_AREA_MIN = o; };
   }],
+  ['Painel: o sub-ramal deixa de herdar o material do ramal-pai', 'N11.T11', () => {
+    const c = VC.calculo, o = c.origemPropria; c.origemPropria = function (r, campo) { return this._proprio(r, campo) ? r : null; };
+    return () => { c.origemPropria = o; };
+  }],
   // Fase 4 da auditoria: qualidade de cálculo
   ['ε_v do espaço ignorado (só o do Setup)', 'N2.T21', () => {
     const o = VC.calculo.evDe; VC.calculo.evDe = function () { return Number(VC.dados.eficaciaRemocao) || 1; };

@@ -494,6 +494,36 @@ VC6.testes = {
       } finally { VC.dados.plantas = guard; VC.dados.ramais = guardR; P.zoom = z; }
       return okDiv && okT && okW;
     } });
+    self.registar({ id: 'N11.T11', nucleo: 'N11', grupo: 'Construtor & Dados', nome: 'Planta: painel único (esquemas, herança, desfazer)', criterio: 'cada objeto tem as seis zonas; o material passa do ramal-pai aos sub-ramais; uma alteração no painel entra no desfazer e volta atrás', fn: () => {
+      const P = VC.planta, PN = VC.paineis; if (!P || !PN) return true;
+      const guard = { pl: VC.dados.plantas, R: VC.dados.ramais, E: VC.dados.espacos, T: VC.dados.terminais, pilha: P._pilha, ref: P._refeitas, piso: P.piso, sel: P.selecionado, rs: P.ramalSel };
+      try {
+        const piso = { id: 'pt', nome: 'T', imagem: null, w: 200, h: 100, escala: 0.01, H: 2.7 };
+        VC.dados.plantas = [piso];
+        VC.dados.espacos = [{ id: 9801, nome: 'ST', tipo: 'Escritório', A: 10, H: '', N: 2, planta: { pisoId: 'pt', pts: [[0, 0], [100, 0], [100, 100], [0, 100]] } }];
+        VC.dados.ramais = [{ id: 9901, nome: 'RP', rede: 'insuflacao', Q: 300, L: 2, planta: { pisoId: 'pt', pts: [[0, 0], [100, 0]] } },
+                           { id: 9902, nome: 'RF', rede: 'insuflacao', parente: 'RP', Q: 100, L: 1, planta: { pisoId: 'pt', pts: [[50, 0], [50, 100]] } }];
+        VC.dados.terminais = []; P._pilha = []; P._refeitas = []; P.piso = 'pt';
+        const R = VC.dados.ramais, e = VC.dados.espacos[0];
+        // zonas: cabeçalho, essencial, avançado, resultado, ações
+        const h = PN.render('ramal', R[0], piso), zonas = ['pn-cab', 'Essencial', 'pn-av', 'pn-res', 'pn-acoes'].every(z => h.includes(z));
+        const hp = PN.render('piso', piso, piso).includes('Pé-direito por omissão');
+        // pé-direito proposto pelo piso
+        const prH = PN.estadoCampo(PN.esquemas.sala.campos.find(c => c.id === 'H'), e, piso);
+        const okH = prH.pr && prH.pr.v === 2.7 && prH.origem.tipo === 'proposto';
+        // herança do material
+        PN.definir('ramal', 9901, 'material', 'Conduta flexível (esticada)');
+        const herda = VC.calculo.rugosidadeDe(R[1]) === 3 && VC.calculo.origemPropria(R[1], 'rugosidade') === R[0];
+        const prM = PN.estadoCampo(PN.esquemas.ramal.campos.find(c => c.id === 'material'), R[1], piso);
+        // desfazer
+        const naPilha = P._pilha.length === 1; P.desfazer();
+        const volta = VC.calculo.rugosidadeDe(R[1]) !== 3 && !(R[0].geometriaInput && R[0].geometriaInput.proprio && R[0].geometriaInput.proprio.rugosidade);
+        return zonas && hp && okH && herda && prM.origem && prM.origem.txt.includes('herdado') && naPilha && volta;
+      } finally {
+        VC.dados.plantas = guard.pl; VC.dados.ramais = guard.R; VC.dados.espacos = guard.E; VC.dados.terminais = guard.T;
+        P._pilha = guard.pilha; P._refeitas = guard.ref; P.piso = guard.piso; P.selecionado = guard.sel; P.ramalSel = guard.rs;
+      }
+    } });
   },
 
   initIntegracao() {
