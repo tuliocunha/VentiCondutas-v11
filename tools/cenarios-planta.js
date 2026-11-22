@@ -752,6 +752,29 @@ const CENARIOS = {
     ok(await h.v(() => !!document.querySelector('.planta-grupo[data-grupo="contar"]')), 'Grupo «Ocupação e aparelhos» na barra');
   },
 
+  /* PR 63 · Fase 5B: direção e alcance dos terminais, difusor linear */
+  async alcance(pg, ok) {
+    const h = ajudas(pg);
+    await pg.evaluate(async () => { await VC._carregarExemploDeFicheiro(['exemplos/degrade-21nov26-corrigido.json'], 'x'); VC.nav.irPasso('rede'); VC.nav.setVista('planta'); VC.planta.setPiso('piso-p0'); });
+    await pg.waitForTimeout(1200);
+    const id = await h.v(() => { const P = VC.planta, p = P.pisoAtual(), of = P.espacosDoPiso(p).find(e => /^Sala P0-S3/.test(e.nome)), t = P.terminaisDe(of).find(x => x.planta && x.rede === 'insuflacao'), c = P.centro(of.planta.pts); P.zoom = 1.2; P.vx = c[0] - 380 / 1.2; P.vy = c[1] - 250 / 1.2; P.aplicarVista(); P.selecionarTerminal(t.id); return t.id; });
+    await pg.waitForTimeout(400);
+    ok(await pg.evaluate(id => { const t = VC.dados.terminais.find(x => x.id === id); return t.alcance && t.alcance.L > 0 && !!document.querySelector('.planta-alcance[data-t="' + id + '"]'); }, id), 'Terminal selecionado: alcance L0,25 calculado e desenhado');
+    ok(/Alcance L0,25/.test(await pg.locator('.pn').first().textContent()) && /Até à parede/.test(await pg.locator('.pn').first().textContent()), 'O painel mostra o alcance e a distância à parede');
+    const d0 = await pg.evaluate(id => VC.planta.jatosDe(VC.dados.terminais.find(x => x.id === id), VC.planta.pisoAtual())[0].ang, id);
+    await pg.click('.pn-acoes button:has-text("Rodar 90°")'); await pg.waitForTimeout(350);
+    const d1 = await pg.evaluate(id => VC.planta.jatosDe(VC.dados.terminais.find(x => x.id === id), VC.planta.pisoAtual())[0].ang, id);
+    ok(Math.abs(((d1 - d0) * 180 / Math.PI + 360) % 360 - 90) < 1e-6, '«Rodar 90°» roda o jato 90°');
+    await pg.locator('#plantaSVG').hover(); await pg.keyboard.press('Control+z'); await pg.waitForTimeout(300);
+    ok(await pg.evaluate(id => VC.dados.terminais.find(x => x.id === id).planta.dir == null, id), 'Ctrl+Z volta à direção proposta');
+    await h.v(() => VC.planta.alternarAlcances()); await pg.waitForTimeout(300);
+    ok(await h.v(() => document.querySelectorAll('.planta-alcance').length > 1), '«Mostrar os alcances» desenha os de todos os terminais de insuflação');
+    // difusor linear
+    await pg.evaluate(id => { const t = VC.dados.terminais.find(x => x.id === id); t.tipo = 'Difusor Linear'; t.planta.comp = 2; VC.calculo.calcularTudo(); VC.planta.redesenhar(); }, id);
+    await pg.waitForTimeout(300);
+    ok(await pg.evaluate(id => { const t = VC.dados.terminais.find(x => x.id === id); return t.alcance.vias === 2 && !!document.querySelector('.planta-linear') && VC.planta.jatosDe(t, VC.planta.pisoAtual()).length === 2; }, id), 'Difusor linear de 2 m: desenhado com o comprimento e 2 jatos');
+  },
+
   /* PR 9: nome legível numa sala em L; zona útil nítida; Entrega recortada */
   async representacao(pg, ok) {
     const h = ajudas(pg);

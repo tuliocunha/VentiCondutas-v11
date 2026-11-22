@@ -398,8 +398,22 @@ VC.calculo = {
   calcularDimensionamentoTerminais() {
     VC.dados.terminais.forEach(t => {
       const v = this.verificarTerminal(t);
-      t.dPCalc = v.dPCalc; t.LwCalc = v.LwCalc; t.throwCalc = v.throwCalc; t.status = v.status;
+      t.dPCalc = v.dPCalc; t.LwCalc = v.LwCalc; t.throwCalc = v.throwCalc; t.status = v.status; t.vCalc = v.v;
+      t.alcance = this.alcanceTerminal(t, v.v);
     });
+  },
+  /* Fase 5B · alcance L0,25 (m) de um terminal de insuflação: o do catálogo, ou o do jato livre L = K·v0·√A0 / vt,
+     com A0 = Q / v0 (área efetiva à velocidade de saída). Linear: por metro de comprimento, em cada via. */
+  alcanceTerminal(t, v0) {
+    if (VC.redes.ehExtracao(t.rede)) return null;
+    const AL = VC.constantes.ALCANCE, Q = (Number(t.Q) || 0) / 3600, tipo = t.tipo || 'Difusor';
+    const vias = tipo === 'Difusor Linear' && t.planta && Number(t.planta.vias) === 1 ? 1 : (AL.VIAS[tipo] || 1);
+    if (Number(t.throwCalc) > 0) return { L: Number(t.throwCalc), origem: 'catálogo', vias };
+    v0 = Number(v0) || Number(t.v_saida) || 0; if (!(Q > 0) || !(v0 > 0)) return null;
+    const K = AL.K[tipo] || AL.K['Grelha Insuflação'];
+    const comp = tipo === 'Difusor Linear' ? Math.max(0.3, Number(t.planta && t.planta.comp) || 1) : 0;
+    const A0 = Q / v0 / vias / (comp || 1);   // por via (e por metro, no linear)
+    return { L: K * v0 * Math.sqrt(A0) / AL.VT, origem: 'estimado · K ' + K, vias, K, v0 };
   },
 
   propagarCaudal() {
