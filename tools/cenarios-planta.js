@@ -796,6 +796,36 @@ const CENARIOS = {
     ok(await h.v(() => { const i = VC.dados.utas.find(u => /VCM Refeit.*insufla/.test(u.nome)), e = VC.dados.utas.find(u => /VCM Refeit.*extra/.test(u.nome)); i.uvbPar = e.id; e.uvbPar = i.id; i.recirculacao = 50; const f = VC.calculo.calcularTudo().findings || []; delete i.recirculacao; return f.some(x => x.tipo === 'Recirculação de ar sujo' && x.elemento === i.nome); }), 'VCM do refeitório (extração da copa): «Recirculação de ar sujo» é erro');
   },
 
+  /* PR 68 · Fases 1C e 0B: nomes sempre, cores/textos no Ctrl+Z, campos novos */
+  async campos(pg, ok) {
+    const h = ajudas(pg);
+    await pg.evaluate(async () => { await VC._carregarExemploDeFicheiro(['exemplos/degrade-21nov26-corrigido.json'], 'x'); VC.nav.irPasso('rede'); VC.nav.setVista('planta'); VC.planta.setPiso('piso-p0'); VC.planta.zoom = 0.35; VC.planta.aplicarVista(); VC.planta.redesenhar(); });
+    await pg.waitForTimeout(1200);
+    const esc0 = await h.v(() => document.querySelectorAll('.planta-rotulo text[data-escondido]').length);
+    await h.v(() => VC.paineis.definir('piso', 'piso-p0', 'nomesSalasSempre', true));
+    await pg.waitForTimeout(400);
+    const esc1 = await h.v(() => [...document.querySelectorAll('.planta-rotulo')].filter(g => { const t = g.querySelector('text'); return t && t.getAttribute('data-escondido'); }).length);
+    ok(esc1 === 0, '«Mostrar sempre os nomes das salas»: nenhum nome escondido', [esc0, esc1]);
+    await pg.locator('#plantaSVG').hover(); await pg.keyboard.press('Control+z'); await pg.waitForTimeout(300);
+    ok(await h.v(() => !VC.dados.params.nomesSalasSempre), 'Ctrl+Z desfaz a opção');
+    await h.v(() => VC.paineis.definir('piso', 'piso-p0', 'cor_SUP', '#ff0000'));
+    ok(await h.v(() => VC.planta.cores().SUP === '#ff0000'), 'Cor da insuflação mudada');
+    await pg.locator('#plantaSVG').hover(); await pg.keyboard.press('Control+z'); await pg.waitForTimeout(300);
+    ok(await h.v(() => VC.planta.cores().SUP !== '#ff0000'), 'Ctrl+Z repõe a cor');
+    await h.v(() => VC.planta.mudarTextos(0.2));
+    await pg.locator('#plantaSVG').hover(); await pg.keyboard.press('Control+z'); await pg.waitForTimeout(300);
+    ok(await h.v(() => !VC.dados.params.escalaTextos), 'Ctrl+Z repõe o tamanho dos textos');
+    await h.v(() => { VC.paineis.definir('piso', 'piso-p0', 'norte', 30); VC.paineis.definir('piso', 'piso-p0', 'hTeto', 300); });
+    await pg.waitForTimeout(300);
+    ok(await h.v(() => { const g = document.querySelector('.planta-norte'); return g && /rotate\(30\)/.test(g.getAttribute('transform')); }), 'Seta do norte a 30°');
+    ok(await h.v(() => { const r = VC.dados.ramais.find(x => x.planta && x.planta.pisoId === 'piso-p0' && !(x.geometriaInput && x.geometriaInput.proprio && x.geometriaInput.proprio.H_max)); return !r || VC.calculo.hMaxDe(r) === 300; }), 'Ramais do piso usam o teto falso (300 mm)');
+    const nv = await h.v(() => { const P = VC.planta, r = VC.dados.ramais.find(x => x.planta && x.planta.pisoId === 'piso-p0'); P.selecionarRamal(r.id); VC.paineis.definir('ramal', r.id, 'nivel', '4'); return [r.nivelNumero, VC.calculo.vMaxDe(r), !!document.querySelector('#pn-ramal-nivel'), VC.constantes.VMAX_NIVEL[4]]; });
+    ok(nv[0] === 4 && nv[1] === nv[3] && nv[2], 'Nível do ramal no painel: N4 → v máx. ' + nv[1] + ' m/s', nv);
+    const sala = await h.v(() => { const P = VC.planta, e = VC.dados.espacos.find(x => x.nome === 'Sala P0-S3'); e.tipo = 'Escritório'; const n = e.N; delete e.N; P.selecionar(e.id); const ph = document.querySelector('#pn-sala-N'); const r = ph ? ph.getAttribute('placeholder') : null; e.N = n; return [r, P.nPelaDensidade(e), P.tipoPeloNome('Casa de Banho P1'), P.tipoPeloNome('Sala 3')]; });
+    ok(sala[1] && sala[1].N === Math.round(34.21 / 10) && sala[2] === 'Sanitários' && sala[3] === null, 'N proposto pela densidade (10 m²/pessoa) e tipo pelo nome', sala);
+    ok(await h.v(() => { const e = VC.dados.espacos.find(x => x.tipo === 'Garagem'); VC.planta.selecionar(e.id); return !!document.querySelector('#pn-sala-detecaoCO'); }), 'Garagem: campo «Deteção de CO» no painel');
+  },
+
   /* PR 67 · Fase 1C: seleção múltipla e cor de seleção */
   async multi(pg, ok) {
     const h = ajudas(pg); await prepararPlanta(pg);
@@ -889,7 +919,7 @@ const CENARIOS = {
   const browser = await chromium.launch();
   let falhas = 0, total = 0;
   for (const [nome, fn] of Object.entries(CENARIOS)) {
-    if (SO && SO !== nome) continue;
+    if (SO && SO.split(',').indexOf(nome) < 0) continue;   // --so a,b,c: só esses cenários
     const pg = await browser.newPage({ viewport: { width: 1440, height: 900 } });
     const erros = [];
     pg.on('pageerror', e => erros.push(String(e.message)));

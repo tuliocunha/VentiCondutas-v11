@@ -1446,6 +1446,30 @@ VC6.testes = {
       } finally { Object.assign(D, { espacos: g.esp, plantas: g.pl, terminais: g.ter, ramais: g.ram, transferencias: g.tr }); P.piso = g.piso; VC.calculo.ultimo = g.ult; }
     } });
     // renomear ramal na Topologia: a mesma cascata da Tabela e do desenho; nome repetido recusado e reposto
+    self.registar({ id: 'N11.T30', nucleo: 'N2', grupo: 'Normas', nome: 'Fase 0B: teto falso do piso, categoria da sala, deteção de CO', criterio: 'ramal desenhado num piso com teto falso de 320 mm → altura disponível 320 (o do ramal ganha); categoria I na sala > III; garagem de 300 m² com extração e sem deteção → «Deteção de CO por definir»', fn: () => {
+      const D = VC.dados, C = VC.calculo, g = { pl: D.plantas, e: D.espacos, cat: D.params.categoria };
+      try {
+        D.plantas = [{ id: 'pz', nome: 'Pz', hTeto: 320 }];
+        const h1 = C.hMaxDe({ nome: 'X', planta: { pisoId: 'pz' }, geometriaInput: {} });
+        const h2 = C.hMaxDe({ nome: 'Y', planta: { pisoId: 'pz' }, geometriaInput: { H_max: 200, proprio: { H_max: true } } });
+        const h3 = C.hMaxDe({ nome: 'Z', geometriaInput: {} });
+        D.params.categoria = 'II';
+        const q = c => C.calcularQ_normas({ nome: 'S', tipo: 'Escritório', A: 50, H: 3, N: 5, geometriaMetodo: 'AH', categoria: c }).Q_EN16798;
+        const ok1 = h1 === 320 && h2 === 200 && h3 === (Number(D.restricaoH) || 250), ok2 = q('I') > q('') && q('') > q('III');
+        const dc = VC.constantes.DENSIDADE_OCUPACAO || {}, ok3 = dc['Escritório'] === 10 && dc['Sala de reuniões'] === 3.5;
+        let ok4 = true;
+        if (VC6.balanco && VC6.balanco.QOutDireto) {
+          const o = VC6.balanco.QOutDireto; VC6.balanco.QOutDireto = () => 6000;
+          try {
+            D.espacos = [{ id: 'gz', nome: 'Garagem Z', tipo: 'Garagem', A: 300, H: 3, lugares: 10 }];
+            const tem = () => (C.calcularTudo().findings || []).some(f => f.tipo === 'Deteção de CO por definir' && f.elemento === 'Garagem Z');
+            const a = tem(); D.espacos[0].detecaoCO = 'sim'; const b = tem();
+            ok4 = a && !b;
+          } finally { VC6.balanco.QOutDireto = o; }
+        }
+        return ok1 && ok2 && ok3 && ok4;
+      } finally { D.plantas = g.pl; D.espacos = g.e; D.params.categoria = g.cat; C.calcularTudo(); }
+    } });
     self.registar({ id: 'UI.T43', nucleo: 'UI', grupo: 'UI', nome: 'Planta: janela de seleção (dentro / a tocar)', criterio: 'esq → dir apanha só a sala toda dentro; dir → esq apanha também a sala e o ramal que a janela toca; uma janela vazia não apanha nada', fn: () => {
       const P = VC.planta; if (!P || !P.objetosNaJanela) return true;
       const p = { id: 'pT' }, g = { esp: P.espacosDoPiso, ram: P.ramaisDoPiso };

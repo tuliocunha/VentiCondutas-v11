@@ -144,7 +144,7 @@ VC.calculo = {
     else if (met === 'AH') { V = A * H; }
     else if (met === 'V') { if (!V && A > 0 && H > 0) V = A * H; }
     if (!A && V) A = V / 3.0;
-    const def = VC.normas.getDef(esp.tipo);
+    const def = VC.normas.getDef(esp.tipo, esp);   // Fase 0B: categoria da sala
     const g = esp.grupoForcado || def.g;
     // Decisão do autor: N vazio = «por definir» (não N = 1). O ar novo de G1 é então só T12 × A, e a app avisa (por fazer).
     const nPorDefinir = g === 1 && VC.calculo.nVazio(esp);
@@ -952,6 +952,9 @@ VC.calculo = {
   hMaxDe(r) {
     const o = this.origemPropria(r, 'H_max');
     if (o) return Number(o.geometriaInput.H_max);
+    // Fase 0B: a altura livre do teto falso do piso onde o ramal está desenhado vem antes da do Setup
+    const p = r && r.planta && (VC.dados.plantas || []).find(x => x.id === r.planta.pisoId);
+    if (p && Number(p.hTeto) > 0) return Number(p.hTeto);
     return Number(VC.dados.restricaoH) || 250;
   },
   vMaxDe(r) {
@@ -1208,6 +1211,9 @@ VC.calculo = {
           else if (qo < 600 * n) findings.push({ severidade: 'ATENÇÃO', tipo: 'Garagem abaixo da boa prática', elemento: e.nome, msg: 'Extração ' + VC.utils.fmt(qo, 0) + ' m³/h cumpre 300 × ' + n + ' mas não 600 × ' + n + ' = ' + VC.utils.fmt(600 * n, 0) + ' m³/h. ' + nota + '.' });
           return;
         }
+        // Fase 0B: parque coberto com ventilação mecânica → deteção automática de CO que comanda os 2 patamares
+        if (qo > 0 && !e.detecaoCO) findings.push({ severidade: 'POR FAZER', tipo: 'Deteção de CO por definir', elemento: e.nome, msg: 'Parque coberto com extração mecânica: indique a deteção automática de CO que liga a ventilação a 50 ppm e a 100 ppm (RT-SCIE, arts. 180.º–183.º), ou marque «não se aplica» (parque aberto)' });
+        else if (qo > 0 && e.detecaoCO === 'nao') findings.push({ severidade: 'ATENÇÃO', tipo: 'Garagem sem deteção de CO', elemento: e.nome, msg: 'Marcada como sem deteção de CO: confirme que o parque é aberto (ventilação natural), caso contrário o RT-SCIE pede a deteção (arts. 180.º–183.º)' });
         if (!(n > 0)) { findings.push({ severidade: 'POR FAZER', tipo: 'Lugares da garagem por definir', elemento: e.nome, msg: 'Escreva o número de lugares: o RT-SCIE pede 300 m³/h por veículo a 50 ppm de CO e 600 m³/h por veículo a 100 ppm' }); return; }
         if (qo < 300 * n) findings.push({ severidade: 'ERRO', tipo: 'Garagem abaixo do RT-SCIE', elemento: e.nome, msg: 'Extração ' + VC.utils.fmt(qo, 0) + ' m³/h < 300 × ' + n + ' = ' + VC.utils.fmt(300 * n, 0) + ' m³/h (1.º patamar, 50 ppm de CO; Portaria 1532/2008)' });
         else if (qo < 600 * n) findings.push({ severidade: 'ERRO', tipo: 'Garagem abaixo do RT-SCIE', elemento: e.nome, msg: 'Extração ' + VC.utils.fmt(qo, 0) + ' m³/h cumpre o 1.º patamar (300 × ' + n + ') mas não o 2.º, a 100 ppm de CO: 600 × ' + n + ' = ' + VC.utils.fmt(600 * n, 0) + ' m³/h. O sistema tem de garantir os dois patamares (RT-SCIE, art. 183.º)' });

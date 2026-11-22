@@ -348,6 +348,18 @@ const CASOS = [
     const C = VC.calculo, o = C.recirculacaoDe; C.recirculacaoDe = function (u) { return u && u.rede === 'insuflacao' ? o.call(this, u) : 0; };
     return () => { C.recirculacaoDe = o; };
   }],
+  ['Teto falso do piso ignorado', 'N11.T30', () => {
+    const C = VC.calculo, o = C.hMaxDe; C.hMaxDe = function (r) { const g = VC.dados.plantas; VC.dados.plantas = []; try { return o.call(this, r); } finally { VC.dados.plantas = g; } };
+    return () => { C.hMaxDe = o; };
+  }],
+  ['Categoria da sala ignorada', 'N11.T30', () => {
+    const N = VC.normas, o = N.getDef; N.getDef = function (t) { return o.call(this, t); };
+    return () => { N.getDef = o; };
+  }],
+  ['Garagem sem pedido de deteção de CO', 'N11.T30', () => {
+    const C = VC.calculo, o = C.calcularTudo; C.calcularTudo = function () { const r = o.apply(this, arguments); if (r && r.findings) r.findings = r.findings.filter(f => !/Deteção de CO/.test(f.tipo)); return r; };
+    return () => { C.calcularTudo = o; };
+  }],
   ['Janela: a tocar passa a exigir tudo dentro', 'UI.T43', () => {
     const P = VC.planta, o = P.objetosNaJanela; P.objetosNaJanela = function (a, b, tocar, p) { return o.call(this, a, b, false, p); };
     return () => { P.objetosNaJanela = o; };
@@ -521,7 +533,10 @@ function servidor() {
   await page.waitForTimeout(2500);
   console.log('VentiCondutas · testes de mutação\n──────────────────────────────────────────');
   let falhas = 0;
+  // --so N11.T30,UI.T44: só as mutações desses testes (rápido, para um PR); sem --so corre todas
+  const SO = args.includes('--so') ? String(args[args.indexOf('--so') + 1] || '').split(',') : null;
   for (const [nome, id, mutar] of CASOS) {
+    if (SO && SO.indexOf(id) < 0) continue;
     const r = await page.evaluate(([id, src]) => {
       const estado = () => { const t = VC6.testes.correr().detalhe.find(x => x.id === id); return t ? t.estado : 'inexistente'; };
       const antes = estado(); let durante = 'erro', depois;
@@ -535,7 +550,8 @@ function servidor() {
     console.log((ok ? '✓ ' : '✗ ') + id.padEnd(7) + ' apanha: ' + nome + (ok ? '' : '  (' + r.antes + ' → ' + r.durante + ' → ' + r.depois + ')'));
   }
   console.log('──────────────────────────────────────────');
-  console.log(falhas ? '✗ ' + falhas + ' teste(s) não apanham o erro que vigiam' : '✓ ' + CASOS.length + '/' + CASOS.length + ' erros apanhados pelos testes');
+  const nCorr = SO ? CASOS.filter(c => SO.indexOf(c[1]) >= 0).length : CASOS.length;
+  console.log(falhas ? '✗ ' + falhas + ' teste(s) não apanham o erro que vigiam' : '✓ ' + nCorr + '/' + nCorr + ' erros apanhados pelos testes' + (SO ? ' (só ' + SO.join(', ') + ')' : ''));
   await browser.close(); srv.close();
   process.exitCode = falhas ? 1 : 0;
 })();
