@@ -840,9 +840,20 @@ VC.calculo = {
         const San = espacosDaRede([].concat(...raizes.map(subarvore))).filter(ehSanitaria);
         if (San.length) findings.push({ severidade: 'ATENÇÃO', tipo: 'Recuperação de calor com ar sanitário', elemento: u.nome, msg: 'A UTA ' + u.nome + ' tem recuperador e extrai ' + San.length + ' instalação(ões) sanitária(s): o projetista tem de garantir que o ar novo não é contaminado (SCE, Portaria 138-I)' });
       });
-      // 2 · garagem: extração do RT-SCIE por veículo (controlo de CO); sem n.º de lugares fica por fazer
+      // 2 · garagem: extração do RT-SCIE por veículo (controlo de CO); sem n.º de lugares fica por fazer.
+      //     Só é parque de estacionamento (UT II, arts. 180.º–183.º) a partir de 200 m² de área bruta
+      //     (ANEPC, Nota Técnica 01/2021); abaixo disso a garagem segue a UT onde está e os 300/600 m³/h
+      //     por veículo ficam como referência de boa prática (aviso, não erro).
       (VC.dados.espacos || []).filter(e => e.tipo === 'Garagem').forEach(e => {
         const n = Number(e.lugares) || 0, qo = VC6.balanco && VC6.balanco.QOutDireto ? VC6.balanco.QOutDireto(e) : 0;
+        const Amin = VC.constantes.GARAGEM_UT2_AREA_MIN, A = Number(e.A) || 0;
+        if (A < Amin) {
+          if (!(n > 0)) return;
+          const nota = 'Garagem com ' + VC.utils.fmt(A, 1) + ' m² (< ' + Amin + ' m²): não é parque de estacionamento (UT II; ANEPC, Nota Técnica 01/2021, e RJ-SCIE art. 10.º, n.º 3, m)) e segue as regras da utilização-tipo onde está. Os 300/600 m³/h por veículo do RT-SCIE (art. 183.º) ficam como referência de boa prática';
+          if (qo < 300 * n) findings.push({ severidade: 'ATENÇÃO', tipo: 'Garagem abaixo da boa prática', elemento: e.nome, msg: 'Extração ' + VC.utils.fmt(qo, 0) + ' m³/h < 300 × ' + n + ' = ' + VC.utils.fmt(300 * n, 0) + ' m³/h. ' + nota + '.' });
+          else if (qo < 600 * n) findings.push({ severidade: 'ATENÇÃO', tipo: 'Garagem abaixo da boa prática', elemento: e.nome, msg: 'Extração ' + VC.utils.fmt(qo, 0) + ' m³/h cumpre 300 × ' + n + ' mas não 600 × ' + n + ' = ' + VC.utils.fmt(600 * n, 0) + ' m³/h. ' + nota + '.' });
+          return;
+        }
         if (!(n > 0)) { findings.push({ severidade: 'POR FAZER', tipo: 'Lugares da garagem por definir', elemento: e.nome, msg: 'Escreva o número de lugares: o RT-SCIE pede 300 m³/h por veículo a 50 ppm de CO e 600 m³/h por veículo a 100 ppm' }); return; }
         if (qo < 300 * n) findings.push({ severidade: 'ERRO', tipo: 'Garagem abaixo do RT-SCIE', elemento: e.nome, msg: 'Extração ' + VC.utils.fmt(qo, 0) + ' m³/h < 300 × ' + n + ' = ' + VC.utils.fmt(300 * n, 0) + ' m³/h (1.º patamar, 50 ppm de CO; Portaria 1532/2008)' });
         else if (qo < 600 * n) findings.push({ severidade: 'ERRO', tipo: 'Garagem abaixo do RT-SCIE', elemento: e.nome, msg: 'Extração ' + VC.utils.fmt(qo, 0) + ' m³/h cumpre o 1.º patamar (300 × ' + n + ') mas não o 2.º, a 100 ppm de CO: 600 × ' + n + ' = ' + VC.utils.fmt(600 * n, 0) + ' m³/h. O sistema tem de garantir os dois patamares (RT-SCIE, art. 183.º)' });

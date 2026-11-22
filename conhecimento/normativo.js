@@ -42,6 +42,7 @@ VC._normativo = {
     { codigo: 'Regulamento (UE) 327/2011', titulo: 'Ecodesign · ventiladores (eficiência mínima)', tipo: 'legislacao-eu' },
     { codigo: 'ISO 2533:1975', titulo: 'Standard Atmosphere', tipo: 'norma-iso' },
     { codigo: 'DL 220/2008 + Portaria 1532/2008 (RT-SCIE, na redação da Portaria 135/2020)', titulo: 'SCIE · escadas pressurizadas (art. 161.º) e parques de estacionamento (arts. 180.º–183.º)', tipo: 'legislacao' },
+    { codigo: 'ANEPC · Nota Técnica 01/2021', titulo: 'Utilizações-tipo de edifícios e recintos · UT II (estacionamentos) só a partir de 200 m² de área bruta', tipo: 'legislacao' },
     { codigo: 'EN 12101-13:2022', titulo: 'Sistemas de diferencial de pressão · projeto e ensaio (substitui a EN 12101-6:2005)', tipo: 'norma-eu' },
     { codigo: 'ASHRAE 55:2020', titulo: 'Thermal Environmental Conditions', tipo: 'norma-ashrae' }
   ],
@@ -51,7 +52,7 @@ VC._normativo = {
       { codigo: 'Portaria 138-I/2021', funcao: 'SCE · caudais T11 / T12 / T13', obrigatorio: true },
       { codigo: 'DL 101-D/2020', funcao: 'Desempenho energético · SACE (≥ 290 kW de potência térmica) · inspeções (> 70 kW)', obrigatorio: true },
       { codigo: 'Manual SCE (Despacho 6476-H/2021)', funcao: 'Eficácia de remoção, SFP e caudais (metodologia da Portaria 138-I)', obrigatorio: true },
-      { codigo: 'RT-SCIE (Portaria 1532/2008)', funcao: 'Escadas pressurizadas 20–80 Pa · parques de estacionamento 300/600 m³/h por veículo', obrigatorio: true },
+      { codigo: 'RT-SCIE (Portaria 1532/2008)', funcao: 'Escadas pressurizadas 20–80 Pa · parques de estacionamento (UT II, ≥ 200 m², ANEPC NT 01/2021) 300/600 m³/h por veículo', obrigatorio: true },
       { codigo: 'Reg. (UE) 1253/2014 e 327/2011', funcao: 'Ecodesign de unidades de ventilação e de ventiladores', obrigatorio: true },
       { codigo: 'NP 1037-1/-2', funcao: 'Ventilação residencial (só habitação; tipologia em implementação)', obrigatorio: false }
     ],
