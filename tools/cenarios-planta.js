@@ -336,6 +336,57 @@ const CENARIOS = {
     ok(await h.v(() => VC.dados.params.escalaTextos === undefined), 'Volta ao tamanho automático');
   },
 
+  /* Fase 1B: encaixe, Shift, Alt, comprimento escrito, grelha, medir */
+  async precisao(pg, ok) {
+    const h = ajudas(pg); await prepararPlanta(pg);
+    await h.tecla('r'); await h.arrastar([100, 100], [500, 400]); await h.criarSala('Sala P', 'Escritório', 2);
+    await h.tecla('p');
+    let [x, y] = await h.ecra(504, 97); await pg.mouse.move(x, y); await pg.waitForTimeout(120);
+    ok(await h.v(() => { const g = document.getElementById('plantaEncaixe'); return !!g && /vértice/.test(g.textContent); }), 'Perto de um canto aparece o marcador «vértice»');
+    await pg.mouse.click(x, y); await pg.waitForTimeout(200);
+    ok(await h.v(() => JSON.stringify(VC.planta.rascunho[0]) === '[500,100]'), 'O clique encaixa no canto (500, 100)', await h.v(() => VC.planta.rascunho));
+    [x, y] = await h.ecra(700, 104); await pg.mouse.move(x, y); await pg.waitForTimeout(100);
+    await pg.keyboard.type('3'); await pg.waitForTimeout(80);
+    ok(await h.v(() => { const c = document.getElementById('plantaComprimento'); return !!c && /3/.test(c.textContent); }), 'Ao escrever um número aparece a caixa do comprimento');
+    await pg.keyboard.press('Enter'); await pg.waitForTimeout(250);
+    const p2 = await h.v(() => VC.planta.rascunho[1]);
+    ok(p2 && Math.abs(Math.hypot(p2[0] - 500, p2[1] - 100) - 300) < 0.5, '«3» + Enter: o ponto seguinte fica a 3,00 m na direção do rato', p2);
+    // Shift: ângulo reto
+    [x, y] = await h.ecra(810, 300);
+    await pg.keyboard.down('Shift'); await pg.mouse.move(x, y); await pg.mouse.click(x, y); await pg.keyboard.up('Shift'); await pg.waitForTimeout(200);
+    const p3 = await h.v(() => VC.planta.rascunho[2]);
+    ok(p3 && Math.abs(p3[0] - p2[0]) < 0.01, 'Shift: o ponto fica na vertical do anterior (ângulo reto)', [p2, p3]);
+    // Alt: sem encaixe
+    [x, y] = await h.ecra(503, 404);
+    await pg.keyboard.down('Alt'); await pg.mouse.move(x, y); await pg.mouse.click(x, y); await pg.keyboard.up('Alt'); await pg.waitForTimeout(200);
+    const p4 = await h.v(() => VC.planta.rascunho[3]);
+    ok(p4 && Math.abs(p4[0] - 503) < 1 && Math.abs(p4[1] - 404) < 1, 'Alt premido: o ponto fica onde se clicou (sem encaixe)', p4);
+    await h.tecla('Escape');
+    // grelha
+    await h.tecla('g'); await h.tecla('p'); await h.clicar([623, 573]);
+    ok(await h.v(() => JSON.stringify(VC.planta.rascunho[0]) === '[600,550]'), 'Grelha (G) de 0,50 m: o ponto vai para (600, 550)', await h.v(() => VC.planta.rascunho[0]));
+    await h.tecla('Escape'); await h.tecla('g');
+    // medir
+    await h.tecla('m'); await h.clicar([100, 100]); await h.clicar([500, 100]); await h.clicar([500, 400]); await h.tecla('Enter');
+    ok(await h.v(() => Math.abs(VC.planta.medidaTotal() - 7) < 1e-6 && VC.planta.medidaFim && /total 7[.,]00 m/.test(document.getElementById('plantaMedida').textContent)), 'Medir (M): 4,00 + 3,00 m, total 7,00 m no desenho', await h.v(() => [VC.planta.medida, VC.planta.medidaTotal(), VC.planta.medidaFim, (document.getElementById('plantaMedida') || {}).textContent]));
+    ok(await h.v(() => VC.dados.espacos.filter(e => e.planta).length === 1 && !VC.planta.pendente), 'Medir não cria nada');
+    await h.tecla('Escape');
+    ok(await h.v(() => VC.planta.medida.length === 0), 'Esc limpa a medição');
+    // arrastar vértice: encaixa no canto de outra sala
+    await h.tecla('r'); await h.arrastar([520, 120], [700, 400]); await h.criarSala('Sala Q', 'Escritório', 1);
+    await h.tecla('v'); await h.clicar([600, 250]); await h.arrastar([520, 120], [504, 103]);
+    ok(await h.v(() => VC.dados.espacos.find(e => e.nome === 'Sala Q').planta.pts.some(q => q[0] === 500 && q[1] === 100)), 'Ao arrastar um vértice ele encaixa no canto da sala vizinha');
+    // duplicar e rodar
+    await h.clicar([300, 250]); await pg.keyboard.press('Control+d'); await pg.waitForTimeout(300);
+    const dup = await h.v(() => { const e = VC.dados.espacos.find(x => x.nome === 'Sala P (2)'), o = VC.dados.espacos.find(x => x.nome === 'Sala P'); return e && { pts: e.planta.pts, A: e.A, N: e.N, H: e.H, tipo: e.tipo, sel: VC.planta.selecionado === e.id, oH: o.H }; });
+    ok(dup && dup.pts[0][0] === 200 && dup.pts[0][1] === 200 && Math.abs(dup.A - 12) < 0.01 && dup.N === 2 && dup.H === dup.oH && dup.sel, 'Ctrl+D duplica a sala 1 m ao lado, com o mesmo tipo, N e pé-direito, e seleciona a cópia', dup);
+    await pg.click('.pn-acoes button:has-text("Rodar 90°")'); await pg.waitForTimeout(250);
+    const rod = await h.v(() => { const e = VC.dados.espacos.find(x => x.nome === 'Sala P (2)'); const xs = e.planta.pts.map(q => q[0]), ys = e.planta.pts.map(q => q[1]); return [Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys), e.A]; });
+    ok(Math.abs(rod[0] - 300) < 0.5 && Math.abs(rod[1] - 400) < 0.5 && Math.abs(rod[2] - 12) < 0.01, 'Rodar 90°: 4 × 3 m passa a 3 × 4 m, a área mantém-se', rod);
+    await pg.locator('#plantaSVG').hover(); await pg.keyboard.press('Control+z'); await pg.waitForTimeout(250);
+    ok(await h.v(() => { const e = VC.dados.espacos.find(x => x.nome === 'Sala P (2)'); return e && e.planta.pts[0][0] === 200; }), 'Ctrl+Z desfaz a rotação');
+  },
+
   /* PR 9: nome legível numa sala em L; zona útil nítida; Entrega recortada */
   async representacao(pg, ok) {
     const h = ajudas(pg);

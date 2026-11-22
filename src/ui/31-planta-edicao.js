@@ -163,6 +163,7 @@ P.ligar = function () {
     ev.stopPropagation(); ev.preventDefault();
     try { palco.setPointerCapture(ev.pointerId); } catch (e) { /* captura opcional */ }
     arr = { ed, modo, i, q0: this._ponto(ev), x0: ev.clientX, y0: ev.clientY, base: copia(ed.pts), pts: copia(ed.pts), antes: this._estado(), mexeu: false };
+    if (modo === 'v' || modo === 'm') this._snapEdicao = { tipo: ed.tipo, o: ed.o };   // o vértice encaixa noutras salas / ramais (35-planta-precisao)
   }, true);
   palco.addEventListener('pointermove', ev => {
     if (!arr) return;
@@ -194,7 +195,7 @@ P.ligar = function () {
   }, true);
   const fim = ev => {
     if (!arr) return;
-    const a = arr; arr = null; ev.stopPropagation();
+    const a = arr; arr = null; ev.stopPropagation(); this._snapEdicao = null;
     const ed = a.ed, nome = ed.o.nome, chave = { tipo: ed.tipo, id: ed.o.id };
     if (!a.mexeu) {
       if (a.modo === 'v') { this.vertSel = Object.assign(chave, { i: a.i }); this.redesenhar(); return; }   // clique: seleciona o vértice (Esc larga)
@@ -215,7 +216,7 @@ P.ligar = function () {
     this._aplicarGeometria(ed, a.pts, motivo, a.antes, extra);
   };
   palco.addEventListener('pointerup', fim, true);
-  palco.addEventListener('pointercancel', ev => { if (arr) { arr = null; ev.stopPropagation(); this.redesenhar(); } }, true);
+  palco.addEventListener('pointercancel', ev => { if (arr) { arr = null; this._snapEdicao = null; ev.stopPropagation(); this.redesenhar(); } }, true);
   /* duplo clique numa aresta: vértice nesse ponto */
   palco.addEventListener('dblclick', ev => {
     const alca = ev.target.closest && ev.target.closest('.pe-a'); if (!alca) return;

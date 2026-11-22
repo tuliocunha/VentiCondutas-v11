@@ -244,6 +244,14 @@ const CASOS = [
     const P = VC.planta, o = P._pxTexto; P._pxTexto = function (cat) { return P.CAT_TEXTOS[cat].orig * P.fatorTextos(); };
     return () => { P._pxTexto = o; };
   }],
+  ['Encaixe: a aresta ganha ao vértice', 'N11.T15', () => {
+    const P = VC.planta, o = P.encaixe; P.encaixe = function (raw, opts) { const r = o.call(this, raw, opts); if (r.tipo === 'vertice') { const a = o.call(this, raw, Object.assign({}, opts)); a.tipo = 'aresta'; return a; } return r; };
+    return () => { P.encaixe = o; };
+  }],
+  ['Siglas: a legenda do projeto é ignorada', 'N11.T15', () => {
+    const U = VC.uta, o = U.siglasProjeto; U.siglasProjeto = () => [];
+    return () => { U.siglasProjeto = o; };
+  }],
   // Fase 4 da auditoria: qualidade de cálculo
   ['ε_v do espaço ignorado (só o do Setup)', 'N2.T21', () => {
     const o = VC.calculo.evDe; VC.calculo.evDe = function () { return Number(VC.dados.eficaciaRemocao) || 1; };

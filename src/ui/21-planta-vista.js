@@ -281,6 +281,7 @@ window.addEventListener('keydown', ev => {
   if (!document.getElementById('plantaSVG') || emCampo(ev.target)) return;
   const mod = ev.ctrlKey || ev.metaKey, k = ev.key;
   const tratar = f => { ev.preventDefault(); ev.stopImmediatePropagation(); f(); };
+  if (P.teclaDesenho && P.teclaDesenho(ev)) { ev.preventDefault(); ev.stopImmediatePropagation(); return; }   // comprimento escrito, grelha (35-planta-precisao)
   if (k === ' ' && !mod) { ev.preventDefault(); if (!P._espaco) { P._espaco = true; const pc = P._palco(); if (pc) pc.classList.add('espaco'); } return; }
   if (mod && (k === 'z' || k === 'Z') && !ev.shiftKey) return tratar(() => P.desfazer());
   if (mod && (k === 'y' || k === 'Y' || ((k === 'z' || k === 'Z') && ev.shiftKey))) return tratar(() => P.refazer());

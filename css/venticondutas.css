@@ -580,3 +580,7 @@ details.pn-av>summary{cursor:pointer;list-style:revert}
 .planta-leg-redes small{flex-basis:100%;color:#64748b;font-size:10.5px}
 #plantaTela .planta-legenda{pointer-events:none;max-width:min(520px,calc(100% - 420px))}   /* só informa: não tapa cliques no desenho */
 .pn-cor .pn-entrada input[type="color"]{width:52px;min-height:34px;padding:2px;border:1px solid var(--borda-media);border-radius:8px;background:#fff;cursor:pointer}
+/* ── Planta: comprimento escrito (Fase 1B) ── */
+.planta-comprimento{position:absolute;z-index:6;pointer-events:none;background:#fff7ed;border:1.5px solid #e05a00;color:#7c2d12;border-radius:8px;padding:4px 8px;font-size:13px;box-shadow:0 2px 8px rgba(15,23,42,.18);white-space:nowrap}
+.planta-comprimento b{font-size:15px;font-variant-numeric:tabular-nums}
+.planta-comprimento kbd{font:700 10.5px/1 ui-monospace,monospace;padding:2px 5px;margin-left:4px;border:1px solid #e0b089;border-bottom-width:2px;border-radius:4px;background:#fff}

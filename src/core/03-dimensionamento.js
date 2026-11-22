@@ -1303,10 +1303,26 @@ VC.uta = {
     const T = VC.constantes.TIPOS_SISTEMA, porCod = c => T.find(t => t.codigo === c) || null;
     const alias = c => (c === 'VEI' ? 'VEIS' : c);   // VEI (versão anterior) = VEIS
     if (u.tipoSistema) return porCod(alias(u.tipoSistema));
+    // legenda de siglas do projeto: o prefixo mais comprido que começa o nome (VEISP0 → VEIS, «VCM Refeitório» → VCM)
+    const nome = String(u.nome || '').toUpperCase().replace(/\s+/g, ' ').trim();
+    const leg = (this.siglasProjeto() || []).filter(x => x.prefixo && nome.indexOf(x.prefixo) === 0).sort((a, b) => b.prefixo.length - a.prefixo.length)[0];
+    if (leg) return porCod(alias(leg.tipo));
     const m = String(u.nome || '').toUpperCase().match(/^(VMC|VCM|VAN|VIN|VEG|VEX|VEIS|VEI)(?![A-Za-z]{3})/);
     return m ? porCod(alias(m[1])) : null;
   },
   tipoSistemaProprio(u) { return !!(u && u.tipoSistema); },
+  /* legenda de siglas do projeto: [{ prefixo: 'VEISP', tipo: 'VEIS' }] em VC.dados.params.siglasEquip */
+  siglasProjeto() {
+    const L = VC.dados.params && VC.dados.params.siglasEquip;
+    return Array.isArray(L) ? L.map(x => ({ prefixo: String(x.prefixo || '').toUpperCase().replace(/\s+/g, ' ').trim(), tipo: x.tipo })).filter(x => x.prefixo && x.tipo) : [];
+  },
+  definirSigla(prefixo, tipo) {
+    const P = String(prefixo || '').toUpperCase().replace(/\s+/g, ' ').trim(); if (!P) return false;
+    const L = (VC.dados.params.siglasEquip || []).filter(x => String(x.prefixo || '').toUpperCase().trim() !== P);
+    if (tipo) { if (!VC.constantes.TIPOS_SISTEMA.some(t => t.codigo === tipo)) return false; L.push({ prefixo: P, tipo }); }
+    VC.dados.params.siglasEquip = L;
+    return true;
+  },
   /* escolher o tipo: guarda-o e acerta o tipo Ecodesign (UVU/UVB) ao do sistema. Devolve false se a rede da UTA
      não é servida por esse tipo (ex.: VEI numa UTA de insuflação). Código vazio = volta ao do nome. */
   definirTipoSistema(u, codigo) {
