@@ -1446,6 +1446,18 @@ VC6.testes = {
       } finally { Object.assign(D, { espacos: g.esp, plantas: g.pl, terminais: g.ter, ramais: g.ram, transferencias: g.tr }); P.piso = g.piso; VC.calculo.ultimo = g.ult; }
     } });
     // renomear ramal na Topologia: a mesma cascata da Tabela e do desenho; nome repetido recusado e reposto
+    self.registar({ id: 'UI.T43', nucleo: 'UI', grupo: 'UI', nome: 'Planta: janela de seleção (dentro / a tocar)', criterio: 'esq → dir apanha só a sala toda dentro; dir → esq apanha também a sala e o ramal que a janela toca; uma janela vazia não apanha nada', fn: () => {
+      const P = VC.planta; if (!P || !P.objetosNaJanela) return true;
+      const p = { id: 'pT' }, g = { esp: P.espacosDoPiso, ram: P.ramaisDoPiso };
+      const A = { id: 'A', planta: { pts: [[0, 0], [10, 0], [10, 10], [0, 10]] } }, B = { id: 'B', planta: { pts: [[10, 0], [30, 0], [30, 10], [10, 10]] } }, R = { id: 'R', planta: { pts: [[5, 20], [25, 20], [25, 40]] } };
+      try {
+        P.espacosDoPiso = () => [A, B]; P.ramaisDoPiso = () => [R];
+        const ids = L => L.map(x => x.k + x.id).sort().join(',');
+        const dentro = ids(P.objetosNaJanela([-1, -1], [12, 12], false, p)), toca = ids(P.objetosNaJanela([12, 12], [-1, -1], true, p));
+        const ramal = ids(P.objetosNaJanela([20, 15], [40, 25], true, p)), canto = ids(P.objetosNaJanela([4, 4], [6, 6], true, p)), nada = ids(P.objetosNaJanela([50, 50], [60, 60], true, p));
+        return dentro === 'salaA' && toca === 'salaA,salaB' && ramal === 'ramalR' && canto === 'salaA' && nada === '';
+      } finally { P.espacosDoPiso = g.esp; P.ramaisDoPiso = g.ram; }
+    } });
     self.registar({ id: 'UI.T40', nucleo: 'UI', grupo: 'UI', nome: 'Topologia: renomear ramal em cascata', criterio: 'RA → «Norte»: sub-ramal, terminal e espaço seguem; «norte» noutro ramal é recusado e o campo volta ao nome antigo', fn: () => {
       const A = VC.associacao; if (!A || !A.renomearRamal) return false;
       const D = VC.dados, g = { ram: D.ramais, ter: D.terminais, esp: D.espacos, nos: D.nos, tr: D.trechos, toast: VC.ui.toast, sync: VC.estado.forcarSync, render: VC.passos.render, hist: VC.historico && VC.historico.push };

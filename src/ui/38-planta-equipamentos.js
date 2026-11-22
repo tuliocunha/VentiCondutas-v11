@@ -238,7 +238,7 @@ P._equipHTML = function (u, p, z) {
     const ext = !VC.redes.ehExtracao(u.rede);
     x += ligExterior(borda, ux, uy, z, ext ? C.ODA : C.EHA, ext, ext ? 'ar exterior · ODA' : 'rejeição · EHA');
   }
-  x += '<rect x="' + n2(o[0] - w / 2) + '" y="' + n2(o[1] - hh / 2) + '" width="' + n2(w) + '" height="' + n2(hh) + '" rx="' + n2(3 / z) + '" fill="#1e293b" stroke="' + (sel ? '#f2c94c' : '#fff') + '" stroke-width="' + n2((sel ? 3.2 : 1.6) / z) + '"/>';
+  x += '<rect x="' + n2(o[0] - w / 2) + '" y="' + n2(o[1] - hh / 2) + '" width="' + n2(w) + '" height="' + n2(hh) + '" rx="' + n2(3 / z) + '" fill="#1e293b" stroke="' + (sel ? VC.planta.COR_SEL : '#fff') + '" stroke-width="' + n2((sel ? 3.2 : 1.6) / z) + '"/>';
   if (duplo) x += '<line x1="' + n2(o[0]) + '" y1="' + n2(o[1] - hh / 2 + 2 / z) + '" x2="' + n2(o[0]) + '" y2="' + n2(o[1] + hh / 2 - 2 / z) + '" stroke="#64748b" stroke-width="' + n2(1 / z) + '"/>';
   x += '<text x="' + n2(o[0]) + '" y="' + n2(o[1] + 3.4 / z) + '" text-anchor="middle" font-size="' + n2((duplo ? 9.5 : 8.5) / z) + '" font-weight="800" fill="#fff">' + esc(cod) + '</text>';
   if (z >= 0.5) x += '<text class="planta-eq-nome" x="' + n2(o[0]) + '" y="' + n2(o[1] + hh / 2 + 10 / z) + '" text-anchor="middle" font-size="' + n2(8.5 / z) + '" font-weight="700" fill="#1e293b" paint-order="stroke" stroke="#fff" stroke-width="' + n2(3 / z) + '">' + esc(duplo ? String(u.nome).replace(/\s*\((insufla|extra)[^)]*\)\s*$/i, '') : u.nome) + '</text>';

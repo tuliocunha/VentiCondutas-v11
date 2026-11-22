@@ -23,6 +23,7 @@ const QUALIDADE = 0.82;         // JPEG
 if (!Array.isArray(VC.dados.plantas)) VC.dados.plantas = [];
 
 VC.planta = {
+  COR_SEL: '#c026d3',   // cor única de seleção (magenta): não se confunde com nenhuma rede nem com os grupos
   piso: null, ferramenta: 'sel', zoom: null, rascunho: [], ponteiro: null,
   selecionado: null, pendente: null, escalaPts: [], corPor: 'grupo',
 
@@ -265,7 +266,7 @@ VC.planta = {
       let [cx, cy] = (e.planta.rotulo && e.planta.rotulo.length === 2) ? e.planta.rotulo : (this.pontoInterior ? this.pontoInterior(e.planta.pts) : this.centro(e.planta.pts)); const A = this.areaM2(e.planta.pts, p);   // o nome pode ser arrastado; sem isso fica no ponto mais interior (B4)
       const rt = this.rotuloAjustado ? this.rotuloAjustado(e.nome, e.planta.pts, cx, cy, fs) : { fs, texto: e.nome };
       if (rt.x != null && !(e.planta.rotulo && e.planta.rotulo.length === 2)) cx = rt.x;   // o nome cabe entre as paredes (um nome arrastado fica onde foi posto)
-      s += '<g class="planta-sala' + (on ? ' sel' : '') + '" data-esp="' + e.id + '"><polygon points="' + pts + '" fill="' + c[0] + '" fill-opacity="0.72" stroke="' + c[1] + '" stroke-width="' + (on ? 3.5 : sw) + '" vector-effect="non-scaling-stroke"/>'
+      s += '<g class="planta-sala' + (on ? ' sel' : '') + '" data-esp="' + e.id + '"><polygon points="' + pts + '" fill="' + c[0] + '" fill-opacity="0.72" stroke="' + (on ? this.COR_SEL : c[1]) + '" stroke-width="' + (on ? 3.5 : sw) + '" vector-effect="non-scaling-stroke"/>'
         + '<g class="planta-rotulo" data-esp="' + e.id + '"><title>' + esc(e.nome) + '</title><text x="' + cx + '" y="' + cy + '" font-size="' + rt.fs + '" text-anchor="middle" font-weight="700" fill="#1e293b">' + esc(rt.texto) + '</text>'
         + (this._rotuloQ ? '<text x="' + cx + '" y="' + (cy + rt.fs * 1.2) + '" font-size="' + (rt.fs * 0.9) + '" text-anchor="middle" fill="#334155">' + fmt(VC.calculo.calcularQEspaco(e).Q_total, 0) + ' m³/h</text>' : (A ? '<text x="' + cx + '" y="' + (cy + rt.fs * 1.2) + '" font-size="' + (rt.fs * 0.9) + '" text-anchor="middle" fill="#334155">' + fmt(A) + ' m²</text>' : '')) + '</g>' + '</g>';
     });

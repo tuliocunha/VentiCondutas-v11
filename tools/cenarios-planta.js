@@ -796,6 +796,38 @@ const CENARIOS = {
     ok(await h.v(() => { const i = VC.dados.utas.find(u => /VCM Refeit.*insufla/.test(u.nome)), e = VC.dados.utas.find(u => /VCM Refeit.*extra/.test(u.nome)); i.uvbPar = e.id; e.uvbPar = i.id; i.recirculacao = 50; const f = VC.calculo.calcularTudo().findings || []; delete i.recirculacao; return f.some(x => x.tipo === 'Recirculação de ar sujo' && x.elemento === i.nome); }), 'VCM do refeitório (extração da copa): «Recirculação de ar sujo» é erro');
   },
 
+  /* PR 67 · Fase 1C: seleção múltipla e cor de seleção */
+  async multi(pg, ok) {
+    const h = ajudas(pg); await prepararPlanta(pg);
+    const ids = await h.v(() => { const E = VC.dados.espacos, P = VC.planta; E.forEach(e => delete e.planta);
+      E[0].planta = { pisoId: 'pS', pts: [[100, 100], [500, 100], [500, 400], [100, 400]] }; E[1].planta = { pisoId: 'pS', pts: [[500, 100], [700, 100], [700, 400], [500, 400]] };
+      E[0].tipo = 'Escritório'; E[1].tipo = 'Escritório'; P.setFerramenta('sel'); P.redesenhar(); return [E[0].id, E[1].id]; });
+    await h.clicar([300, 250]);
+    ok(await h.v(() => { const g = document.querySelector('.planta-sala.sel polygon'); return g && g.getAttribute('stroke') === VC.planta.COR_SEL && VC.planta.COR_SEL === '#c026d3'; }), 'Sala selecionada com a cor de seleção única (magenta)');
+    await pg.keyboard.down('Shift'); await h.clicar([600, 250]); await pg.keyboard.up('Shift');
+    ok(await h.v(() => VC.planta.multi.length === 2 && !!document.querySelector('.pn-multi') && document.querySelectorAll('.planta-multi polygon').length === 2), 'Shift+clique junta a segunda sala: painel de 2 objetos');
+    await pg.selectOption('#pn-multi-sala-tipo', 'Sala de reuniões').catch(async () => { const v = await h.v(() => [...document.querySelectorAll('#pn-multi-sala-tipo option')].map(o => o.value).find(x => x && x !== 'Escritório')); await pg.selectOption('#pn-multi-sala-tipo', v); });
+    await pg.waitForTimeout(300);
+    const tipos = await pg.evaluate(ids => ids.map(i => VC.dados.espacos.find(e => e.id === i).tipo), ids);
+    ok(tipos[0] === tipos[1] && tipos[0] !== 'Escritório', 'Mudar o tipo no painel muda-o nas duas salas', tipos);
+    await pg.locator('#plantaSVG').hover(); await pg.keyboard.press('Control+z'); await pg.waitForTimeout(300);
+    ok(await pg.evaluate(ids => ids.every(i => VC.dados.espacos.find(e => e.id === i).tipo === 'Escritório'), ids), 'Um só Ctrl+Z repõe as duas');
+    await pg.keyboard.down('Shift'); await h.clicar([600, 250]); await pg.keyboard.up('Shift');
+    ok(await h.v(() => !VC.planta.multi.length && VC.planta.selecionado != null), 'Shift+clique outra vez tira-a: fica a seleção simples');
+    await h.tecla('Escape'); await h.tecla('Escape');
+    await h.arrastar([60, 60], [600, 450]);
+    ok(await pg.evaluate(id => VC.planta.selecionado === id && !VC.planta.multi.length, ids[0]), 'Janela da esquerda para a direita: só a sala toda dentro');
+    await h.arrastar([650, 450], [60, 60]);
+    ok(await h.v(() => VC.planta.multi.length === 2), 'Janela da direita para a esquerda: apanha também a que toca');
+    await h.tecla('Delete');
+    ok(await pg.evaluate(ids => ids.every(i => !VC.dados.espacos.find(e => e.id === i).planta), ids), 'Delete apaga os dois desenhos');
+    await pg.locator('#plantaSVG').hover(); await pg.keyboard.press('Control+z'); await pg.waitForTimeout(300);
+    ok(await pg.evaluate(ids => ids.every(i => !!VC.dados.espacos.find(e => e.id === i).planta), ids), 'Ctrl+Z repõe os dois');
+    await h.v(() => { VC.planta.multi = [{ k: 'sala', id: VC.dados.espacos[0].id }, { k: 'sala', id: VC.dados.espacos[1].id }]; VC.planta._aplicarMulti(); });
+    await h.tecla('Escape');
+    ok(await h.v(() => !VC.planta.multi.length && !document.querySelector('.pn-multi')), 'Esc limpa a seleção múltipla');
+  },
+
   /* PR 66 · Fase 6B: controlo de fumo */
   async fumo(pg, ok) {
     const h = ajudas(pg);

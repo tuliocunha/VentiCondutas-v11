@@ -201,7 +201,7 @@ P._svg = function (p) {
       const pol = [[a[0] + nx * w1, a[1] + ny * w1], [b[0] + nx * w2, b[1] + ny * w2], [b[0] - nx * w2, b[1] - ny * w2], [a[0] - nx * w1, a[1] - ny * w1]];
       const on = this.redSel === rd.key && this.trocoSel && String(this.trocoSel.r) === String(r.id);
       x += '<g class="planta-red' + (on ? ' sel' : '') + '" data-r="' + r.id + '" data-k="' + rd.key + '"><title>Redução ' + (rd.deTxt || 'Ø' + rd.de) + ' → ' + (rd.paraTxt || 'Ø' + rd.para) + ' a ' + fmt(rd.s, 2) + ' m' + (rd.movida ? ' (adiada)' : '') + ' · arraste para a adiar; clique e Delete para a remover</title>'
-        + '<polygon points="' + pol.map(c => n2(c[0]) + ',' + n2(c[1])).join(' ') + '" fill="' + (on ? '#f2c94c' : '#fff') + '" stroke="#1e293b" stroke-width="1.6" vector-effect="non-scaling-stroke"/></g>';
+        + '<polygon points="' + pol.map(c => n2(c[0]) + ',' + n2(c[1])).join(' ') + '" fill="' + (on ? VC.planta.COR_SEL : '#fff') + '" stroke="#1e293b" stroke-width="1.6" vector-effect="non-scaling-stroke"/></g>';
     });
   });
   if (!x) return s;
