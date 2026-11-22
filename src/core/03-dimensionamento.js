@@ -675,7 +675,8 @@ VC.calculo = {
       r.trocos.forEach(t => { t.area_m2 = (t.forma === 'retangular' ? 2 * ((t.b || 0) + (t.h || 0)) : Math.PI * (t.Dcom || 0)) / 1000 * (t.L || 0); });
       r.superficie_m2 = r.trocos.reduce((s, t) => s + t.area_m2, 0);
       r.aumentaJusante = (r.reducoesCalc || []).filter(x => x.aumenta).map(x => x.deTxt + ' → ' + x.paraTxt + ' a ' + VC.utils.fmt(x.s, 1) + ' m');
-      r.deltaPTroco = r.deltaPlin + r.deltaPsing + r.deltaPderiv;
+      this.calcularAcessorios(r, rho);   // Fase 4B: acessórios e curvas do desenho
+      r.deltaPTroco = r.deltaPlin + r.deltaPsing + r.deltaPderiv + (r.deltaPacess || 0) + (r.deltaPcurvas || 0);
     });
   },
 
@@ -789,6 +790,48 @@ VC.calculo = {
     });
   },
 
+  /* Fase 4B · troço onde fica a posição s */
+  trocoEm(r, s) { const T = r.trocos || []; return T.find(t => s >= t.de - 1e-9 && s < t.ate - 1e-9) || T[T.length - 1] || null; },
+  /* curvas do traçado na planta: posição (m ao longo do ramal) e ângulo (graus) */
+  curvasDoTracado(r) {
+    const pts = r.planta && r.planta.pts; if (!pts || pts.length < 3) return [];
+    let tot = 0; const acc = [0];
+    for (let i = 1; i < pts.length; i++) { tot += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]); acc.push(tot); }
+    const L = Number(r.L) || 0, out = [];
+    for (let i = 1; i < pts.length - 1; i++) {
+      const a = Math.atan2(pts[i][1] - pts[i - 1][1], pts[i][0] - pts[i - 1][0]), b = Math.atan2(pts[i + 1][1] - pts[i][1], pts[i + 1][0] - pts[i][0]);
+      let g = Math.abs(b - a) * 180 / Math.PI; if (g > 180) g = 360 - g;
+      if (g >= 25 && tot > 0) out.push({ s: acc[i] / tot * L, ang: Math.round(g), i });
+    }
+    return out;
+  },
+  /* acessórios (r.acessorios = [{ id, tipo, s, dpFab, L }]) e, com a regra «curvas pela planta», as curvas do desenho.
+     Nesse modo o ζ global do ramal deixa de contar: entra só a saída do pai (0,3) + cada curva na sua velocidade. */
+  calcularAcessorios(r, rho) {
+    const A = VC.constantes.ACESSORIOS, pv = v => 0.5 * rho * v * v, L = Number(r.L) || 0;
+    (r.trocos || []).forEach(t => { t.dpAcess = 0; t.dpCurvas = 0; });
+    r.acessCalc = (r.acessorios || []).map(a => {
+      const def = A[a.tipo] || A.registo, s = Math.max(0, Math.min(L, Number(a.s) || 0)), t = this.trocoEm(r, s), v = t ? Number(t.v) || 0 : Number(r.v) || 0;
+      const La = Number(a.L) > 0 ? Number(a.L) : (def.L || 0);
+      let dp, origem;
+      if (Number(a.dpFab) > 0) { dp = Number(a.dpFab); origem = 'catálogo'; }
+      else { dp = def.zeta * pv(v) + (def.fatorR ? (def.fatorR - 1) * (t ? Number(t.R) || 0 : 0) * La : 0); origem = def.fatorR ? 'R × ' + def.fatorR + ' em ' + VC.utils.fmt(La, 1) + ' m' : 'ζ ' + VC.utils.fmt(def.zeta, 2); }
+      if (t) t.dpAcess += dp;
+      return { id: a.id, tipo: a.tipo, nome: def.nome, s, v, dp, origem, L: La, key: t ? t.key : null };
+    });
+    r.deltaPacess = r.acessCalc.reduce((x, a) => x + a.dp, 0);
+    r.curvasCalc = []; r.deltaPcurvas = 0;
+    if (this.specDe(r, 'curvas', 'manual') === 'planta' && r.planta) {
+      r.curvasCalc = this.curvasDoTracado(r).map(c => {
+        const t = this.trocoEm(r, c.s), v = t ? Number(t.v) || 0 : Number(r.v) || 0, z = VC.constantes.ZETA_CURVA_90 * Math.min(c.ang, 90) / 90, dp = z * pv(v);
+        if (t) t.dpCurvas += dp;
+        return { s: c.s, ang: c.ang, zeta: z, v, dp };
+      });
+      r.deltaPcurvas = r.curvasCalc.reduce((x, c) => x + c.dp, 0);
+      r.deltaPsing = VC.constantes.ZETA_SAIDA_PAI * pv(Number(r.v) || 0);   // o ζ global deixa de contar
+    }
+  },
+
   /* Δp do início do ramal até à posição s (perda singular de entrada + troços até s + tês e reduções antes de s) */
   dpAte(r, s) {
     const trocos = r.trocos || [{ de: 0, ate: Number(r.L) || 0, dpLin: Number(r.deltaPlin) || 0, L: Number(r.L) || 0 }];
@@ -798,6 +841,8 @@ VC.calculo = {
       if (ov > 0 && t.L > 0) dp += t.dpLin * ov / t.L;
       if (t.de < s - 1e-9) dp += (t.dpTe || 0) + (t.dpReducao || 0);   // a derivação no início do troço fica a montante de s
     });
+    (r.acessCalc || []).forEach(x => { if (x.s < s - 1e-9) dp += x.dp; });   // Fase 4B
+    (r.curvasCalc || []).forEach(x => { if (x.s < s - 1e-9) dp += x.dp; });
     return dp;
   },
 

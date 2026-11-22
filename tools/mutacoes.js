@@ -324,6 +324,14 @@ const CASOS = [
     const C = VC.calculo, o = C.posicaoNoRamal; C.posicaoNoRamal = function (x, ramal, t) { if (x && x.prumada) { const y = Object.assign({}, x); delete y.prumada; return o.call(this, y, ramal, t); } return o.apply(this, arguments); };
     return () => { C.posicaoNoRamal = o; };
   }],
+  ['Acessórios: ζ na velocidade do início do ramal', 'N11.T26', () => {
+    const C = VC.calculo, o = C.trocoEm; C.trocoEm = function (r) { return (r.trocos || [])[0] || null; };
+    return () => { C.trocoEm = o; };
+  }],
+  ['Acessórios: não contam a jusante (sub-ramais)', 'N11.T26', () => {
+    const C = VC.calculo, o = C.dpAte; C.dpAte = function (r, s) { const a = r.acessCalc, c = r.curvasCalc; r.acessCalc = []; r.curvasCalc = []; try { return o.call(this, r, s); } finally { r.acessCalc = a; r.curvasCalc = c; } };
+    return () => { C.dpAte = o; };
+  }],
   // Fase 4 da auditoria: qualidade de cálculo
   ['ε_v do espaço ignorado (só o do Setup)', 'N2.T21', () => {
     const o = VC.calculo.evDe; VC.calculo.evDe = function () { return Number(VC.dados.eficaciaRemocao) || 1; };

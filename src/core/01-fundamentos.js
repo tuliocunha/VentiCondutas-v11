@@ -737,6 +737,7 @@ VC.estado._hashEstado = function () {
     + '|' + ((r.geometriaInput && r.geometriaInput.material) || '') + '|' + ((r.geometriaInput && r.geometriaInput.rugosidade) || '') + '|' + ((r.geometriaInput && r.geometriaInput.H_max) || '') + '|' + JSON.stringify((r.geometriaInput && r.geometriaInput.proprio) || {})   // v11.1 (E1) · v11.2: valores próprios
     + '|' + (r.sPai == null ? '' : r.sPai) + '|' + (r.planta ? r.planta.pisoId + ':' + JSON.stringify(r.planta.pts || []) : '')   // Fase 2A: posição no pai e traçado
     + '|' + JSON.stringify(r.especificacao || {}) + '|' + JSON.stringify(r.trocosFix || {}) + '|' + JSON.stringify(r.reducoes || {}) + '|' + (r.lock && r.lock.D ? r.Dcom : '')   // Fase 2 do desenho: especificação, Ø fixos e reduções
+    + '|' + JSON.stringify(r.acessorios || []) + '|' + JSON.stringify(r.prumada || '')   // Fase 4: acessórios e prumada (posição da derivação)
   ).join('#'));
   const terminais = (VC.dados && VC.dados.terminais) || [];
   partes.push('Tm' + terminais.length);
@@ -841,6 +842,15 @@ VC.constantes = {
       cobertura: { nome: 'saída / entrada na cobertura (chapéu)', zeta: 1.0, livre: 0.9 }
     }
   },
+  /* Fase 4B · acessórios nas condutas: ζ típico (referido à velocidade do troço onde estão) ou o Δp do catálogo.
+     Flexível: a perda linear do troço vezes fatorR no seu comprimento (corrugado). Curvas pela planta: ζ90 · ângulo/90. */
+  ACESSORIOS: {
+    registo: { nome: 'Registo de regulação', zeta: 0.3, nota: 'Aberto, lâminas opostas.' },
+    cortafogo: { nome: 'Registo corta-fogo', zeta: 0.6, nota: 'EN 15650 · classe EI do compartimento (EN 1366-2).' },
+    silenciador: { nome: 'Silenciador', zeta: 1.2, L: 1.0, nota: 'Use o Δp do catálogo para o caudal.' },
+    flexivel: { nome: 'Conduta flexível', zeta: 0, L: 1.0, fatorR: 2.0, nota: 'Comprimento curto e esticado (≤ 1,5 m).' }
+  },
+  ZETA_CURVA_90: 0.25, ZETA_SAIDA_PAI: 0.3,
   /* Fase 3B · perdas térmicas pelas paredes das condutas (isolamento): U = 1/(1/hi + e/λ + 1/he) */
   TERMICA: { LAMBDA: 0.035, HI: 20, HE: 8, T_AR: 16, T_ENV: 26, HR_ENV: 60, CP: 1005, MARGEM_ORVALHO: 0.5 },
   V_ABERTURA_EXTERIOR: 2.0,    // m/s · velocidade de referência numa grelha de admissão natural para o exterior (dimensiona a área livre)
