@@ -55,7 +55,7 @@ const CENAS = [
       __centrar(m, 1.3, 250, 330); await __espera(); window.__m = m;`,
     acao: async pg => { const [x, y] = await pg.evaluate(() => { const s = document.getElementById('plantaSVG'), M = s.getScreenCTM(), p = s.createSVGPoint(); p.x = window.__m[0]; p.y = window.__m[1]; const z = p.matrixTransform(M); return [z.x, z.y]; }); await pg.mouse.click(x, y, { button: 'right' }); await pg.waitForTimeout(500); },
     marcas: [{ svgPonto: 'm', n: 1, lado: 'tl' }, { sel: '#plantaCtx', n: 2, caixa: true, lado: 'tr' }],
-    pontos: `return { m: window.__m };`, recorte: TUDO.map(r => [315, 160, 760, 620]) },
+    pontos: `return { m: window.__m };`, recorte: [[315, 146, 760, 620]] },
 
   { id: 'escala', alt: 'Calibrar a escala por uma cota', prep: `
       const P = VC.planta, e = VC.dados.espacos.find(x => x.nome === 'Sala P0-S3'), a = e.planta.pts[0], b = e.planta.pts[1];
