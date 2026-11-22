@@ -580,6 +580,23 @@ VC6.testes = {
       } finally { VC.dados.utas = gU; VC.dados.nextId = JSON.parse(gN); }
       return cores && siglas && contraste && vcm;
     } });
+    self.registar({ id: 'N11.T15', nucleo: 'N11', grupo: 'Construtor & Dados', nome: 'Planta: encaixe e legenda de siglas', criterio: 'o vértice ganha ao meio e à aresta; a grelha só sem outro encaixe; a sigla mais comprida da legenda do projeto decide o tipo', fn: () => {
+      const P = VC.planta; if (!P || !P.encaixe || !VC.uta.siglasProjeto) return true;
+      const g = { pl: VC.dados.plantas, E: VC.dados.espacos, piso: P.piso, z: P.zoom, gr: P.grelha, sig: VC.dados.params.siglasEquip };
+      let enc = false, sig = false;
+      try {
+        VC.dados.plantas = [{ id: 'pt', nome: 'T', imagem: null, w: 1000, h: 1000, escala: 0.01 }]; P.piso = 'pt'; P.zoom = 1; P.grelha = false;
+        VC.dados.espacos = [{ id: 9601, nome: 'S', tipo: 'Escritório', A: 12, planta: { pisoId: 'pt', pts: [[100, 100], [500, 100], [500, 400], [100, 400]] } }];
+        const v = P.encaixe([506, 104], { salas: true }), m = P.encaixe([303, 96], { salas: true }), a = P.encaixe([200, 104], { salas: true }), n = P.encaixe([800, 800], { salas: true });
+        P.grelha = true; const gr = P.encaixe([823, 774], { salas: true }), grPerto = P.encaixe([506, 104], { salas: true });
+        enc = v.tipo === 'vertice' && v.q[0] === 500 && v.q[1] === 100 && m.tipo === 'meio' && m.q[0] === 300 && a.tipo === 'aresta' && a.q[1] === 100 && a.q[0] === 200 && n.tipo === null
+          && gr.tipo === 'grelha' && gr.q[0] === 800 && gr.q[1] === 750 && grPerto.tipo === 'vertice';
+        VC.dados.params.siglasEquip = [{ prefixo: 'VE', tipo: 'VEG' }, { prefixo: 'veisp', tipo: 'VEIS' }];
+        sig = (VC.uta.tipoSistemaDe({ nome: 'VEISP0' }) || {}).codigo === 'VEIS' && (VC.uta.tipoSistemaDe({ nome: 'VE-3' }) || {}).codigo === 'VEG'
+          && (VC.uta.tipoSistemaDe({ nome: 'VEISP0', tipoSistema: 'VEX' }) || {}).codigo === 'VEX' && VC.uta.definirSigla('XX', 'NADA') === false;
+      } finally { VC.dados.plantas = g.pl; VC.dados.espacos = g.E; P.piso = g.piso; P.zoom = g.z; P.grelha = g.gr; if (g.sig === undefined) delete VC.dados.params.siglasEquip; else VC.dados.params.siglasEquip = g.sig; }
+      return enc && sig;
+    } });
     self.registar({ id: 'N11.T14', nucleo: 'N11', grupo: 'Construtor & Dados', nome: 'Planta: textos proporcionais ao desenho', criterio: 'o tamanho segue a escala e o zoom (altura real em m), fica entre o mínimo legível e o máximo, e o fator do utilizador multiplica-o', fn: () => {
       const P = VC.planta; if (!P || !P._pxTexto) return true;
       const gz = P.zoom, gf = VC.dados.params.escalaTextos, p = { escala: 0.01 };   // 1 m = 100 px da imagem

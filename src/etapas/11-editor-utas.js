@@ -40,6 +40,7 @@ VC.editorUtas = {
     h += '<p style="font-size:11.5px;color:var(--texto-med);margin-bottom:10px">'
       + 'Cada UTA agrupa o ventilador + componentes (filtros, baterias, recuperador). '
       + 'O Q \u00e9 a soma dos caudais dos ramais que serve. O SFPint de cada UTA \u00e9 comparado com o limite do Reg. (UE) 1253/2014 (Ecodesign) para o seu tipo de unidade.</p>';
+    h += self._cartaoSiglas();
 
     h += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px">';
     h += '<div style="background:var(--superf2);border:1px solid var(--borda);border-left:3px solid var(--primario);border-radius:5px;padding:8px 10px"><div style="font-size:9.5px;font-weight:800;color:var(--texto-suave);text-transform:uppercase">UTAs</div><div style="font-size:16px;font-weight:900;color:var(--texto);margin-top:3px">' + utas.length + '</div></div>';
@@ -162,6 +163,31 @@ VC.editorUtas = {
     VC.dados.filtros.modo = (modo === 'medio' || modo === 'limpo') ? modo : 'sujo';
     VC.estado.forcarSync();
     VC.passos.render('utas');
+  },
+
+  /* Legenda de siglas do projeto: em Portugal as siglas dos equipamentos são da legenda de cada projeto.
+     Cada sigla aponta para um tipo da app; o nome do equipamento que começa por ela fica com esse tipo. */
+  _cartaoSiglas: function () {
+    var T = VC.constantes.TIPOS_SISTEMA || [], L = VC.uta.siglasProjeto(), U = VC.dados.utas || [], esc = VC.utils.esc;
+    var usa = function (pref) { return U.filter(function (u) { return String(u.nome || '').toUpperCase().replace(/\s+/g, ' ').trim().indexOf(pref) === 0; }).map(function (u) { return u.nome; }); };
+    var opc = function (sel) { return '<option value="">— tipo —</option>' + T.map(function (t) { return '<option value="' + t.codigo + '"' + (sel === t.codigo ? ' selected' : '') + '>' + esc(t.nome) + '</option>'; }).join(''); };
+    var h = '<details class="cartao-sub" style="margin-bottom:12px"' + '><summary style="cursor:pointer;font-weight:800;font-size:12px">Legenda de siglas do projeto <span style="font-weight:600;color:var(--texto-suave)">(' + L.length + ')</span></summary>';
+    h += '<p style="font-size:11.5px;color:var(--texto-med);margin:6px 0">As siglas dos equipamentos v\u00eam da legenda de cada projeto (n\u00e3o h\u00e1 norma portuguesa que as fixe). Diga \u00e0 app a que tipo corresponde cada sigla: um equipamento cujo nome comece por ela fica com esse tipo (ex.: VEISP \u2192 VEIS).</p>';
+    h += '<table class="tabela" style="font-size:12px"><thead><tr><th>Sigla (in\u00edcio do nome)</th><th>Tipo na app</th><th>Equipamentos</th><th></th></tr></thead><tbody>';
+    L.forEach(function (x) {
+      var u = usa(x.prefixo);
+      h += '<tr><td><b>' + esc(x.prefixo) + '</b></td><td><select class="input" onchange="VC.editorUtas.definirSigla(\'' + esc(x.prefixo) + '\', this.value)">' + opc(x.tipo) + '</select></td><td>' + (u.length ? esc(u.join(', ')) : '<i style="color:var(--texto-suave)">nenhum</i>') + '</td><td><button class="btn btn-mini" title="Remover a sigla" onclick="VC.editorUtas.definirSigla(\'' + esc(x.prefixo) + '\', \'\')">\u00d7</button></td></tr>';
+    });
+    h += '<tr><td><input class="input" id="siglaNova" placeholder="ex.: VEISP" style="width:110px" onkeydown="if(event.key===\'Enter\')VC.editorUtas.definirSigla(this.value, document.getElementById(\'siglaNovaTipo\').value)"></td><td><select class="input" id="siglaNovaTipo">' + opc('') + '</select></td><td colspan="2"><button class="btn btn-mini primario" onclick="VC.editorUtas.definirSigla(document.getElementById(\'siglaNova\').value, document.getElementById(\'siglaNovaTipo\').value)">Acrescentar</button></td></tr>';
+    return h + '</tbody></table></details>';
+  },
+  definirSigla: function (prefixo, tipo) {
+    if (!String(prefixo || '').trim()) { VC.ui.toast('Escreva a sigla.'); return; }
+    if (!VC.uta.definirSigla(prefixo, tipo)) { VC.ui.toast('Escolha o tipo da sigla.'); return; }
+    if (VC.historico && VC.historico.push) VC.historico.push('Legenda de siglas: ' + String(prefixo).toUpperCase() + (tipo ? ' \u2192 ' + tipo : ' removida'));
+    VC.estado.forcarSync();
+    VC.passos.render('utas');
+    var d = document.querySelector('details.cartao-sub'); if (d) d.open = true;
   },
 
   /* Fase 1 do desenho: tipo de sistema (VMC, VAN, VIN, VEG, VEX, VEI) */
