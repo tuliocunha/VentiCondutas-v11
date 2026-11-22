@@ -104,7 +104,11 @@ P.ligarRamaisAoEquip = function (id) {
   const antes = this._estado(), q = [u.planta.x, u.planta.y];
   lista.forEach(r => {
     const L0 = p.escala ? this.comprimentoM(r.planta.pts, p) : 0, Lt = Number(r.L) || 0;
-    r.planta.pts = [[q[0], q[1]]].concat(r.planta.pts);
+    // se o equipamento fica para lá do início, na linha do 1.º troço, o início passa para o equipamento em vez de o traçado voltar para trás
+    const P0 = r.planta.pts[0], P1 = r.planta.pts[1], dot = P1 ? (P0[0] - q[0]) * (P1[0] - P0[0]) + (P0[1] - q[1]) * (P1[1] - P0[1]) : 1;
+    const lq = P1 ? Math.hypot(P1[0] - q[0], P1[1] - q[1]) : 0, afast = P1 && lq ? Math.abs((P1[0] - q[0]) * (P0[1] - q[1]) - (P1[1] - q[1]) * (P0[0] - q[0])) / lq : Infinity;
+    if (dot < 0 && p.escala && afast * p.escala <= 0.3) r.planta.pts = [[q[0], q[1]]].concat(r.planta.pts.slice(1));
+    else r.planta.pts = [[q[0], q[1]]].concat(r.planta.pts);
     if (L0 && Math.abs(L0 - Lt) <= Math.max(0.05, Lt * 0.02)) r.L = n2(this.comprimentoM(r.planta.pts, p));
   });
   this._empilhar(lista.length + ' ramal(is) ligado(s) a ' + u.nome, antes);
