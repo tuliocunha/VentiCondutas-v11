@@ -264,6 +264,10 @@ const CASOS = [
     const C = VC.calculo, o = C._aplicarReajuste; C._aplicarReajuste = function (r, regras, a, b, c) { return o.call(this, r, Object.assign({}, regras, { minL: 0 }), a, b, c); };
     return () => { C._aplicarReajuste = o; };
   }],
+  ['Secções: «automática» nunca passa a retangular', 'N11.T18', () => {
+    const C = VC.calculo, o = C.formaPedida; C.formaPedida = function (r) { const f = o.call(this, r); return f === 'auto' ? 'circular' : f; };
+    return () => { C.formaPedida = o; };
+  }],
   // Fase 4 da auditoria: qualidade de cálculo
   ['ε_v do espaço ignorado (só o do Setup)', 'N2.T21', () => {
     const o = VC.calculo.evDe; VC.calculo.evDe = function () { return Number(VC.dados.eficaciaRemocao) || 1; };

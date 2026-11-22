@@ -188,18 +188,18 @@ P._svg = function (p) {
     // contorno branco por baixo de todo o ramal, depois cada troço com a sua largura
     // contorno: amarelo se selecionado; vermelho/âmbar se o ramal tem erro/atenção (a cor da conduta fica a da rede)
     const est = this._corEstado ? this._corEstado(r) : null;
-    partes.forEach(({ t, pts: q }) => { g += '<polyline points="' + q.map(c => c.join(',')).join(' ') + '" fill="none" stroke="' + (on ? '#f2c94c' : (est || '#fff')) + '" stroke-width="' + (largura(t.Dcom) + (on ? 6 : est ? 5 : 2.5) / z) + '" stroke-linejoin="round" stroke-linecap="round"' + (est && !on ? ' stroke-dasharray="' + 6 / z + ' ' + 3 / z + '"' : '') + '/>'; });
+    partes.forEach(({ t, pts: q }) => { g += '<polyline points="' + q.map(c => c.join(',')).join(' ') + '" fill="none" stroke="' + (on ? '#f2c94c' : (est || '#fff')) + '" stroke-width="' + (largura(t.forma === 'retangular' ? t.b : t.Dcom) + (on ? 6 : est ? 5 : 2.5) / z) + '" stroke-linejoin="round" stroke-linecap="round"' + (est && !on ? ' stroke-dasharray="' + 6 / z + ' ' + 3 / z + '"' : '') + '/>'; });
     partes.forEach(({ t, pts: q }) => {
       const tip = esc(r.nome) + ' · ' + (t.secao || (t.Dcom ? 'Ø' + t.Dcom : '')) + ' · Q ' + fmt(t.Q, 0) + ' m³/h · v ' + fmt(t.v) + ' m/s';
-      g += '<polyline class="planta-troco" points="' + q.map(c => c.join(',')).join(' ') + '" fill="none" stroke="' + cor + '" stroke-opacity="0.82" stroke-width="' + largura(t.Dcom) + '" stroke-linejoin="round" stroke-linecap="butt"><title>' + tip + '</title></polyline>';
+      g += '<polyline class="planta-troco" points="' + q.map(c => c.join(',')).join(' ') + '" fill="none" stroke="' + cor + '" stroke-opacity="0.82" stroke-width="' + largura(t.forma === 'retangular' ? t.b : t.Dcom) + '" stroke-linejoin="round" stroke-linecap="butt"><title>' + tip + '</title></polyline>';
     });
     // Ø de cada troço, quando há espaço no ecrã
     partes.forEach(({ t, pts: q }) => {
       if (!t.Dcom || partes.length < 2) return;
       if (this.comprimentoPx(q) * z < 70) return;
       const m = this._subTracado(q, 0.5, 0.5001), dx = q[q.length - 1][0] - q[0][0], dy = q[q.length - 1][1] - q[0][1], vertical = Math.abs(dy) > Math.abs(dx);
-      const off = largura(t.Dcom) / 2 + 9 / z;
-      g += '<text x="' + (m[0][0] + (vertical ? off : 0)) + '" y="' + (m[0][1] - (vertical ? 0 : off)) + '" font-size="' + 10 / z + '" text-anchor="' + (vertical ? 'start' : 'middle') + '" font-weight="700" fill="' + this._corRotulo(cor) + '" paint-order="stroke" stroke="#fff" stroke-width="' + 3 / z + '">Ø' + t.Dcom + '</text>';
+      const off = largura(t.forma === 'retangular' ? t.b : t.Dcom) / 2 + 9 / z;
+      g += '<text x="' + (m[0][0] + (vertical ? off : 0)) + '" y="' + (m[0][1] - (vertical ? 0 : off)) + '" font-size="' + 10 / z + '" text-anchor="' + (vertical ? 'start' : 'middle') + '" font-weight="700" fill="' + this._corRotulo(cor) + '" paint-order="stroke" stroke="#fff" stroke-width="' + 3 / z + '">' + (t.forma === 'retangular' ? t.secao : 'Ø' + t.Dcom) + '</text>';
     });
     let k = 1, maior = 0; for (let i = 1; i < pts.length; i++) { const l = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]); if (l > maior) { maior = l; k = i; } }
     const mx = (pts[k][0] + pts[k - 1][0]) / 2, my = (pts[k][1] + pts[k - 1][1]) / 2, vert = Math.abs(pts[k][1] - pts[k - 1][1]) > Math.abs(pts[k][0] - pts[k - 1][0]);

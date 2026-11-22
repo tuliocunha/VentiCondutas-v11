@@ -83,7 +83,7 @@ VC.calculo = {
     const Q = VC.utils.num(Qmh) / 3600;
     const W1505 = VC.constantes.W1505, H1505 = VC.constantes.H1505;
     const candidatos = W1505.reduce((acc, b) => acc.concat(H1505.filter(h => h <= hmax).map(h => ({ b, h }))), [])
-      .filter(c => Math.min(c.b, c.h) / Math.max(c.b, c.h) >= ratioMin)
+      .filter(c => Math.min(c.b, c.h) / Math.max(c.b, c.h) >= ratioMin && (!(opts && opts.deitada) || c.b >= c.h))   // deitada: largura ≥ altura (a forma habitual no teto)
       .sort((a, b) => { const pa = 2 * (a.b + a.h), pb = 2 * (b.b + b.h); return pa !== pb ? pa - pb : a.b * a.h - b.b * b.h; });
     // Fase 4: no método de perda constante a secção retangular também tem de cumprir R ≤ R_ALVO (como a circular)
     const comR = opts && opts.rho && opts.nu && ((VC.dados.metodoCalculo && VC.dados.metodoCalculo.metodo) || 'loss') === 'loss';
@@ -488,42 +488,44 @@ VC.calculo = {
     r.reducoesCalc = [];
     if (!T.length) return;
     const fix = r.trocosFix || {}, red = r.reducoes || {};
-    const circular = this.formaDe(r) !== 'retangular';
     const serie = this.specDe(r, 'serie', VC.dados.serieDiametros || 'S1') === 'S2' ? VC.constantes.COMM_S2 : VC.constantes.COMM_S1;
     const idx = d => { const i = serie.indexOf(d); return i >= 0 ? i : serie.filter(x => x < d).length; };
-    const fixo = t => { const f = Number(fix[t.key]); return f > 0 ? f : 0; };
-    if (!circular) { T.forEach(t => { t.motivo = ''; }); return; }
+    const nom = t => t.secNom || { forma: 'circular', D: t.Dnom };
+    const area = s => (s.forma === 'retangular' ? s.b * s.h : Math.PI * s.D * s.D / 4);
+    const perim = s => (s.forma === 'retangular' ? 2 * (s.b + s.h) : Math.PI * s.D);   // conduta gasta ∝ perímetro × L
+    const igual = (a, b) => a.forma === b.forma && (a.forma === 'retangular' ? a.b === b.b && a.h === b.h : a.D === b.D);
+    const passos = (a, b) => (a.forma === 'circular' && b.forma === 'circular' ? idx(a.D) - idx(b.D) : (area(b) < area(a) ? Infinity : 0));   // o salto mínimo conta na série circular
+    const fixo = t => this.lerSeccao(fix[t.key]);
     const extra = new Set();
     const sequencia = () => {
-      const D = [];
+      const S = [];
       T.forEach((t, i) => {
         t.motivo = '';
-        const f = fixo(t); if (f) { D[i] = f; t.motivo = 'Ø fixo'; return; }
-        if (i === 0 || semRegras) { D[i] = t.Dnom; return; }
-        const prev = D[i - 1], d = t.Dnom;
-        if (!(d < prev)) { D[i] = d; return; }
-        if (red[t.key] && red[t.key].removida) { D[i] = prev; t.motivo = 'redução removida'; return; }
-        if (extra.has(i)) { D[i] = prev; t.motivo = 'máximo de reduções'; return; }
-        if (regras.minL > 0 && t.L < regras.minL - 1e-9) { D[i] = prev; t.motivo = 'troço curto (< ' + regras.minL + ' m)'; return; }
-        if (idx(prev) - idx(d) < regras.minSaltos) { D[i] = prev; t.motivo = 'salto menor que ' + regras.minSaltos + ' tamanhos'; return; }
-        D[i] = d;
+        const f = fixo(t); if (f) { S[i] = f; t.motivo = 'secção fixa'; return; }
+        const n = nom(t);
+        if (i === 0 || semRegras) { S[i] = n; return; }
+        const prev = S[i - 1];
+        if (!(area(n) < area(prev) - 1e-9) || prev.forma !== n.forma) { S[i] = n; return; }
+        if (red[t.key] && red[t.key].removida) { S[i] = prev; t.motivo = 'redução removida'; return; }
+        if (extra.has(i)) { S[i] = prev; t.motivo = 'máximo de reduções'; return; }
+        if (regras.minL > 0 && t.L < regras.minL - 1e-9) { S[i] = prev; t.motivo = 'troço curto (< ' + regras.minL + ' m)'; return; }
+        if (passos(prev, n) < regras.minSaltos) { S[i] = prev; t.motivo = 'salto menor que ' + regras.minSaltos + ' tamanhos'; return; }
+        S[i] = n;
       });
-      return D;
+      return S;
     };
-    let D = sequencia();
+    let S = sequencia();
     if (regras.maxReducoes != null && !semRegras) {
-      // escolher as reduções a manter que gastam menos conduta (Σ Ø × L), com o Ø de cada grupo = o do seu início
-      const B = []; for (let i = 1; i < T.length; i++) if (D[i] < D[i - 1]) B.push(i);
+      // escolher as reduções a manter que gastam menos conduta (Σ perímetro × L), com a secção de cada grupo = a do seu início
+      const B = []; for (let i = 1; i < T.length; i++) if (area(S[i]) < area(S[i - 1]) - 1e-9) B.push(i);
       if (B.length > regras.maxReducoes) {
         const forcadas = new Set(B.filter(i => fixo(T[i]) || fixo(T[i - 1])));
         const k = Math.max(regras.maxReducoes, forcadas.size), n = T.length;
-        const cand = [0].concat(B);   // inícios possíveis de grupo
-        const custo = (a, b) => { let c = 0; for (let j = a; j < b; j++) c += D[a] * T[j].L; return c; };   // grupo [a, b)
-        // best[j][c]: menor custo dos troços 0..cand[j]-1 com c reduções, tendo um grupo a começar em cand[j]
+        const cand = [0].concat(B);
+        const custo = (a, b) => { let c = 0; for (let j = a; j < b; j++) c += perim(S[a]) * T[j].L; return c; };
         const best = cand.map(() => Array(k + 1).fill(Infinity)), de = cand.map(() => Array(k + 1).fill(-1));
         best[0][0] = 0;
         for (let j = 1; j < cand.length; j++) for (let c = 1; c <= k; c++) for (let i = 0; i < j; i++) {
-          // não se pode saltar uma redução forçada entre cand[i] e cand[j]
           if (cand.slice(i + 1, j).some(x => forcadas.has(x))) continue;
           const v = best[i][c - 1] + custo(cand[i], cand[j]); if (v < best[j][c]) { best[j][c] = v; de[j][c] = i; }
         }
@@ -534,66 +536,75 @@ VC.calculo = {
         }
         const manter = new Set(); for (let j = jf, c = cf; j > 0; c--) { manter.add(cand[j]); j = de[j][c]; }
         B.forEach(i => { if (!manter.has(i)) extra.add(i); });
-        D = sequencia();
+        S = sequencia();
       }
     }
     // secções finais e reduções adiadas (dividem o troço)
     const novo = [];
     T.forEach((t, i) => {
-      const prevD = i ? novo[novo.length - 1].Dcom : null, d = D[i];
+      const prevS = i ? novo[novo.length - 1].sec : null, sc = S[i];
       const mov = red[t.key] && Number(red[t.key].s);
-      if (i && prevD && d < prevD && mov > t.de + 1e-6 && mov < t.ate - 1e-6) {
-        novo.push(Object.assign({}, t, { ate: mov, L: mov - t.de, Dcom: prevD, motivo: 'redução adiada', parte: 1 }));
-        novo.push(Object.assign({}, t, { de: mov, L: t.ate - mov, Dcom: d, parte: 2 }));
-      } else novo.push(Object.assign({}, t, { Dcom: d }));
+      if (i && prevS && area(sc) < area(prevS) - 1e-9 && mov > t.de + 1e-6 && mov < t.ate - 1e-6) {
+        novo.push(Object.assign({}, t, { ate: mov, L: mov - t.de, sec: prevS, motivo: 'redução adiada', parte: 1 }));
+        novo.push(Object.assign({}, t, { de: mov, L: t.ate - mov, sec: sc, parte: 2 }));
+      } else novo.push(Object.assign({}, t, { sec: sc }));
     });
     r.trocos = novo.map(t => {
-      if (t.Dcom === t.Dnom && !t.parte) return t;
-      const sec = this._seccao(r, t.Q, rho, nu, t.Dcom);
-      return Object.assign(t, { De: sec.De, secao: sec.secaoCalc, v: sec.v, Re: sec.Re, R: sec.R, dpLin: (sec.R || 0) * t.L });
+      const sc = t.sec; delete t.sec;
+      if (igual(sc, nom(t)) && !t.parte) return t;
+      const sec = this._seccao(r, t.Q, rho, nu, sc);
+      return Object.assign(t, { Dcom: sc.forma === 'circular' ? sc.D : t.Dcom, forma: sec.forma, b: sec.b, h: sec.h, De: sec.De, secao: sec.secaoCalc, v: sec.v, Re: sec.Re, R: sec.R, dpLin: (sec.R || 0) * t.L });
     });
+    const larg = t => (t.forma === 'retangular' ? t.b : t.Dcom), rot = t => (t.forma === 'retangular' ? t.b + '×' + t.h : 'Ø' + t.Dcom);
     for (let i = 1; i < r.trocos.length; i++) {
       const a = r.trocos[i - 1], b = r.trocos[i];
-      if (b.Dcom !== a.Dcom) r.reducoesCalc.push({ s: b.de, key: b.key, de: a.Dcom, para: b.Dcom, movida: b.parte === 2, aumenta: b.Dcom > a.Dcom });
+      if (rot(a) !== rot(b)) r.reducoesCalc.push({ s: b.de, key: b.key, de: larg(a), para: larg(b), deTxt: rot(a), paraTxt: rot(b), movida: b.parte === 2, aumenta: (b.forma === 'retangular' ? b.b * b.h : Math.PI * b.Dcom * b.Dcom / 4) > (a.forma === 'retangular' ? a.b * a.h : Math.PI * a.Dcom * a.Dcom / 4) });
     }
   },
 
-  /* secção e perda linear de um troço com o caudal Q (circular ou retangular, Ø travado ou não) */
-  _seccao(r, Q, rho, nu, Dforcado) {
+  /* secção de um troço com o caudal Q. Calcula sempre as duas sugestões — circular (Ø comercial) e retangular
+     (EN 1505, h ≤ altura disponível) — e adota uma:
+       · forcado número → circular com esse Ø; forcado { b, h } → retangular com essas medidas;
+       · senão, a forma do ramal: circular, retangular, ou automática = circular (mais barata) e retangular
+         só quando o Ø (com o isolamento) não cabe na altura disponível.
+     Devolve v, Re, f, R da secção adotada, a forma, Dcom (Ø da sugestão circular), b × h e as duas sugestões. */
+  _avaliarCirc(D, Q, rho, nu, eps) {
+    const Dm = D / 1000, A = Math.PI * Dm * Dm / 4, v = A > 0 ? Q / 3600 / A : 0, Re = v > 0 ? v * Dm / nu : 0;
+    const f = VC.fisica.fatorAtrito(Re, eps / Dm), R = Dm > 0 ? f / Dm * (0.5 * rho * v * v) : 0;
+    return { forma: 'circular', D, v, Re, f, R, De: D, secao: 'Ø' + D };
+  },
+  _avaliarRect(b, h, Q, rho, nu, eps) {
+    const a = b / 1000, c = h / 1000, De = 1.30 * Math.pow(a * c, 0.625) / Math.pow(a + c, 0.25);   // diâmetro equivalente (Huebscher)
+    const vDe = Q / 3600 / (Math.PI * De * De / 4), Re = vDe * De / nu, f = VC.fisica.fatorAtrito(Re, eps / De);
+    return { forma: 'retangular', b, h, v: Q / 3600 / (a * c), Re, f, R: De > 0 ? f / De * (0.5 * rho * vDe * vDe) : 0, De: Math.round(De * 1000), secao: b + '×' + h };
+  },
+  lerSeccao(x) {   // 250 → circular; '400×200' / '400x200' → retangular; o resto → null
+    if (x == null || x === '') return null;
+    if (typeof x === 'number' || /^\s*\d+\s*$/.test(String(x))) { const D = Number(x); return D > 0 ? { forma: 'circular', D } : null; }
+    const m = String(x).match(/^\s*(\d+)\s*[x×X*]\s*(\d+)\s*$/); return m ? { forma: 'retangular', b: Number(m[1]), h: Number(m[2]) } : null;
+  },
+  _seccao(r, Q, rho, nu, forcado) {
     const eps = this.rugosidadeDe(r) / 1000, vMax = this.vMaxDe(r), hMax = this.hMaxDe(r);
-    const o = { aviso: '' };
-    if (Dforcado) {
-      const D = Dforcado / 1000, A = Math.PI * D * D / 4;
-      o.v = A > 0 ? Q / 3600 / A : 0; o.Re = o.v > 0 ? o.v * D / nu : 0;
-      o.f = VC.fisica.fatorAtrito(o.Re, eps / D); o.R = D > 0 ? o.f / D * (0.5 * rho * o.v * o.v) : 0; o.Dcom = Dforcado;
-    } else {
-      const z = this.dimensionarConduta(Q, { rho, nu, vMax, eps, serie: this.specDe(r, 'serie', null) });
-      o.v = z.v; o.Re = z.Re; o.f = z.f; o.R = z.R; o.Dcom = z.Dc;
-    }
-    // v11.1 (3.6): a forma da secção é escolha do utilizador (geometriaInput.forma).
-    // A app calcula a secção escolhida e só AVISA quando não cabe na altura disponível.
-    const rect = this.retangular(hMax, 0.5, vMax, Q, { rho, nu, eps });
-    if (this.formaDe(r) === 'retangular') {
-      if (rect) {
-        const a = rect.b / 1000, b = rect.h / 1000;
-        const De = 1.30 * Math.pow(a * b, 0.625) / Math.pow(a + b, 0.25);      // diâmetro equivalente (Huebscher)
-        const vDe = Q / 3600 / (Math.PI * De * De / 4);
-        o.v = Q / 3600 / (a * b);                                             // velocidade real na secção
-        o.Re = vDe * De / nu;
-        o.f = VC.fisica.fatorAtrito(o.Re, eps / De);
-        o.R = De > 0 ? o.f / De * (0.5 * rho * vDe * vDe) : 0;
-        o.De = Math.round(De * 1000);
-        o.secaoCalc = rect.b + '×' + rect.h;
-      } else {
-        o.secaoCalc = o.Dcom ? 'Ø' + o.Dcom : '';
-        o.aviso = 'Sem secção retangular com h ≤ ' + hMax + ' mm e v ≤ ' + vMax + ' m/s — calculado como circular Ø' + o.Dcom;
-      }
-    } else {
-      o.secaoCalc = o.Dcom ? 'Ø' + o.Dcom : '';
-      o.De = o.Dcom;
-      if (o.Dcom && o.Dcom > hMax) o.aviso = 'Ø' + o.Dcom + ' mm não cabe na altura disponível (' + hMax + ' mm)' + (rect ? ' — sugestão retangular ' + rect.b + '×' + rect.h : '');
-    }
-    return o;
+    const iso = this.specDe(r, 'isolamento', '') ? (Number(this.specDe(r, 'isolEsp', 0)) || 0) : 0;
+    const fx = typeof forcado === 'object' && forcado ? forcado : (Number(forcado) > 0 ? { forma: 'circular', D: Number(forcado) } : null);
+    const z = this.dimensionarConduta(Q, { rho, nu, vMax, eps, serie: this.specDe(r, 'serie', null) });
+    const Dmin = Number(this.specDe(r, 'Dmin', 0)) || 0;   // Ø mínimo da especificação (ex.: 125 em obra): o calculado nunca fica abaixo
+    const Dsug = Dmin > z.Dc ? this.diametroComercial(Dmin, this.specDe(r, 'serie', null)) : z.Dc;
+    const circ = this._avaliarCirc(fx && fx.forma === 'circular' ? fx.D : Dsug, Q, rho, nu, eps);
+    // sugestão retangular: deitada, até 4:1 (a proporção máxima habitual), h ≤ altura disponível menos o isolamento
+    const rq = this.retangular(Math.max(0, hMax - 2 * iso), 0.25, vMax, Q, { rho, nu, eps, deitada: true });
+    const rect = rq ? this._avaliarRect(rq.b, rq.h, Q, rho, nu, eps) : null;
+    const pedida = this.formaPedida(r);
+    let adot, aviso = '';
+    if (fx && fx.forma === 'retangular') adot = this._avaliarRect(fx.b, fx.h, Q, rho, nu, eps);
+    else if (fx) adot = circ;
+    else if (pedida === 'retangular') { adot = rect || circ; if (!rect) aviso = 'Sem secção retangular com h ≤ ' + (hMax - 2 * iso) + ' mm e v ≤ ' + vMax + ' m/s — calculado como circular Ø' + circ.D; }
+    else if (pedida === 'auto' && circ.D + 2 * iso > hMax && rect) adot = rect;
+    else adot = circ;
+    if (adot.forma === 'circular' && adot.D + 2 * iso > hMax) aviso = 'Ø' + adot.D + ' mm' + (iso ? ' + isolamento' : '') + ' não cabe na altura disponível (' + hMax + ' mm)' + (rect ? ' — sugestão retangular ' + rect.secao : '');
+    if (adot.forma === 'retangular' && adot.h + 2 * iso > hMax && !aviso) aviso = adot.secao + (iso ? ' + isolamento' : '') + ' não cabe na altura disponível (' + hMax + ' mm)';
+    return { v: adot.v, Re: adot.Re, f: adot.f, R: adot.R, Dcom: circ.D, De: adot.De, secaoCalc: adot.secao, forma: adot.forma, b: adot.b, h: adot.h, aviso,
+      sugCirc: { D: circ.D, v: circ.v, R: circ.R, cabe: circ.D + 2 * iso <= hMax }, sugRect: rect ? { b: rect.b, h: rect.h, v: rect.v, R: rect.R, De: rect.De } : null, formaPedida: pedida };
   },
 
   calcularCondutas(rho, nu) {
@@ -607,11 +618,13 @@ VC.calculo = {
       // troço inicial (caudal total do ramal): define o Ø, a v e a perda singular do ramal, como antes
       const s0 = this._seccao(r, Number(r.Q) || 0, rho, nu, travado);
       r.v = s0.v; r.Re = s0.Re; r.f = s0.f; r.R = s0.R; r.Dcom = s0.Dcom; r.De = s0.De; r.secaoCalc = s0.secaoCalc; r.avisoSecao = s0.aviso;
+      r.secaoAdotada = s0.forma || this.formaDe(r); r.b = s0.b; r.h = s0.h; r.sugCirc = s0.sugCirc; r.sugRect = s0.sugRect;
       const regras = this.regrasReajuste(r), unicoR = unico || regras.modo === 'unico';
       r.trocos = T.trocos.map((t, i) => {
         const sec = (i === 0 && Math.abs(t.Q - (Number(r.Q) || 0)) < 1e-9) ? s0 : this._seccao(r, t.Q, rho, nu, travado || (unicoR ? s0.Dcom : null));
         if (sec.aviso && !r.avisoSecao) r.avisoSecao = sec.aviso;
-        return { de: t.de, ate: t.ate, L: t.L, Q: t.Q, Dcom: sec.Dcom, Dnom: sec.Dcom, De: sec.De, secao: sec.secaoCalc, v: sec.v, Re: sec.Re, R: sec.R, dpLin: (sec.R || 0) * t.L, key: this.chaveTroco(t.de) };
+        return { de: t.de, ate: t.ate, L: t.L, Q: t.Q, Dcom: sec.Dcom, Dnom: sec.Dcom, De: sec.De, secao: sec.secaoCalc, v: sec.v, Re: sec.Re, R: sec.R, dpLin: (sec.R || 0) * t.L, key: this.chaveTroco(t.de),
+          forma: sec.forma, b: sec.b, h: sec.h, secNom: sec.forma === 'retangular' ? { forma: 'retangular', b: sec.b, h: sec.h } : { forma: 'circular', D: sec.Dcom }, sugCirc: sec.sugCirc, sugRect: sec.sugRect };
       });
       this._aplicarReajuste(r, regras, rho, nu, !!(travado || unicoR));
       r.modoTrocos = T.modo;
@@ -633,6 +646,10 @@ VC.calculo = {
         }
       });
       r.deltaPderiv = r.trocos.reduce((s, t) => s + (t.dpTe || 0) + (t.dpReducao || 0), 0);
+      // superfície de conduta (m²) = perímetro × L, troço a troço; secção que aumenta no sentido em que o caudal diminui
+      r.trocos.forEach(t => { t.area_m2 = (t.forma === 'retangular' ? 2 * ((t.b || 0) + (t.h || 0)) : Math.PI * (t.Dcom || 0)) / 1000 * (t.L || 0); });
+      r.superficie_m2 = r.trocos.reduce((s, t) => s + t.area_m2, 0);
+      r.aumentaJusante = (r.reducoesCalc || []).filter(x => x.aumenta).map(x => x.deTxt + ' → ' + x.paraTxt + ' a ' + VC.utils.fmt(x.s, 1) + ' m');
       r.deltaPTroco = r.deltaPlin + r.deltaPsing + r.deltaPderiv;
     });
   },
@@ -683,7 +700,9 @@ VC.calculo = {
   },
 
   /* v11.1: parâmetros de cada ramal (forma, rugosidade, altura disponível, velocidade máxima) */
-  formaDe(r) { return (r && r.geometriaInput && r.geometriaInput.forma === 'retangular') ? 'retangular' : 'circular'; },
+  /* forma pedida: 'circular', 'retangular' ou 'auto' (circular, que é mais barata; retangular só se a circular não couber) */
+  formaPedida(r) { const f = r && r.geometriaInput && r.geometriaInput.forma; return f === 'retangular' || f === 'circular' ? f : 'auto'; },
+  formaDe(r) { return this.formaPedida(r) === 'retangular' ? 'retangular' : 'circular'; },
   // v11.2: a rugosidade e a altura disponível vêm do Setup. Cada ramal guardava uma cópia (0,15 mm, 250 mm)
   // feita quando foi criado, e por isso mudar o Setup não tinha efeito. O valor do ramal só conta se for
   // marcado como próprio (geometriaInput.proprio.rugosidade / .H_max = true).

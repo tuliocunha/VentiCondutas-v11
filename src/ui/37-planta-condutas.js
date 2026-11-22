@@ -50,17 +50,22 @@ const camposSpec = [
   spec('estanquidade', 'Estanquidade (EN 12237 / EN 1507)', 'opcoes', { opcoes: () => ESTANQ }),
   spec('isolamento', 'Isolamento', 'opcoes', { opcoes: () => ISOL }),
   spec('isolEsp', 'Espessura do isolamento', 'num', { un: 'mm', min: 0, passo: 5, vis: r => !!C.specDe(r, 'isolamento', '') }),
+  spec('Dmin', 'Ø mínimo', 'num', { un: 'mm', min: 0, passo: 5, omissao: () => ({ v: '', origem: 'norma', nota: 'sem mínimo' }), ajuda: 'O Ø calculado nunca fica abaixo deste (ex.: 125 mm por limpeza ou montagem).' }),
   spec('reajuste', 'Reajuste do Ø', 'opcoes', { opcoes: () => [['', '—'], ['derivacao', 'reduzir em cada derivação'], ['unico', 'Ø único em todo o ramal']], omissao: () => ({ v: 'derivacao', origem: 'norma', nota: 'perda constante' }), ajuda: 'As regras abaixo passam aos sub-ramais.' }),
   spec('minL', 'Troço mínimo para reduzir', 'num', { un: 'm', min: 0, passo: 0.5, vis: r => C.regrasReajuste(r).modo !== 'unico', omissao: () => ({ v: 0, origem: 'norma', nota: 'sem mínimo' }) }),
   spec('minSaltos', 'Reduzir só se descer', 'num', { un: 'tamanhos', min: 1, passo: 1, vis: r => C.regrasReajuste(r).modo !== 'unico', omissao: () => ({ v: 1, origem: 'norma' }) }),
   spec('maxReducoes', 'Máximo de reduções no ramal', 'num', { min: 0, passo: 1, vis: r => C.regrasReajuste(r).modo !== 'unico', omissao: () => ({ v: '', origem: 'norma', nota: 'sem limite' }) })
 ];
 const ER = PN.esquemas.ramal;
+const pfR = ER.porFazer;
+ER.porFazer = function (r, p) { const a = pfR.call(this, r, p); return (r.aumentaJusante || []).length ? a.concat(['a secção aumenta a jusante (' + r.aumentaJusante.join('; ') + '): confirme a secção fixa']) : a; };
 ER.campos = ER.campos.concat(camposSpec);
 const resR = ER.resultado;
 ER.resultado = function (r, p) {
   const out = resR.call(this, r, p), R = r.reducoesCalc || [], F = Object.keys(r.trocosFix || {}).length;
-  out.push(['Reduções', R.length ? R.map(x => 'Ø' + x.de + '→' + x.para + ' a ' + fmt(x.s, 1) + ' m').join(' · ') : 'nenhuma', F ? F + ' troço(s) com Ø fixo' : 'clique num troço para o ver']);
+  out.push(['Superfície de conduta', fmt(r.superficie_m2, 2) + ' m²', 'perímetro × comprimento, troço a troço']);
+  if (r.sugCirc) out.splice(4, 0, ['Sugestão no início', 'Ø' + r.sugCirc.D + (r.sugRect ? ' · ou ' + r.sugRect.b + '×' + r.sugRect.h : ''), r.secaoAdotada === 'retangular' ? 'adotada a retangular' + (r.sugCirc.cabe ? '' : ' (a circular não cabe)') : 'adotada a circular (mais barata)']);
+  out.push(['Reduções', R.length ? R.map(x => (x.deTxt || 'Ø' + x.de) + '→' + (x.paraTxt || x.para) + ' a ' + fmt(x.s, 1) + ' m').join(' · ') : 'nenhuma', F ? F + ' troço(s) com Ø fixo' : 'clique num troço para o ver']);
   return out;
 };
 
@@ -79,12 +84,16 @@ PN.esquemas.troco = {
   titulo: o => o.r.nome + ' · troço ' + (o.i + 1) + ' de ' + o.n, icone: 'fa-grip-lines', rotulo: 'Troço',
   avisos: o => [o.r.nome],
   campos: [
-    { id: 'Dfixo', rot: 'Ø fixo neste troço', un: 'mm', tipo: 'opcoes', ess: true,
-      opcoes: o => { const S = C.specDe(o.r, 'serie', VC.dados.serieDiametros || 'S1') === 'S2' ? VC.constantes.COMM_S2 : VC.constantes.COMM_S1; return [['', 'calculado']].concat(S.map(d => [String(d), 'Ø' + d])); },
-      ler: o => { const f = (o.r.trocosFix || {})[o.key]; return f ? String(f) : ''; },
-      proposto: o => ({ v: '', origem: 'calculo', nota: 'Ø' + o.t.Dnom + ' (perda constante)' }),
-      escrever: (o, v) => { const F = o.r.trocosFix = Object.assign({}, o.r.trocosFix); if (vazio(v)) delete F[o.key]; else F[o.key] = Number(v); if (!Object.keys(F).length) delete o.r.trocosFix; },
-      ajuda: 'Um Ø fixo manda sobre o cálculo e as regras; a app avisa se a velocidade passar o limite.' }
+    { id: 'secFixa', rot: 'Secção fixa neste troço', tipo: 'texto', ess: true,
+      ler: o => { const f = (o.r.trocosFix || {})[o.key]; return f ? String(f).replace('x', '×') : ''; },
+      proposto: o => ({ v: '', origem: 'calculo', nota: o.t.secNom && o.t.secNom.forma === 'retangular' ? o.t.secNom.b + '×' + o.t.secNom.h : 'Ø' + o.t.Dnom }),
+      escrever: (o, v) => {
+        const F = o.r.trocosFix = Object.assign({}, o.r.trocosFix);
+        if (vazio(v)) delete F[o.key];
+        else { const sc = C.lerSeccao(v); if (!sc) { VC.ui.toast('Escreva um Ø (ex.: 250) ou largura × altura (ex.: 400×200).'); return; } F[o.key] = sc.forma === 'circular' ? sc.D : sc.b + '×' + sc.h; }
+        if (!Object.keys(F).length) delete o.r.trocosFix;
+      },
+      ajuda: 'Ø (ex.: 250) ou largura × altura em mm (ex.: 400×200). Manda sobre o cálculo e as regras; vazio volta ao calculado.' }
   ],
   resultado: o => {
     const T = trocosDaChave(o.r, o.key), t = T[0], u = T[T.length - 1];
@@ -93,11 +102,14 @@ PN.esquemas.troco = {
     return [
       ['Posição no ramal', fmt(t.de, 2) + ' a ' + fmt(u.ate, 2) + ' m', 'L ' + fmt(L, 2) + ' m'],
       ['Caudal', fmt(t.Q, 0) + ' m³/h'],
-      ['Ø calculado / adotado', 'Ø' + t.Dnom + ' / ' + T.map(x => 'Ø' + x.Dcom).join(' → '), t.motivo || (T.length > 1 ? 'redução adiada' : '')],
+      ['Secção adotada', T.map(x => x.forma === 'retangular' ? x.b + '×' + x.h : 'Ø' + x.Dcom).join(' → '), t.motivo || (T.length > 1 ? 'redução adiada' : 'a sugerida')],
+      t.sugCirc ? ['Sugestão circular', 'Ø' + t.sugCirc.D + ' · ' + fmt(t.sugCirc.v, 2) + ' m/s · ' + fmt(t.sugCirc.R, 2) + ' Pa/m', t.sugCirc.cabe ? 'preferida: mais barata' : 'não cabe na altura disponível'] : null,
+      t.sugRect ? ['Alternativa retangular', t.sugRect.b + '×' + t.sugRect.h + ' · ' + fmt(t.sugRect.v, 2) + ' m/s · ' + fmt(t.sugRect.R, 2) + ' Pa/m', 'Ø equivalente ' + t.sugRect.De] : ['Alternativa retangular', '—', 'nenhuma cabe na altura disponível'],
       ['Velocidade', fmt(vmax, 2) + ' m/s', vmax > lim + 1e-9 ? 'acima do limite de ' + fmt(lim, 1) + ' m/s' : 'limite ' + fmt(lim, 1) + ' m/s'],
       ['Perda linear R', fmt(t.R, 2) + ' Pa/m'],
+      ['Superfície de conduta', fmt(T.reduce((s, x) => s + (x.area_m2 || 0), 0), 2) + ' m²'],
       ['Δp do troço', fmt(dp, 1) + ' Pa', 'linear + tê + redução']
-    ];
+    ].filter(Boolean);
   },
   porFazer: o => { const T = trocosDaChave(o.r, o.key); const v = Math.max.apply(null, T.map(x => Number(x.v) || 0)); return v > C.vMaxDe(o.r) + 1e-9 ? ['velocidade acima do limite: aumente o Ø fixo ou volte ao calculado'] : []; },
   acoes: o => {
@@ -105,6 +117,11 @@ PN.esquemas.troco = {
     if (o.i > 0 && calc) a.push(['Remover a redução no início (Delete)', "VC.planta.removerReducao('" + esc(o.r.id) + "','" + o.key + "')"]);
     if (red && red.removida) a.push(['Repor a redução', "VC.planta.reporReducao('" + esc(o.r.id) + "','" + o.key + "')", true]);
     if (red && red.s) a.push(['Reduzir logo na derivação', "VC.planta.reporReducao('" + esc(o.r.id) + "','" + o.key + "')"]);
+    const t = o.t, def = "VC.paineis.definir('troco','" + esc(o.id) + "','secFixa',";
+    const atual = (o.r.trocosFix || {})[o.key];
+    if (t.sugCirc && String(atual) !== String(t.sugCirc.D)) a.push(['Usar circular Ø' + t.sugCirc.D, def + "'" + t.sugCirc.D + "')", t.sugCirc.cabe && !atual]);
+    if (t.sugRect && String(atual) !== t.sugRect.b + '×' + t.sugRect.h) a.push(['Usar retangular ' + t.sugRect.b + '×' + t.sugRect.h, def + "'" + t.sugRect.b + '×' + t.sugRect.h + "')"]);
+    if (atual) a.push(['Voltar à secção calculada', def + "'')", true]);
     a.push(['Voltar ao ramal', 'VC.planta.trocoSel=null;VC.planta.redesenhar()']);
     return a;
   }
@@ -143,7 +160,7 @@ P._svg = function (p) {
     if (this.trocoSel && String(this.trocoSel.r) === String(r.id)) {
       trocosDaChave(r, this.trocoSel.key).forEach(t => {
         const q = this._subTracado(pts, t.de / L, t.ate / L);
-        x += '<polyline class="planta-troco-sel" points="' + q.map(c => c.join(',')).join(' ') + '" fill="none" stroke="#ff6a00" stroke-opacity="0.55" stroke-width="' + (larg(r, t.Dcom) + 10 / z) + '" stroke-linecap="round" pointer-events="none"/>';
+        x += '<polyline class="planta-troco-sel" points="' + q.map(c => c.join(',')).join(' ') + '" fill="none" stroke="#ff6a00" stroke-opacity="0.55" stroke-width="' + (larg(r, t.forma === 'retangular' ? t.b : t.Dcom) + 10 / z) + '" stroke-linecap="round" pointer-events="none"/>';
       });
     }
     const Lpx = this.comprimentoPx(pts) || 1;
@@ -156,7 +173,7 @@ P._svg = function (p) {
       const a = [e.p[0] - ux * h / 2, e.p[1] - uy * h / 2], b = [e.p[0] + ux * h / 2, e.p[1] + uy * h / 2];
       const pol = [[a[0] + nx * w1, a[1] + ny * w1], [b[0] + nx * w2, b[1] + ny * w2], [b[0] - nx * w2, b[1] - ny * w2], [a[0] - nx * w1, a[1] - ny * w1]];
       const on = this.redSel === rd.key && this.trocoSel && String(this.trocoSel.r) === String(r.id);
-      x += '<g class="planta-red' + (on ? ' sel' : '') + '" data-r="' + r.id + '" data-k="' + rd.key + '"><title>Redução Ø' + rd.de + ' → Ø' + rd.para + ' a ' + fmt(rd.s, 2) + ' m' + (rd.movida ? ' (adiada)' : '') + ' · arraste para a adiar; clique e Delete para a remover</title>'
+      x += '<g class="planta-red' + (on ? ' sel' : '') + '" data-r="' + r.id + '" data-k="' + rd.key + '"><title>Redução ' + (rd.deTxt || 'Ø' + rd.de) + ' → ' + (rd.paraTxt || 'Ø' + rd.para) + ' a ' + fmt(rd.s, 2) + ' m' + (rd.movida ? ' (adiada)' : '') + ' · arraste para a adiar; clique e Delete para a remover</title>'
         + '<polygon points="' + pol.map(c => n2(c[0]) + ',' + n2(c[1])).join(' ') + '" fill="' + (on ? '#f2c94c' : '#fff') + '" stroke="#1e293b" stroke-width="1.6" vector-effect="non-scaling-stroke"/></g>';
     });
   });

@@ -83,7 +83,7 @@ P._svg = function (p) {
   (this.ramaisDoPiso ? this.ramaisDoPiso(p) : []).forEach(r => {
     const cor = this._corRamal(r), sent = this.sentidoDoAr(r);
     const larg = D => { const d = Number(D) || Number(r.Dcom) || 160; return p.escala ? Math.max(d / 1000 / p.escala, 2.5 / z) : Math.max(2.5, Math.min(9, d / 45)) / z; };
-    (this._trocosNoTracado ? this._trocosNoTracado(r) : [{ t: r, pts: r.planta.pts }]).forEach(({ t, pts }) => { setas += this._setasTracado(pts, sent, cor, z, larg(t.Dcom)); });
+    (this._trocosNoTracado ? this._trocosNoTracado(r) : [{ t: r, pts: r.planta.pts }]).forEach(({ t, pts }) => { setas += this._setasTracado(pts, sent, cor, z, larg(t.forma === 'retangular' ? t.b : t.Dcom)); });
     if (!r.parente && r.utaRef && r.planta.pts.length >= 2) equip += this._equipamentoNoInicio(r, z);
   });
   // setas e equipamentos por cima dos ramais e por baixo dos terminais
