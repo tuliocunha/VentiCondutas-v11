@@ -835,6 +835,15 @@ VC.constantes = {
   P138_SISTEMAS: { REJEICAO_RECUPERACAO_W: 80000, ETA_RECUPERACAO_MIN: 0.5, FREE_COOLING_M3H: 10000, CAUDAL_VARIAVEL_W: 100000, GT_AR_NOVO_M3H: 3000 },
   // Fase 5 · escadas pressurizadas: RT-SCIE art. 161.º (velocidade na porta aberta) e EN 12101-13 (força de abertura)
   ESCADAS: { vPortaSemCamara: 0.5, vPortaComCamara: 1.0, forcaPortaMax: 100 },
+  // materiais de conduta e rugosidade absoluta de referência (mm) · ASHRAE Handbook Fundamentals, cap. 21 (valores médios)
+  MATERIAIS_CONDUTA: [
+    { nome: 'Aço galvanizado', rugosidade: 0.15 },
+    { nome: 'Aço inoxidável', rugosidade: 0.05 },
+    { nome: 'Alumínio', rugosidade: 0.05 },
+    { nome: 'PVC / plástico', rugosidade: 0.01 },
+    { nome: 'Painel isolante (lã mineral, fibra)', rugosidade: 0.9 },
+    { nome: 'Conduta flexível (esticada)', rugosidade: 3.0 }
+  ],
   GARAGEM_UT2_AREA_MIN: 200,   // m² · parque de estacionamento (UT II) só a partir de 200 m² de área bruta (ANEPC, Nota Técnica 01/2021)
   COMM_S1: [63, 80, 100, 125, 160, 200, 250, 315, 355, 400, 450, 500, 560, 630, 710, 800, 900, 1000, 1120, 1250, 1400, 1600, 1800, 2000],
   COMM_S2: [100, 125, 160, 200, 250, 315, 400, 500, 630, 800, 1000, 1250, 1600, 2000],

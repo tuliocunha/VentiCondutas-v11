@@ -607,12 +607,26 @@ VC.calculo = {
     const g = r && r.geometriaInput;
     return !!(g && g.proprio && g.proprio[campo] && Number(g[campo]) > 0);
   },
+  /* Fase 0 do desenho (E12, herança): o valor próprio de um ramal passa aos sub-ramais que não têm o seu.
+     Devolve o ramal (ele próprio ou um antecessor) que define o campo, ou null (vale o Setup). */
+  origemPropria(r, campo) {
+    const R = (VC.dados && VC.dados.ramais) || [];
+    let x = r, guard = 0;
+    while (x && guard++ < 60) {
+      if (this._proprio(x, campo)) return x;
+      const pai = x.parente;
+      x = pai ? R.find(y => y.nome === pai && y !== x) : null;
+    }
+    return null;
+  },
   rugosidadeDe(r) {
-    if (this._proprio(r, 'rugosidade')) return Number(r.geometriaInput.rugosidade);
+    const o = this.origemPropria(r, 'rugosidade');
+    if (o) return Number(o.geometriaInput.rugosidade);
     return VC.utils.num(VC.dados.params && VC.dados.params.rugosidade) || 0.15;
   },
   hMaxDe(r) {
-    if (this._proprio(r, 'H_max')) return Number(r.geometriaInput.H_max);
+    const o = this.origemPropria(r, 'H_max');
+    if (o) return Number(o.geometriaInput.H_max);
     return Number(VC.dados.restricaoH) || 250;
   },
   vMaxDe(r) {

@@ -360,6 +360,8 @@ P.ligar = function () {
     if (a.tipo === 'vert') { if (a.mudou && VC.historico && VC.historico.push) VC.historico.push('desenho corrigido'); this.redesenhar(); return; }
     if (a.tipo === 'term') {
       const t = (VC.dados.terminais || []).find(x => String(x.id) === String(a.id));
+      // Fase 0 do desenho: clicar (sem arrastar) seleciona o terminal e abre o painel dele
+      if (t && !a.q) { if (this.selecionarTerminal) this.selecionarTerminal(t.id); else this.redesenhar(); return; }
       if (t && a.q) {
         t.planta = { pisoId: p.id, x: Math.round(a.q[0] * 10) / 10, y: Math.round(a.q[1] * 10) / 10 };
         const sala = this.salaEm(a.q);

@@ -529,3 +529,35 @@ html, body, .app { height: 100vh !important; overflow: hidden !important; margin
 /* nome do ramal editável na Topologia (árvore de ligações) */
 .topo-nome{font:inherit;font-size:12.5px;border:1px solid transparent;border-radius:4px;padding:1px 4px;background:transparent}
 .topo-nome:hover,.topo-nome:focus{border-color:var(--borda-media);background:#fff}
+/* ── Planta: painel único (Fase 0 do plano de desenho) ── */
+.pn{flex-shrink:0;background:#fff;border:1px solid var(--primario-esc);box-shadow:0 0 0 3px var(--primario-soft);border-radius:10px;display:flex;flex-direction:column;overflow:hidden}
+.pn-cab{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--borda);background:var(--superf2,#f8fafc)}
+.pn-cab>i{font-size:16px;color:var(--primario-esc);width:20px;text-align:center}
+.pn-cab>div{display:flex;flex-direction:column;min-width:0;flex:1}
+.pn-cab small{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#64748b}
+.pn-cab b{font-size:15px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pn-estado{font-size:11.5px;font-weight:800;padding:3px 8px;border-radius:999px;white-space:nowrap}
+.pn-ok{background:#e6f4ea;color:#1e6b34}.pn-atencao{background:#fdf1dc;color:#8a5a00}.pn-erro{background:#fbe4e4;color:#9b2c2c}.pn-porfazer{background:#eef1f5;color:#475569}
+.pn-sec{padding:10px 14px;border-bottom:1px solid var(--borda);display:flex;flex-direction:column;gap:8px}
+.pn-sec:last-child{border-bottom:none}
+.pn-sec-t{font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:#334155;cursor:default}
+details.pn-av>summary{cursor:pointer;list-style:revert}
+.pn-campo{display:flex;flex-direction:column;gap:3px}
+.pn-campo label{font-size:12.5px;font-weight:700;color:#475569}
+.pn-campo label small{font-weight:600;color:#64748b}
+.pn-entrada{display:flex;gap:6px;align-items:center}
+.pn-entrada input:not([type="checkbox"]),.pn-entrada select{font:inherit;font-size:14px;padding:7px 9px;border:1px solid var(--borda-media);border-radius:8px;background:#fff;min-height:38px;width:100%;box-sizing:border-box}
+.pn-entrada input:focus-visible,.pn-entrada select:focus-visible,.pn-repor:focus-visible{outline:3px solid var(--primario-soft);outline-offset:1px;border-color:var(--primario-esc)}
+.pn-sim{flex-direction:row-reverse;justify-content:flex-end;align-items:center;gap:8px}
+.pn-sim .pn-entrada input{width:20px;height:20px}
+.pn-repor{min-width:34px;min-height:34px;border:1px solid var(--borda-media);border-radius:8px;background:#fff;cursor:pointer;font-size:15px;color:var(--primario-esc)}
+.pn-origem{align-self:flex-start;font-size:11px;font-weight:700;padding:1px 7px;border-radius:999px}
+.pn-proposto{background:#eef4fb;color:#2f5f8f}.pn-igual{background:#eef1f5;color:#475569}.pn-escrito{background:#fdf1dc;color:#8a5a00}
+.pn-ajuda{font-size:11.5px;color:#64748b}
+.pn-res dl{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:0}
+.pn-res dt{font-size:12.5px;color:#64748b}
+.pn-res dd{margin:0;font-weight:700;font-variant-numeric:tabular-nums}
+.pn-res dd small{display:block;font-weight:500;color:#64748b;font-size:11.5px}
+.pn-falta ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:3px;font-size:12.5px;color:#7a4b00}
+.pn-acoes{display:flex;flex-wrap:wrap;gap:6px;padding:10px 14px}
+.pn-acoes .btn{min-height:36px}
