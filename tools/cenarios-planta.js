@@ -284,6 +284,28 @@ const CENARIOS = {
     ok(await h.v(() => !document.querySelector('.planta-vert')), 'As alças antigas (só cantos) deixaram de aparecer');
   },
 
+  /* sentido do ar automático: setas nos ramais, pontas nos terminais, equipamento com ar exterior / rejeição */
+  async sentido(pg, ok) {
+    const h = ajudas(pg); await prepararPlanta(pg);
+    await h.tecla('r'); await h.arrastar([100, 100], [500, 400]); await h.criarSala('Sala A', 'Escritório', 2);
+    const criar = async (y, rede, tipo, nome) => {
+      await h.tecla('l'); await h.clicar([100, y]); await h.clicar([700, y]); await h.tecla('Enter');
+      await pg.evaluate(() => { const t = document.getElementById('rmUtaTipo'); const d = t && t.closest('details'); if (d) d.open = true; });
+      await pg.selectOption('#rmUtaTipo', tipo); await pg.selectOption('#rmUtaRede', rede); await pg.fill('#rmUtaNome', nome); await pg.click('button:has-text("Criar equipamento")'); await pg.waitForTimeout(250);
+      await pg.click('button:has-text("Criar ramal")'); await pg.waitForTimeout(300);
+    };
+    await criar(500, 'insuflacao', 'VAN', 'VAN-A'); await criar(600, 'extracao', 'VEG', 'VEG-A');
+    const ang = await h.v(() => [...document.querySelectorAll('.planta-seta-ar')].map(p => [p.dataset.sentido, Number((p.getAttribute('transform').match(/rotate\(([-\d.]+)\)/) || [])[1])]));
+    ok(ang.some(([s, a]) => s === '1' && Math.abs(a) < 1) && ang.some(([s, a]) => s === '-1' && Math.abs(Math.abs(a) - 180) < 1), 'Insuflação: setas no sentido do traçado; extração: ao contrário (para o equipamento)', ang.slice(0, 6));
+    const eq = await h.v(() => [...document.querySelectorAll('.planta-equip')].map(g => g.dataset.tipo + ':' + g.dataset.lig).sort());
+    ok(eq.join() === 'VAN:ar-exterior,VEG:rejeicao', 'Equipamento no início do ramal com a ligação ao exterior do tipo (VAN capta, VEG rejeita)', eq);
+    await h.tecla('v'); await h.clicar([300, 500]); await pg.click('.pn-acoes button:has-text("Inverter o sentido")'); await pg.waitForTimeout(250);
+    const inv = await h.v(() => { const r = VC.dados.ramais.find(x => x.rede === 'insuflacao'); return r.planta.pts[0][0]; });
+    ok(inv === 700 && await h.v(() => [...document.querySelectorAll('.planta-equip')].some(g => g.dataset.tipo === 'VAN' && Number(g.querySelector('rect').getAttribute('x')) > 690)), 'Inverter o sentido muda as setas e leva o equipamento para a outra ponta');
+    await pg.click('#plantaMenuBt'); await pg.click('#plantaMenu .pm-item:has-text("sentido do ar")'); await pg.waitForTimeout(200);
+    ok(await pg.locator('.planta-sentido').count() === 0, 'O menu ☰ esconde o sentido do ar');
+  },
+
   /* PR 9: nome legível numa sala em L; zona útil nítida; Entrega recortada */
   async representacao(pg, ok) {
     const h = ajudas(pg);
