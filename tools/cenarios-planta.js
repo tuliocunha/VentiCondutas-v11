@@ -212,6 +212,27 @@ const CENARIOS = {
     ok(await pg.locator('.pn[data-pn="piso"]').count() === 1, 'Esc volta ao painel do piso');
   },
 
+  /* menu «Ferramentas»: nome e atalho de cada ícone; escolher no menu = ícone = tecla */
+  async menu(pg, ok) {
+    const h = ajudas(pg); await prepararPlanta(pg);
+    await pg.click('#plantaMenuBt'); await pg.waitForTimeout(200);
+    const linhas = await h.v(() => [...document.querySelectorAll('#plantaMenu .pm-item')].map(b => [b.querySelector('.pm-rot').textContent, (b.querySelector('kbd') || {}).textContent || '']));
+    const ferr = await h.v(() => VC.planta.FERRAMENTAS.map(f => [f[2], VC.planta.TECLAS[f[0]] || '']));
+    ok(ferr.every(([n, k]) => linhas.some(([a, b]) => a === n && b === k)), 'O menu lista todas as ferramentas com o nome e a tecla', { linhas });
+    ok(linhas.some(([a, b]) => a === 'Desfazer' && b === 'Ctrl+Z') && linhas.some(([a, b]) => /Cancelar/.test(a) && b === 'Esc'), 'O menu lista os comandos (Ctrl+Z, Esc…)');
+    await pg.keyboard.press('ArrowDown'); await pg.keyboard.press('ArrowDown'); await pg.keyboard.press('ArrowDown');
+    const foco = await h.v(() => document.activeElement.querySelector('.pm-rot').textContent);
+    await pg.keyboard.press('Enter'); await pg.waitForTimeout(250);
+    const st = await h.v(() => [(VC.planta.FERRAMENTAS.find(f => f[0] === VC.planta.ferramenta) || [])[2], document.getElementById('plantaMenu').hidden]);
+    ok(st[0] === foco && st[1], 'Setas + Enter escolhem a ferramenta e fecham o menu', [foco, st]);
+    await pg.click('#plantaMenuBt'); await pg.click('#plantaMenu .pm-item:has-text("Retângulo")'); await pg.waitForTimeout(200);
+    ok(await h.v(() => VC.planta.ferramenta === 'ret'), 'Clique em «Retângulo» no menu = tecla R');
+    await pg.click('#plantaMenuBt'); await pg.keyboard.press('Escape'); await pg.waitForTimeout(150);
+    ok(await pg.locator('#plantaMenu').isHidden() && await h.v(() => VC.planta.ferramenta === 'ret'), 'Esc fecha o menu sem mudar de ferramenta');
+    await pg.click('#plantaMenuBt'); await h.clicar([800, 600]); await pg.waitForTimeout(150);
+    ok(await pg.locator('#plantaMenu').isHidden(), 'Clicar fora fecha o menu');
+  },
+
   /* PR 9: nome legível numa sala em L; zona útil nítida; Entrega recortada */
   async representacao(pg, ok) {
     const h = ajudas(pg);
