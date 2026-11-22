@@ -9,8 +9,10 @@
    · O traço liga-se a um ramal existente ou cria um ramal novo (filho do ramal
      onde começa, ou principal de uma UTA). Terminais tocados pelo traço ligam-se
      a esse ramal, se forem da mesma rede.
-   · Depois do cálculo, cada ramal aparece com Ø e cor do estado; clicar mostra
-     Q, v, Δp e o L da tabela vs o medido.
+   · Depois do cálculo, cada ramal aparece com a cor do estado e desenhado à
+     escala do diâmetro, troço a troço (Fase 2A): a largura de cada troço é o
+     seu Ø na escala do piso, com o Ø escrito ao lado; clicar mostra Q, v, Δp
+     e o L da tabela vs o medido.
    Dados: ramal.planta = { pisoId, pts: [[x, y], …] } (píxeis da imagem).
    ============================================================ */
 (function () {
@@ -138,20 +140,63 @@ P._corRamal = function (r) {
   if (r.status === 'ATENÇÃO' || r.avisoSecao) return '#b7791f';
   return r.rede === 'insuflacao' ? '#2f5f8f' : (r.rede === 'extracao_suja' ? '#7a3b3b' : '#2f6b45');
 };
+/* troço de um traçado entre as frações a e b do comprimento (0 ≤ a < b ≤ 1) */
+P._subTracado = function (pts, a, b) {
+  const tot = this.comprimentoPx(pts); if (!(tot > 0)) return pts.slice();
+  const sa = a * tot, sb = b * tot, out = []; let acc = 0;
+  const ponto = (p0, p1, t) => [p0[0] + (p1[0] - p0[0]) * t, p0[1] + (p1[1] - p0[1]) * t];
+  for (let i = 1; i < pts.length; i++) {
+    const l = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]), s0 = acc, s1 = acc + l; acc = s1;
+    if (s1 < sa || l === 0) continue;
+    if (!out.length) out.push(ponto(pts[i - 1], pts[i], Math.max(0, (sa - s0) / l)));
+    if (s1 >= sb) { out.push(ponto(pts[i - 1], pts[i], Math.min(1, (sb - s0) / l))); break; }
+    out.push(pts[i]);
+  }
+  return out.length >= 2 ? out : pts.slice();
+};
+/* Condutas à escala: cada troço (Fase 2A) desenhado com a largura do seu Ø, na escala da planta
+   (piso sem escala: largura esquemática). A posição dos troços no traçado segue a mesma regra das
+   derivações: fração do L do ramal. */
+P._trocosNoTracado = function (r) {
+  const pts = r.planta.pts, L = Number(r.L) || 0;
+  const T = Array.isArray(r.trocos) && r.trocos.length && L > 0 ? r.trocos : [{ de: 0, ate: 1, Dcom: r.Dcom, secao: r.secaoCalc, Q: r.Q, v: r.v }];
+  const Lr = Array.isArray(r.trocos) && r.trocos.length && L > 0 ? L : 1;
+  return T.map(t => ({ t, pts: this._subTracado(pts, Math.max(0, t.de / Lr), Math.min(1, t.ate / Lr)) }));
+};
 const svgBase = P._svg;
 P._svg = function (p) {
   const s = svgBase.call(this, p), z = this.zoom || 1;
   let x = '';
   this.ramaisDoPiso(p).forEach(r => {
     const pts = r.planta.pts, cor = this._corRamal(r), on = String(this.ramalSel) === String(r.id);
-    const lw = Math.max(2.5, Math.min(9, (Number(r.Dcom) || 160) / 45)) + (on ? 3 : 0);
+    const largura = D => {   // largura do traço em píxeis da imagem
+      const d = Number(D) || Number(r.Dcom) || 160;
+      if (p.escala) return Math.max(d / 1000 / p.escala, 2.5 / z);
+      return Math.max(2.5, Math.min(9, d / 45)) / z;
+    };
+    const partes = this._trocosNoTracado(r);
+    let g = '';
+    // contorno branco por baixo de todo o ramal, depois cada troço com a sua largura
+    partes.forEach(({ t, pts: q }) => { g += '<polyline points="' + q.map(c => c.join(',')).join(' ') + '" fill="none" stroke="' + (on ? '#f2c94c' : '#fff') + '" stroke-width="' + (largura(t.Dcom) + (on ? 6 : 2.5) / z) + '" stroke-linejoin="round" stroke-linecap="round"/>'; });
+    partes.forEach(({ t, pts: q }) => {
+      const tip = esc(r.nome) + ' · ' + (t.secao || (t.Dcom ? 'Ø' + t.Dcom : '')) + ' · Q ' + fmt(t.Q, 0) + ' m³/h · v ' + fmt(t.v) + ' m/s';
+      g += '<polyline class="planta-troco" points="' + q.map(c => c.join(',')).join(' ') + '" fill="none" stroke="' + cor + '" stroke-opacity="0.82" stroke-width="' + largura(t.Dcom) + '" stroke-linejoin="round" stroke-linecap="butt"><title>' + tip + '</title></polyline>';
+    });
+    // Ø de cada troço, quando há espaço no ecrã
+    partes.forEach(({ t, pts: q }) => {
+      if (!t.Dcom || partes.length < 2) return;
+      if (this.comprimentoPx(q) * z < 70) return;
+      const m = this._subTracado(q, 0.5, 0.5001), dx = q[q.length - 1][0] - q[0][0], dy = q[q.length - 1][1] - q[0][1], vertical = Math.abs(dy) > Math.abs(dx);
+      const off = largura(t.Dcom) / 2 + 9 / z;
+      g += '<text x="' + (m[0][0] + (vertical ? off : 0)) + '" y="' + (m[0][1] - (vertical ? 0 : off)) + '" font-size="' + 10 / z + '" text-anchor="' + (vertical ? 'start' : 'middle') + '" font-weight="700" fill="' + cor + '" paint-order="stroke" stroke="#fff" stroke-width="' + 3 / z + '">Ø' + t.Dcom + '</text>';
+    });
     let k = 1, maior = 0; for (let i = 1; i < pts.length; i++) { const l = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]); if (l > maior) { maior = l; k = i; } }
-    const mx = (pts[k][0] + pts[k - 1][0]) / 2, my = (pts[k][1] + pts[k - 1][1]) / 2;
-    const rot = r.nome + (r.Dcom ? ' · Ø' + r.Dcom : (r.secaoCalc ? ' · ' + r.secaoCalc : ''));
+    const mx = (pts[k][0] + pts[k - 1][0]) / 2, my = (pts[k][1] + pts[k - 1][1]) / 2, vert = Math.abs(pts[k][1] - pts[k - 1][1]) > Math.abs(pts[k][0] - pts[k - 1][0]);
+    const rot = r.nome + (partes.length < 2 && r.Dcom ? ' · Ø' + r.Dcom : (partes.length < 2 && r.secaoCalc ? ' · ' + r.secaoCalc : ''));
+    const offR = largura(r.Dcom) / 2 + 9 / z;
     x += '<g class="planta-ramal' + (on ? ' sel' : '') + '" data-r="' + r.id + '"><title>' + esc(r.nome) + ' · ' + esc(r.rede) + ' · Q ' + fmt(r.Q, 0) + ' m³/h · v ' + fmt(r.v) + ' m/s · Δp ' + fmt(r.deltaPTroco, 1) + ' Pa</title>'
-      + '<polyline points="' + pts.map(q => q.join(',')).join(' ') + '" fill="none" stroke="#fff" stroke-width="' + (lw + 3) + '" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>'
-      + '<polyline points="' + pts.map(q => q.join(',')).join(' ') + '" fill="none" stroke="' + cor + '" stroke-width="' + lw + '" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>'
-      + '<text x="' + mx + '" y="' + (my - 7 / z) + '" font-size="' + 11.5 / z + '" text-anchor="middle" font-weight="800" fill="' + cor + '">' + esc(rot) + '</text></g>';
+      + g
+      + '<text x="' + (mx - (vert ? offR : 0)) + '" y="' + (my + (vert ? 0 : offR + 11 / z)) + '" font-size="' + 11.5 / z + '" text-anchor="' + (vert ? 'end' : 'middle') + '" font-weight="800" fill="' + cor + '" paint-order="stroke" stroke="#fff" stroke-width="' + 3 / z + '">' + esc(rot) + '</text></g>';
   });
   if (this.ferramenta === 'ramal' || this.tracado.length) {
     const pts = this.tracado.concat(this.ponteiro && this.tracado.length ? [this.ponteiro] : []);
