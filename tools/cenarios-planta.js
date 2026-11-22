@@ -89,7 +89,7 @@ const CENARIOS = {
     ok(Math.abs(await h.v(() => VC.dados.plantas[0].escala) - 0.01) < 1e-6, 'Escala pela área: 400 × 300 px com 12 m² → 0,01 m/px');
     await h.criarSala('Circ', 'Circulação');
     await h.tecla('r'); await h.arrastar([500, 100], [700, 400]); await h.criarSala('WC', 'Sanitários');
-    await h.tecla('t'); await h.arrastar([600, 250], [300, 250]);
+    await h.tecla('x'); await h.arrastar([600, 250], [300, 250]);
     ok(await pg.locator('button:has-text("Criar transferência")').isDisabled(), 'Transferência WC → Circulação bloqueada (Portaria 138-I, 1.2.2 f)');
     await pg.click('button:has-text("Inverter direção")'); await pg.waitForTimeout(250);
     await pg.fill('#plantaTrfQ', '45'); await pg.locator('#plantaTrfQ').press('Enter'); await pg.waitForTimeout(300);
@@ -148,7 +148,7 @@ const CENARIOS = {
     await h.tecla('r'); await h.arrastar([500, 100], [700, 400]); await h.criarSala('WC G', 'Sanitários');
     await h.tecla('v'); await h.clicar([300, 250]); await h.tecla('Escape');
     ok(await h.v(() => VC.planta.selecionado === null), 'Esc limpa a seleção');
-    await h.tecla('t'); await h.arrastar([300, 250], [600, 250]); await pg.fill('#plantaTrfQ', '45'); await pg.locator('#plantaTrfQ').press('Enter'); await pg.waitForTimeout(300);
+    await h.tecla('x'); await h.arrastar([300, 250], [600, 250]); await pg.fill('#plantaTrfQ', '45'); await pg.locator('#plantaTrfQ').press('Enter'); await pg.waitForTimeout(300);
     await h.tecla('Delete');
     ok(await h.v(() => !(VC.dados.transferencias || []).some(t => t.deNome === 'Circ G')), 'Delete na seta selecionada remove a transferência');
     await h.passo('associacao');
@@ -367,8 +367,8 @@ const CENARIOS = {
     ok(await h.v(() => JSON.stringify(VC.planta.rascunho[0]) === '[600,550]'), 'Grelha (G) de 0,50 m: o ponto vai para (600, 550)', await h.v(() => VC.planta.rascunho[0]));
     await h.tecla('Escape'); await h.tecla('g');
     // medir
-    await h.tecla('m'); await h.clicar([100, 100]); await h.clicar([500, 100]); await h.clicar([500, 400]); await h.tecla('Enter');
-    ok(await h.v(() => Math.abs(VC.planta.medidaTotal() - 7) < 1e-6 && VC.planta.medidaFim && /total 7[.,]00 m/.test(document.getElementById('plantaMedida').textContent)), 'Medir (M): 4,00 + 3,00 m, total 7,00 m no desenho', await h.v(() => [VC.planta.medida, VC.planta.medidaTotal(), VC.planta.medidaFim, (document.getElementById('plantaMedida') || {}).textContent]));
+    await h.tecla('t'); await h.clicar([100, 100]); await h.clicar([500, 100]); await h.clicar([500, 400]); await h.tecla('Enter');
+    ok(await h.v(() => Math.abs(VC.planta.medidaTotal() - 7) < 1e-6 && VC.planta.medidaFim && /total 7[.,]00 m/.test(document.getElementById('plantaMedicao').textContent)), 'Medir: 4,00 + 3,00 m, total 7,00 m no desenho', await h.v(() => [VC.planta.medida, VC.planta.medidaTotal(), VC.planta.medidaFim, (document.getElementById('plantaMedicao') || {}).textContent]));
     ok(await h.v(() => VC.dados.espacos.filter(e => e.planta).length === 1 && !VC.planta.pendente), 'Medir não cria nada');
     await h.tecla('Escape');
     ok(await h.v(() => VC.planta.medida.length === 0), 'Esc limpa a medição');
@@ -385,6 +385,51 @@ const CENARIOS = {
     ok(Math.abs(rod[0] - 300) < 0.5 && Math.abs(rod[1] - 400) < 0.5 && Math.abs(rod[2] - 12) < 0.01, 'Rodar 90°: 4 × 3 m passa a 3 × 4 m, a área mantém-se', rod);
     await pg.locator('#plantaSVG').hover(); await pg.keyboard.press('Control+z'); await pg.waitForTimeout(250);
     ok(await h.v(() => { const e = VC.dados.espacos.find(x => x.nome === 'Sala P (2)'); return e && e.planta.pts[0][0] === 200; }), 'Ctrl+Z desfaz a rotação');
+  },
+
+  /* atalhos e gestos ao estilo SketchUp / AutoCAD */
+  async cad(pg, ok) {
+    const h = ajudas(pg); await prepararPlanta(pg);
+    const fer = () => h.v(() => VC.planta.ferramenta);
+    await h.tecla('x'); ok(await fer() === 'trf', 'X: Transferência');
+    await h.tecla('t'); ok(await fer() === 'medir', 'T: Medir (fita métrica do SketchUp)');
+    await h.tecla(' '); ok(await fer() === 'sel', 'Espaço (toque): Selecionar, como no SketchUp');
+    // retângulo por dois cliques e por «4;3»
+    await h.tecla('r'); await h.clicar([100, 100]);
+    let [x, y] = await h.ecra(400, 300); await pg.mouse.move(x, y); await pg.waitForTimeout(80);
+    await pg.keyboard.type('4;3'); await pg.keyboard.press('Enter'); await pg.waitForTimeout(250);
+    const perto = (A, B) => !!A && A.length === B.length && A.every((q, i) => Math.abs(q[0] - B[i][0]) < 0.05 && Math.abs(q[1] - B[i][1]) < 0.05);
+    ok(perto(await h.v(() => VC.planta.pendente), [[100, 100], [500, 100], [500, 400], [100, 400]]), 'R + clique + «4;3» Enter: retângulo de 4 × 3 m', await h.v(() => VC.planta.pendente));
+    await h.criarSala('Sala C', 'Escritório', 1);
+    await h.tecla('r'); await h.clicar([600, 100]); await h.clicar([800, 300]);
+    ok(perto(await h.v(() => VC.planta.pendente), [[600, 100], [800, 100], [800, 300], [600, 300]]), 'R por dois cliques (canto e canto oposto)', await h.v(() => VC.planta.pendente));
+    await h.tecla('Escape');
+    // mover 2 m com distância escrita
+    await h.tecla('m'); await h.clicar([300, 250]);
+    [x, y] = await h.ecra(300, 500); await pg.mouse.move(x, y); await pg.waitForTimeout(80);
+    await pg.keyboard.type('2'); await pg.keyboard.press('Enter'); await pg.waitForTimeout(250);
+    ok(await h.v(() => { const e = VC.dados.espacos.find(x => x.nome === 'Sala C'); return e.planta.pts[0][0] === 100 && e.planta.pts[0][1] === 300; }), 'M: clique na sala, rato para baixo, «2» Enter → a sala desce 2,00 m');
+    // mover com Ctrl = copiar
+    await h.clicar([300, 450]); [x, y] = await h.ecra(800, 450);
+    await pg.keyboard.down('Control'); await pg.mouse.move(x, y); await pg.mouse.click(x, y); await pg.keyboard.up('Control'); await pg.waitForTimeout(300);
+    ok(await h.v(() => { const c = VC.dados.espacos.find(x => x.nome === 'Sala C (2)'); return c && c.planta.pts[0][0] === 600 && c.planta.pts[0][1] === 300 && VC.dados.espacos.find(x => x.nome === 'Sala C').planta.pts[0][0] === 100; }), 'M com Ctrl: copia a sala para o destino e o original fica');
+    // rodar com ângulo escrito
+    await h.tecla('q'); await h.clicar([300, 450]); await pg.keyboard.type('90'); await pg.keyboard.press('Enter'); await pg.waitForTimeout(250);
+    ok(await h.v(() => { const e = VC.dados.espacos.find(x => x.nome === 'Sala C'); const xs = e.planta.pts.map(q => q[0]), ys = e.planta.pts.map(q => q[1]); return Math.abs(Math.max(...xs) - Math.min(...xs) - 300) < 0.5 && Math.abs(Math.max(...ys) - Math.min(...ys) - 400) < 0.5; }), 'Q: clique na sala, «90» Enter → rodada 90°');
+    // apagar
+    await h.tecla('e'); await h.clicar([700, 400]);
+    ok(await h.v(() => { const c = VC.dados.espacos.find(x => x.nome === 'Sala C (2)'); return c && !c.planta; }), 'E: clique apaga o desenho da sala (fica na tabela)');
+    await pg.locator('#plantaSVG').hover(); await pg.keyboard.press('Control+z'); await pg.waitForTimeout(250);
+    ok(await h.v(() => !!VC.dados.espacos.find(x => x.nome === 'Sala C (2)').planta), 'Ctrl+Z repõe o desenho apagado');
+    // F8 orto, F3, F9, Shift+Z
+    await h.tecla('F8'); ok(await h.v(() => VC.planta.orto && /ORTO/.test(document.getElementById('plantaEstado').textContent)), 'F8 liga o orto (indicado na barra de estado)');
+    await h.tecla('p'); await h.clicar([150, 600]); await h.clicar([400, 640]);
+    ok(await h.v(() => Math.abs(VC.planta.rascunho[1][1] - VC.planta.rascunho[0][1]) < 1e-9), 'Com orto, o segundo ponto fica na horizontal do primeiro', await h.v(() => VC.planta.rascunho));
+    await h.tecla('Escape'); await h.tecla('F8');
+    await h.tecla('F3'); ok(await h.v(() => VC.planta.encaixeDesligado), 'F3 desliga o encaixe'); await h.tecla('F3');
+    await h.tecla('F9'); ok(await h.v(() => VC.planta.grelha), 'F9 liga a grelha'); await h.tecla('F9');
+    await pg.evaluate(() => { VC.planta.zoom = 3; VC.planta.aplicarVista(); }); await pg.keyboard.press('Shift+Z'); await pg.waitForTimeout(200);
+    ok(await h.v(() => VC.planta.zoom < 3), 'Shift+Z mostra a planta inteira (Zoom Extents)');
   },
 
   /* PR 9: nome legível numa sala em L; zona útil nítida; Entrega recortada */

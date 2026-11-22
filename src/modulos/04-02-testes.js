@@ -597,6 +597,18 @@ VC6.testes = {
       } finally { VC.dados.plantas = g.pl; VC.dados.espacos = g.E; P.piso = g.piso; P.zoom = g.z; P.grelha = g.gr; if (g.sig === undefined) delete VC.dados.params.siglasEquip; else VC.dados.params.siglasEquip = g.sig; }
       return enc && sig;
     } });
+    self.registar({ id: 'N11.T16', nucleo: 'N11', grupo: 'Construtor & Dados', nome: 'Planta: atalhos ao estilo SketchUp / AutoCAD', criterio: 'cada ferramenta tem uma tecla e não há teclas repetidas; L, R, M, Q, E, T, H como no SketchUp; rotação com o rato em passos de 15°', fn: () => {
+      const P = VC.planta; if (!P || !P._anguloRot) return true;
+      const T = P.TECLAS, ks = P.FERRAMENTAS.map(f => (T[f[0]] || '').toUpperCase());
+      const unicas = ks.every(k => k) && new Set(ks).size === ks.length;
+      const su = T.ramal === 'L' && T.ret === 'R' && T.mover === 'M' && T.rodar === 'Q' && T.apagar === 'E' && T.medir === 'T' && T.mao === 'H';
+      const g = P.rot; let ang = false;
+      try {
+        P.rot = { c: [0, 0], a0: 0 };
+        ang = P._anguloRot([10, 3]) === 15 && P._anguloRot([10, 3], true) === 17 && P._anguloRot([0, 10]) === 90 && P._anguloRot([-10, -1]) === -180;
+      } finally { P.rot = g; }
+      return unicas && su && ang;
+    } });
     self.registar({ id: 'N11.T14', nucleo: 'N11', grupo: 'Construtor & Dados', nome: 'Planta: textos proporcionais ao desenho', criterio: 'o tamanho segue a escala e o zoom (altura real em m), fica entre o mínimo legível e o máximo, e o fator do utilizador multiplica-o', fn: () => {
       const P = VC.planta; if (!P || !P._pxTexto) return true;
       const gz = P.zoom, gf = VC.dados.params.escalaTextos, p = { escala: 0.01 };   // 1 m = 100 px da imagem

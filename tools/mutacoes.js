@@ -252,6 +252,10 @@ const CASOS = [
     const U = VC.uta, o = U.siglasProjeto; U.siglasProjeto = () => [];
     return () => { U.siglasProjeto = o; };
   }],
+  ['Atalhos: duas ferramentas com a mesma tecla', 'N11.T16', () => {
+    const T = VC.planta.TECLAS, o = T.medir; T.medir = 'M';
+    return () => { T.medir = o; };
+  }],
   // Fase 4 da auditoria: qualidade de cálculo
   ['ε_v do espaço ignorado (só o do Setup)', 'N2.T21', () => {
     const o = VC.calculo.evDe; VC.calculo.evDe = function () { return Number(VC.dados.eficaciaRemocao) || 1; };

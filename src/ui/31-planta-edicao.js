@@ -179,7 +179,7 @@ P.ligar = function () {
     if (arr.modo === 'v') {
       let v = q;
       if (arr.ed.tipo === 'ramal' && !ev.altKey) v = this._encaixarVertice(v, arr.ed.o);
-      if (ev.shiftKey) {
+      if (ev.shiftKey || this.orto) {
         const ant = arr.ed.fechado || arr.i > 0 ? B[(arr.i - 1 + n) % n] : null, seg = arr.ed.fechado || arr.i < n - 1 ? B[(arr.i + 1) % n] : null;
         v = this._ortogonal(v, ant, seg);
       }
