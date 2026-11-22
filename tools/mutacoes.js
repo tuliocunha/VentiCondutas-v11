@@ -236,6 +236,10 @@ const CASOS = [
     const U = VC.uta, o = U.criarDeTipo; U.criarDeTipo = function (c, n, r, z) { const u = o.call(this, c, n, r, z); delete u.uvbPar; return u; };
     return () => { U.criarDeTipo = o; };
   }],
+  ['Cores: a paleta do utilizador é ignorada', 'N11.T13', () => {
+    const P = VC.planta, o = P.cores; P.cores = function () { return Object.assign({}, VC.constantes.PALETA_REDES); };
+    return () => { P.cores = o; };
+  }],
   // Fase 4 da auditoria: qualidade de cálculo
   ['ε_v do espaço ignorado (só o do Setup)', 'N2.T21', () => {
     const o = VC.calculo.evDe; VC.calculo.evDe = function () { return Number(VC.dados.eficaciaRemocao) || 1; };

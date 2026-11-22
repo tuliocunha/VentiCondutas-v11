@@ -24,7 +24,7 @@ const fmt = (n, d) => VC.utils.fmt(n, d == null ? 0 : d);
 const PDFJS = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/';
 
 P.FERRAMENTAS.push(['trf', 'fa-right-left', 'Transferência']);
-P.DICAS.sel = 'Clique numa sala para a selecionar; arraste os cantos da sala selecionada para corrigir o desenho. Os terminais (I, E) também se arrastam.';
+P.DICAS.sel = 'Clique numa sala para a selecionar; arraste os cantos da sala selecionada para corrigir o desenho. Os terminais (GI, GE, VE…) também se arrastam.';
 P.DICAS.trf = 'Arraste de uma sala para outra passando pela porta (por exemplo, do corredor para a casa de banho): a seta fica onde o arrasto atravessa as paredes. O caudal sugerido equilibra o destino; a origem pode ser compensada.';
 P.pendenteTrf = null;
 
@@ -54,6 +54,8 @@ P.salaEm = function (q, piso) { return this.espacosDoPiso(piso || this.pisoAtual
 P.terminaisDe = function (e) { return (VC.dados.terminais || []).filter(t => (t.espacos || []).some(x => String(x.id) === String(e.id) || x.nome === e.nome)); };
 P._letra = t => (t.rede === 'insuflacao' ? 'I' : 'E');
 P._corTerm = t => (t.rede === 'insuflacao' ? '#4f6d8c' : (t.rede === 'extracao_suja' ? '#a14b4b' : '#3f7a52'));
+P._corTrf = () => '#9a6a12';   // transferência (a paleta das redes substitui-a)
+P._corTexto = () => '#fff';    // letra dentro do terminal (a paleta escolhe preto ou branco pelo contraste)
 
 /* coloca os terminais de um espaço numa grelha dentro do desenho (insuflação em cima, extração em baixo) */
 P.distribuir = function (e, todos) {
@@ -226,14 +228,14 @@ P._setaTrf = function (t, po, z) {
   const sel = String(this.trfSel) === String(t.id);
   return '<g class="planta-trf' + (sel ? ' sel' : '') + '" data-trf="' + esc(t.id) + '"><title>' + esc(t.deNome) + ' → ' + esc(t.paraNome) + ' · ' + fmt(t.Q) + ' m³/h' + (t.compensacao ? ' · origem compensada' : '') + '</title>'
     + '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="transparent" stroke-width="18" vector-effect="non-scaling-stroke"/>'
-    + (sel ? '<circle cx="' + po.x + '" cy="' + po.y + '" r="' + 30 / z + '" fill="rgba(154,106,18,.12)" stroke="#9a6a12" stroke-dasharray="4 3" vector-effect="non-scaling-stroke"/>' : '')
-    + '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="#9a6a12" stroke-width="3.5" vector-effect="non-scaling-stroke" marker-end="url(#plantaSeta)"/>'
-    + '<text x="' + (po.x + nx * k) + '" y="' + (po.y + ny * k + 4 / z) + '" font-size="' + 12 / z + '" text-anchor="middle" font-weight="700" fill="#7a5a1e" stroke="#fff" stroke-width="3" paint-order="stroke" vector-effect="non-scaling-stroke">' + fmt(t.Q) + ' m³/h</text></g>';
+    + (sel ? '<circle cx="' + po.x + '" cy="' + po.y + '" r="' + 30 / z + '" fill="' + P._corTrf() + '" fill-opacity=".12" stroke="' + P._corTrf() + '" stroke-dasharray="4 3" vector-effect="non-scaling-stroke"/>' : '')
+    + '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="' + P._corTrf() + '" stroke-width="3.5" vector-effect="non-scaling-stroke" marker-end="url(#plantaSeta)"/>'
+    + '<text x="' + (po.x + nx * k) + '" y="' + (po.y + ny * k + 4 / z) + '" font-size="' + 12 / z + '" text-anchor="middle" font-weight="700" fill="' + P._corTrf() + '" stroke="#fff" stroke-width="3" paint-order="stroke" vector-effect="non-scaling-stroke">' + fmt(t.Q) + ' m³/h</text></g>';
 };
 const svgBase = P._svg;
 P._svg = function (p) {
   const s = svgBase.call(this, p), z = this.zoom || 1;
-  let x = '<defs><marker id="plantaSeta" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#9a6a12"/></marker></defs>';
+  let x = '<defs><marker id="plantaSeta" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="' + P._corTrf() + '"/></marker></defs>';
   const salas = this.espacosDoPiso(p), porId = {}; salas.forEach(e => { porId[e.id] = e; });
   (VC.dados.transferencias || []).forEach(t => {
     const a = porId[t.deId], b = porId[t.paraId]; if (!a || !b) return;
@@ -243,11 +245,11 @@ P._svg = function (p) {
     if (!t.planta || t.planta.pisoId !== p.id) return;
     const r = 10 / z, c = this._corTerm(t);
     x += '<g class="planta-term" data-t="' + esc(t.id) + '"><title>' + esc(t.nome || t.id) + ' · ' + esc(t.tipo || '') + ' · ' + fmt(t.Q) + ' m³/h</title><circle cx="' + t.planta.x + '" cy="' + t.planta.y + '" r="' + r + '" fill="' + c + '" stroke="#fff" stroke-width="2" vector-effect="non-scaling-stroke"/>'
-      + '<text x="' + t.planta.x + '" y="' + (t.planta.y + 4 / z) + '" font-size="' + 11 / z + '" text-anchor="middle" font-weight="800" fill="#fff">' + this._letra(t) + '</text></g>';
+      + '<text x="' + t.planta.x + '" y="' + (t.planta.y + (this._letra(t).length > 1 ? 3.2 : 4) / z) + '" font-size="' + (this._letra(t).length > 2 ? 7.5 : this._letra(t).length > 1 ? 9 : 11) / z + '" text-anchor="middle" font-weight="800" fill="' + this._corTexto(c) + '">' + this._letra(t) + '</text></g>';
   });
   const sel = this.ferramenta === 'sel' && salas.find(e => String(e.id) === String(this.selecionado));
   if (sel) x += sel.planta.pts.map((q, i) => '<circle class="planta-vert" data-i="' + i + '" cx="' + q[0] + '" cy="' + q[1] + '" r="' + 7 / z + '" fill="#fff" stroke="#4f6d8c" stroke-width="2.5" vector-effect="non-scaling-stroke"/>').join('');
-  x += '<line id="plantaTrfLinha" x1="0" y1="0" x2="0" y2="0" stroke="#9a6a12" stroke-width="3" stroke-dasharray="6 4" vector-effect="non-scaling-stroke" marker-end="url(#plantaSeta)" visibility="hidden"/>';
+  x += '<line id="plantaTrfLinha" x1="0" y1="0" x2="0" y2="0" stroke="' + P._corTrf() + '" stroke-width="3" stroke-dasharray="6 4" vector-effect="non-scaling-stroke" marker-end="url(#plantaSeta)" visibility="hidden"/>';
   return s.replace(/<\/svg>$/, x + '</svg>');
 };
 

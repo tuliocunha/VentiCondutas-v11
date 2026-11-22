@@ -302,6 +302,13 @@ const CENARIOS = {
     await h.tecla('v'); await h.clicar([300, 500]); await pg.click('.pn-acoes button:has-text("Inverter o sentido")'); await pg.waitForTimeout(250);
     const inv = await h.v(() => { const r = VC.dados.ramais.find(x => x.rede === 'insuflacao'); return r.planta.pts[0][0]; });
     ok(inv === 700 && await h.v(() => [...document.querySelectorAll('.planta-equip')].some(g => g.dataset.tipo === 'VAN' && Number(g.querySelector('rect').getAttribute('x')) > 690)), 'Inverter o sentido muda as setas e leva o equipamento para a outra ponta');
+    ok(await h.v(() => { const l = document.querySelector('.planta-leg-redes'); return !!l && /SUP/.test(l.textContent) && /ETA/.test(l.textContent) && /ODA/.test(l.textContent) && /EHA/.test(l.textContent); }), 'Legenda com as redes do piso (SUP, ETA) e ar exterior / rejeição (ODA, EHA)');
+    await h.tecla('Escape'); await h.tecla('Escape'); await pg.waitForTimeout(150);
+    await pg.evaluate(() => { const d = document.querySelector('.pn[data-pn="piso"] details'); if (d) d.open = true; });
+    await pg.evaluate(() => { const i = document.getElementById('pn-piso-cor_SUP'); i.value = '#aa00aa'; i.dispatchEvent(new Event('change')); }); await pg.waitForTimeout(250);
+    ok(await h.v(() => [...document.querySelectorAll('.planta-troco')].some(x => x.getAttribute('stroke') === '#aa00aa')), 'Cor da insuflação mudada no painel do piso: as condutas mudam');
+    await pg.click('.pn[data-pn="piso"] .pn-repor'); await pg.waitForTimeout(250);
+    ok(await h.v(() => ![...document.querySelectorAll('.planta-troco')].some(x => x.getAttribute('stroke') === '#aa00aa') && !(VC.dados.params.paletaRedes || {}).SUP), '↺ repõe a cor da norma');
     await pg.click('#plantaMenuBt'); await pg.click('#plantaMenu .pm-item:has-text("sentido do ar")'); await pg.waitForTimeout(200);
     ok(await pg.locator('.planta-sentido').count() === 0, 'O menu ☰ esconde o sentido do ar');
   },

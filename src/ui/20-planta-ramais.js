@@ -140,6 +140,15 @@ P._corRamal = function (r) {
   if (r.status === 'ATENÇÃO' || r.avisoSecao) return '#b7791f';
   return r.rede === 'insuflacao' ? '#2f5f8f' : (r.rede === 'extracao_suja' ? '#7a3b3b' : '#2f6b45');
 };
+/* cor do texto de um ramal: a da rede, escurecida quando é clara (amarelo da extração) para se ler sobre fundo branco */
+P._corRotulo = function (hex) {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex || ''); if (!m) return hex;
+  const c = [0, 2, 4].map(i => parseInt(m[1].substr(i, 2), 16));
+  const L = (0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]) / 255;
+  if (L < 0.45) return hex;
+  const k = 0.45 / L;
+  return '#' + c.map(v => Math.round(v * k).toString(16).padStart(2, '0')).join('');
+};
 /* troço de um traçado entre as frações a e b do comprimento (0 ≤ a < b ≤ 1) */
 P._subTracado = function (pts, a, b) {
   const tot = this.comprimentoPx(pts); if (!(tot > 0)) return pts.slice();
@@ -177,7 +186,9 @@ P._svg = function (p) {
     const partes = this._trocosNoTracado(r);
     let g = '';
     // contorno branco por baixo de todo o ramal, depois cada troço com a sua largura
-    partes.forEach(({ t, pts: q }) => { g += '<polyline points="' + q.map(c => c.join(',')).join(' ') + '" fill="none" stroke="' + (on ? '#f2c94c' : '#fff') + '" stroke-width="' + (largura(t.Dcom) + (on ? 6 : 2.5) / z) + '" stroke-linejoin="round" stroke-linecap="round"/>'; });
+    // contorno: amarelo se selecionado; vermelho/âmbar se o ramal tem erro/atenção (a cor da conduta fica a da rede)
+    const est = this._corEstado ? this._corEstado(r) : null;
+    partes.forEach(({ t, pts: q }) => { g += '<polyline points="' + q.map(c => c.join(',')).join(' ') + '" fill="none" stroke="' + (on ? '#f2c94c' : (est || '#fff')) + '" stroke-width="' + (largura(t.Dcom) + (on ? 6 : est ? 5 : 2.5) / z) + '" stroke-linejoin="round" stroke-linecap="round"' + (est && !on ? ' stroke-dasharray="' + 6 / z + ' ' + 3 / z + '"' : '') + '/>'; });
     partes.forEach(({ t, pts: q }) => {
       const tip = esc(r.nome) + ' · ' + (t.secao || (t.Dcom ? 'Ø' + t.Dcom : '')) + ' · Q ' + fmt(t.Q, 0) + ' m³/h · v ' + fmt(t.v) + ' m/s';
       g += '<polyline class="planta-troco" points="' + q.map(c => c.join(',')).join(' ') + '" fill="none" stroke="' + cor + '" stroke-opacity="0.82" stroke-width="' + largura(t.Dcom) + '" stroke-linejoin="round" stroke-linecap="butt"><title>' + tip + '</title></polyline>';
@@ -188,7 +199,7 @@ P._svg = function (p) {
       if (this.comprimentoPx(q) * z < 70) return;
       const m = this._subTracado(q, 0.5, 0.5001), dx = q[q.length - 1][0] - q[0][0], dy = q[q.length - 1][1] - q[0][1], vertical = Math.abs(dy) > Math.abs(dx);
       const off = largura(t.Dcom) / 2 + 9 / z;
-      g += '<text x="' + (m[0][0] + (vertical ? off : 0)) + '" y="' + (m[0][1] - (vertical ? 0 : off)) + '" font-size="' + 10 / z + '" text-anchor="' + (vertical ? 'start' : 'middle') + '" font-weight="700" fill="' + cor + '" paint-order="stroke" stroke="#fff" stroke-width="' + 3 / z + '">Ø' + t.Dcom + '</text>';
+      g += '<text x="' + (m[0][0] + (vertical ? off : 0)) + '" y="' + (m[0][1] - (vertical ? 0 : off)) + '" font-size="' + 10 / z + '" text-anchor="' + (vertical ? 'start' : 'middle') + '" font-weight="700" fill="' + this._corRotulo(cor) + '" paint-order="stroke" stroke="#fff" stroke-width="' + 3 / z + '">Ø' + t.Dcom + '</text>';
     });
     let k = 1, maior = 0; for (let i = 1; i < pts.length; i++) { const l = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]); if (l > maior) { maior = l; k = i; } }
     const mx = (pts[k][0] + pts[k - 1][0]) / 2, my = (pts[k][1] + pts[k - 1][1]) / 2, vert = Math.abs(pts[k][1] - pts[k - 1][1]) > Math.abs(pts[k][0] - pts[k - 1][0]);
@@ -196,7 +207,7 @@ P._svg = function (p) {
     const offR = largura(r.Dcom) / 2 + 9 / z;
     x += '<g class="planta-ramal' + (on ? ' sel' : '') + '" data-r="' + r.id + '"><title>' + esc(r.nome) + ' · ' + esc(r.rede) + ' · Q ' + fmt(r.Q, 0) + ' m³/h · v ' + fmt(r.v) + ' m/s · Δp ' + fmt(r.deltaPTroco, 1) + ' Pa</title>'
       + g
-      + '<text x="' + (mx - (vert ? offR : 0)) + '" y="' + (my + (vert ? 0 : offR + 11 / z)) + '" font-size="' + 11.5 / z + '" text-anchor="' + (vert ? 'end' : 'middle') + '" font-weight="800" fill="' + cor + '" paint-order="stroke" stroke="#fff" stroke-width="' + 3 / z + '">' + esc(rot) + '</text></g>';
+      + '<text x="' + (mx - (vert ? offR : 0)) + '" y="' + (my + (vert ? 0 : offR + 11 / z)) + '" font-size="' + 11.5 / z + '" text-anchor="' + (vert ? 'end' : 'middle') + '" font-weight="800" fill="' + this._corRotulo(cor) + '" paint-order="stroke" stroke="#fff" stroke-width="' + 3 / z + '">' + esc(rot) + '</text></g>';
   });
   if (this.ferramenta === 'ramal' || this.tracado.length) {
     const pts = this.tracado.concat(this.ponteiro && this.tracado.length ? [this.ponteiro] : []);

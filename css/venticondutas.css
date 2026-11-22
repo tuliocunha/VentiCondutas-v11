@@ -574,3 +574,9 @@ details.pn-av>summary{cursor:pointer;list-style:revert}
 .pm-rot{flex:1}
 .planta-menu{border-bottom:1px solid var(--borda);padding-bottom:2px;margin-bottom:2px}
 .planta-menubt[aria-expanded="true"]{background:var(--primario-soft)}
+/* ── Planta: legenda das redes (EN 16798-3) e campo de cor ── */
+.planta-leg-redes{flex-basis:100%;width:100%;display:flex;flex-wrap:wrap;gap:3px 12px;padding-bottom:5px;margin-bottom:5px;border-bottom:1px solid var(--borda)}
+.planta-leg-redes span{display:flex;align-items:center;gap:7px}
+.planta-leg-redes small{flex-basis:100%;color:#64748b;font-size:10.5px}
+#plantaTela .planta-legenda{pointer-events:none;max-width:min(520px,calc(100% - 420px))}   /* só informa: não tapa cliques no desenho */
+.pn-cor .pn-entrada input[type="color"]{width:52px;min-height:34px;padding:2px;border:1px solid var(--borda-media);border-radius:8px;background:#fff;cursor:pointer}
