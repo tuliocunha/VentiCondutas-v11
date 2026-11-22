@@ -82,16 +82,24 @@ P.criarTerminalAqui = function (rede, Q, n) {
 };
 
 /* ── UTA no cartão do ramal (A4) ── */
-P.criarUtaAqui = function (rede, nome) {
+P.criarUtaAqui = function (rede, nome, tipo) {
   if (this._bloqueado()) return null;
   rede = VC.redes.normalizar(rede);
-  nome = String(nome || '').trim() || (rede === 'extracao_suja' ? 'VEX-' : 'UTA-') + ((VC.dados.utas || []).filter(u => u.rede === rede).length + 1);
-  if ((VC.dados.utas || []).some(u => String(u.nome).toLowerCase() === nome.toLowerCase())) { VC.ui.toast('Já existe uma UTA «' + nome + '».'); return null; }
-  const u = VC.uta.criar(nome, rede, '');
-  u.componentes = rede === 'insuflacao' ? VC.uta.componentesPadrao() : VC.uta.componentesExtracao();
-  if (VC.historico && VC.historico.push) VC.historico.push('Nova UTA: ' + nome);
+  const T = (VC.constantes.TIPOS_SISTEMA || []).find(x => x.codigo === tipo) || null;
+  if (T && T.redes.indexOf(rede) < 0) { VC.ui.toast('Um equipamento ' + T.codigo + ' não serve a rede de ' + VC.redes.rotulo(rede) + '.'); return null; }
+  const pref = T ? T.codigo : (rede === 'extracao_suja' ? 'VEX' : 'UTA');
+  if (!String(nome || '').trim()) {   // nome livre seguinte: VEG-1, VEG-2…; numa VMC conta-se cada par uma vez
+    let n = 1; const usado = k => (VC.dados.utas || []).some(u => String(u.nome).toLowerCase().indexOf((pref + '-' + k).toLowerCase()) === 0 && !/\d/.test(String(u.nome).charAt((pref + '-' + k).length)));
+    while (usado(n)) n++;
+    nome = pref + '-' + n;
+  }
+  nome = String(nome).trim();
+  const nomes = T && T.par ? [nome + ' (insuflação)', nome + ' (extração)'] : [nome];
+  if ((VC.dados.utas || []).some(u => nomes.some(n => String(u.nome).toLowerCase() === n.toLowerCase()))) { VC.ui.toast('Já existe uma UTA «' + nomes[0] + '».'); return null; }
+  const u = VC.uta.criarDeTipo(T ? T.codigo : null, nome, rede, '');
+  if (VC.historico && VC.historico.push) VC.historico.push('Nova UTA: ' + u.nome);
   this._utaEscolhida = u.id;
-  VC.ui.toast('UTA «' + nome + '» criada (' + VC.redes.rotulo(rede) + '). Agora «Criar ramal».');
+  VC.ui.toast((T && T.par ? 'VMC «' + nome + '» criada (insuflação e extração, em par)' : '«' + u.nome + '» criada (' + VC.redes.rotulo(rede) + ')') + '. Agora «Criar ramal».');
   this.redesenhar();
   return u;
 };
@@ -228,6 +236,12 @@ P._parcelasCaudal = function (e) {
 };
 
 /* ── cartões ── */
+/* o tipo de sistema limita as redes que se podem escolher (VEG só extração; VMC insuflação ou extração…) */
+P._tipoUtaMudou = function (codigo) {
+  const T = (VC.constantes.TIPOS_SISTEMA || []).find(x => x.codigo === codigo), sel = document.getElementById('rmUtaRede'); if (!sel) return;
+  [...sel.options].forEach(o => { o.disabled = !!T && T.redes.indexOf(o.value) < 0; });
+  if (T && T.redes.indexOf(sel.value) < 0) sel.value = T.redes[0];
+};
 const painelBase = P._painel;
 P._painel = function (p) {
   let h = painelBase.call(this, p);
@@ -235,9 +249,10 @@ P._painel = function (p) {
   if (this.pendenteRamal) {
     const utas = VC.dados.utas || [];
     const criar = '<details class="planta-sub"' + (utas.length ? '' : ' open') + '><summary>' + (utas.length ? 'Criar outra UTA aqui' : 'Ainda não há UTAs: crie a UTA do ramal principal aqui') + '</summary>'
+      + '<label for="rmUtaTipo">Tipo de sistema</label><select id="rmUtaTipo" onchange="VC.planta._tipoUtaMudou(this.value)"><option value="">— sem tipo (UTA) —</option>' + (VC.constantes.TIPOS_SISTEMA || []).map(t => '<option value="' + t.codigo + '">' + esc(t.nome) + '</option>').join('') + '</select>'
       + '<label for="rmUtaRede">Rede</label><select id="rmUtaRede">' + VC.redes.LISTA.map(([v, l]) => '<option value="' + v + '">' + esc(l) + '</option>').join('') + '</select>'
-      + '<label for="rmUtaNome">Nome</label><input id="rmUtaNome" placeholder="ex.: UTA-Mezanino">'
-      + '<div class="planta-acoes"><button class="btn" onclick="VC.planta.criarUtaAqui(document.getElementById(\'rmUtaRede\').value, document.getElementById(\'rmUtaNome\').value)">Criar UTA</button></div></details>';
+      + '<label for="rmUtaNome">Nome</label><input id="rmUtaNome" placeholder="ex.: VAN P0 N">'
+      + '<div class="planta-acoes"><button class="btn" onclick="VC.planta.criarUtaAqui(document.getElementById(\'rmUtaRede\').value, document.getElementById(\'rmUtaNome\').value, document.getElementById(\'rmUtaTipo\').value)">Criar equipamento</button></div></details>';
     h = h.replace(/(<label for="rmUta">[\s\S]*?<\/select>)/, (m) => {
       const sel = this._utaEscolhida;
       const m2 = sel ? m.replace('value="' + sel + '"', 'value="' + sel + '" selected') : m;

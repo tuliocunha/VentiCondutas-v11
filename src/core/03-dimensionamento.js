@@ -1294,6 +1294,37 @@ VC.uta = {
     return u;
   },
   porRede(rede) { return VC.dados.utas.filter(u => u.rede === rede && u.ativo !== false); },
+  /* Tipo de sistema (VMC, VAN, VIN, VEG, VEX, VEI): o escolhido ou, sem ele, o prefixo do nome («VEG P0 N» → VEG) */
+  tipoSistemaDe(u) {
+    if (!u) return null;
+    const T = VC.constantes.TIPOS_SISTEMA, porCod = c => T.find(t => t.codigo === c) || null;
+    if (u.tipoSistema) return porCod(u.tipoSistema);
+    const m = String(u.nome || '').toUpperCase().match(/^(VMC|VAN|VIN|VEG|VEX|VEI)(?![A-Za-z]{3})/);
+    return m ? porCod(m[1]) : null;
+  },
+  tipoSistemaProprio(u) { return !!(u && u.tipoSistema); },
+  /* escolher o tipo: guarda-o e acerta o tipo Ecodesign (UVU/UVB) ao do sistema. Devolve false se a rede da UTA
+     não é servida por esse tipo (ex.: VEI numa UTA de insuflação). Código vazio = volta ao do nome. */
+  definirTipoSistema(u, codigo) {
+    if (!u) return false;
+    if (!codigo) { delete u.tipoSistema; return true; }
+    const t = VC.constantes.TIPOS_SISTEMA.find(x => x.codigo === codigo);
+    if (!t || t.redes.indexOf(u.rede) < 0) return false;
+    u.tipoSistema = t.codigo; u.tipoUV = t.tipoUV;
+    return true;
+  },
+  /* criar um equipamento de um tipo: VMC cria as duas metades (insuflação e extração) em par UVB.
+     Devolve a UTA da rede pedida (a outra metade fica em u.uvbPar). */
+  criarDeTipo(codigo, nome, rede, zona) {
+    const t = VC.constantes.TIPOS_SISTEMA.find(x => x.codigo === codigo);
+    if (!t) { const u = this.criar(nome, rede, zona); u.componentes = rede === 'insuflacao' ? this.componentesPadrao() : this.componentesExtracao(); return u; }
+    rede = t.redes.indexOf(rede) >= 0 ? rede : t.redes[0];
+    const fazer = (n, r) => { const u = this.criar(n, r, zona); u.componentes = r === 'insuflacao' ? this.componentesPadrao() : this.componentesExtracao(); u.tipoSistema = t.codigo; u.tipoUV = t.tipoUV; return u; };
+    if (!t.par) return fazer(nome, rede);
+    const ins = fazer(nome + ' (insuflação)', 'insuflacao'), ext = fazer(nome + ' (extração)', 'extracao');
+    ins.uvbPar = ext.id; ext.uvbPar = ins.id;
+    return rede === 'extracao' ? ext : ins;
+  },
   componentesPadrao() {
     return [
       { id: VC.utils.uid('COMP'), nome: 'Pré-filtro G4', tipo: 'Filtro G4', deltaP: 35, deltaP_final: 90, zeta: 2.0, obs: 'ISO 16890' },

@@ -163,9 +163,9 @@ P._mostrarMedida = function (ev) {
 P._pilha = []; P._refeitas = [];
 P._estado = function () {
   const c = VC.utils.clonar, D = VC.dados;
-  return { e: c(D.espacos || []), t: c(D.terminais || []), r: c(D.ramais || []), tr: c(D.transferencias || []), pl: (D.plantas || []).map(x => ({ id: x.id, nome: x.nome, escala: x.escala, H: x.H, cota: x.cota })) };
+  return { e: c(D.espacos || []), t: c(D.terminais || []), r: c(D.ramais || []), tr: c(D.transferencias || []), u: (D.utas || []).map(x => ({ id: x.id, nome: x.nome, tipoSistema: x.tipoSistema, tipoUV: x.tipoUV, uvbPar: x.uvbPar })), pl: (D.plantas || []).map(x => ({ id: x.id, nome: x.nome, escala: x.escala, H: x.H, cota: x.cota })) };
 };
-const CHAVE_COL = { e: 'espacos', t: 'terminais', r: 'ramais', tr: 'transferencias', pl: 'plantas' };
+const CHAVE_COL = { e: 'espacos', t: 'terminais', r: 'ramais', tr: 'transferencias', u: 'utas', pl: 'plantas' };
 /* comparação estável (a ordem das chaves não conta) */
 const canon = v => {
   if (Array.isArray(v)) return '[' + v.map(canon).join(',') + ']';
@@ -210,7 +210,7 @@ P._aplicar = function (difs, para) {
       });
       return;
     }
-    if (d.col === 'pl') return;        // pisos: só nome e escala; criar/remover pisos não passa por aqui
+    if (d.col === 'pl' || d.col === 'u') return;        // pisos e UTAs: só alguns campos; criar/remover não passa por aqui
     const alvo = d[para], origem = d[de];
     if (alvo && !origem) {            // repor um objeto removido
       if (atual) {

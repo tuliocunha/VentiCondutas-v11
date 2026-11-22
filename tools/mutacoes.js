@@ -228,6 +228,14 @@ const CASOS = [
     const c = VC.calculo, o = c.origemPropria; c.origemPropria = function (r, campo) { return this._proprio(r, campo) ? r : null; };
     return () => { c.origemPropria = o; };
   }],
+  ['Edição: a área da tabela deixa de acompanhar o desenho', 'N11.T12', () => {
+    const P = VC.planta, o = P.areaM2; let n = 0; P.areaM2 = function () { return n++ % 2 ? o.apply(this, arguments) : -1; };
+    return () => { P.areaM2 = o; };
+  }],
+  ['Tipo de sistema: VMC sem o par UVB', 'N11.T12', () => {
+    const U = VC.uta, o = U.criarDeTipo; U.criarDeTipo = function (c, n, r, z) { const u = o.call(this, c, n, r, z); delete u.uvbPar; return u; };
+    return () => { U.criarDeTipo = o; };
+  }],
   // Fase 4 da auditoria: qualidade de cálculo
   ['ε_v do espaço ignorado (só o do Setup)', 'N2.T21', () => {
     const o = VC.calculo.evDe; VC.calculo.evDe = function () { return Number(VC.dados.eficaciaRemocao) || 1; };

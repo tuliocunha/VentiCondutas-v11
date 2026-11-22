@@ -97,11 +97,11 @@ const CENARIOS = {
     await h.tecla('d'); await h.clicar([200, 300]); await pg.fill('#ptQ', '107'); await pg.click('#ptCriar'); await pg.waitForTimeout(300);
     ok(await h.v(() => VC.dados.terminais.some(t => t.definicaoRef && VC.dados.espacos.find(e => e.id === t.definicaoRef.espacoId && e.nome === 'Circ') && t.Q === 107 && t.planta)), 'Terminal (D) cria a insuflação de 107 m³/h no ponto clicado');
     await h.tecla('l'); await h.clicar([150, 450]); await h.clicar([200, 450]); await h.clicar([200, 300]); await h.tecla('Enter');
-    await pg.selectOption('#rmUtaRede', 'insuflacao'); await pg.fill('#rmUtaNome', 'UTA-Mez'); await pg.click('button:has-text("Criar UTA")'); await pg.waitForTimeout(250);
+    await pg.selectOption('#rmUtaRede', 'insuflacao'); await pg.fill('#rmUtaNome', 'UTA-Mez'); await pg.click('button:has-text("Criar equipamento")'); await pg.waitForTimeout(250);
     await pg.click('button:has-text("Criar ramal")'); await pg.waitForTimeout(300);
     const r = await h.v(() => { const r = VC.dados.ramais[VC.dados.ramais.length - 1]; return { nome: r.nome, uta: !!r.utaRef, term: VC.dados.terminais.some(t => t.ramalRef === r.nome) }; });
     ok(r.uta && r.term, 'Ramal com UTA criada no cartão e o terminal associado', r);
-    await h.tecla('v'); await h.clicar([200, 400]);
+    await h.tecla('v'); await h.clicar([200, 430]);
     await pg.fill('#pn-ramal-nome', 'Mez-P'); await pg.press('#pn-ramal-nome', 'Enter'); await pg.waitForTimeout(300);
     await h.passo('rede');
     ok(await h.v(() => [...document.querySelectorAll('#conteudoPasso input.ramal-nome')].some(i => i.value === 'Mez-P')), 'Nome do ramal mudado no desenho aparece na Tabela');
@@ -114,7 +114,7 @@ const CENARIOS = {
   async nomes(pg, ok) {
     const h = ajudas(pg); await prepararPlanta(pg);
     await h.tecla('l'); await h.clicar([150, 450]); await h.clicar([400, 450]); await h.tecla('Enter');
-    await pg.selectOption('#rmUtaRede', 'insuflacao'); await pg.fill('#rmUtaNome', 'UTA-N'); await pg.click('button:has-text("Criar UTA")'); await pg.waitForTimeout(250);
+    await pg.selectOption('#rmUtaRede', 'insuflacao'); await pg.fill('#rmUtaNome', 'UTA-N'); await pg.click('button:has-text("Criar equipamento")'); await pg.waitForTimeout(250);
     await pg.click('button:has-text("Criar ramal")'); await pg.waitForTimeout(300);
     const nome0 = await h.v(() => VC.dados.ramais[VC.dados.ramais.length - 1].nome);
     // Topologia → Tabela e desenho
@@ -190,7 +190,7 @@ const CENARIOS = {
     ok(await h.v(() => VC.dados.espacos.find(e => e.nome === 'Sala P').tipo === 'Escritório'), 'Ctrl+Z desfaz a alteração feita no painel');
     // ramal e sub-ramal: o material passa ao sub-ramal
     await h.tecla('l'); await h.clicar([150, 450]); await h.clicar([600, 450]); await h.tecla('Enter');
-    await pg.selectOption('#rmUtaRede', 'insuflacao'); await pg.fill('#rmUtaNome', 'UTA-P'); await pg.click('button:has-text("Criar UTA")'); await pg.waitForTimeout(250);
+    await pg.selectOption('#rmUtaRede', 'insuflacao'); await pg.fill('#rmUtaNome', 'UTA-P'); await pg.click('button:has-text("Criar equipamento")'); await pg.waitForTimeout(250);
     await pg.click('button:has-text("Criar ramal")'); await pg.waitForTimeout(300);
     await h.tecla('l'); await h.clicar([400, 450]); await h.clicar([400, 550]); await h.tecla('Enter');
     await pg.click('button:has-text("Criar ramal")'); await pg.waitForTimeout(300);
@@ -231,6 +231,57 @@ const CENARIOS = {
     ok(await pg.locator('#plantaMenu').isHidden() && await h.v(() => VC.planta.ferramenta === 'ret'), 'Esc fecha o menu sem mudar de ferramenta');
     await pg.click('#plantaMenuBt'); await h.clicar([800, 600]); await pg.waitForTimeout(150);
     ok(await pg.locator('#plantaMenu').isHidden(), 'Clicar fora fecha o menu');
+  },
+
+  /* Fase 1: editar a geometria (vértices, arestas, mover) e o tipo de sistema */
+  async edicao(pg, ok) {
+    const h = ajudas(pg); await prepararPlanta(pg);
+    await h.tecla('r'); await h.arrastar([100, 100], [500, 400]); await h.criarSala('Sala E', 'Escritório', 2);
+    const sala = () => h.v(() => { const e = VC.dados.espacos.find(x => x.nome === 'Sala E'); return { n: e.planta.pts.length, pts: e.planta.pts, A: e.A }; });
+    await h.tecla('v'); await h.clicar([300, 250]);
+    ok(await pg.locator('.pe .pe-v').count() === 4 && await pg.locator('.pe .pe-m').count() === 4, 'Sala selecionada: 4 vértices e 4 alças de meio de aresta');
+    await h.arrastar([500, 400], [500, 500]);
+    let e = await sala();
+    ok(e.pts.some(q => q[0] === 500 && q[1] === 500) && Math.abs(e.A - 14) < 0.05, 'Arrastar um vértice muda o desenho e a área acompanha (12 → 14 m²)', e);
+    await h.clicar([300, 250]);
+    ok(await h.v(() => VC.planta.selecionado != null && !!document.querySelector('.pn[data-pn="sala"]')), 'Clicar dentro da sala selecionada mantém a seleção');
+    await pg.locator('#plantaSVG').hover(); await pg.keyboard.press('Control+z'); await pg.waitForTimeout(300);
+    e = await sala();
+    ok(e.pts.some(q => q[0] === 500 && q[1] === 400) && Math.abs(e.A - 12) < 0.05, 'Ctrl+Z repõe o vértice e a área', e);
+    await h.clicar([300, 250]); await h.clicar([300, 100]);
+    e = await sala(); ok(e.n === 5, 'Clicar na alça ○ acrescenta um vértice no meio da aresta', e);
+    await h.arrastar([300, 100], [300, 60]);
+    e = await sala(); ok(e.pts.some(q => q[0] === 300 && q[1] === 60), 'O vértice novo arrasta-se como os outros', e);
+    await h.clicar([300, 60]); await h.tecla('Delete');
+    e = await sala(); ok(e.n === 4 && !e.pts.some(q => q[1] === 60), 'Clique no vértice + Delete apaga-o', e);
+    // Shift: ângulo reto
+    const [x0, y0] = await h.ecra(500, 400), [x1, y1] = await h.ecra(512, 470);
+    await pg.mouse.move(x0, y0); await pg.mouse.down(); await pg.keyboard.down('Shift'); await pg.mouse.move(x1, y1, { steps: 8 }); await pg.mouse.up(); await pg.keyboard.up('Shift'); await pg.waitForTimeout(250);
+    e = await sala(); ok(e.pts.some(q => q[0] === 500 && Math.abs(q[1] - 470) < 1), 'Shift ao arrastar: o vértice fica em ângulo reto (x mantém-se)', e);
+    await pg.keyboard.press('Control+z'); await pg.waitForTimeout(250);
+    // mover a sala inteira (o terminal vai junto)
+    await h.tecla('d'); await h.clicar([200, 200]); await pg.fill('#ptQ', '60'); await pg.click('#ptCriar'); await pg.waitForTimeout(300);
+    await h.tecla('v'); await h.clicar([300, 300]); await h.arrastar([300, 300], [350, 330]);
+    e = await sala();
+    const t = await h.v(() => { const t = VC.dados.terminais.find(x => (x.espacos || []).some(y => y.nome === 'Sala E') && x.planta); return t && [t.planta.x, t.planta.y]; });
+    ok(e.pts.some(q => q[0] === 150 && q[1] === 130) && t && t[0] === 250 && t[1] === 230, 'Arrastar o interior move a sala e o terminal dela', { e, t });
+    // segmento
+    await h.arrastar([550, 200], [600, 200]);
+    e = await sala(); ok(e.pts.filter(q => q[0] === 600).length === 2, 'Arrastar uma aresta move o segmento inteiro', e);
+    // ramal: tipo de sistema VMC, vértice novo, inverter
+    await h.tecla('l'); await h.clicar([100, 600]); await h.clicar([700, 600]); await h.tecla('Enter');
+    await pg.selectOption('#rmUtaTipo', 'VMC'); await pg.fill('#rmUtaNome', 'VMC-Mez'); await pg.click('button:has-text("Criar equipamento")'); await pg.waitForTimeout(250);
+    const par = await h.v(() => { const a = VC.dados.utas.find(u => u.nome === 'VMC-Mez (insuflação)'), b = VC.dados.utas.find(u => u.nome === 'VMC-Mez (extração)'); return !!(a && b && a.uvbPar === b.id && b.uvbPar === a.id && a.tipoSistema === 'VMC' && a.tipoUV === 'BVU_HRS'); });
+    ok(par, 'Tipo VMC cria as duas metades (insuflação e extração) em par UVB');
+    await pg.click('button:has-text("Criar ramal")'); await pg.waitForTimeout(300);
+    await h.tecla('v'); await h.clicar([250, 600]);
+    ok(await h.v(() => { const s = document.getElementById('pn-ramal-tipoSistema'); return !!s && s.value === 'VMC'; }), 'No painel do ramal principal aparece o tipo de sistema (VMC)');
+    await h.arrastar([400, 600], [400, 650]);
+    const rm = await h.v(() => { const r = VC.dados.ramais[VC.dados.ramais.length - 1]; return r.planta.pts; });
+    ok(rm.length === 3 && rm[1][0] === 400 && rm[1][1] === 650, 'Arrastar a alça ○ do ramal cria um vértice e dobra o traçado', rm);
+    await pg.click('.pn-acoes button:has-text("Inverter o sentido")'); await pg.waitForTimeout(250);
+    ok(await h.v(() => { const p = VC.dados.ramais[VC.dados.ramais.length - 1].planta.pts; return p[0][0] === 700 && p[2][0] === 100; }), 'Inverter o sentido do ramal');
+    ok(await h.v(() => !document.querySelector('.planta-vert')), 'As alças antigas (só cantos) deixaram de aparecer');
   },
 
   /* PR 9: nome legível numa sala em L; zona útil nítida; Entrega recortada */

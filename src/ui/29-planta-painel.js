@@ -30,9 +30,10 @@ const C = () => VC.constantes;
    Só há um objeto selecionado de cada vez: escolher uma sala, um ramal ou uma transferência (em qualquer
    módulo da planta) larga o terminal selecionado. */
 P.termSel = null;
-['selecionado', 'ramalSel', 'trfSel'].forEach(k => {
-  let v = P[k];
-  Object.defineProperty(P, k, { configurable: true, enumerable: true, get() { return v; }, set(x) { v = x; if (x != null) this.termSel = null; } });
+const selV = { selecionado: P.selecionado, ramalSel: P.ramalSel, trfSel: P.trfSel };
+Object.keys(selV).forEach(k => {
+  Object.defineProperty(P, k, { configurable: true, enumerable: true, get() { return selV[k]; },
+    set(x) { selV[k] = x; if (x != null) { this.termSel = null; Object.keys(selV).forEach(o => { if (o !== k) selV[o] = null; }); } } });
 });
 P.selecionarTerminal = function (id) {
   this.termSel = id; this.selecionado = null; this.ramalSel = null; this.trfSel = null;
@@ -64,7 +65,7 @@ P._svg = function (p) {
 };
 
 /* ── propostas (E11) ── */
-const origemRotulo = { norma: 'norma', piso: 'piso', herdado: 'herdado', setup: 'Setup', rede: 'rede', balanco: 'balanço', medido: 'desenho' };
+const origemRotulo = { nome: 'pelo nome', norma: 'norma', piso: 'piso', herdado: 'herdado', setup: 'Setup', rede: 'rede', balanco: 'balanço', medido: 'desenho' };
 function herdadoDe(r, campo) {   // o ramal que define o campo (ele ou um antecessor) e se é herdado
   const o = VC.calculo.origemPropria ? VC.calculo.origemPropria(r, campo) : null;
   return o ? { ramal: o, herdado: o !== r } : null;
@@ -154,6 +155,13 @@ const sala = {
   }
 };
 
+/* equipamento de onde sai o ramal (o do ramal principal, subindo pelos ramais-pai) */
+function utaDoRamal(r) {
+  const R = VC.dados.ramais || []; let x = r, g = 0;
+  while (x && x.parente && g++ < 60) { const pai = R.find(y => y.nome === x.parente && y !== x); if (!pai) break; x = pai; }
+  return x && x.utaRef ? porId('utas', x.utaRef) : null;
+}
+const rotuloUta = u => (u ? u.nome + ((VC.uta.tipoSistemaDe(u) && !new RegExp('^' + VC.uta.tipoSistemaDe(u).codigo, 'i').test(u.nome)) ? ' (' + VC.uta.tipoSistemaDe(u).codigo + ')' : '') : '—');
 const ramal = {
   titulo: r => 'Ramal ' + r.nome, icone: 'fa-route', rotulo: 'Ramal',
   avisos: r => [r.nome],
@@ -170,6 +178,15 @@ const ramal = {
         if (!m) { delete g.proprio.rugosidade; delete g.material; return; }
         g.material = m.nome; g.rugosidade = m.rugosidade; g.proprio.rugosidade = true;
       }, ajuda: 'Os sub-ramais desenhados a partir deste herdam o material.' },
+    { id: 'utaRef', rot: 'Equipamento', tipo: 'opcoes', ess: true, vis: r => !r.parente,
+      opcoes: r => [['', '— sem equipamento —']].concat((VC.dados.utas || []).filter(u => VC.redes.compativeis(u.rede, r.rede) || u.id === r.utaRef).map(u => [u.id, rotuloUta(u)])),
+      ler: r => r.utaRef || '', escrever: (r, v) => { r.utaRef = v || ''; }, ajuda: 'Os sub-ramais saem do mesmo equipamento.' },
+    { id: 'tipoSistema', rot: 'Tipo de sistema', tipo: 'opcoes', ess: true, vis: r => !r.parente && !!(r.utaRef && porId('utas', r.utaRef)),
+      opcoes: r => { const u = porId('utas', r.utaRef); return [['', '— por definir —']].concat(C().TIPOS_SISTEMA.filter(t => u && t.redes.indexOf(u.rede) >= 0).map(t => [t.codigo, t.nome])); },
+      ler: r => { const u = porId('utas', r.utaRef); return (u && u.tipoSistema) || ''; },
+      proposto: r => { const u = porId('utas', r.utaRef), t = u && !u.tipoSistema ? VC.uta.tipoSistemaDe(u) : null; return t ? { v: t.codigo, origem: 'nome' } : null; },
+      escrever: (r, v) => { const u = porId('utas', r.utaRef); if (u && !VC.uta.definirTipoSistema(u, v)) VC.ui.toast('Esse tipo não serve a rede de ' + VC.redes.rotulo(u.rede) + '.'); },
+      ajuda: 'Muda o equipamento; com a VMC, o tipo Ecodesign passa a UVB com recuperador.' },
     { id: 'forma', rot: 'Forma da secção', tipo: 'opcoes', ess: true, opcoes: () => [['circular', 'Circular'], ['retangular', 'Retangular']],
       ler: r => VC.calculo.formaDe(r), escrever: (r, v) => { (r.geometriaInput = r.geometriaInput || {}).forma = v === 'retangular' ? 'retangular' : 'circular'; } },
     { id: 'rugosidade', rot: 'Rugosidade própria', un: 'mm', tipo: 'num', min: 0, passo: 0.01,
@@ -195,13 +212,14 @@ const ramal = {
     const tr = Array.isArray(r.trocos) && r.trocos.length ? r.trocos.map(t => t.secao || ('Ø' + t.Dcom)).filter((s, i, a) => i === 0 || s !== a[i - 1]).join(' → ') : (r.secaoCalc || '—');
     return [
       ['Rede', VC.redes.rotulo(r.rede)],
-      ['Sai de', r.parente ? r.parente + (r.sNoPai != null ? ' a ' + fmt(r.sNoPai, 1) + ' m' : '') : (u ? u.nome : '—')],
+      ['Sai de', r.parente ? r.parente + (r.sNoPai != null ? ' a ' + fmt(r.sNoPai, 1) + ' m' : '') : rotuloUta(u)],
+      r.parente ? ['Equipamento', rotuloUta(utaDoRamal(r))] : null,
       ['Caudal', fmt(r.Q, 0) + ' m³/h'],
       ['Secção (troços)', tr],
       ['Velocidade máxima', fmt(Math.max(Number(r.v) || 0, Number(r.vMaxTrocos) || 0), 2) + ' m/s', 'limite ' + fmt(VC.calculo.vMaxDe(r), 1) + ' m/s'],
       ['Δp do ramal / acumulado', fmt(r.deltaPTroco, 1) + ' / ' + fmt(r.deltaPAcumulado, 1) + ' Pa'],
       ['L tabela / medido', fmt(r.L, 2) + ' / ' + (L ? fmt(L, 2) : '—') + ' m']
-    ];
+    ].filter(Boolean);
   },
   porFazer: r => (r.parente || r.utaRef ? [] : ['ligar a um ramal-pai ou a uma UTA']),
   acoes: (r, p) => {

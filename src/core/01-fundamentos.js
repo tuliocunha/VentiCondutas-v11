@@ -844,6 +844,16 @@ VC.constantes = {
     { nome: 'Painel isolante (lã mineral, fibra)', rugosidade: 0.9 },
     { nome: 'Conduta flexível (esticada)', rugosidade: 3.0 }
   ],
+  /* Tipos de sistema (designação do projeto de AVAC). redes: as redes que o equipamento serve; a primeira é a de
+     omissão. VMC = unidade de duplo fluxo com recuperação: são duas UTAs na app (insuflação e extração), em par UVB. */
+  TIPOS_SISTEMA: [
+    { codigo: 'VMC', nome: 'VMC · ventilação mecânica com recuperação (duplo fluxo)', redes: ['insuflacao', 'extracao'], tipoUV: 'BVU_HRS', par: true },
+    { codigo: 'VAN', nome: 'VAN · unidade de ar novo (insuflação tratada)', redes: ['insuflacao'], tipoUV: 'UVU_FILTER' },
+    { codigo: 'VIN', nome: 'VIN · ventilador de insuflação', redes: ['insuflacao'], tipoUV: 'UVU_FILTER' },
+    { codigo: 'VEG', nome: 'VEG · ventilador de extração geral', redes: ['extracao'], tipoUV: 'UVU_SEM_FILTER' },
+    { codigo: 'VEX', nome: 'VEX · ventilador de extração dedicada (ar sujo)', redes: ['extracao_suja', 'extracao'], tipoUV: 'UVU_SEM_FILTER' },
+    { codigo: 'VEI', nome: 'VEI · extração das instalações sanitárias', redes: ['extracao_suja'], tipoUV: 'UVU_SEM_FILTER' }
+  ],
   GARAGEM_UT2_AREA_MIN: 200,   // m² · parque de estacionamento (UT II) só a partir de 200 m² de área bruta (ANEPC, Nota Técnica 01/2021)
   COMM_S1: [63, 80, 100, 125, 160, 200, 250, 315, 355, 400, 450, 500, 560, 630, 710, 800, 900, 1000, 1120, 1250, 1400, 1600, 1800, 2000],
   COMM_S2: [100, 125, 160, 200, 250, 315, 400, 500, 630, 800, 1000, 1250, 1600, 2000],
