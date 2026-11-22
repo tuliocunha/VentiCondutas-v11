@@ -315,7 +315,7 @@ function tamanhoJPEG(b) {   // largura e altura de um JPEG (marcador SOF)
 /* ── CORREÇÕES (versão «corrigido»): o que muda face ao desenho e porquê ──
    Cada correção altera caudais e acrescenta só os terminais e troços precisos; o traçado do desenho mantém-se. */
 const CORRECOES = [
-  'Garagem P0-N1: extração dedicada VEX Garagem de 600 m³/h em dois patamares comandados por deteção de CO (RT-SCIE art. 183.º: 300 e 600 m³/h por veículo, 1 lugar), 2 GE × 300 junto ao pavimento; admissão natural por grelha permanente na fachada ou na porta (≈ 0,083 m² livres a 2 m/s), registada no balanço como entrada pelo exterior; a garagem fica em depressão face ao edifício',
+  'Garagem P0-N1: sistema dedicado de insuflação e extração mecânicas (variante b). Extração VEX Garagem de 600 m³/h em dois patamares comandados por deteção de CO (RT-SCIE art. 183.º: 300 e 600 m³/h por veículo, 1 lugar), 2 GE × 300 junto ao pavimento; insuflação VIN Garagem de 540 m³/h (90 %) a partir do exterior, 2 GI × 270 em cota alta; os 60 m³/h que faltam entram por grelha permanente na porta (≈ 0,008 m² livres a 2 m/s), registados no balanço como abertura para o exterior; a garagem fica em depressão face ao edifício',
   'Sala P0-N1 (bastidores): ar novo 60 m³/h (VAN P0 N, tronco prolongado) e extração 60 m³/h (VEG P0 N, tronco prolongado); mínimo 59 m³/h',
   'Refeitório P0-S1: ar novo da VCM 2 × 100 = 200 m³/h (mínimo 192) e extração de ar sujo da copa pela VCM de 2 × 70 para 2 × 100 m³/h (balanço nulo)',
   'Sanitários (uso público, Tabela 13): VE de 75 para 90 m³/h por sanita; GE azul da CB P0-N2 suprimido (a VE de 90 cumpre)',
@@ -339,7 +339,7 @@ function corrigir() {
   ramal('UTA-01', 'R1.1.1').t.push(['Circulação P0-N2', [2272, 3760], 200]);
   setQ('UTA-01', 'R1.1.1.1.1', 'Casa de Banho P0-N2', 60);
   E.filter(e => e[3] === 'Sala técnica').forEach(e => { e[5] = Object.assign({}, e[5], { rphAplicado: 0, rphOrigem: 'utilizador' }); });
-  E.filter(e => e[0] === 'Garagem P0-N1').forEach(e => { e[5] = Object.assign({}, e[5], { Q_exterior: 600 }); });   // admissão natural (variante a)
+  E.filter(e => e[0] === 'Garagem P0-N1').forEach(e => { e[5] = Object.assign({}, e[5], { Q_exterior: 60 }); });   // variante b: o que falta à insuflação entra pela grelha da porta
   // extração = ar novo
   [['Arrumo P0-N1', 100], ['Sala P0-N4', 125], ['Sala P0-N3', 125], ['Sala P0-N2', 100]].forEach(([e, q]) => setQ('UTA-02', 'R2.1', e, q));
   [['Laboratório P0-S5', 150], ['Sala P0-S4', 150], ['Sala P0-S3', 150], ['Sala P0-S1', 125], ['Sala P0-S2', 125]].forEach(([e, q]) => setQ('UTA-04', 'R4.1', e, q));
@@ -357,6 +357,9 @@ function corrigir() {
   RD.push({ id: 'UTA-12', nome: 'VEX Garagem P0-N1', rede: 'extracao_suja', zona: 'P0 Garagem', ala: 'Norte', tipoT: GE,
     uv: { tipoUV: 'UVU_SEM_FILTER', eta: 0.45, componentes: [C.ventilador, C.grelhaExt] }, ramais: [
       { nome: 'R12.1', piso: 'P0', pts: [[530, 4100], [900, 4100]], t: [['Garagem P0-N1', [700, 4100], 300], ['Garagem P0-N1', [900, 4100], 300]] }] });
+  RD.push({ id: 'UTA-13', nome: 'VIN Garagem P0-N1', rede: 'insuflacao', zona: 'P0 Garagem', ala: 'Norte', tipoT: GI,
+    uv: { tipoUV: 'UVU_FILTER', eta: 0.45, componentes: [C.grelhaExt, C.g4, C.ventilador] }, ramais: [
+      { nome: 'R13.1', piso: 'P0', pts: [[530, 3790], [900, 3790]], t: [['Garagem P0-N1', [700, 3790], 270], ['Garagem P0-N1', [900, 3790], 270]] }] });
   const T = [['Circulação P0-N2', 'Casa de Banho esp. P0-N3', 90, 'P0', [2385, 3702]], ['Circulação P0-N2', 'Casa de Banho P0-N1', 80, 'P0', [2510, 3702]], ['Circulação P0-N2', 'Casa de Banho P0-N2', 30, 'P0', [2510, 3815]]];
   return { E, R: RD, T };
 }
