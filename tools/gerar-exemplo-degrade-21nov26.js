@@ -26,6 +26,12 @@
    · prumadas P1 → cobertura: 3,0 m (assumido; ramal sem traçado);
    · plantas guardadas no exemplo (Piso 0, Piso 1, Mezanino), a partir
      dos recortes em tools/exemplos/degrade-21nov26/;
+   · VCM do refeitório: ar exterior (verde, GEA) → insuflação (magenta);
+     extração de ar sujo da copa, 2 grelhas de 70 m³/h (ciano, «Retorno
+     VCM» na legenda) → VCM
+     → saída para a fachada; modelada como duas unidades (insuflação e
+     extração de ar sujo), sem recirculação;
+   · altura livre no teto falso: 350 mm;
    · ventiladores com parâmetros de referência (sem catálogo).
 
    Uso:  node tools/gerar-exemplo-degrade-21nov26.js
@@ -89,7 +95,8 @@ const C = {
   g4: { nome: 'Pré-filtro G4', tipo: 'Filtro G4', deltaP: 35, deltaP_final: 90, zeta: 2.0, obs: 'ISO 16890 · limpo' },
   grelhaExt: { nome: 'Grelha exterior + rede de proteção', tipo: 'Outro', deltaP: 20, deltaP_final: 20, zeta: 0, obs: 'referência' },
   descargaSuja: { nome: 'Descarga Ø200 2,9 m + GSAxt 500×300', tipo: 'Outro', deltaP: 25, deltaP_final: 25, zeta: 0, obs: 'medido na planta' },
-  admissaoVCM: { nome: 'Admissão GEA 300×200 + Ø100 4,2 m', tipo: 'Outro', deltaP: 45, deltaP_final: 45, zeta: 0, obs: 'medido na planta' }
+  admissaoVCM: { nome: 'Admissão GEA 300×200 + Ø100 4,2 m', tipo: 'Outro', deltaP: 45, deltaP_final: 45, zeta: 0, obs: 'medido na planta' },
+  descargaVCM: { nome: 'Descarga do ar sujo 2,5 m + grelha na fachada', tipo: 'Outro', deltaP: 25, deltaP_final: 25, zeta: 0, obs: 'medido na planta' }
 };
 const VAN = () => ({ tipoUV: 'UVU_FILTER', eta: 0.55, componentes: [C.grelhaExt, C.f7, C.ventilador] });
 const VEG = () => ({ tipoUV: 'UVU_FILTER', eta: 0.50, componentes: [C.g4, C.ventilador, C.grelhaExt] });
@@ -114,7 +121,7 @@ const SALAS = {
   'Casa de Banho esp. P0-N3': ['P0', R(2330, 3590, 2440, 3700)],
   'Casa de Banho P0-N1': ['P0', [[2440, 3590], [2856, 3590], [2856, 3810], [2560, 3810], [2560, 3700], [2440, 3700]]],
   'Casa de Banho P0-N2': ['P0', R(2440, 3830, 2860, 3948)],
-  'Refeitório P0-S1': ['P0', [[2247, 4100], [2480, 4100], [2480, 4000], [2860, 4000], [2860, 4345], [2247, 4345]]],
+  'Refeitório P0-S1': ['P0', [[2247, 4100], [2480, 4100], [2480, 3975], [2860, 3975], [2860, 4345], [2247, 4345]]],
   'Átrio Central P0': ['P0', R(1000, 3855, 2245, 4200)],
   'Hall P0-S1': ['P0', R(520, 4140, 895, 4595)],
   'Escada P0-S1': ['P0', R(505, 4595, 890, 4765)],
@@ -186,10 +193,16 @@ const REDES = [
     { nome: 'R9.1.2', pai: 'R9.1', piso: 'P0', pts: [[2697, 3700], [2432, 3700], [2432, 3640]], t: [['Casa de Banho esp. P0-N3', [2432, 3640], 75]] },
     { nome: 'R9.1.3', pai: 'R9.1', piso: 'P0', pts: [[2697, 3700], [2842, 3700], [2842, 3680]], t: [['Casa de Banho P0-N1', [2742, 3690], 75], ['Casa de Banho P0-N1', [2842, 3680], 75]] }
   ] },
-  { id: 'UTA-10', nome: 'VCM Refeitório (ar novo)', rede: 'insuflacao', zona: 'P0 Refeitório', ala: 'Sul', tipoT: GI,
+  { id: 'UTA-10', nome: 'VCM Refeitório (insuflação)', rede: 'insuflacao', zona: 'P0 Refeitório', ala: 'Sul', tipoT: GI,
     uv: { tipoUV: 'UVU_SEM_FILTER', eta: 0.40, componentes: [C.admissaoVCM, C.ventilador] }, ramais: [
-    // insuflação da VCM (a recirculação de 70 m³/h não é modelada)
+    // insuflação da VCM: ar exterior (verde) pela GEA → insuflação (magenta)
     { nome: 'R10.1', piso: 'P0', pts: [[2575, 3950], [2490, 3950], [2490, 4137], [2366, 4137]], t: [['Refeitório P0-S1', [2495, 4065], 90], ['Refeitório P0-S1', [2366, 4137], 90]] }
+  ] },
+  // extração de ar sujo da copa (ciano): 2 grelhas de 70 m³/h sobre a bancada MLL/micro-ondas, pela VCM, com saída para a fachada
+  { id: 'UTA-11', nome: 'VCM Refeitório (extração copa)', rede: 'extracao_suja', zona: 'P0 Refeitório', ala: 'Sul', tipoT: GE,
+    uv: { tipoUV: 'UVU_SEM_FILTER', eta: 0.40, componentes: [C.ventilador, C.descargaVCM] }, ramais: [
+    { nome: 'R11.1', piso: 'P0', pts: [[2590, 3950], [2590, 3984], [2505, 3984]], t: [['Refeitório P0-S1', [2505, 3988], 70]] },
+    { nome: 'R11.1.1', pai: 'R11.1', piso: 'P0', pts: [[2590, 3984], [2645, 3984]], t: [['Refeitório P0-S1', [2645, 3988], 70]] }
   ] }
 ];
 
@@ -283,7 +296,7 @@ function montarProjeto(ESPACOS, REDES, TRANSF, META, PARAMS_EXTRA) {
   return {
     _versao: 'V9',
     metadados: Object.assign({ cliente: 'Degrade', local: 'Torres Vedras, Portugal', autor: 'Tulio Cunha' }, META),
-    configuracao: { tipologia: 'comercio', restricaoH: 250, serieDiametros: 'S1',
+    configuracao: { tipologia: 'comercio', restricaoH: 350, serieDiametros: 'S1',
       params: Object.assign({ altitude: 30, temperatura: 20, humidade: 50, rugosidade: 0.15, categoria: 'II', poluicaoEdificio: 'pouco', potenciaTermica: 42, tExtInverno: 3 }, PARAMS_EXTRA || {}) },
     dados: { espacos, ramais, terminais, transferencias, utas, nos: [], trechos: [], elementosRede: [], _mapaRenomeacao: {}, plantas }
   };
@@ -304,7 +317,7 @@ function tamanhoJPEG(b) {   // largura e altura de um JPEG (marcador SOF)
 const CORRECOES = [
   'Garagem P0-N1: extração dedicada VEX Garagem de 600 m³/h (RT-SCIE art. 183.º: 300 e 600 m³/h por veículo, 1 lugar), 2 GE × 300 junto ao pavimento; ar de compensação natural pela porta exterior',
   'Sala P0-N1 (bastidores): ar novo 60 m³/h (VAN P0 N, tronco prolongado) e extração 60 m³/h (VEG P0 N, tronco prolongado); mínimo 59 m³/h',
-  'Refeitório P0-S1: ar novo da VCM 2 × 100 = 200 m³/h (mínimo 192) e extração nova de 2 × 100 m³/h por derivação do VEG P0 S',
+  'Refeitório P0-S1: ar novo da VCM 2 × 100 = 200 m³/h (mínimo 192) e extração de ar sujo da copa pela VCM de 2 × 70 para 2 × 100 m³/h (balanço nulo)',
   'Sanitários (uso público, Tabela 13): VE de 75 para 90 m³/h por sanita; GE azul da CB P0-N2 suprimido (a VE de 90 cumpre)',
   'CB P0-N2: ar novo de 100 para 60 m³/h; recebe 30 m³/h por transferência e fica em depressão (Anexo II, 1.2.2 h))',
   'Circulação P0-N2: ar novo 200 m³/h (derivação da Sala Técnica), igual ao ar que transfere para os sanitários (90 + 80 + 30)',
@@ -332,17 +345,17 @@ function corrigir() {
   ramal('UTA-06', 'R6.1.1.1').t.forEach(t => { t[2] = 100; });
   setQ('UTA-08', 'R8.1', 'Sala P1-S2 (open space)', 200);
   // refeitório
-  rede('UTA-04').ramais.push({ nome: 'R4.1.1', pai: 'R4.1', piso: 'P0', pts: [[2610, 4735], [2610, 4300], [2750, 4300]], t: [['Refeitório P0-S1', [2610, 4300], 100], ['Refeitório P0-S1', [2750, 4300], 100]] });
   ramal('UTA-10', 'R10.1').t.forEach(t => { t[2] = 100; });
+  setQ('UTA-11', 'R11.1', 'Refeitório P0-S1', 100); setQ('UTA-11', 'R11.1.1', 'Refeitório P0-S1', 100);
   // apoio P1-S4
   rede('UTA-08').ramais.push({ nome: 'R8.1.1', pai: 'R8.1', piso: 'P1', pts: [[2700, 4755], [2700, 4450]], t: [['Apoio/Serviço P1-S4', [2700, 4450], 100]] });
   // sanitários: VE 90, sem GE azul
   ramal('UTA-09', 'R9.1').t = [];
   rede('UTA-09').ramais.forEach(r => r.t.forEach(t => { t[2] = 90; }));
   // garagem: extração dedicada (ar contaminado, rede própria)
-  RD.push({ id: 'UTA-11', nome: 'VEX Garagem P0-N1', rede: 'extracao_suja', zona: 'P0 Garagem', ala: 'Norte', tipoT: GE,
+  RD.push({ id: 'UTA-12', nome: 'VEX Garagem P0-N1', rede: 'extracao_suja', zona: 'P0 Garagem', ala: 'Norte', tipoT: GE,
     uv: { tipoUV: 'UVU_SEM_FILTER', eta: 0.45, componentes: [C.ventilador, C.grelhaExt] }, ramais: [
-      { nome: 'R11.1', piso: 'P0', pts: [[530, 4100], [900, 4100]], t: [['Garagem P0-N1', [700, 4100], 300], ['Garagem P0-N1', [900, 4100], 300]] }] });
+      { nome: 'R12.1', piso: 'P0', pts: [[530, 4100], [900, 4100]], t: [['Garagem P0-N1', [700, 4100], 300], ['Garagem P0-N1', [900, 4100], 300]] }] });
   const T = [['Circulação P0-N2', 'Casa de Banho esp. P0-N3', 90, 'P0', [2385, 3702]], ['Circulação P0-N2', 'Casa de Banho P0-N1', 80, 'P0', [2510, 3702]], ['Circulação P0-N2', 'Casa de Banho P0-N2', 30, 'P0', [2510, 3815]]];
   return { E, R: RD, T };
 }
