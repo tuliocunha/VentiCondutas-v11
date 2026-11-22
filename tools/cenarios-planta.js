@@ -695,6 +695,34 @@ const CENARIOS = {
     ok(cv[2] === cv[4] && cv[2] > 0 && cv[3] > 0 && cv[1] !== cv[0], 'Curvas pela planta: cada curva do desenho conta e o ζ global sai', cv);
   },
 
+  /* PR 60 · barra por grupos com sub-ícones e menu de contexto */
+  async barra(pg, ok) {
+    const h = ajudas(pg);
+    await pg.evaluate(async () => { await VC._carregarExemploDeFicheiro(['exemplos/degrade-21nov26-corrigido.json'], 'x'); VC.nav.irPasso('rede'); VC.nav.setVista('planta'); VC.planta.setPiso('piso-p0'); });
+    await pg.waitForTimeout(1200);
+    await h.v(() => { const P = VC.planta, r = VC.dados.ramais.find(x => x.nome === 'R1.1'), a = r.planta.pts[1]; P.zoom = 1.1; P.vx = a[0] - 300 / 1.1; P.vy = a[1] - 250 / 1.1; P.aplicarVista(); });
+    await pg.waitForTimeout(400);
+    const n = await h.v(() => [document.querySelectorAll('.planta-ferrbar .planta-grupo').length, document.querySelectorAll('.planta-ferrbar .pfo-item').length, VC.planta.FERRAMENTAS.length, !!document.getElementById('plantaMenuBt')]);
+    ok(n[0] === 6 && n[1] === n[2] && n[3], 'Barra com 6 grupos; os sub-ícones têm todas as ferramentas; o menu ☰ fica', n);
+    await pg.hover('.planta-grupo[data-grupo="condutas"] .planta-ft'); await pg.waitForTimeout(600);
+    ok(await pg.isVisible('.planta-grupo[data-grupo="condutas"] .pfo-item:has-text("Prumada")'), 'Passar o rato em Condutas mostra Ramal, Prumada, Equipamento, Tomada / rejeição');
+    await pg.click('.planta-grupo[data-grupo="condutas"] .pfo-item:has-text("Prumada")'); await pg.waitForTimeout(300);
+    ok(await h.v(() => VC.planta.ferramenta === 'prumada' && !!document.querySelector('.planta-grupo[data-grupo="condutas"] .planta-ft.ativo') && /Prumada/.test(document.querySelector('.planta-grupo[data-grupo="condutas"] .planta-ft').getAttribute('aria-label'))), 'O sub-ícone escolhe a ferramenta e o grupo passa a mostrá-la');
+    await h.tecla('Escape'); await h.tecla('v'); await pg.mouse.move(800, 650);
+    await pg.mouse.click(700, 410, { button: 'right' }); await pg.waitForTimeout(400);
+    const m = await h.v(() => { const c = document.getElementById('plantaCtx'); return c ? c.innerText : ''; });
+    ok(/Ramal R1\.1/i.test(m) && /sub-ramal a partir de R1\.1/.test(m) && /Prumada/.test(m), 'Botão direito no ramal: menu com as ações do ramal', m.slice(0, 120));
+    await pg.click('#plantaCtx .pctx-item:has-text("Traçar um sub-ramal")'); await pg.waitForTimeout(300);
+    ok(await h.v(() => VC.planta.ferramenta === 'ramal' && !document.getElementById('plantaCtx')), 'Escolher a ação fecha o menu e liga a ferramenta Ramal');
+    await h.tecla('Escape'); await h.tecla('v');
+    const sala = await h.v(() => { const e = VC.dados.espacos.find(x => x.nome === 'Garagem P0-N1'), g = document.querySelector('.planta-sala[data-esp="' + e.id + '"] polygon'), b = g.getBoundingClientRect(); return [b.x + b.width / 2, b.y + b.height * 0.75]; });
+    await pg.mouse.click(sala[0], sala[1], { button: 'right' }); await pg.waitForTimeout(400);
+    const ms = await h.v(() => { const c = document.getElementById('plantaCtx'); return c ? c.innerText : ''; });
+    ok(/garagem p0-n1/i.test(ms) && /Colocar um terminal nesta sala/.test(ms) && /Abertura para o exterior/.test(ms) && await h.v(() => VC.paineis.selecao() && VC.paineis.selecao().tipo === 'sala'), 'Botão direito na sala: seleciona-a e mostra terminal, abertura, duplicar, rodar…', ms.slice(0, 120));
+    await h.tecla('Escape');
+    ok(await h.v(() => !document.getElementById('plantaCtx')), 'Esc fecha o menu');
+  },
+
   /* PR 9: nome legível numa sala em L; zona útil nítida; Entrega recortada */
   async representacao(pg, ok) {
     const h = ajudas(pg);
