@@ -332,6 +332,14 @@ const CASOS = [
     const C = VC.calculo, o = C.dpAte; C.dpAte = function (r, s) { const a = r.acessCalc, c = r.curvasCalc; r.acessCalc = []; r.curvasCalc = []; try { return o.call(this, r, s); } finally { r.acessCalc = a; r.curvasCalc = c; } };
     return () => { C.dpAte = o; };
   }],
+  ['Alcance: as vias não dividem o caudal', 'N11.T27', () => {
+    const V = VC.constantes.ALCANCE.VIAS, o = Object.assign({}, V); Object.keys(V).forEach(k => { V[k] = 1; });
+    return () => { Object.assign(V, o); };
+  }],
+  ['Alcance: o catálogo é ignorado', 'N11.T27', () => {
+    const C = VC.calculo, o = C.alcanceTerminal; C.alcanceTerminal = function (t, v) { return o.call(this, Object.assign({}, t, { throwCalc: 0 }), v); };
+    return () => { C.alcanceTerminal = o; };
+  }],
   // Fase 4 da auditoria: qualidade de cálculo
   ['ε_v do espaço ignorado (só o do Setup)', 'N2.T21', () => {
     const o = VC.calculo.evDe; VC.calculo.evDe = function () { return Number(VC.dados.eficaciaRemocao) || 1; };

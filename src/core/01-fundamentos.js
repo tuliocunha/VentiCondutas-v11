@@ -742,7 +742,7 @@ VC.estado._hashEstado = function () {
   const terminais = (VC.dados && VC.dados.terminais) || [];
   partes.push('Tm' + terminais.length);
   partes.push(terminais.map(t =>
-    t.id + '|' + (t.ramalRef || '') + '|' + (t.Q_medido == null ? '' : t.Q_medido) + '|' + (t.sRamal == null ? '' : t.sRamal) + '|' + (t.planta ? t.planta.pisoId + ':' + t.planta.x + ',' + t.planta.y : '') +   // Fase 2A
+    t.id + '|' + (t.ramalRef || '') + '|' + (t.Q_medido == null ? '' : t.Q_medido) + '|' + (t.sRamal == null ? '' : t.sRamal) + '|' + (t.planta ? t.planta.pisoId + ':' + t.planta.x + ',' + t.planta.y + ':' + (t.planta.dir || '') + ':' + (t.planta.vias || '') + ':' + (t.planta.comp || '') : '') + '|' + (t.tipo || '') + '|' + (t.v_saida || '') +   // Fase 2A · 5B: direção, vias, comprimento, tipo e v
     '|' + ((t.espacos || []).map(e => e.nome + ':' + e.Q_parcela).join(','))
   ).join('#'));
   const trf = (VC.dados && VC.dados.transferencias) || [];
@@ -827,6 +827,10 @@ VC.constantes = {
   //   ampliação cónica (extração, fluxo para a secção maior): ζ = REDUCAO.expansao · (1 − A_menor / A_maior)², referido a v na secção menor.
   ZETA_DERIVACAO: { TE_PASSAGEM: 0.4, REDUCAO: { contracao: 0.05, expansao: 0.3 } },
   TERMINAL: { vAtencao: 2.2, vMax: 2.5, LwAtencao: 35, LwMax: 40, dpAtencao: 60, expoenteLw: 50 },   // m/s no colo · dB(A) · critério de conforto (VDI 2081) · Fase 4: Δp > 60 Pa = atenção (boa prática); sem catálogo, Lw cresce com 50·log(Q/Q0) num tamanho fixo
+  /* Fase 5B · alcance (throw) L0,25 dos terminais de insuflação sem catálogo: jato livre v(x) = K·v0·√A0 / x
+     (ASHRAE Fundamentals, cap. Space Air Diffusion; EN ISO 5219 / EN 12238 para o ensaio). K típico por tipo; vt = 0,25 m/s.
+     Vias: jatos por terminal (difusor de teto 4, linear 1 ou 2, grelha e jato 1). Bom: 0,5 a 1,0 da distância à parede. */
+  ALCANCE: { VT: 0.25, K: { 'Difusor': 1.2, 'Grelha Insuflação': 5.0, 'Difusor Linear': 3.5, 'Jato de Ar': 6.2 }, VIAS: { 'Difusor': 4, 'Grelha Insuflação': 1, 'Difusor Linear': 2, 'Jato de Ar': 1 }, CURTO: 0.5, LONGO: 1.0 },
   CD_TRANSFERENCIA: 0.61,       // Fase 4 · coeficiente de descarga de grelhas / frestas de transferência (orifício de arestas vivas)
   BALANCO_ESPACO: { sub: 0.90, sobre: 1.20 },                          // Q servido / Q necessário · tolerância da app
   MINIMO_LEGAL_ARREDONDAMENTO: 0.5,   // m³/h · folga de arredondamento ao m³/h na comparação servido ≥ mínimo legal (Fase 2)

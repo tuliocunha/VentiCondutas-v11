@@ -792,6 +792,27 @@ VC6.testes = {
       const ok3 = Math.abs(C.dpAte(r, 7) - a[0].dp - a[2].dp - r.curvasCalc[0].dp) < 1e-9;
       return ok1 && ok2 && ok3;
     } });
+    self.registar({ id: 'N11.T27', nucleo: 'N7', grupo: 'Terminais', nome: 'Alcance L0,25 dos terminais e jatos até à parede', criterio: 'jato livre L = K·v0·√(Q/v0/vias)/0,25; o catálogo manda; extração sem alcance; linear por metro e 1 ou 2 vias; na planta, distância à parede por raio e estado curto / bom / bate na parede', fn: () => {
+      const C = VC.calculo; if (!C.alcanceTerminal) return true;
+      const g = C.alcanceTerminal({ tipo: 'Grelha Insuflação', rede: 'insuflacao', Q: 360 }, 2);
+      const okG = Math.abs(g.L - 5 * 2 * Math.sqrt(0.1 / 2) / 0.25) < 1e-9 && g.vias === 1;
+      const d = C.alcanceTerminal({ tipo: 'Difusor', rede: 'insuflacao', Q: 360 }, 2), okD = d.vias === 4 && Math.abs(d.L - 1.2 * 2 * Math.sqrt(0.1 / 2 / 4) / 0.25) < 1e-9;
+      const l = C.alcanceTerminal({ tipo: 'Difusor Linear', rede: 'insuflacao', Q: 360, planta: { comp: 2, vias: 1 } }, 2), okL = l.vias === 1 && Math.abs(l.L - 3.5 * 2 * Math.sqrt(0.1 / 2 / 2) / 0.25) < 1e-9;
+      const okC = C.alcanceTerminal({ tipo: 'Difusor', rede: 'insuflacao', Q: 360, throwCalc: 3.3 }, 2).L === 3.3 && C.alcanceTerminal({ tipo: 'Grelha Extração', rede: 'extracao', Q: 360 }, 2) === null;
+      const P = VC.planta; let okP = true;
+      if (P && P.jatosDe) {
+        const sala = { planta: { pts: [[0, 0], [600, 0], [600, 400], [0, 400]] } }, pz = { escala: 0.01 }, gs = P.salaEm;
+        try {
+          P.salaEm = () => sala;
+          const t = { rede: 'insuflacao', planta: { x: 300, y: 395 }, alcance: { L: 2, vias: 1 } };
+          const dir = P.direcaoProposta(t, pz), J1 = P.jatosDe(t, pz);
+          t.planta.dir = 0; t.alcance.L = 4; const J2 = P.jatosDe(t, pz);
+          t.alcance.L = 0.5; const J3 = P.jatosDe(t, pz);
+          okP = dir === 270 && Math.abs(J1[0].d - 3.95) < 1e-9 && J1[0].estado === 'ok' && Math.abs(J2[0].d - 3) < 1e-9 && J2[0].estado === 'longo' && J3[0].estado === 'curto';
+        } finally { P.salaEm = gs; }
+      }
+      return okG && okD && okL && okC && okP;
+    } });
     self.registar({ id: 'N11.T21', nucleo: 'N11', grupo: 'Construtor & Dados', nome: 'Renomear ramal com o prefixo dos sub-ramais', criterio: 'R1 → A passa R1.1 a A.1 e R1.1.1 a A.1.1 e atualiza terminais; ramais que não descendem ficam; um conflito não muda nada', fn: () => {
       const T = VC.topologia; if (!T.renomearComSubRamais) return true;
       const gR = VC.dados.ramais, gT = VC.dados.terminais, gE = VC.dados.espacos;
