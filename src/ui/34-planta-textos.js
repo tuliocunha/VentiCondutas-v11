@@ -93,7 +93,7 @@ P.equilibrarTextos = function () {
   reservar(Q('.planta-term circle').concat(Q('.planta-aviso-sala circle'), Q('.planta-equip rect')));
   // nomes das salas: as maiores primeiro; um nome que tapa outro esconde-se com a sua área (o nome está no título e na lista)
   const areaRot = t => { const b = t.getBoundingClientRect(); const g = t.closest('.planta-sala'); const pb = g && g.querySelector('polygon') ? g.querySelector('polygon').getBoundingClientRect() : b; return pb.width * pb.height; };
-  colocar(ordem(nomesSala.sort((a, b) => areaRot(b) - areaRot(a))));
+  if (VC.dados.params.nomesSalasSempre) reservar(nomesSala); else colocar(ordem(nomesSala.sort((a, b) => areaRot(b) - areaRot(a))));   // Fase 1C: opção «mostrar sempre os nomes»
   linhas2.forEach(t => { const n = t.parentNode.querySelector('text'); if (n && n.getAttribute('data-escondido')) { t.setAttribute('visibility', 'hidden'); t.setAttribute('data-escondido', '1'); escondidos++; } });
   colocar(ordem(nomesRamal));
   colocar(linhas2.filter(t => !t.getAttribute('data-escondido')));
@@ -124,6 +124,12 @@ P.ligar = function () {
 
 /* ── controlo ── */
 P.mudarTextos = function (d) {
+  const antes = this._estado ? this._estado() : null;
+  const r = this._mudarTextos(d);
+  if (antes && this._empilhar) this._empilhar('tamanho dos textos', antes);
+  return r;
+};
+P._mudarTextos = function (d) {
   const f = d === 0 ? 1 : Math.round(Math.max(0.6, Math.min(1.6, this.fatorTextos() + d)) * 10) / 10;
   if (f === 1) delete VC.dados.params.escalaTextos; else VC.dados.params.escalaTextos = f;
   if (VC.estado && VC.estado.forcarSync) VC.estado.forcarSync();
@@ -146,6 +152,10 @@ if (VC.paineis && VC.paineis.esquemas && VC.paineis.esquemas.piso) {
     proposto: () => ({ v: 1, origem: 'norma', nota: 'automático, proporcional ao desenho' }),
     escrever: (p, v) => { const f = VC.utils.num(v); if (!(f >= 0.6 && f <= 1.6) || f === 1) delete VC.dados.params.escalaTextos; else VC.dados.params.escalaTextos = Math.round(f * 10) / 10; },
     ajuda: 'Os textos seguem a escala do desenho; os que se sobrepõem a outros mais importantes escondem-se até aproximar.' });
+  E.campos.splice(4, 0, { id: 'nomesSalasSempre', rot: 'Mostrar sempre os nomes das salas', tipo: 'sim',
+    ler: () => !!VC.dados.params.nomesSalasSempre,
+    escrever: (p, v) => { if (v) VC.dados.params.nomesSalasSempre = true; else delete VC.dados.params.nomesSalasSempre; },
+    ajuda: 'Sem esta opção, um nome que tapa outro esconde-se até aproximar. Com ela, os nomes das salas ficam sempre à vista (os textos dos ramais é que cedem).' });
   const res = E.resultado;
   E.resultado = function (p) { const r = res.call(this, p); return P._escondidos ? r.concat([['Textos escondidos', String(P._escondidos), 'sobrepunham-se: aproxime para os ver']]) : r; };
 }

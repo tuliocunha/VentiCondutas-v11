@@ -163,9 +163,10 @@ P._mostrarMedida = function (ev) {
 P._pilha = []; P._refeitas = [];
 P._estado = function () {
   const c = VC.utils.clonar, D = VC.dados;
-  return { e: c(D.espacos || []), t: c(D.terminais || []), r: c(D.ramais || []), tr: c(D.transferencias || []), u: (D.utas || []).map(x => ({ id: x.id, nome: x.nome, tipoSistema: x.tipoSistema, tipoUV: x.tipoUV, uvbPar: x.uvbPar, planta: x.planta ? c(x.planta) : undefined, exterior: x.exterior ? c(x.exterior) : undefined, recirculacao: x.recirculacao })), pl: (D.plantas || []).map(x => ({ id: x.id, nome: x.nome, escala: x.escala, H: x.H, cota: x.cota })) };
+  return { e: c(D.espacos || []), t: c(D.terminais || []), r: c(D.ramais || []), tr: c(D.transferencias || []), u: (D.utas || []).map(x => ({ id: x.id, nome: x.nome, tipoSistema: x.tipoSistema, tipoUV: x.tipoUV, uvbPar: x.uvbPar, planta: x.planta ? c(x.planta) : undefined, exterior: x.exterior ? c(x.exterior) : undefined, recirculacao: x.recirculacao })), pl: (D.plantas || []).map(x => ({ id: x.id, nome: x.nome, escala: x.escala, H: x.H, cota: x.cota, hTeto: x.hTeto, norte: x.norte })),
+    pa: [{ id: 'params', paletaRedes: D.params && D.params.paletaRedes ? c(D.params.paletaRedes) : undefined, escalaTextos: D.params && D.params.escalaTextos, nomesSalasSempre: D.params && D.params.nomesSalasSempre }] };   // Fase 1C: cores e textos também no Ctrl+Z
 };
-const CHAVE_COL = { e: 'espacos', t: 'terminais', r: 'ramais', tr: 'transferencias', u: 'utas', pl: 'plantas' };
+const CHAVE_COL = { e: 'espacos', t: 'terminais', r: 'ramais', tr: 'transferencias', u: 'utas', pl: 'plantas', pa: 'params' };
 /* comparação estável (a ordem das chaves não conta) */
 const canon = v => {
   if (Array.isArray(v)) return '[' + v.map(canon).join(',') + ']';
@@ -199,8 +200,9 @@ P._aplicar = function (difs, para) {
   let conflitos = 0;
   difs.forEach(d => {
     const nome = CHAVE_COL[d.col];
-    if (!D[nome]) D[nome] = [];
-    const lista = D[nome], idx = lista.findIndex(o => idDe(o) === d.id), atual = idx >= 0 ? lista[idx] : null;
+    if (d.col === 'pa') { D.params = D.params || {}; }
+    else if (!D[nome]) D[nome] = [];
+    const lista = d.col === 'pa' ? [D.params] : D[nome], idx = d.col === 'pa' ? 0 : lista.findIndex(o => idDe(o) === d.id), atual = idx >= 0 ? lista[idx] : null;
     if (d.campos) {
       if (!atual) { conflitos++; return; }
       Object.keys(Object.assign({}, d.campos.antes, d.campos.depois)).forEach(f => {

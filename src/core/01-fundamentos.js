@@ -717,6 +717,7 @@ VC.estado._hashEstado = function () {
   if (p) partes.push(p.altitude + '|' + p.temperatura + '|' + p.humidade + '|' + p.rugosidade + '|' + (p.categoria || 'II') + '|' + (p.potenciaTermica == null ? '' : p.potenciaTermica) + '|' + (p.poluicaoEdificio || '') + '|' + (p.tExtInverno == null ? '' : p.tExtInverno) + '|' + (p.potenciaRejeitada == null ? '' : p.potenciaRejeitada) + '|' + (p.integracaoGT ? 1 : 0));
   partes.push(VC.dados && VC.dados.tipologia || '');
   partes.push(VC.dados && VC.dados.restricaoH || 0);
+  partes.push((VC.dados && VC.dados.plantas || []).map(x => x.id + ':' + (x.hTeto || '')).join(','));   // Fase 0B: altura livre do teto falso por piso
   partes.push(VC.dados && VC.dados.eficaciaRemocao || 1);
   // v11.1 (E1): opções que mudam o cálculo e não forçavam o recálculo
   partes.push((VC.dados && VC.dados.serieDiametros) || 'S1');
@@ -731,7 +732,8 @@ VC.estado._hashEstado = function () {
     '|' + (e.A || 0) + '|' + (e.H || 0) + '|' + (e.V || 0) + '|' + (e.N || 0) +
     '|' + (e.rphAplicado || 0) + '|' + (e.rphOrigem || 'norma') + '|' + (e.eficaciaRemocao == null ? '' : e.eficaciaRemocao) + '|' + (e.pressurizada ? JSON.stringify([e.deltaP, e.vPortaAberta, e.camaraCortaFogo, e.forcaPorta]) : '') + '|' + (e.desenfumagem || '') + (e.fumoExigido ? 'X' : '') + (e.up || '') + JSON.stringify((e.planta && e.planta.fumo) || '') +
     '|' + (e.QAI_projeto || 0) + '|' + (e.QAI_projeto_rede || 'auto') + '|' + (e.QAI_projeto_motivo || '') + '|' + (e.QAI_projeto_origem || 'norma') + '|' + (e.Q_exterior || 0) +
-    '|' + ((e.definicoes || []).map(d => d.tipo + ':' + d.rede + ':' + d.quantidade + ':' + d.Q_total).join(','))
+    '|' + ((e.definicoes || []).map(d => d.tipo + ':' + d.rede + ':' + d.quantidade + ':' + d.Q_total).join(',')) +
+    '|' + (e.categoria || '') + '|' + (e.detecaoCO || '')   // Fase 0B
   ).join('#'));
   const ramais = (VC.dados && VC.dados.ramais) || [];
   partes.push('R' + ramais.length);
@@ -831,6 +833,9 @@ VC.constantes = {
   //   ampliação cónica (extração, fluxo para a secção maior): ζ = REDUCAO.expansao · (1 − A_menor / A_maior)², referido a v na secção menor.
   ZETA_DERIVACAO: { TE_PASSAGEM: 0.4, REDUCAO: { contracao: 0.05, expansao: 0.3 } },
   TERMINAL: { vAtencao: 2.2, vMax: 2.5, LwAtencao: 35, LwMax: 40, dpAtencao: 60, expoenteLw: 50 },   // m/s no colo · dB(A) · critério de conforto (VDI 2081) · Fase 4: Δp > 60 Pa = atenção (boa prática); sem catálogo, Lw cresce com 50·log(Q/Q0) num tamanho fixo
+  // Fase 0B: ocupação por omissão (m² por pessoa), EN 16798-1:2019, Anexo B (os valores da EN 15251, Tabela B.2).
+  // Só propõe o N no painel; o projetista confirma ou escreve outro.
+  DENSIDADE_OCUPACAO: { 'Escritório': 10, 'Gabinete': 10, 'Sala de reuniões': 3.5, 'Auditório': 0.75, 'Restauração': 1.5, 'Café / bar': 1.5, 'Sala de aula': 2, 'Jardim de infância': 1.9, 'Loja': 7, 'Retalho seco': 7 },
   FUMO: { EFETIVO_RISCO_B: 500, ENTERRADO_EFETIVO: 200, ENTERRADO_AREA: 400, CANTAO_AREA: 1600, CANTAO_DIM: 60,
     ATIVA_POR_100M2: 1, ATIVA_MIN: 1.5, ATIVA_M2_POR_BOCA: 320, ADMISSAO_FRACAO: 0.6, ADMISSAO_V_MAX: 5,
     ATIVA_POR_UP: 0.5, ATIVA_DIST: 15, PASSIVA_POR_UP: 0.10, PASSIVA_DIST: 10, PASSIVA_ALCANCE_H: 7, PASSIVA_ALCANCE_MAX: 30 },
@@ -967,13 +972,15 @@ VC.fisica = {
 };
 
 VC.normas = {
-  getDef(tipo) {
+  getDef(tipo, esp) {
     // v11.1: categoria escolhida no Setup (antes estava fixa em 'II').
     // Valores EN 16798-1 (Anexo B): q por pessoa e q por m² para edifício pouco poluente.
     // A categoria é usada só para COMPARAÇÃO (Q_EN16798); o caudal de projeto segue a Portaria 138-I.
     // Fase 4: q_p e q_B da EN 16798-1 por categoria e por nível de poluição do edifício (Setup); a norma não os dá por tipo de espaço.
     const P = (VC.dados && VC.dados.params) || {};
-    const cat = ['I', 'II', 'III', 'IV'].indexOf(P.categoria) >= 0 ? P.categoria : 'II';
+    // Fase 0B: a sala pode ter a sua categoria (esp.categoria); sem ela vale a do Setup
+    const catEsp = esp && ['I', 'II', 'III', 'IV'].indexOf(esp.categoria) >= 0 ? esp.categoria : null;
+    const cat = catEsp || (['I', 'II', 'III', 'IV'].indexOf(P.categoria) >= 0 ? P.categoria : 'II');
     const EN = VC.conhecimento.tabelas.EN16798_1;
     const pol = EN.qB[P.poluicaoEdificio] ? P.poluicaoEdificio : 'pouco';
     const brp = EN.qp[cat], bra = EN.qB[pol][cat];
