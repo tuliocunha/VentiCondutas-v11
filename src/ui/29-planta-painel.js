@@ -166,7 +166,12 @@ const ramal = {
   titulo: r => 'Ramal ' + r.nome, icone: 'fa-route', rotulo: 'Ramal',
   avisos: r => [r.nome],
   campos: [
-    { id: 'nome', rot: 'Nome', tipo: 'texto', ess: true, ler: r => r.nome, acao: (r, v) => P.renomearRamalPlanta(r.id, v) },
+    { id: 'nome', rot: 'Nome', tipo: 'texto', ess: true, ler: r => r.nome, acao: (r, v) => P.renomearRamalPlanta(r.id, v),
+      ajuda: 'Escreva o novo nome + Enter (F2 ou duplo clique no nome do ramal na planta trazem aqui). Atualiza sub-ramais, terminais e espaços.' },
+    { id: 'prefixoSub', rot: 'Mudar também o prefixo dos sub-ramais', tipo: 'sim', ess: true,
+      vis: r => !!(VC.topologia.subRamaisComPrefixo && VC.topologia.subRamaisComPrefixo(r.nome, r.nome).length),
+      ler: () => P.prefixoSubRamais !== false, acao: (r, v) => { P.prefixoSubRamais = !!v; P.redesenhar(); },
+      ajuda: 'Ex.: R1 → INS1 passa R1.1 a INS1.1 e R1.2 a INS1.2, num só passo de desfazer.' },
     { id: 'material', rot: 'Material da conduta', tipo: 'opcoes', ess: true,
       opcoes: r => { const h = herdadoDe(r, 'rugosidade'), base = h && h.herdado ? 'herdado de ' + h.ramal.nome + ' · ' + (h.ramal.geometriaInput.material || 'próprio') : 'como no Setup · ' + String(VC.utils.num(VC.dados.params.rugosidade) || 0.15).replace('.', ',') + ' mm';
         return [['', base]].concat(C().MATERIAIS_CONDUTA.map(m => [m.nome, m.nome + ' · ' + String(m.rugosidade).replace('.', ',') + ' mm'])); },

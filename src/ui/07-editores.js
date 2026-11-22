@@ -1417,8 +1417,9 @@ VC.editorRamais = VC.editorRamais || {
  '<td>' + (r.parente ? '<input type="number" step="0.5" min="0" style="width:64px" value="' + (r.sPai != null && r.sPai !== '' ? r.sPai : '') + '" placeholder="' + (r.sNoPaiOrigem === 'planta' ? VC.utils.fmt(r.sNoPai, 1) + ' (planta)' : 'fim') + '" onchange="VC.editorRamais.editar(' + i + ', \'sPai\', this.value)" ' + dis + '>' : '<span style="color:var(--texto-suave)">—</span>') + '</td>' +  
  '<td><input type="number" step="0.1" value="' + VC.utils.fmt(r.zeta || 0, 1) + '" onchange="VC.editorRamais.editar(' + i + ', \'zeta\', this.value)" ' + dis + '></td>' +  
  '<td><select onchange="VC.editorRamais.editar(' + i + ', \'forma\', this.value)" ' + dis + ' style="font-size:11px">' +  
-   '<option value="circular"' + (r.secaoAdotada !== 'retangular' ? ' selected' : '') + '>Circular</option>' +  
-   '<option value="retangular"' + (r.secaoAdotada === 'retangular' ? ' selected' : '') + '>Retangular</option></select> ' +  
+   (fp => '<option value="auto"' + (fp === 'auto' ? ' selected' : '') + ' title="circular; retangular só se não couber">Auto</option>' +  
+   '<option value="circular"' + (fp === 'circular' ? ' selected' : '') + '>Circular</option>' +  
+   '<option value="retangular"' + (fp === 'retangular' ? ' selected' : '') + '>Retangular</option>')(VC.calculo.formaPedida ? VC.calculo.formaPedida(r) : (r.secaoAdotada === 'retangular' ? 'retangular' : 'circular')) + '</select> ' +  
    '<b>' + VC.utils.esc(r.secaoCalc || (r.Dcom ? 'Ø' + r.Dcom : '-')) + '</b>' +  
    (r.avisoSecao ? ' <span title="' + VC.utils.esc(r.avisoSecao) + '" style="cursor:help;color:var(--ambar-esc)">⚠</span>' : '') + '</td>' +  
  '<td><span class="valor-derivado">' + VC.utils.fmt(r.Q, 0) + '</span></td>' +  
@@ -1455,7 +1456,7 @@ VC.editorRamais = VC.editorRamais || {
  if (!r) return;  
  if (['L', 'zeta', 'Q'].indexOf(campo) >= 0) r[campo] = VC.utils.num(valor);  
  else if (campo === 'sPai') { if (valor === '' || valor == null) delete r.sPai; else r.sPai = Math.max(0, VC.utils.num(valor)); }   // Fase 2A  
- else if (campo === 'forma') r.geometriaInput = Object.assign({}, r.geometriaInput || {}, { forma: valor === 'retangular' ? 'retangular' : 'circular' });   // v11.1: escolha do utilizador  
+ else if (campo === 'forma') r.geometriaInput = Object.assign({}, r.geometriaInput || {}, { forma: valor === 'retangular' || valor === 'auto' ? valor : 'circular' });   // v11.1: escolha do utilizador  
  else r[campo] = valor;  
  VC.estado.sincronizar();  
  }  

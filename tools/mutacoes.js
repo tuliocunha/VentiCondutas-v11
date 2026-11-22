@@ -268,6 +268,30 @@ const CASOS = [
     const C = VC.calculo, o = C.formaPedida; C.formaPedida = function (r) { const f = o.call(this, r); return f === 'auto' ? 'circular' : f; };
     return () => { C.formaPedida = o; };
   }],
+  ['Fugas: a classe de estanquidade não conta (todas como A)', 'N11.T19', () => {
+    const K = VC.calculo.CLASSES_ESTANQUIDADE, o = Object.assign({}, K); Object.keys(K).forEach(k => { K[k] = 0.027; });
+    return () => { Object.assign(K, o); };
+  }],
+  ['Fugas: a pressão entra linear (sem o expoente 0,65)', 'N11.T19', () => {
+    const o = Math.pow; Math.pow = function (b, e) { return e === 0.65 ? b : o(b, e); };
+    return () => { Math.pow = o; };
+  }],
+  ['Redução: a brusca usa o ζ da gradual', 'N11.T20', () => {
+    const C = VC.calculo, o = C.zetaReducao; C.zetaReducao = function (t, e, a) { return o.call(this, 'gradual', e, a); };
+    return () => { C.zetaReducao = o; };
+  }],
+  ['Reajuste «marcados» reduz em todas as derivações', 'N11.T20', () => {
+    const C = VC.calculo, o = C._aplicarReajuste; C._aplicarReajuste = function (r, regras, a, b, c) { return o.call(this, r, Object.assign({}, regras, regras.modo === 'marcados' ? { modo: 'derivacao' } : {}), a, b, c); };
+    return () => { C._aplicarReajuste = o; };
+  }],
+  ['Série própria ignorada (usa sempre S1)', 'N11.T20', () => {
+    const C = VC.calculo, o = C.listaSerie; C.listaSerie = function () { return VC.constantes.COMM_S1; };
+    return () => { C.listaSerie = o; };
+  }],
+  ['Renomear: o prefixo não passa aos sub-ramais', 'N11.T21', () => {
+    const T = VC.topologia, o = T.subRamaisComPrefixo; T.subRamaisComPrefixo = function () { return []; };
+    return () => { T.subRamaisComPrefixo = o; };
+  }],
   // Fase 4 da auditoria: qualidade de cálculo
   ['ε_v do espaço ignorado (só o do Setup)', 'N2.T21', () => {
     const o = VC.calculo.evDe; VC.calculo.evDe = function () { return Number(VC.dados.eficaciaRemocao) || 1; };

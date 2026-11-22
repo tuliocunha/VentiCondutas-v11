@@ -64,9 +64,9 @@ P.comprimentoLigacao = function (t) {
 P.renomearRamalPlanta = function (id, novo) {
   const r = (VC.dados.ramais || []).find(x => String(x.id) === String(id)); if (!r || this._bloqueado()) return;
   const antigo = r.nome, antes = this._estado();
-  const res = VC.topologia.renomearRamal(antigo, novo);
+  const res = VC.topologia.renomearComSubRamais ? VC.topologia.renomearComSubRamais(antigo, novo, { subRamais: this.prefixoSubRamais !== false }) : VC.topologia.renomearRamal(antigo, novo);
   if (!res.ok) { VC.ui.toast(res.erro); return; }
-  if (r.nome !== antigo) { this._empilhar('ramal ' + antigo + ' → ' + r.nome, antes); VC.estado.forcarSync(); VC.ui.toast('Ramal ' + antigo + ' → ' + r.nome + (res.n ? ' (' + res.n + ' referências atualizadas)' : '') + '.'); }
+  if (r.nome !== antigo) { this._empilhar('ramal ' + antigo + ' → ' + r.nome + (res.sub ? ' (+' + res.sub + ' sub-ramais)' : ''), antes); VC.estado.forcarSync(); VC.ui.toast('Ramal ' + antigo + ' → ' + r.nome + (res.sub ? ' e ' + res.sub + ' sub-ramais com o novo prefixo' : '') + (res.n ? ' (' + res.n + ' referências atualizadas)' : '') + '.'); }
   this.redesenhar();
 };
 const painelBase = P._painel;

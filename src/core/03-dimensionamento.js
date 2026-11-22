@@ -35,11 +35,18 @@ VC.calculo = {
   _emExecucao: false,
 
   diametroComercial(dmm, serieRamal) {
-    const serie = serieRamal || VC.dados.serieDiametros || 'S1';
-    const lista = serie === 'S2' ? VC.constantes.COMM_S2 : VC.constantes.COMM_S1;
+    const lista = this.listaSerie(serieRamal);
     return lista.filter(x => x >= dmm)[0] || dmm;
   },
 
+  /* série de diâmetros: 'S1', 'S2' ou uma lista própria («100,125,160,…» ou um array) */
+  listaSerie(serie) {
+    if (Array.isArray(serie)) return serie.slice().sort((a, b) => a - b);
+    if (typeof serie === 'string' && /^\s*\d+([\s,;]+\d+)+\s*$/.test(serie)) { const L = serie.split(/[,;\s]+/).map(Number).filter(x => x > 0).sort((a, b) => a - b); if (L.length) return L; }
+    const s = serie || VC.dados.serieDiametros || 'S1';
+    return s === 'S2' ? VC.constantes.COMM_S2 : VC.constantes.COMM_S1;
+  },
+  serieDe(r) { const s = this.specDe(r, 'serie', null); return s === 'propria' ? this.specDe(r, 'serieLista', null) : s; },
   dimensionarConduta(Qmh, opts) {
     opts = opts || {};
     const Q = VC.utils.num(Qmh) / 3600;
@@ -47,7 +54,7 @@ VC.calculo = {
     const eps = opts.eps || (VC.utils.num(VC.dados.params.rugosidade) || 0.15) / 1000;
     const rho = opts.rho || 1.2;
     const nu = opts.nu || 1.5e-5;
-    const metodo = (VC.dados.metodoCalculo && VC.dados.metodoCalculo.metodo) || 'loss';
+    const metodo = opts.metodo || (VC.dados.metodoCalculo && VC.dados.metodoCalculo.metodo) || 'loss';   // Fase 2C: critério por ramal
     const evalD = (D) => {
       const A = Math.PI * D * D / 4;
       const v = A > 0 ? Q / A : 0;
@@ -488,13 +495,16 @@ VC.calculo = {
     r.reducoesCalc = [];
     if (!T.length) return;
     const fix = r.trocosFix || {}, red = r.reducoes || {};
-    const serie = this.specDe(r, 'serie', VC.dados.serieDiametros || 'S1') === 'S2' ? VC.constantes.COMM_S2 : VC.constantes.COMM_S1;
+    const serie = this.listaSerie(this.serieDe(r));
     const idx = d => { const i = serie.indexOf(d); return i >= 0 ? i : serie.filter(x => x < d).length; };
+    const W = VC.constantes.W1505, H = VC.constantes.H1505, iw = b => W.filter(x => x < b).length, ih = h => H.filter(x => x < h).length;
     const nom = t => t.secNom || { forma: 'circular', D: t.Dnom };
     const area = s => (s.forma === 'retangular' ? s.b * s.h : Math.PI * s.D * s.D / 4);
     const perim = s => (s.forma === 'retangular' ? 2 * (s.b + s.h) : Math.PI * s.D);   // conduta gasta ∝ perímetro × L
     const igual = (a, b) => a.forma === b.forma && (a.forma === 'retangular' ? a.b === b.b && a.h === b.h : a.D === b.D);
-    const passos = (a, b) => (a.forma === 'circular' && b.forma === 'circular' ? idx(a.D) - idx(b.D) : (area(b) < area(a) ? Infinity : 0));   // o salto mínimo conta na série circular
+    // salto em tamanhos: na série circular; nas retangulares, tamanhos EN 1505 da largura e da altura somados
+    const passos = (a, b) => (a.forma === 'circular' && b.forma === 'circular' ? idx(a.D) - idx(b.D)
+      : a.forma === 'retangular' && b.forma === 'retangular' ? (iw(a.b) - iw(b.b)) + (ih(a.h) - ih(b.h)) : (area(b) < area(a) ? Infinity : 0));
     const fixo = t => this.lerSeccao(fix[t.key]);
     const extra = new Set();
     const sequencia = () => {
@@ -507,6 +517,7 @@ VC.calculo = {
         const prev = S[i - 1];
         if (!(area(n) < area(prev) - 1e-9) || prev.forma !== n.forma) { S[i] = n; return; }
         if (red[t.key] && red[t.key].removida) { S[i] = prev; t.motivo = 'redução removida'; return; }
+        if (regras.modo === 'marcados' && !(red[t.key] && red[t.key].marcada)) { S[i] = prev; t.motivo = 'sem redução marcada'; return; }
         if (extra.has(i)) { S[i] = prev; t.motivo = 'máximo de reduções'; return; }
         if (regras.minL > 0 && t.L < regras.minL - 1e-9) { S[i] = prev; t.motivo = 'troço curto (< ' + regras.minL + ' m)'; return; }
         if (passos(prev, n) < regras.minSaltos) { S[i] = prev; t.motivo = 'salto menor que ' + regras.minSaltos + ' tamanhos'; return; }
@@ -587,12 +598,13 @@ VC.calculo = {
     const eps = this.rugosidadeDe(r) / 1000, vMax = this.vMaxDe(r), hMax = this.hMaxDe(r);
     const iso = this.specDe(r, 'isolamento', '') ? (Number(this.specDe(r, 'isolEsp', 0)) || 0) : 0;
     const fx = typeof forcado === 'object' && forcado ? forcado : (Number(forcado) > 0 ? { forma: 'circular', D: Number(forcado) } : null);
-    const z = this.dimensionarConduta(Q, { rho, nu, vMax, eps, serie: this.specDe(r, 'serie', null) });
+    const z = this.dimensionarConduta(Q, { rho, nu, vMax, eps, serie: this.serieDe(r), metodo: this.specDe(r, 'criterio', null) });
     const Dmin = Number(this.specDe(r, 'Dmin', 0)) || 0;   // Ø mínimo da especificação (ex.: 125 em obra): o calculado nunca fica abaixo
-    const Dsug = Dmin > z.Dc ? this.diametroComercial(Dmin, this.specDe(r, 'serie', null)) : z.Dc;
+    const Dsug = Dmin > z.Dc ? this.diametroComercial(Dmin, this.serieDe(r)) : z.Dc;
     const circ = this._avaliarCirc(fx && fx.forma === 'circular' ? fx.D : Dsug, Q, rho, nu, eps);
     // sugestão retangular: deitada, até 4:1 (a proporção máxima habitual), h ≤ altura disponível menos o isolamento
-    const rq = this.retangular(Math.max(0, hMax - 2 * iso), 0.25, vMax, Q, { rho, nu, eps, deitada: true });
+    const lados = Math.max(1, Number(this.specDe(r, 'ladosMax', 4)) || 4);   // relação de lados máxima (4:1 por omissão)
+    const rq = this.retangular(Math.max(0, hMax - 2 * iso), 1 / lados, vMax, Q, { rho, nu, eps, deitada: true });
     const rect = rq ? this._avaliarRect(rq.b, rq.h, Q, rho, nu, eps) : null;
     const pedida = this.formaPedida(r);
     let adot, aviso = '';
@@ -638,11 +650,13 @@ VC.calculo = {
         t.dpTe = 0; t.dpReducao = 0;
         if (i === 0 || !(t.Q > 0)) return;
         const m = r.trocos[i - 1], vm = Number(m.v) || 0, vj = Number(t.v) || 0;
-        if (vm > 0) t.dpTe = ZD.TE_PASSAGEM * Math.pow(1 - vj / vm, 2) * 0.5 * rho * vm * vm;
+        if (vm > 0 && t.parte !== 2) t.dpTe = ZD.TE_PASSAGEM * Math.pow(1 - vj / vm, 2) * 0.5 * rho * vm * vm;   // redução adiada: no ponto não há tê
         const Am = m.Q / 3600 / Math.max(vm, 1e-9), Aj = t.Q / 3600 / Math.max(vj, 1e-9);
         if (Am > Aj * (1 + 1e-6) && vj > 0) {   // a secção muda: Aj é a menor
-          t.dpReducao = ext ? ZD.REDUCAO.expansao * Math.pow(1 - Aj / Am, 2) * 0.5 * rho * vj * vj
-            : ZD.REDUCAO.contracao * 0.5 * rho * vj * vj;
+          const tipo = ((r.reducoes || {})[t.key] || {}).tipo || 'gradual', k = 1 - Aj / Am;
+          // gradual (concêntrica ou excêntrica, ~30°): ζ da biblioteca; brusca: Borda-Carnot (expansão) e 0,5·(1 − A2/A1) (contração)
+          const z = this.zetaReducao(tipo, ext, Aj / Am);
+          t.dpReducao = z * 0.5 * rho * vj * vj; t.zetaReducao = z; t.tipoReducao = tipo;
         }
       });
       r.deltaPderiv = r.trocos.reduce((s, t) => s + (t.dpTe || 0) + (t.dpReducao || 0), 0);
@@ -652,6 +666,32 @@ VC.calculo = {
       r.aumentaJusante = (r.reducoesCalc || []).filter(x => x.aumenta).map(x => x.deTxt + ' → ' + x.paraTxt + ' a ' + VC.utils.fmt(x.s, 1) + ' m');
       r.deltaPTroco = r.deltaPlin + r.deltaPsing + r.deltaPderiv;
     });
+  },
+
+  /* Fase 2C: fugas nas condutas pela classe de estanquidade (EN 12237 / EN 1507; EN 16798-3 ATC):
+       f = c · p^0,65 · 10⁻³  m³/(s·m²),  c = 0,027 (A) · 0,009 (B) · 0,003 (C) · 0,001 (D)
+     p = pressão do percurso crítico que passa no ramal (majorante: é a pressão à saída do equipamento).
+     Fugas do ramal = f × superfície de conduta; as do equipamento somam os ramais que serve. */
+  /* ζ da mudança de secção, referido à velocidade da secção menor; ar = área menor / área maior.
+     Extração: o ar passa do troço menor para o maior (expansão); insuflação: contração. */
+  zetaReducao(tipo, ext, ar) {
+    const ZD = VC.constantes.ZETA_DERIVACAO, k = Math.max(0, 1 - ar);
+    if (tipo === 'brusca') return ext ? k * k : 0.5 * k;   // Borda-Carnot · contração brusca
+    return ext ? ZD.REDUCAO.expansao * k * k : ZD.REDUCAO.contracao;   // gradual (~30°), concêntrica ou excêntrica
+  },
+  CLASSES_ESTANQUIDADE: { A: 0.027, B: 0.009, C: 0.003, D: 0.001 },
+  calcularFugas() {
+    const R = VC.dados.ramais || [], byName = {}; R.forEach(r => { byName[r.nome] = r; });
+    const raiz = r => { let x = r, g = 0; while (x && x.parente && byName[x.parente] && g++ < 60) x = byName[x.parente]; return x; };
+    (VC.dados.utas || []).forEach(u => { u.Q_fugas = 0; u.fugasDefinidas = 0; u.fugasRamais = 0; });
+    R.forEach(r => {
+      const cl = this.specDe(r, 'estanquidade', ''), c = this.CLASSES_ESTANQUIDADE[cl];
+      r.classeEstanquidade = cl || ''; r.p_fugas = Math.max(0, Number(r.deltaPCritico) || 0);
+      r.Q_fugas = c ? c * Math.pow(r.p_fugas, 0.65) * 1e-3 * (Number(r.superficie_m2) || 0) * 3600 : null;
+      const u = (VC.dados.utas || []).find(x => x.id === (raiz(r) || {}).utaRef);
+      if (u) { u.fugasRamais++; if (r.Q_fugas != null) { u.Q_fugas += r.Q_fugas; u.fugasDefinidas++; } }
+    });
+    (VC.dados.utas || []).forEach(u => { u.Q_ventilador_mh = (Number(u.Q) || 0) * 3600 + (u.Q_fugas || 0); });   // m³/h
   },
 
   /* Δp do início do ramal até à posição s (perda singular de entrada + troços até s + tês e reduções antes de s) */
@@ -921,6 +961,7 @@ VC.calculo = {
       this.calcularCondutas(rho, nu);
       this.calcularDeltaPAcumulado();
       const vent = this.calcularVentiladores();
+      this.calcularFugas();   // depois dos ventiladores: soma as fugas ao caudal do equipamento (u.Q em m³/s)
       // Fase 4: área das grelhas de transferência sempre com o Cd atual (projetos antigos guardavam a área antiga)
       if (VC6.transferencias && VC6.transferencias.dimensionarArea) (VC.dados.transferencias || []).forEach(t => { if (!t.areaFixa && Number(t.Q) > 0) t.area_cm2 = VC6.transferencias.dimensionarArea(t.Q, t.dP_Pa || 2); });
       const findings = [];

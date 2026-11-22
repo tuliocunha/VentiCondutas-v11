@@ -37,11 +37,23 @@ Object.assign(P.DICAS || {}, {
 });
 
 P.orto = false; P.encaixeDesligado = false;
+
+/* F2 / duplo clique no nome: foca o campo «Nome» do painel do objeto selecionado (como renomear no CAD) */
+P.focarNome = function () {
+  const sel = VC.paineis && VC.paineis.selecao();
+  if (!sel || (sel.tipo !== 'ramal' && sel.tipo !== 'sala')) { VC.ui.toast('Selecione um ramal ou uma sala para mudar o nome (F2).'); return true; }
+  const alvo = 'pn-' + sel.tipo + '-nome';
+  if (this.trocoSel) { this.trocoSel = null; this.redSel = null; }   // o nome está no painel do ramal, não no do troço
+  if (!document.getElementById(alvo)) this.redesenhar();
+  const el = document.getElementById(alvo); if (el) { el.focus(); if (el.select) el.select(); }
+  return true;
+};
 P.mov = null; P.rot = null; P.retInicio = null;
 
 const tecBase = P.teclaDesenho;
 P.teclaDesenho = function (ev) {
   const k = ev.key, mod = ev.ctrlKey || ev.metaKey;
+  if (k === 'F2' && !mod) return this.focarNome();
   if (k === 'F3') { this.encaixeDesligado = !this.encaixeDesligado; VC.ui.toast(this.encaixeDesligado ? 'Encaixe desligado (F3 liga).' : 'Encaixe ligado.'); this._estadoModos(); return true; }
   if (k === 'F8') { this.orto = !this.orto; VC.ui.toast(this.orto ? 'Orto ligado: só horizontal e vertical (F8 desliga).' : 'Orto desligado.'); this._estadoModos(); return true; }
   if (k === 'F9') { this.grelha = !this.grelha; VC.ui.toast(this.grelha ? 'Grelha de 0,50 m ligada (F9 desliga).' : 'Grelha desligada.'); this._estadoModos(); return true; }
