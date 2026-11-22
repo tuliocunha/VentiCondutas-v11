@@ -27,7 +27,8 @@
    · plantas guardadas no exemplo (Piso 0, Piso 1, Mezanino), a partir
      dos recortes em tools/exemplos/degrade-21nov26/;
    · VCM do refeitório: ar exterior (verde, GEA) → insuflação (magenta);
-     extração de ar sujo da copa (ciano, «Retorno VCM» na legenda) → VCM
+     extração de ar sujo da copa, 2 grelhas de 70 m³/h (ciano, «Retorno
+     VCM» na legenda) → VCM
      → saída para a fachada; modelada como duas unidades (insuflação e
      extração de ar sujo), sem recirculação;
    · altura livre no teto falso: 350 mm;
@@ -197,10 +198,11 @@ const REDES = [
     // insuflação da VCM: ar exterior (verde) pela GEA → insuflação (magenta)
     { nome: 'R10.1', piso: 'P0', pts: [[2575, 3950], [2490, 3950], [2490, 4137], [2366, 4137]], t: [['Refeitório P0-S1', [2495, 4065], 90], ['Refeitório P0-S1', [2366, 4137], 90]] }
   ] },
-  // extração de ar sujo da copa (ciano, grelha linear sobre a bancada MLL/micro-ondas) pela VCM, com saída para a fachada
+  // extração de ar sujo da copa (ciano): 2 grelhas de 70 m³/h sobre a bancada MLL/micro-ondas, pela VCM, com saída para a fachada
   { id: 'UTA-11', nome: 'VCM Refeitório (extração copa)', rede: 'extracao_suja', zona: 'P0 Refeitório', ala: 'Sul', tipoT: GE,
     uv: { tipoUV: 'UVU_SEM_FILTER', eta: 0.40, componentes: [C.ventilador, C.descargaVCM] }, ramais: [
-    { nome: 'R11.1', piso: 'P0', pts: [[2590, 3950], [2590, 3988]], t: [['Refeitório P0-S1', [2590, 3990], 70]] }
+    { nome: 'R11.1', piso: 'P0', pts: [[2590, 3950], [2590, 3984], [2505, 3984]], t: [['Refeitório P0-S1', [2505, 3988], 70]] },
+    { nome: 'R11.1.1', pai: 'R11.1', piso: 'P0', pts: [[2590, 3984], [2645, 3984]], t: [['Refeitório P0-S1', [2645, 3988], 70]] }
   ] }
 ];
 
@@ -315,7 +317,7 @@ function tamanhoJPEG(b) {   // largura e altura de um JPEG (marcador SOF)
 const CORRECOES = [
   'Garagem P0-N1: extração dedicada VEX Garagem de 600 m³/h (RT-SCIE art. 183.º: 300 e 600 m³/h por veículo, 1 lugar), 2 GE × 300 junto ao pavimento; ar de compensação natural pela porta exterior',
   'Sala P0-N1 (bastidores): ar novo 60 m³/h (VAN P0 N, tronco prolongado) e extração 60 m³/h (VEG P0 N, tronco prolongado); mínimo 59 m³/h',
-  'Refeitório P0-S1: ar novo da VCM 2 × 100 = 200 m³/h (mínimo 192) e extração de ar sujo da copa pela VCM de 70 para 200 m³/h (balanço nulo)',
+  'Refeitório P0-S1: ar novo da VCM 2 × 100 = 200 m³/h (mínimo 192) e extração de ar sujo da copa pela VCM de 2 × 70 para 2 × 100 m³/h (balanço nulo)',
   'Sanitários (uso público, Tabela 13): VE de 75 para 90 m³/h por sanita; GE azul da CB P0-N2 suprimido (a VE de 90 cumpre)',
   'CB P0-N2: ar novo de 100 para 60 m³/h; recebe 30 m³/h por transferência e fica em depressão (Anexo II, 1.2.2 h))',
   'Circulação P0-N2: ar novo 200 m³/h (derivação da Sala Técnica), igual ao ar que transfere para os sanitários (90 + 80 + 30)',
@@ -344,7 +346,7 @@ function corrigir() {
   setQ('UTA-08', 'R8.1', 'Sala P1-S2 (open space)', 200);
   // refeitório
   ramal('UTA-10', 'R10.1').t.forEach(t => { t[2] = 100; });
-  setQ('UTA-11', 'R11.1', 'Refeitório P0-S1', 200);
+  setQ('UTA-11', 'R11.1', 'Refeitório P0-S1', 100); setQ('UTA-11', 'R11.1.1', 'Refeitório P0-S1', 100);
   // apoio P1-S4
   rede('UTA-08').ramais.push({ nome: 'R8.1.1', pai: 'R8.1', piso: 'P1', pts: [[2700, 4755], [2700, 4450]], t: [['Apoio/Serviço P1-S4', [2700, 4450], 100]] });
   // sanitários: VE 90, sem GE azul
