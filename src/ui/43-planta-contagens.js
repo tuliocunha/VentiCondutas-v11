@@ -97,7 +97,7 @@ P._svg = function (p) {
     const c = this.ICONES_CONTAGEM[ic.tipo]; if (!c) return;
     const sel = this.iconeSel && String(this.iconeSel.e) === String(e.id) && this.iconeSel.i === i;
     g += '<g class="planta-icone" data-esp="' + esc(e.id) + '" data-i="' + i + '" data-tipo="' + ic.tipo + '" transform="translate(' + n2(ic.x - 12 * k) + ',' + n2(ic.y - 12 * k) + ') scale(' + n2(k * 1000) / 1000 + ')"><title>' + esc(c.nome + ' · ' + e.nome) + '</title>'
-      + '<circle cx="12" cy="12" r="12" fill="#fff" fill-opacity=".85" stroke="' + (sel ? '#f2c94c' : '#475569') + '" stroke-width="' + (sel ? 3 : 1.2) + '"/>'
+      + '<circle cx="12" cy="12" r="12" fill="#fff" fill-opacity=".85" stroke="' + (sel ? VC.planta.COR_SEL : '#475569') + '" stroke-width="' + (sel ? 3 : 1.2) + '"/>'
       + '<path d="' + c.d + '" fill="none" stroke="#1e293b" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></g>';
   }));
   if (!g) return s;

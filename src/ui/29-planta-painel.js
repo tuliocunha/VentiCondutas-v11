@@ -60,7 +60,7 @@ P._svg = function (p) {
   const t = this.termSel != null && porId('terminais', this.termSel);
   if (!t || !t.planta || t.planta.pisoId !== p.id) return s;
   const z = this.zoom || 1;
-  const anel = '<circle class="planta-term-sel" cx="' + t.planta.x + '" cy="' + t.planta.y + '" r="' + 15 / z + '" fill="none" stroke="#f2c94c" stroke-width="4" vector-effect="non-scaling-stroke" pointer-events="none"/>';
+  const anel = '<circle class="planta-term-sel" cx="' + t.planta.x + '" cy="' + t.planta.y + '" r="' + 15 / z + '" fill="none" stroke="' + VC.planta.COR_SEL + '" stroke-width="4" vector-effect="non-scaling-stroke" pointer-events="none"/>';
   return s.replace(/<\/svg>$/, anel + '</svg>');
 };
 

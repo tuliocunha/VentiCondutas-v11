@@ -348,6 +348,10 @@ const CASOS = [
     const C = VC.calculo, o = C.recirculacaoDe; C.recirculacaoDe = function (u) { return u && u.rede === 'insuflacao' ? o.call(this, u) : 0; };
     return () => { C.recirculacaoDe = o; };
   }],
+  ['Janela: a tocar passa a exigir tudo dentro', 'UI.T43', () => {
+    const P = VC.planta, o = P.objetosNaJanela; P.objetosNaJanela = function (a, b, tocar, p) { return o.call(this, a, b, false, p); };
+    return () => { P.objetosNaJanela = o; };
+  }],
   ['Fumo: sem o mínimo de 1,5 m³/s', 'N11.T29', () => {
     const F = VC.constantes.FUMO, o = F.ATIVA_MIN; F.ATIVA_MIN = 0;
     return () => { F.ATIVA_MIN = o; };

@@ -188,7 +188,7 @@ P._svg = function (p) {
     // contorno branco por baixo de todo o ramal, depois cada troço com a sua largura
     // contorno: amarelo se selecionado; vermelho/âmbar se o ramal tem erro/atenção (a cor da conduta fica a da rede)
     const est = this._corEstado ? this._corEstado(r) : null;
-    partes.forEach(({ t, pts: q }) => { g += '<polyline points="' + q.map(c => c.join(',')).join(' ') + '" fill="none" stroke="' + (on ? '#f2c94c' : (est || '#fff')) + '" stroke-width="' + (largura(t.forma === 'retangular' ? t.b : t.Dcom) + (on ? 6 : est ? 5 : 2.5) / z) + '" stroke-linejoin="round" stroke-linecap="round"' + (est && !on ? ' stroke-dasharray="' + 6 / z + ' ' + 3 / z + '"' : '') + '/>'; });
+    partes.forEach(({ t, pts: q }) => { g += '<polyline points="' + q.map(c => c.join(',')).join(' ') + '" fill="none" stroke="' + (on ? VC.planta.COR_SEL : (est || '#fff')) + '" stroke-width="' + (largura(t.forma === 'retangular' ? t.b : t.Dcom) + (on ? 6 : est ? 5 : 2.5) / z) + '" stroke-linejoin="round" stroke-linecap="round"' + (est && !on ? ' stroke-dasharray="' + 6 / z + ' ' + 3 / z + '"' : '') + '/>'; });
     partes.forEach(({ t, pts: q }) => {
       const tip = esc(r.nome) + ' · ' + (t.secao || (t.Dcom ? 'Ø' + t.Dcom : '')) + ' · Q ' + fmt(t.Q, 0) + ' m³/h · v ' + fmt(t.v) + ' m/s';
       g += '<polyline class="planta-troco" points="' + q.map(c => c.join(',')).join(' ') + '" fill="none" stroke="' + cor + '" stroke-opacity="0.82" stroke-width="' + largura(t.forma === 'retangular' ? t.b : t.Dcom) + '" stroke-linejoin="round" stroke-linecap="butt"><title>' + tip + '</title></polyline>';

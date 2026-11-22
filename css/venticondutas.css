@@ -611,3 +611,6 @@ details.pn-av>summary{cursor:pointer;list-style:revert}
 .pctx-item.perigo{color:#b42318}
 .pctx-ic{display:inline-block;width:17px}
 .planta-ferrbar{z-index:9}
+
+/* Fase 1C · seleção múltipla */
+.pn-multi-nomes{display:flex;flex-wrap:wrap;gap:4px;margin:4px 0 8px}.pn-multi-nomes span{background:#fae8ff;color:#86198f;border-radius:10px;padding:1px 8px;font-size:12px}

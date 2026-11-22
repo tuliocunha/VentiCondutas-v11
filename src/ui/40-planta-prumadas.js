@@ -155,7 +155,7 @@ P._prumadaHTML = function (o, z) {
   const r = o.r, cor = this.corRede ? this.corRede(r.rede) : '#2f6fb5', q = o.q, R = 9 / z, s = R * 0.7;
   const sel = String(this.prumSel) === String(r.id), sobe = this.sentidoPrumada(r) * (o.lado === 'de' ? 1 : -1) > 0;
   const outro = o.lado === 'de' ? r.prumada.para.pisoId : r.prumada.de.pisoId;
-  let h = '<circle cx="' + n2(q[0]) + '" cy="' + n2(q[1]) + '" r="' + n2(R) + '" fill="#fff" stroke="' + (sel ? '#f2c94c' : cor) + '" stroke-width="' + n2((sel ? 3.5 : 2.4) / z) + '"/>'
+  let h = '<circle cx="' + n2(q[0]) + '" cy="' + n2(q[1]) + '" r="' + n2(R) + '" fill="#fff" stroke="' + (sel ? VC.planta.COR_SEL : cor) + '" stroke-width="' + n2((sel ? 3.5 : 2.4) / z) + '"/>'
     + '<path d="M' + n2(q[0] - s) + ',' + n2(q[1] - s) + 'L' + n2(q[0] + s) + ',' + n2(q[1] + s) + 'M' + n2(q[0] + s) + ',' + n2(q[1] - s) + 'L' + n2(q[0] - s) + ',' + n2(q[1] + s) + '" stroke="' + cor + '" stroke-width="' + n2(1.8 / z) + '"/>';
   if (z >= 0.45) h += '<text x="' + n2(q[0] + R + 3 / z) + '" y="' + n2(q[1] + 3 / z) + '" font-size="' + n2(8 / z) + '" font-weight="800" fill="' + cor + '" paint-order="stroke" stroke="#fff" stroke-width="' + n2(3 / z) + '">' + esc(r.nome) + ' ' + (sobe ? '↑' : '↓') + ' ' + esc(nomePiso(outro)) + '</text>';
   return '<g class="planta-prumada" data-r="' + esc(r.id) + '" data-lado="' + o.lado + '" style="cursor:move"><title>Prumada ' + esc(r.nome) + ' · ' + (sobe ? 'sobe' : 'desce') + ' para ' + esc(nomePiso(outro)) + ' · L ' + fmt(r.L, 2) + ' m · ' + esc(r.secaoCalc || (r.Dcom ? 'Ø' + r.Dcom : '')) + ' · ' + fmt(r.Q, 0) + ' m³/h</title>' + h + '</g>';
@@ -167,7 +167,7 @@ P._svg = function (p) {
   const z = this.zoom || 1;
   let g = this.pontosPrumada(p).map(o => this._prumadaHTML(o, z)).join('');
   const pp = this.pendentePrum;
-  if (pp && pp.pisoId === p.id) g += '<circle class="planta-prumada-nova" cx="' + pp.x + '" cy="' + pp.y + '" r="' + n2(9 / z) + '" fill="none" stroke="#f2c94c" stroke-width="' + n2(3 / z) + '" stroke-dasharray="' + n2(3 / z) + ' ' + n2(2 / z) + '"/>';
+  if (pp && pp.pisoId === p.id) g += '<circle class="planta-prumada-nova" cx="' + pp.x + '" cy="' + pp.y + '" r="' + n2(9 / z) + '" fill="none" stroke="' + VC.planta.COR_SEL + '" stroke-width="' + n2(3 / z) + '" stroke-dasharray="' + n2(3 / z) + ' ' + n2(2 / z) + '"/>';
   if (!g) return s;
   const corte = s.indexOf('<g class="planta-term"') >= 0 ? s.indexOf('<g class="planta-term"') : s.lastIndexOf('</svg>');
   return s.slice(0, corte) + '<g class="planta-prumadas">' + g + '</g>' + s.slice(corte);

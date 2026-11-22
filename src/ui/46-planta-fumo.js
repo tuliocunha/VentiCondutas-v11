@@ -100,7 +100,7 @@ P._svg = function (p) {
       const sel = this.fumoSel && String(this.fumoSel.e) === String(e.id) && this.fumoSel.i === i, c = COR[b.tipo];
       const seta = b.tipo === 'ext' ? 'M0,' + n2(R * 0.55) + 'V' + n2(-R * 0.55) + 'M' + n2(-R * 0.4) + ',' + n2(-R * 0.15) + 'L0,' + n2(-R * 0.55) + 'L' + n2(R * 0.4) + ',' + n2(-R * 0.15) : 'M0,' + n2(-R * 0.55) + 'V' + n2(R * 0.55) + 'M' + n2(-R * 0.4) + ',' + n2(R * 0.15) + 'L0,' + n2(R * 0.55) + 'L' + n2(R * 0.4) + ',' + n2(R * 0.15);
       g += '<g class="planta-fumo" data-esp="' + esc(e.id) + '" data-i="' + i + '" data-tipo="' + b.tipo + '" transform="translate(' + b.x + ',' + b.y + ')"><title>' + (b.tipo === 'ext' ? 'Extração de fumo' : 'Admissão de ar (controlo de fumo)') + ' · ' + esc(e.nome) + '</title>'
-        + '<rect x="' + n2(-R) + '" y="' + n2(-R) + '" width="' + n2(2 * R) + '" height="' + n2(2 * R) + '" rx="' + n2(2 / z) + '" fill="#fff" stroke="' + (sel ? '#f2c94c' : c) + '" stroke-width="' + n2((sel ? 3 : 2) / z) + '"/>'
+        + '<rect x="' + n2(-R) + '" y="' + n2(-R) + '" width="' + n2(2 * R) + '" height="' + n2(2 * R) + '" rx="' + n2(2 / z) + '" fill="#fff" stroke="' + (sel ? VC.planta.COR_SEL : c) + '" stroke-width="' + n2((sel ? 3 : 2) / z) + '"/>'
         + '<path d="' + seta + '" fill="none" stroke="' + c + '" stroke-width="' + n2(1.8 / z) + '" stroke-linecap="round"/></g>';
     });
   });

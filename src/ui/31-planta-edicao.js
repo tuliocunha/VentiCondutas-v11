@@ -46,7 +46,7 @@ P._alcasHTML = function (ed, pts) {
   }
   pts.forEach((q, i) => {
     const on = vs && vs.tipo === ed.tipo && String(vs.id) === String(ed.o.id) && vs.i === i;
-    h += '<circle class="pe-v' + (on ? ' on' : '') + '" data-i="' + i + '" cx="' + q[0] + '" cy="' + q[1] + '" r="' + (on ? 8 : 7) / z + '" fill="' + (on ? '#f2c94c' : '#fff') + '" stroke="#4f6d8c" stroke-width="2.5" vector-effect="non-scaling-stroke"><title>Arrastar: mover o vértice (Shift: ângulo reto) · clique e Delete: apagar</title></circle>';
+    h += '<circle class="pe-v' + (on ? ' on' : '') + '" data-i="' + i + '" cx="' + q[0] + '" cy="' + q[1] + '" r="' + (on ? 8 : 7) / z + '" fill="' + (on ? VC.planta.COR_SEL : '#fff') + '" stroke="#4f6d8c" stroke-width="2.5" vector-effect="non-scaling-stroke"><title>Arrastar: mover o vértice (Shift: ângulo reto) · clique e Delete: apagar</title></circle>';
   });
   return h + '</g>';
 };
