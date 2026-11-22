@@ -597,10 +597,12 @@ VC6.testes = {
       } finally { VC.dados.plantas = g.pl; VC.dados.espacos = g.E; P.piso = g.piso; P.zoom = g.z; P.grelha = g.gr; if (g.sig === undefined) delete VC.dados.params.siglasEquip; else VC.dados.params.siglasEquip = g.sig; }
       return enc && sig;
     } });
-    self.registar({ id: 'N11.T16', nucleo: 'N11', grupo: 'Construtor & Dados', nome: 'Planta: atalhos ao estilo SketchUp / AutoCAD', criterio: 'cada ferramenta tem uma tecla e não há teclas repetidas; L, R, M, Q, E, T, H como no SketchUp; rotação com o rato em passos de 15°', fn: () => {
+    self.registar({ id: 'N11.T16', nucleo: 'N11', grupo: 'Construtor & Dados', nome: 'Planta: atalhos ao estilo SketchUp / AutoCAD', criterio: 'cada ferramenta tem uma tecla ou está num grupo da barra, e não há teclas repetidas; L, R, M, Q, E, T, H como no SketchUp; rotação com o rato em passos de 15°', fn: () => {
       const P = VC.planta; if (!P || !P._anguloRot) return true;
-      const T = P.TECLAS, ks = P.FERRAMENTAS.map(f => (T[f[0]] || '').toUpperCase());
-      const unicas = ks.every(k => k) && new Set(ks).size === ks.length;
+      // cada ferramenta tem tecla ou está num grupo da barra (sub-ícones); as teclas não se repetem
+      const T = P.TECLAS, ks = P.FERRAMENTAS.map(f => (T[f[0]] || '').toUpperCase()).filter(Boolean);
+      const noGrupo = id => (P.GRUPOS || []).some(g => g[2].indexOf(id) >= 0);
+      const unicas = P.FERRAMENTAS.every(f => T[f[0]] || noGrupo(f[0])) && new Set(ks).size === ks.length;
       const su = T.ramal === 'L' && T.ret === 'R' && T.mover === 'M' && T.rodar === 'Q' && T.apagar === 'E' && T.medir === 'T' && T.mao === 'H';
       const g = P.rot; let ang = false;
       try {

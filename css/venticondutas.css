@@ -610,3 +610,4 @@ details.pn-av>summary{cursor:pointer;list-style:revert}
 .pctx-item:hover{background:var(--superf3)}
 .pctx-item.perigo{color:#b42318}
 .pctx-ic{display:inline-block;width:17px}
+.planta-ferrbar{z-index:9}
