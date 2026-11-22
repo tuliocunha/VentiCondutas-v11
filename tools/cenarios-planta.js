@@ -363,9 +363,9 @@ const CENARIOS = {
     ok(p4 && Math.abs(p4[0] - 503) < 1 && Math.abs(p4[1] - 404) < 1, 'Alt premido: o ponto fica onde se clicou (sem encaixe)', p4);
     await h.tecla('Escape');
     // grelha
-    await h.tecla('g'); await h.tecla('p'); await h.clicar([623, 573]);
-    ok(await h.v(() => JSON.stringify(VC.planta.rascunho[0]) === '[600,550]'), 'Grelha (G) de 0,50 m: o ponto vai para (600, 550)', await h.v(() => VC.planta.rascunho[0]));
-    await h.tecla('Escape'); await h.tecla('g');
+    await h.tecla('F9'); await h.tecla('p'); await h.clicar([623, 573]);
+    ok(await h.v(() => JSON.stringify(VC.planta.rascunho[0]) === '[600,550]'), 'Grelha (F9) de 0,50 m: o ponto vai para (600, 550)', await h.v(() => VC.planta.rascunho[0]));
+    await h.tecla('Escape'); await h.tecla('F9');
     // medir
     await h.tecla('t'); await h.clicar([100, 100]); await h.clicar([500, 100]); await h.clicar([500, 400]); await h.tecla('Enter');
     ok(await h.v(() => Math.abs(VC.planta.medidaTotal() - 7) < 1e-6 && VC.planta.medidaFim && /total 7[.,]00 m/.test(document.getElementById('plantaMedicao').textContent)), 'Medir: 4,00 + 3,00 m, total 7,00 m no desenho', await h.v(() => [VC.planta.medida, VC.planta.medidaTotal(), VC.planta.medidaFim, (document.getElementById('plantaMedicao') || {}).textContent]));
@@ -579,6 +579,58 @@ const CENARIOS = {
     ok(await h.v(() => { const pr = VC.planta.pendenteRamal, u = VC.dados.utas.find(x => x.nome === 'VAN P0 N'); return pr && String(pr.equip) === String(u.id) && pr.pts[0][0] === u.planta.x; }), 'Traçar a partir do equipamento: o ramal encaixa nele e fica proposto esse equipamento');
     ok(/Começa no equipamento/.test(await pg.locator('#plantaPainel, .planta-painel').first().textContent()), 'O cartão do traçado diz «Começa no equipamento»');
     await h.tecla('Escape');
+  },
+
+  /* PR 58 · Fase 3B: tomadas, rejeições, aberturas para o exterior e perdas térmicas */
+  async exterior(pg, ok) {
+    const h = ajudas(pg);
+    await pg.evaluate(async () => { await VC._carregarExemploDeFicheiro(['exemplos/degrade-21nov26-corrigido.json'], 'x'); VC.nav.irPasso('rede'); VC.nav.setVista('planta'); VC.planta.setPiso('piso-p0'); });
+    await pg.waitForTimeout(1200);
+    const van = await h.v(() => { const P = VC.planta; VC.ui.toast = () => {}; ['R1.1', 'R2.1'].forEach(n => { const r = VC.dados.ramais.find(x => x.nome === n), u = VC.dados.utas.find(x => x.id === r.utaRef), a = r.planta.pts[0], b = r.planta.pts[1], l = Math.hypot(b[0] - a[0], b[1] - a[1]); P.colocarEquipamento([a[0] - (b[0] - a[0]) / l * 45, a[1] - (b[1] - a[1]) / l * 45], u.id); P.ligarRamaisAoEquip(u.id); });
+      const u = VC.dados.utas.find(x => x.nome === 'VAN P0 N'); P.selecionarEquip(u.id); P.zoom = 1.4; P.vx = u.planta.x - 380 / 1.4; P.vy = u.planta.y - 260 / 1.4; P.aplicarVista(); return [u.planta.x, u.planta.y, u.dpExt]; });
+    await pg.waitForTimeout(400);
+    ok(/Desenhar a tomada de ar exterior/.test(await pg.locator('.pn[data-pn="equipamento"]').textContent()), 'O painel do equipamento propõe desenhar a tomada (G)');
+    await h.tecla('g');
+    ok(await h.v(() => VC.planta.ferramenta === 'grelhaExt'), 'G escolhe a ferramenta Tomada / rejeição');
+    await h.clicar([van[0] + 60, van[1] - 30]); await pg.waitForTimeout(400);
+    const oda = await h.v(() => { const u = VC.dados.utas.find(x => x.nome === 'VAN P0 N'); return u.exterior && u.ext && [u.ext.lado, u.ext.b, u.ext.h, u.ext.vFace, u.ext.dp, u.dpExt, u.dpRede]; });
+    ok(oda && oda[0] === 'ODA' && oda[3] <= 2 + 1e-9 && oda[4] > 0, 'Clique na fachada: tomada ODA do VAN P0 N, dimensão proposta a ≤ 2 m/s', oda);
+    ok(oda && Math.abs(oda[5] - oda[6] - oda[4]) < 1e-6 && oda[5] > van[2], 'O Δp da grelha e da conduta soma ao Δp externo do equipamento');
+    ok(await h.v(() => !!document.querySelector('.planta-grelha-ext[data-lado="ODA"]') && !document.querySelector('.planta-eq-ext[data-lig="ODA"]')), 'Desenha a grelha ODA e a conduta até ela (sem a seta genérica)');
+    ok(/Tomada de ar exterior · VAN P0 N/.test(await pg.locator('.pn').first().textContent()), 'Fica selecionada com o seu painel');
+    // rejeição do VEG muito perto → aviso e traço vermelho
+    await h.v(() => { const P = VC.planta, u = VC.dados.utas.find(x => x.nome === 'VEG P0 N'), t = VC.dados.utas.find(x => x.nome === 'VAN P0 N'); P.selecionarEquip(u.id); P.colocarGrelha([t.exterior.x + 15, t.exterior.y], u.id); });
+    await pg.waitForTimeout(300);
+    const eha = await h.v(() => { const u = VC.dados.utas.find(x => x.nome === 'VEG P0 N'); return [u.ext.lado, u.ext.distMin, u.ext.avisos.length, !!document.querySelector('.planta-dist-ext')]; });
+    ok(eha[0] === 'EHA' && eha[1] < 2 && eha[2] > 0 && eha[3], 'Rejeição a menos de 2 m da tomada: aviso no painel e traço vermelho com a medida', eha);
+    ok(await h.v(() => (VC.calculo.calcularTudo().findings || []).some(f => f.tipo === 'Rejeição para o exterior' && /mínimo 2 m/.test(f.msg))), 'A verificação lista a distância curta (EN 13779)');
+    // arrastar a rejeição para longe resolve
+    const pe = await h.v(() => { const u = VC.dados.utas.find(x => x.nome === 'VEG P0 N'); return [u.exterior.x, u.exterior.y]; });
+    await h.tecla('v'); await h.arrastar(pe, [pe[0] - 160, pe[1]]); await pg.waitForTimeout(300);
+    ok(await h.v(() => { const u = VC.dados.utas.find(x => x.nome === 'VEG P0 N'); return u.ext.distMin >= 2 && !u.ext.avisos.length && !document.querySelector('.planta-dist-ext'); }), 'Arrastar a rejeição para mais de 2 m tira o aviso');
+    // dimensão escrita e Δp do catálogo
+    await h.v(() => { const u = VC.dados.utas.find(x => x.nome === 'VAN P0 N'); VC.planta.extSel = u.id; VC.planta.redesenhar(); });
+    await pg.fill('#pn-exterior-dim', '600×400'); await pg.press('#pn-exterior-dim', 'Enter'); await pg.waitForTimeout(350);
+    ok(await h.v(() => { const u = VC.dados.utas.find(x => x.nome === 'VAN P0 N'); return u.ext.b === 600 && u.ext.h === 400 && !u.ext.bProposto; }), 'Dimensão escrita 600×400 substitui a proposta');
+    await pg.fill('#pn-exterior-dpFab', '25'); await pg.press('#pn-exterior-dpFab', 'Enter'); await pg.waitForTimeout(350);
+    ok(await h.v(() => VC.dados.utas.find(x => x.nome === 'VAN P0 N').ext.dpGrelha === 25), 'Δp do catálogo usado em vez do ζ típico');
+    await h.tecla('Delete');
+    ok(await h.v(() => !VC.dados.utas.find(x => x.nome === 'VAN P0 N').exterior), 'Delete tira a grelha');
+    await pg.locator('#plantaSVG').hover(); await pg.keyboard.press('Control+z'); await pg.waitForTimeout(350);
+    ok(await h.v(() => { const u = VC.dados.utas.find(x => x.nome === 'VAN P0 N'); return u.exterior && u.exterior.b === 600; }), 'Ctrl+Z repõe-na com a dimensão escrita');
+    // abertura para o exterior numa garagem
+    const gar = await h.v(() => { const e = VC.dados.espacos.find(x => /Garagem/.test(x.nome) && x.planta); const pts = e.planta.pts; const P = VC.planta; const c = [(pts[0][0] + pts[1][0]) / 2, (pts[0][1] + pts[1][1]) / 2]; P.zoom = 1; P.vx = c[0] - 380; P.vy = c[1] - 250; P.aplicarVista(); return { id: e.id, q: c, Q: e.Q_exterior || 0 }; });
+    await pg.waitForTimeout(300);
+    await h.tecla('Escape'); await h.tecla('o');
+    await h.clicar(gar.q); await pg.waitForTimeout(400);
+    ok(await pg.evaluate(id => { const e = VC.dados.espacos.find(x => x.id === id); return !!(e.planta.abertura && document.querySelector('.planta-abert-ext')); }, gar.id), 'O na parede da garagem marca a abertura para o exterior');
+    ok(/Abertura · /.test(await pg.locator('.pn').first().textContent()) && /Área livre/.test(await pg.locator('.pn').first().textContent()), 'Painel da abertura com o caudal e a área livre');
+    // perdas térmicas: sem isolamento e ar a 12 °C condensa; com o isolamento proposto deixa de condensar
+    await h.v(() => { const r = VC.dados.ramais.find(x => x.nome === 'R1.1'); r.especificacao = Object.assign({}, r.especificacao, { tAr: 12, hrEnv: 70 }); VC.calculo.calcularTudo(); });
+    const th = await h.v(() => { const t = VC.dados.ramais.find(x => x.nome === 'R1.1').termica; return [t.risco, t.eMin, t.ts, t.td]; });
+    ok(th[0] && th[1] > 0, 'Ar a 12 °C sem isolamento com 70 % à volta: risco de condensação e espessura mínima proposta', th);
+    await pg.evaluate(e => { const r = VC.dados.ramais.find(x => x.nome === 'R1.1'); r.especificacao = Object.assign({}, r.especificacao, { isolamento: 'termico', isolEsp: e }); VC.calculo.calcularTudo(); }, th[1]);
+    ok(await h.v(() => { const r = VC.dados.ramais.find(x => x.nome === 'R1.1'), t = r.termica; return t && !t.risco && t.e > 0; }), 'Com essa espessura deixa de condensar');
   },
 
   /* PR 9: nome legível numa sala em L; zona útil nítida; Entrega recortada */

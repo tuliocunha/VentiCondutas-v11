@@ -754,6 +754,7 @@ VC.estado._hashEstado = function () {
     '|' + (u.transmissao || 1) + '|' + (u.ativo === false ? '0' : '1') + '|' + (u.curvaFabricante ? (u.curvaFabricante.fabricante + '/' + u.curvaFabricante.modelo) : '') +
     '|' + (u.tipoUV || '') + '|' + (u.recuperadorAtivo === false ? '0' : '1')   // v11.1: tipo Ecodesign
     + '|' + (u.uvbPar || '') + '|' + (u.freeCooling ? 'fc' : '') + (u.tudoAr === false ? 'nta' : '') + '|' + (u.controloCaudal || '') + '|' + (u.componentes || []).map(c => (c.tipo || '') + ':' + c.deltaP + ':' + c.deltaP_final).join(',')   // Fase 3: par da UVB e componentes
+    + '|' + JSON.stringify(u.exterior || '') + JSON.stringify(u.planta || '')   // Fase 3B: tomada / rejeição e posição (L da ligação)
   ).join('#'));
   partes.push((VC.flags && VC.flags.confortoTermico !== false) ? '1' : '0');
   partes.push((VC.flags && VC.flags.qaiProjeto !== false) ? '1' : '0');
@@ -828,6 +829,20 @@ VC.constantes = {
   CD_TRANSFERENCIA: 0.61,       // Fase 4 · coeficiente de descarga de grelhas / frestas de transferência (orifício de arestas vivas)
   BALANCO_ESPACO: { sub: 0.90, sobre: 1.20 },                          // Q servido / Q necessário · tolerância da app
   MINIMO_LEGAL_ARREDONDAMENTO: 0.5,   // m³/h · folga de arredondamento ao m³/h na comparação servido ≥ mínimo legal (Fase 2)
+  /* Fase 3B · tomadas de ar exterior (ODA) e rejeições (EHA) — EN 13779:2007, Anexo A.2 (retomado pela EN 16798-3):
+     tomada não protegida a ≤ 2 m/s; rejeição na fachada com ≤ 0,5 m³/s por abertura e ≥ 5 m/s; rejeição a ≥ 2 m de uma
+     tomada na mesma fachada; tomadas a ≥ 8 m de fontes poluidoras (ar sujo EHA 3/4: garagem, cozinha, IS → sai acima da cobertura). */
+  EXTERIOR: {
+    V_TOMADA_MAX: 2.0, V_REJEICAO_MIN: 5.0, Q_REJEICAO_FACHADA_MAX: 0.5, DIST_MIN: 2.0, DIST_MIN_SUJO: 8.0,
+    ZETA_LIGACAO: 0.8,   // ligação equipamento ↔ grelha: uma curva + entrada no equipamento (referido à v na conduta)
+    TIPOS: {
+      grelha: { nome: 'grelha de fachada com rede', zeta: 1.5, livre: 0.6 },
+      persiana: { nome: 'persiana anti-chuva', zeta: 2.5, livre: 0.45 },
+      cobertura: { nome: 'saída / entrada na cobertura (chapéu)', zeta: 1.0, livre: 0.9 }
+    }
+  },
+  /* Fase 3B · perdas térmicas pelas paredes das condutas (isolamento): U = 1/(1/hi + e/λ + 1/he) */
+  TERMICA: { LAMBDA: 0.035, HI: 20, HE: 8, T_AR: 16, T_ENV: 26, HR_ENV: 60, CP: 1005, MARGEM_ORVALHO: 0.5 },
   V_ABERTURA_EXTERIOR: 2.0,    // m/s · velocidade de referência numa grelha de admissão natural para o exterior (dimensiona a área livre)
   BALANCO_RESIDUO: 5,          // m³/h · resíduo aceite no balanço de massa de um espaço (2× = desequilíbrio grave)
   EQUILIBRIO_REDE: 0.20,       // desvio máximo de Δp entre ramais após otimização (20 %)

@@ -300,6 +300,22 @@ const CASOS = [
     const P = VC.planta, o = P.metadePar; P.metadePar = function () { return null; };
     return () => { P.metadePar = o; };
   }],
+  ['Exterior: a distância ao ar sujo usa o mínimo de 2 m', 'N11.T23', () => {
+    const E = VC.constantes.EXTERIOR, o = E.DIST_MIN_SUJO; E.DIST_MIN_SUJO = E.DIST_MIN;
+    return () => { E.DIST_MIN_SUJO = o; };
+  }],
+  ['Exterior: a conduta até à grelha não conta', 'N11.T23', () => {
+    const E = VC.constantes.EXTERIOR, o = E.ZETA_LIGACAO, C = VC.calculo, d = C.dimensionarConduta; E.ZETA_LIGACAO = 0; C.dimensionarConduta = function () { return Object.assign(d.apply(this, arguments), { R: 0 }); };
+    return () => { E.ZETA_LIGACAO = o; C.dimensionarConduta = d; };
+  }],
+  ['Térmica: λ do isolamento errado', 'N11.T24', () => {
+    const K = VC.constantes.TERMICA, o = K.LAMBDA; K.LAMBDA = 0.07;
+    return () => { K.LAMBDA = o; };
+  }],
+  ['Térmica: a espessura do isolamento é ignorada', 'N11.T24', () => {
+    const C = VC.calculo, o = C.specDe; C.specDe = function (r, k) { return k === 'isolEsp' ? 0 : o.apply(this, arguments); };
+    return () => { C.specDe = o; };
+  }],
   // Fase 4 da auditoria: qualidade de cálculo
   ['ε_v do espaço ignorado (só o do Setup)', 'N2.T21', () => {
     const o = VC.calculo.evDe; VC.calculo.evDe = function () { return Number(VC.dados.eficaciaRemocao) || 1; };

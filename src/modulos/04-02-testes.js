@@ -725,6 +725,43 @@ VC6.testes = {
         if (VC.perf) ['cacheFisica', 'cacheMaterializacao', 'ordenacaoTopologica', 'cacheBalanco'].forEach(k => { if (VC.perf[k] && VC.perf[k].invalidar) VC.perf[k].invalidar(); });   // o desfazer recalculou com os dados do teste
         VC.calculo.calcularTudo(); }
     } });
+    self.registar({ id: 'N11.T23', nucleo: 'N6', grupo: 'UTAs', nome: 'Tomada e rejeição para o exterior (EN 13779, A.2)', criterio: 'tomada proposta a ≤ 2 m/s e rejeição a ≥ 5 m/s; Δp = grelha + conduta somado ao Δp externo; rejeição a < 2 m (ar sujo < 8 m) de uma tomada é avisada; ar sujo na fachada também', fn: () => {
+      const C = VC.calculo; if (!C.exteriorDe) return true;
+      const { rho } = VC.perf.cacheFisica.rhoNu(), g = { u: VC.dados.utas, pl: VC.dados.plantas };
+      try {
+        const pO = C.propostaGrelha(0.27, 'ODA', 'grelha'), pE = C.propostaGrelha(0.17, 'EHA', 'grelha');
+        const ok1 = 0.27 / (pO.b * pO.h / 1e6) <= 2 + 1e-9 && 0.17 / (pE.b * pE.h / 1e6) >= 5 - 1e-9 && pO.b >= pO.h && pO.h % 50 === 0;
+        VC.dados.plantas = [{ id: 'pz', escala: 0.01 }];
+        const I = { id: 'I', nome: 'VAN', rede: 'insuflacao', planta: { pisoId: 'pz', x: 0, y: 0 }, exterior: { pisoId: 'pz', x: 300, y: 0, tipo: 'grelha' } };
+        const E = { id: 'E', nome: 'VEX', rede: 'extracao_suja', exterior: { pisoId: 'pz', x: 300, y: 400, tipo: 'grelha', b: 300, h: 100 } };
+        I.ext = C.exteriorDe(I, 0.27, rho); E.ext = C.exteriorDe(E, 0.17, rho);
+        const ok2 = Math.abs(I.ext.L - 3) < 1e-9 && I.ext.dpLig > 0 && Math.abs(I.ext.dp - I.ext.dpGrelha - I.ext.dpLig) < 1e-9 && E.ext.b === 300 && E.ext.L === 0
+          && Math.abs(I.ext.dpGrelha - 1.5 * 0.5 * rho * Math.pow(0.27 / (I.ext.A * 0.6), 2)) < 1e-9;
+        VC.dados.utas = [I, E]; C.verificarExteriores();
+        const ok3 = Math.abs(E.ext.distMin - 4) < 1e-9 && E.ext.distLim === 8 && E.ext.avisos.some(m => /mínimo 8 m/.test(m)) && E.ext.avisos.some(m => /acima da cobertura/.test(m)) && I.ext.avisos.length === 1;
+        E.rede = 'extracao'; E.exterior.tipo = 'cobertura'; E.ext = C.exteriorDe(E, 0.17, rho); C.verificarExteriores();
+        const ok4 = E.ext.distLim === 2 && !E.ext.avisos.length && !I.ext.avisos.length;
+        return ok1 && ok2 && ok3 && ok4;
+      } finally { VC.dados.utas = g.u; VC.dados.plantas = g.pl; }
+    } });
+    self.registar({ id: 'N11.T24', nucleo: 'N3', grupo: 'Condutas', nome: 'Perdas térmicas e condensação nas condutas de insuflação', criterio: 'U = 1/(1/hi + e/λ + 1/he); Φ = U·S·ΔT; ponto de orvalho de Magnus (26 °C, 60 % → 17,6 °C); com risco, a espessura proposta deixa de condensar; a extração não conta', fn: () => {
+      const C = VC.calculo; if (!C.calcularTermica) return true;
+      const { rho } = VC.perf.cacheFisica.rhoNu(), K = VC.constantes.TERMICA, gR = VC.dados.ramais;
+      try {
+        const okTd = Math.abs(C.pontoOrvalho(26, 60) - 17.6) < 0.1;
+        const r = { id: 1, nome: 'T', rede: 'insuflacao', Q: 360, superficie_m2: 10, especificacao: { tAr: 12, tEnv: 26, hrEnv: 70 } };
+        const x = { id: 2, nome: 'X', rede: 'extracao', Q: 360, superficie_m2: 10 };
+        VC.dados.ramais = [r, x]; C.calcularTermica(rho);
+        const t = r.termica, U0 = 1 / (1 / K.HI + 1 / K.HE);
+        const ok1 = Math.abs(t.U - U0) < 1e-12 && Math.abs(t.phi - U0 * 10 * 14) < 1e-9 && Math.abs(t.dT - t.phi / (rho * K.CP * 0.1)) < 1e-9 && t.risco && t.eMin > 0 && x.termica === null;
+        const Umax = K.HE * (26 - t.td - 0.5) / 14, eEsp = Math.ceil(0.035 * (1 / Umax - 1 / 20 - 1 / 8) * 1000 / 5) * 5;   // λ 0,035 W/(m·K) de lã mineral / espuma
+        const okE = t.eMin === eEsp;
+        r.especificacao = Object.assign({}, r.especificacao, { isolamento: 'termico', isolEsp: t.eMin }); C.calcularTermica(rho);
+        const ok2 = !r.termica.risco && r.termica.ts >= r.termica.td + K.MARGEM_ORVALHO - 1e-9 && r.termica.phi < t.phi;
+        r.especificacao.isolamento = 'acustico'; C.calcularTermica(rho);   // o acústico não conta como isolamento térmico
+        return okTd && ok1 && okE && ok2 && r.termica.risco;
+      } finally { VC.dados.ramais = gR; }
+    } });
     self.registar({ id: 'N11.T21', nucleo: 'N11', grupo: 'Construtor & Dados', nome: 'Renomear ramal com o prefixo dos sub-ramais', criterio: 'R1 → A passa R1.1 a A.1 e R1.1.1 a A.1.1 e atualiza terminais; ramais que não descendem ficam; um conflito não muda nada', fn: () => {
       const T = VC.topologia; if (!T.renomearComSubRamais) return true;
       const gR = VC.dados.ramais, gT = VC.dados.terminais, gE = VC.dados.espacos;

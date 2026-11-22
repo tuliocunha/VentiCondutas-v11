@@ -53,6 +53,9 @@ const camposSpec = [
   spec('estanquidade', 'Estanquidade (EN 12237 / EN 1507)', 'opcoes', { opcoes: () => ESTANQ }),
   spec('isolamento', 'Isolamento', 'opcoes', { opcoes: () => ISOL }),
   spec('isolEsp', 'Espessura do isolamento', 'num', { un: 'mm', min: 0, passo: 5, vis: r => !!C.specDe(r, 'isolamento', '') }),
+  spec('tAr', 'Temperatura do ar na conduta', 'num', { un: '°C', passo: 0.5, vis: r => !VC.redes.ehExtracao(r.rede), omissao: () => ({ v: VC.constantes.TERMICA.T_AR, origem: 'norma', nota: 'insuflação de verão' }), ajuda: 'Para as perdas térmicas e o risco de condensação. No inverno use a temperatura de insuflação de inverno.' }),
+  spec('tEnv', 'Temperatura à volta da conduta', 'num', { un: '°C', passo: 0.5, vis: r => !VC.redes.ehExtracao(r.rede), omissao: () => ({ v: VC.constantes.TERMICA.T_ENV, origem: 'norma', nota: 'teto falso no verão' }) }),
+  spec('hrEnv', 'Humidade relativa à volta', 'num', { un: '%', min: 0, passo: 5, vis: r => !VC.redes.ehExtracao(r.rede), omissao: () => ({ v: VC.constantes.TERMICA.HR_ENV, origem: 'norma' }) }),
   spec('Dmin', 'Ø mínimo', 'num', { un: 'mm', min: 0, passo: 5, omissao: () => ({ v: '', origem: 'norma', nota: 'sem mínimo' }), ajuda: 'O Ø calculado nunca fica abaixo deste (ex.: 125 mm por limpeza ou montagem).' }),
   spec('reajuste', 'Reajuste do Ø', 'opcoes', { opcoes: () => [['', '—'], ['derivacao', 'reduzir em cada derivação'], ['marcados', 'reduzir só nos pontos marcados'], ['unico', 'Ø único em todo o ramal']], omissao: () => ({ v: 'derivacao', origem: 'norma', nota: 'perda constante' }), ajuda: 'As regras abaixo passam aos sub-ramais.' }),
   spec('minL', 'Troço mínimo para reduzir', 'num', { un: 'm', min: 0, passo: 0.5, vis: r => C.regrasReajuste(r).modo !== 'unico', omissao: () => ({ v: 0, origem: 'norma', nota: 'sem mínimo' }) }),
@@ -67,6 +70,12 @@ const resR = ER.resultado;
 ER.resultado = function (r, p) {
   const out = resR.call(this, r, p), R = r.reducoesCalc || [], F = Object.keys(r.trocosFix || {}).length;
   out.push(['Superfície de conduta', fmt(r.superficie_m2, 2) + ' m²', 'perímetro × comprimento, troço a troço']);
+  const th = r.termica;
+  if (th) {
+    out.push([th.phi >= 0 ? 'Ganho térmico pela parede' : 'Perda térmica pela parede', fmt(Math.abs(th.phi), 0) + ' W', 'U ' + fmt(th.U, 2) + ' W/(m²·K) · ' + (th.e ? fmt(th.e, 0) + ' mm de isolamento' : 'sem isolamento térmico') + ' · ' + fmt(th.tAr, 1) + ' → ' + fmt(th.tEnv, 1) + ' °C']);
+    out.push(['Variação da temperatura do ar', (th.dT >= 0 ? '+' : '') + fmt(th.dT, 2) + ' K', 'ao longo do ramal']);
+    out.push(['Superfície exterior', fmt(th.ts, 1) + ' °C', 'ponto de orvalho ' + fmt(th.td, 1) + ' °C' + (th.risco ? ' · CONDENSA: isolamento ≥ ' + th.eMin + ' mm' : ' · sem condensação')]);
+  }
   out.push(['Fugas (estanquidade)', r.Q_fugas != null ? fmt(r.Q_fugas, 1) + ' m³/h' : '—', r.Q_fugas != null ? 'classe ' + r.classeEstanquidade + ' a ' + fmt(r.p_fugas, 0) + ' Pa' + (Number(r.Q) > 0 ? ' · ' + fmt(100 * r.Q_fugas / r.Q, 1) + ' % do caudal' : '') : 'defina a classe de estanquidade (Avançado)']);
   const u = !r.parente && r.utaRef && porId('utas', r.utaRef);
   if (u && u.Q_fugas > 0) out.push(['Fugas da rede de ' + u.nome, fmt(u.Q_fugas, 1) + ' m³/h', 'ventilador: ' + fmt(u.Q * 3600, 0) + ' + ' + fmt(u.Q_fugas, 0) + ' = ' + fmt(u.Q_ventilador_mh, 0) + ' m³/h; potência e SFP com este caudal' + (u.fugasDefinidas < u.fugasRamais ? ' (' + (u.fugasRamais - u.fugasDefinidas) + ' ramais sem classe)' : '')]);
