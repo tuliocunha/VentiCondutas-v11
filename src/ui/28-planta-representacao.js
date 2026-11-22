@@ -52,7 +52,7 @@ P.faixaEm = function (pts, x, y) {   // [esquerda, direita] da sala na horizonta
 P.larguraEm = function (pts, x, y) { const f = this.faixaEm(pts, x, y); return f ? f[1] - f[0] : 0; };
 /* tamanho da letra e texto do nome para caberem na sala */
 P.rotuloAjustado = function (nome, pts, cx, cy, fs) {
-  const z = this.zoom || 1, w = this.larguraEm(pts, cx, cy) * 0.9, fsMin = 8 / z;
+  const z = this.zoom || 1, w = this.larguraEm(pts, cx, cy) * 0.9, fsMin = Math.min(fs, (this._pxMin ? this._pxMin('sala') : 8) / z);
   const largura = (t, f) => t.length * f * 0.58;
   let f = fs;
   if (w > 0 && largura(nome, f) > w) f = Math.max(fsMin, w / (nome.length * 0.58));

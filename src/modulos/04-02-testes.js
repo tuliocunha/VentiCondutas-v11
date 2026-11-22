@@ -580,6 +580,19 @@ VC6.testes = {
       } finally { VC.dados.utas = gU; VC.dados.nextId = JSON.parse(gN); }
       return cores && siglas && contraste && vcm;
     } });
+    self.registar({ id: 'N11.T14', nucleo: 'N11', grupo: 'Construtor & Dados', nome: 'Planta: textos proporcionais ao desenho', criterio: 'o tamanho segue a escala e o zoom (altura real em m), fica entre o mínimo legível e o máximo, e o fator do utilizador multiplica-o', fn: () => {
+      const P = VC.planta; if (!P || !P._pxTexto) return true;
+      const gz = P.zoom, gf = VC.dados.params.escalaTextos, p = { escala: 0.01 };   // 1 m = 100 px da imagem
+      try {
+        delete VC.dados.params.escalaTextos;
+        P.zoom = 0.1; const longe = P._pxTexto('ramal', p);     // 0,28 m × 10 px/m = 2,8 → mínimo 7,5
+        P.zoom = 0.35; const medio = P._pxTexto('ramal', p);    // 0,28 × 35 = 9,8
+        P.zoom = 2; const perto = P._pxTexto('ramal', p);       // 56 → máximo 11,5
+        VC.dados.params.escalaTextos = 1.2; P.zoom = 0.35; const maior = P._pxTexto('ramal', p);
+        const semEscala = (delete VC.dados.params.escalaTextos, P._pxTexto('sala', {}));
+        return Math.abs(longe - 7.5) < 1e-9 && Math.abs(medio - 9.8) < 1e-9 && Math.abs(perto - 11.5) < 1e-9 && Math.abs(maior - 9.8 * 1.2) < 1e-9 && semEscala === 13;
+      } finally { P.zoom = gz; if (gf === undefined) delete VC.dados.params.escalaTextos; else VC.dados.params.escalaTextos = gf; }
+    } });
   },
 
   initIntegracao() {

@@ -313,6 +313,29 @@ const CENARIOS = {
     ok(await pg.locator('.planta-sentido').count() === 0, 'O menu ☰ esconde o sentido do ar');
   },
 
+  /* textos proporcionais e sem sobreposição (exemplo Degrade, planta afastada) */
+  async textos(pg, ok) {
+    const h = ajudas(pg);
+    await pg.evaluate(async () => { await VC._carregarExemploDeFicheiro(['exemplos/degrade-21nov26-corrigido.json'], 'x'); VC.nav.irPasso('rede'); VC.nav.setVista('planta'); VC.planta.setPiso('piso-p0'); });
+    await pg.waitForTimeout(1200);   // a vista ajusta-se e o desenho refaz-se no zoom final
+    const sobre = () => h.v(() => {
+      const T = [...document.querySelectorAll('#plantaSVG .planta-ramal > text, #plantaSVG .planta-trf text, #plantaSVG .planta-rotulo text')].filter(t => t.getAttribute('visibility') !== 'hidden');
+      const B = T.map(t => { const b = t.getBoundingClientRect(), g = t.closest('[data-esp],[data-r],[data-trf]'); return [b.left, b.top, b.right, b.bottom, g ? g.outerHTML.slice(0, 40) : '']; });
+      let n = 0; for (let i = 0; i < B.length; i++) for (let j = i + 1; j < B.length; j++) { const a = B[i], b = B[j]; if (a[4] !== b[4] && a[0] < b[2] - 1 && a[2] > b[0] + 1 && a[1] < b[3] - 1 && a[3] > b[1] + 1) n++; }
+      return n;
+    });
+    const n = await sobre();
+    ok(n === 0, 'Planta afastada: nenhum nome de ramal, Ø, transferência ou nome de sala tapa outro', n);
+    const fs = await h.v(() => { const t = [...document.querySelectorAll('#plantaSVG .planta-ramal > text')].find(x => !/^Ø/.test(x.textContent)); return parseFloat(t.getAttribute('font-size')) * VC.planta.zoom; });
+    ok(fs >= 7.4 && fs < 11.5, 'Afastada, o nome do ramal fica menor que o tamanho fixo antigo (11,5 px) e legível', fs);
+    await pg.click('#plantaMenuBt'); await pg.click('#plantaMenu .pm-item:has-text("Textos maiores")'); await pg.waitForTimeout(300);
+    const fs2 = await h.v(() => { const t = [...document.querySelectorAll('#plantaSVG .planta-ramal > text')].find(x => !/^Ø/.test(x.textContent)); return parseFloat(t.getAttribute('font-size')) * VC.planta.zoom; });
+    ok(Math.abs(fs2 / fs - 1.1) < 0.02 && await h.v(() => VC.dados.params.escalaTextos === 1.1), '«Textos maiores» no menu: +10 % e fica no projeto', [fs, fs2]);
+    ok(await sobre() === 0, 'Com textos maiores continua sem sobreposições (escondem-se mais)');
+    await pg.click('#plantaMenuBt'); await pg.click('#plantaMenu .pm-item:has-text("automático")'); await pg.waitForTimeout(200);
+    ok(await h.v(() => VC.dados.params.escalaTextos === undefined), 'Volta ao tamanho automático');
+  },
+
   /* PR 9: nome legível numa sala em L; zona útil nítida; Entrega recortada */
   async representacao(pg, ok) {
     const h = ajudas(pg);

@@ -255,7 +255,7 @@ VC.planta = {
     return h;
   },
   _svg(p) {
-    const z = this.zoom || 1, fs = 13 / z, sw = 1.5;
+    const z = this.zoom || 1, fs = (this._pxTexto ? this._pxTexto('sala', p) : 13) / z, sw = 1.5;   // tamanho do nome: proporcional ao desenho (34-planta-textos)
     const vb = this.viewBox ? this.viewBox(p) : [0, 0, p.w, p.h];
     let s = '<svg id="plantaSVG" width="100%" height="100%" viewBox="' + vb.join(' ') + '" preserveAspectRatio="xMinYMin meet" role="img" aria-label="Planta de ' + esc(p.nome) + '">';
     s += '<image href="' + p.imagem + '" x="0" y="0" width="' + p.w + '" height="' + p.h + '" preserveAspectRatio="none"/>';

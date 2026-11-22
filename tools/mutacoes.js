@@ -240,6 +240,10 @@ const CASOS = [
     const P = VC.planta, o = P.cores; P.cores = function () { return Object.assign({}, VC.constantes.PALETA_REDES); };
     return () => { P.cores = o; };
   }],
+  ['Textos: tamanho fixo outra vez (deixa de seguir a escala)', 'N11.T14', () => {
+    const P = VC.planta, o = P._pxTexto; P._pxTexto = function (cat) { return P.CAT_TEXTOS[cat].orig * P.fatorTextos(); };
+    return () => { P._pxTexto = o; };
+  }],
   // Fase 4 da auditoria: qualidade de cálculo
   ['ε_v do espaço ignorado (só o do Setup)', 'N2.T21', () => {
     const o = VC.calculo.evDe; VC.calculo.evDe = function () { return Number(VC.dados.eficaciaRemocao) || 1; };
