@@ -65,7 +65,7 @@ P._svg = function (p) {
 };
 
 /* ── propostas (E11) ── */
-const origemRotulo = { nome: 'pelo nome', norma: 'norma', piso: 'piso', herdado: 'herdado', setup: 'Setup', rede: 'rede', balanco: 'balanço', medido: 'desenho' };
+const origemRotulo = { calculo: 'cálculo', nome: 'pelo nome', norma: 'norma', piso: 'piso', herdado: 'herdado', setup: 'Setup', rede: 'rede', balanco: 'balanço', medido: 'desenho' };
 function herdadoDe(r, campo) {   // o ramal que define o campo (ele ou um antecessor) e se é herdado
   const o = VC.calculo.origemPropria ? VC.calculo.origemPropria(r, campo) : null;
   return o ? { ramal: o, herdado: o !== r } : null;

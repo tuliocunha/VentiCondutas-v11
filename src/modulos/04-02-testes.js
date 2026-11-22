@@ -609,6 +609,31 @@ VC6.testes = {
       } finally { P.rot = g; }
       return unicas && su && ang;
     } });
+    self.registar({ id: 'N11.T17', nucleo: 'N3', grupo: 'Condutas', nome: 'Reajuste do Ø: regras, Ø fixo e reduções', criterio: 'troço mínimo, salto mínimo e máximo de reduções (o que gasta menos conduta) mudam onde se reduz; Ø fixo manda; redução removida ou adiada divide/junta troços', fn: () => {
+      const C = VC.calculo; if (!C._aplicarReajuste) return true;
+      const props = VC.perf.cacheFisica.rhoNu(), Dn = [315, 250, 200, 200, 160, 100], L = [9.28, 2.14, 4.69, 5.11, 3.74, 2.84], Q = [970, 510, 410, 285, 160, 60];
+      const gR = VC.dados.ramais;
+      const corre = (regras, extra) => {
+        let de = 0;
+        const r = Object.assign({ id: 1, nome: 'RT', rede: 'insuflacao', Q: 970, L: 27.8, geometriaInput: {} }, extra || {});
+        r.trocos = Dn.map((d, i) => { const t = { de, ate: de + L[i], L: L[i], Q: Q[i], Dcom: d, Dnom: d, key: C.chaveTroco(de) }; de += L[i]; return t; });
+        VC.dados.ramais = [r];
+        C._aplicarReajuste(r, Object.assign({ modo: 'derivacao', minL: 0, maxReducoes: null, minSaltos: 1 }, regras), props.rho, props.nu, false);
+        return r;
+      };
+      try {
+        const Ds = r => r.trocos.map(t => t.Dcom).join(',');
+        const base = corre({}), curto = corre({ minL: 3 }), salto = corre({ minSaltos: 2 }), max2 = corre({ maxReducoes: 2 });
+        const fixo = corre({}, { trocosFix: { '11.42': 250 } }), rem = corre({}, { reducoes: { '9.28': { removida: true } } }), adi = corre({}, { reducoes: { '9.28': { s: 10 } } });
+        return Ds(base) === '315,250,200,200,160,100' && base.reducoesCalc.length === 4
+          && Ds(curto) === '315,315,200,200,160,160' && curto.trocos[1].motivo.indexOf('curto') >= 0
+          && Ds(salto) === '315,315,200,200,200,100'
+          && Ds(max2) === '315,315,200,200,200,100' && max2.reducoesCalc.length === 2
+          && Ds(fixo) === '315,250,250,200,160,100' && fixo.trocos[2].motivo === 'Ø fixo'
+          && Ds(rem) === '315,315,200,200,160,100'
+          && Ds(adi) === '315,315,250,200,200,160,100' && Math.abs(adi.trocos[1].de - 9.28) < 1e-9 && Math.abs(adi.trocos[2].de - 10) < 1e-9 && adi.reducoesCalc[0].movida;
+      } finally { VC.dados.ramais = gR; }
+    } });
     self.registar({ id: 'N11.T14', nucleo: 'N11', grupo: 'Construtor & Dados', nome: 'Planta: textos proporcionais ao desenho', criterio: 'o tamanho segue a escala e o zoom (altura real em m), fica entre o mínimo legível e o máximo, e o fator do utilizador multiplica-o', fn: () => {
       const P = VC.planta; if (!P || !P._pxTexto) return true;
       const gz = P.zoom, gf = VC.dados.params.escalaTextos, p = { escala: 0.01 };   // 1 m = 100 px da imagem

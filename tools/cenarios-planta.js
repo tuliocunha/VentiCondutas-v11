@@ -101,7 +101,7 @@ const CENARIOS = {
     await pg.click('button:has-text("Criar ramal")'); await pg.waitForTimeout(300);
     const r = await h.v(() => { const r = VC.dados.ramais[VC.dados.ramais.length - 1]; return { nome: r.nome, uta: !!r.utaRef, term: VC.dados.terminais.some(t => t.ramalRef === r.nome) }; });
     ok(r.uta && r.term, 'Ramal com UTA criada no cartão e o terminal associado', r);
-    await h.tecla('v'); await h.clicar([200, 430]);
+    await h.tecla('v'); await h.clicar([200, 430]); await pg.evaluate(() => { if (VC.planta.trocoSel) { VC.planta.trocoSel = null; VC.planta.redesenhar(); } }); await pg.waitForTimeout(150);
     await pg.fill('#pn-ramal-nome', 'Mez-P'); await pg.press('#pn-ramal-nome', 'Enter'); await pg.waitForTimeout(300);
     await h.passo('rede');
     ok(await h.v(() => [...document.querySelectorAll('#conteudoPasso input.ramal-nome')].some(i => i.value === 'Mez-P')), 'Nome do ramal mudado no desenho aparece na Tabela');
@@ -274,7 +274,7 @@ const CENARIOS = {
     const par = await h.v(() => { const a = VC.dados.utas.find(u => u.nome === 'VMC-Mez (insuflação)'), b = VC.dados.utas.find(u => u.nome === 'VMC-Mez (extração)'); return !!(a && b && a.uvbPar === b.id && b.uvbPar === a.id && a.tipoSistema === 'VMC' && a.tipoUV === 'BVU_HRS'); });
     ok(par, 'Tipo VMC cria as duas metades (insuflação e extração) em par UVB');
     await pg.click('button:has-text("Criar ramal")'); await pg.waitForTimeout(300);
-    await h.tecla('v'); await h.clicar([250, 600]);
+    await h.tecla('v'); await h.clicar([250, 600]); await pg.evaluate(() => { if (VC.planta.trocoSel) { VC.planta.trocoSel = null; VC.planta.redesenhar(); } }); await pg.waitForTimeout(150);
     ok(await h.v(() => { const s = document.getElementById('pn-ramal-tipoSistema'); return !!s && s.value === 'VMC'; }), 'No painel do ramal principal aparece o tipo de sistema (VMC)');
     await h.arrastar([400, 600], [400, 650]);
     const rm = await h.v(() => { const r = VC.dados.ramais[VC.dados.ramais.length - 1]; return r.planta.pts; });
@@ -299,7 +299,7 @@ const CENARIOS = {
     ok(ang.some(([s, a]) => s === '1' && Math.abs(a) < 1) && ang.some(([s, a]) => s === '-1' && Math.abs(Math.abs(a) - 180) < 1), 'Insuflação: setas no sentido do traçado; extração: ao contrário (para o equipamento)', ang.slice(0, 6));
     const eq = await h.v(() => [...document.querySelectorAll('.planta-equip')].map(g => g.dataset.tipo + ':' + g.dataset.lig).sort());
     ok(eq.join() === 'VAN:ar-exterior,VEG:rejeicao', 'Equipamento no início do ramal com a ligação ao exterior do tipo (VAN capta, VEG rejeita)', eq);
-    await h.tecla('v'); await h.clicar([300, 500]); await pg.click('.pn-acoes button:has-text("Inverter o sentido")'); await pg.waitForTimeout(250);
+    await h.tecla('v'); await h.clicar([300, 500]); await pg.evaluate(() => { if (VC.planta.trocoSel) { VC.planta.trocoSel = null; VC.planta.redesenhar(); } }); await pg.waitForTimeout(150); await pg.click('.pn-acoes button:has-text("Inverter o sentido")'); await pg.waitForTimeout(250);
     const inv = await h.v(() => { const r = VC.dados.ramais.find(x => x.rede === 'insuflacao'); return r.planta.pts[0][0]; });
     ok(inv === 700 && await h.v(() => [...document.querySelectorAll('.planta-equip')].some(g => g.dataset.tipo === 'VAN' && Number(g.querySelector('rect').getAttribute('x')) > 690)), 'Inverter o sentido muda as setas e leva o equipamento para a outra ponta');
     ok(await h.v(() => { const l = document.querySelector('.planta-leg-redes'); return !!l && /SUP/.test(l.textContent) && /ETA/.test(l.textContent) && /ODA/.test(l.textContent) && /EHA/.test(l.textContent); }), 'Legenda com as redes do piso (SUP, ETA) e ar exterior / rejeição (ODA, EHA)');
@@ -430,6 +430,37 @@ const CENARIOS = {
     await h.tecla('F9'); ok(await h.v(() => VC.planta.grelha), 'F9 liga a grelha'); await h.tecla('F9');
     await pg.evaluate(() => { VC.planta.zoom = 3; VC.planta.aplicarVista(); }); await pg.keyboard.press('Shift+Z'); await pg.waitForTimeout(200);
     ok(await h.v(() => VC.planta.zoom < 3), 'Shift+Z mostra a planta inteira (Zoom Extents)');
+  },
+
+  /* Fase 2: troços, Ø fixo, reduções (remover, adiar) e regras do reajuste (Degrade, ramal R1.1) */
+  async condutas(pg, ok) {
+    const h = ajudas(pg);
+    await pg.evaluate(async () => { await VC._carregarExemploDeFicheiro(['exemplos/degrade-21nov26-corrigido.json'], 'x'); VC.nav.irPasso('rede'); VC.nav.setVista('planta'); VC.planta.setPiso('piso-p0'); });
+    await pg.waitForTimeout(1200);
+    await pg.evaluate(() => { const P = VC.planta; P.zoom = 1.1; P.vx = 600; P.vy = 120; P.aplicarVista(); }); await pg.waitForTimeout(600);
+    const ponto = s => h.v(`(() => { const r = VC.dados.ramais.find(x => x.nome === 'R1.1'); const q = VC.planta._subTracado(r.planta.pts, ${'${s}'} / r.L, ${'${s}'} / r.L + 0.0005); return q[0]; })()`.replace(/\$\{s\}/g, s));
+    await pg.evaluate(() => { const r = VC.dados.ramais.find(x => x.nome === 'R1.1'); VC.planta.selecionarRamal(r.id); }); await pg.waitForTimeout(300);
+    const p1 = await ponto(10.3); await h.clicar(p1);
+    ok(await pg.locator('.pn[data-pn="troco"]').count() === 1 && /troço 2 de 6/.test(await pg.locator('.pn-cab').first().textContent()), 'Clicar num troço do ramal selecionado abre o painel do troço (2 de 6)');
+    await pg.selectOption('#pn-troco-Dfixo', '200'); await pg.waitForTimeout(350);
+    ok(await h.v(() => { const r = VC.dados.ramais.find(x => x.nome === 'R1.1'); return r.trocosFix && r.trocosFix['9.28'] === 200 && r.trocos[1].Dcom === 200; }), 'Ø fixo 200 no troço: fica Ø200 e manda sobre o cálculo');
+    await pg.locator('#plantaSVG').hover(); await pg.keyboard.press('Control+z'); await pg.waitForTimeout(350);
+    ok(await h.v(() => { const r = VC.dados.ramais.find(x => x.nome === 'R1.1'); return !r.trocosFix && r.trocos[1].Dcom === 250; }), 'Ctrl+Z volta ao Ø calculado (250)');
+    const nRed = await pg.locator('.planta-red[data-k="9.28"]').count();
+    ok(nRed === 1, 'Há o símbolo da redução Ø315 → Ø250 a 9,28 m');
+    await pg.click('.planta-red[data-k="9.28"]'); await pg.waitForTimeout(250); await h.tecla('Delete');
+    ok(await h.v(() => { const r = VC.dados.ramais.find(x => x.nome === 'R1.1'); return r.reducoes && r.reducoes['9.28'].removida && r.trocos[1].Dcom === 315 && r.trocos[1].motivo === 'redução removida'; }), 'Clique na redução + Delete: o troço seguinte fica Ø315 («redução removida»)');
+    await pg.click('.pn-acoes button:has-text("Repor a redução")'); await pg.waitForTimeout(300);
+    ok(await h.v(() => !VC.dados.ramais.find(x => x.nome === 'R1.1').reducoes), '«Repor a redução» desfaz a remoção');
+    const a = await h.v(() => { const g = document.querySelector('.planta-red[data-k="11.42"] polygon'), b = g.getBBox(); return [b.x + b.width / 2, b.y + b.height / 2]; }), b = await ponto(13.5);
+    await h.arrastar(a, b); await pg.waitForTimeout(300);
+    const adi = await h.v(() => { const r = VC.dados.ramais.find(x => x.nome === 'R1.1'); return r.reducoes && r.reducoes['11.42'] && r.reducoes['11.42'].s; });
+    ok(adi > 12.5 && adi < 14.5, 'Arrastar a redução Ø250 → Ø200 para dentro do troço adia-a (≈ 13,5 m)', adi);
+    await h.tecla('Escape'); await h.tecla('Escape');
+    await pg.evaluate(() => { const r = VC.dados.ramais.find(x => x.nome === 'R1.1'); VC.planta.selecionarRamal(r.id); VC.paineis.abertos.ramal = true; VC.planta.redesenhar(); }); await pg.waitForTimeout(300);
+    await pg.fill('#pn-ramal-esp_maxReducoes', '2'); await pg.press('#pn-ramal-esp_maxReducoes', 'Enter'); await pg.waitForTimeout(400);
+    ok(await h.v(() => { const r = VC.dados.ramais.find(x => x.nome === 'R1.1'); return r.especificacao.maxReducoes === 2 && r.reducoesCalc.length <= 2; }), 'Regra «máximo de reduções» = 2 no painel do ramal: ficam 2 reduções');
+    ok(await h.v(() => { const f = VC.dados.ramais.find(x => x.parente === 'R1.1'); return f && VC.calculo.regrasReajuste(f).maxReducoes === 2; }), 'Os sub-ramais herdam a regra');
   },
 
   /* PR 9: nome legível numa sala em L; zona útil nítida; Entrega recortada */
