@@ -830,6 +830,24 @@ VC6.testes = {
         return ok1 && ok2 && ok3 && I.fracaoArNovo === 1 && Math.abs(C.QarNovoAoEspaco('S') - 400) < 1e-9;
       } finally { VC.dados.utas = g.u; VC.dados.ramais = g.r; VC.dados.terminais = g.t; VC.dados.plantas = g.pl; }
     } });
+    self.registar({ id: 'N11.T29', nucleo: 'N2', grupo: 'Normas', nome: 'Controlo de fumo (RT-SCIE)', criterio: 'exigido com efetivo > 500 e em piso enterrado com > 200 pessoas ou > 400 m²; ativa: máx(1,5; A/100) m³/s e 1 boca por 320 m², admissão 60 %; corredor: 0,5 m³/s por UP (ativa), 0,10 m² por UP (passiva); passiva: alcance 7 × H até 30 m, não acima de 12 m; cantões acima de 1600 m²', fn: () => {
+      const N = VC.normas; if (!N.desenfumagem) return true;
+      const g = VC.dados.plantas;
+      try {
+        VC.dados.plantas = [{ id: 'enterrado', cota: -3 }, { id: 'rc', cota: 0 }];
+        const a = N.desenfumagem({ nome: 'Auditório', tipo: 'Sala', A: 600, N: 520, H: 4 });
+        const b = N.desenfumagem({ nome: 'Cave', tipo: 'Arrumos', A: 450, N: 10, H: 3, planta: { pisoId: 'enterrado' } });
+        const c = N.desenfumagem({ nome: 'Sala', tipo: 'Sala', A: 100, N: 10, H: 3, planta: { pisoId: 'rc' } });
+        const at = N.desenfumagem({ nome: 'Auditório', tipo: 'Sala', A: 600, N: 520, H: 4, desenfumagem: 'ativa' });
+        const pq = N.desenfumagem({ nome: 'Loja', tipo: 'Sala', A: 100, H: 3, desenfumagem: 'ativa' });
+        const co = N.desenfumagem({ nome: 'Corredor', tipo: 'Circulação', A: 60, H: 3, desenfumagem: 'ativa', up: 2 });
+        const cp = N.desenfumagem({ nome: 'Corredor', tipo: 'Circulação', A: 60, H: 3, desenfumagem: 'passiva', up: 2 });
+        const ps = N.desenfumagem({ nome: 'Pavilhão', tipo: 'Sala', A: 2000, H: 14, desenfumagem: 'passiva' });
+        return a.exigido && b.exigido && !c.exigido && a.porFazer.length === 1 && Math.abs(at.Qext - 6) < 1e-9 && at.bocas === 2 && Math.abs(at.Qadm - 3.6) < 1e-9
+          && pq.Qext === 1.5 && pq.bocas === 1 && co.Qext === 1 && co.espMax === 15 && Math.abs(cp.Asaida - 0.2) < 1e-9 && cp.espMax === 10
+          && ps.alcance === 30 && ps.falhas.length === 2;
+      } finally { VC.dados.plantas = g; }
+    } });
     self.registar({ id: 'N11.T21', nucleo: 'N11', grupo: 'Construtor & Dados', nome: 'Renomear ramal com o prefixo dos sub-ramais', criterio: 'R1 → A passa R1.1 a A.1 e R1.1.1 a A.1.1 e atualiza terminais; ramais que não descendem ficam; um conflito não muda nada', fn: () => {
       const T = VC.topologia; if (!T.renomearComSubRamais) return true;
       const gR = VC.dados.ramais, gT = VC.dados.terminais, gE = VC.dados.espacos;

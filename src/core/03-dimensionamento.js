@@ -1258,6 +1258,14 @@ VC.calculo = {
       if (pTerm != null && pTerm > PS.CAUDAL_VARIAVEL_W) insU.forEach(u => { if (!u.controloCaudal) findings.push({ severidade: 'ATENÇÃO', tipo: 'Caudal variável de ar novo', elemento: u.nome, msg: 'Potência de climatização ' + VC.utils.fmt(pTerm / 1000, 0) + ' kW > ' + PS.CAUDAL_VARIAVEL_W / 1000 + ' kW: se a ocupação média for < 50 % da máxima, o caudal de ar novo tem de variar com CO₂ e/ou presença (Portaria 138-I, Anexo II, 1.5 b). Indique o controlo na UTA.' }); });
       // 1.5 c) ventilação com ar novo ≥ 3000 m³/h integrável num sistema de gestão técnica
       if (QinsTot >= PS.GT_AR_NOVO_M3H && !(VC.dados.params && VC.dados.params.integracaoGT)) findings.push({ severidade: 'ATENÇÃO', tipo: 'Integração em gestão técnica', elemento: 'Sistema', msg: 'Ar novo ' + VC.utils.fmt(QinsTot, 0) + ' m³/h ≥ ' + VC.utils.fmt(PS.GT_AR_NOVO_M3H, 0) + ' m³/h: a ventilação tem de ser integrável num sistema de gestão técnica (Portaria 138-I, Anexo II, 1.5 c). Confirme no Setup.' });
+      // Fase 6B · controlo de fumo (RT-SCIE): exigido e por definir; cantões; contagem das bocas desenhadas
+      (VC.dados.espacos || []).forEach(e => {
+        const d = VC.normas.desenfumagem(e); if (!d.exigido && !d.metodo && !d.falhas.length) return;
+        d.falhas.forEach(f => findings.push({ severidade: 'ATENÇÃO', tipo: 'Controlo de fumo', elemento: e.nome, msg: f }));
+        if (d.porFazer.length) findings.push({ severidade: 'POR FAZER', tipo: 'Controlo de fumo por definir', elemento: e.nome, msg: 'Exigido: ' + d.motivos.join('; ') + '. Falta ' + d.porFazer.join(', ') + '.' });
+        const B = (e.planta && e.planta.fumo) || [], nExt = B.filter(b => b.tipo === 'ext').length;
+        if (d.metodo === 'ativa' && d.bocas && e.planta && nExt < d.bocas) findings.push({ severidade: 'ATENÇÃO', tipo: 'Controlo de fumo', elemento: e.nome, msg: nExt + ' boca(s) de extração de fumo desenhada(s); o RT-SCIE pede ' + d.bocas + ' (1 por 320 m², art. 154.º, n.º 2).' });
+      });
       // Fase 5 · escadas pressurizadas (RT-SCIE, art. 161.º; EN 12101-13)
       (VC.dados.espacos || []).filter(e => e.tipo === 'Escadas' && e.pressurizada).forEach(e => {
         const r = VC.normas.verificarEscadaPressurizada(e);

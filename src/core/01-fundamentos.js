@@ -729,7 +729,7 @@ VC.estado._hashEstado = function () {
     e.id + '|' + e.nome + '|' + e.tipo + '|' + (e.grupoForcado || 'auto') +
     '|' + (e.zona || '') + '|' + ((e.localizacao && e.localizacao.piso) || '') + '|' + ((e.localizacao && e.localizacao.ala) || '') +   // zona/piso: a associação automática e a topologia dependem deles
     '|' + (e.A || 0) + '|' + (e.H || 0) + '|' + (e.V || 0) + '|' + (e.N || 0) +
-    '|' + (e.rphAplicado || 0) + '|' + (e.rphOrigem || 'norma') + '|' + (e.eficaciaRemocao == null ? '' : e.eficaciaRemocao) + '|' + (e.pressurizada ? JSON.stringify([e.deltaP, e.vPortaAberta, e.camaraCortaFogo, e.forcaPorta]) : '') +
+    '|' + (e.rphAplicado || 0) + '|' + (e.rphOrigem || 'norma') + '|' + (e.eficaciaRemocao == null ? '' : e.eficaciaRemocao) + '|' + (e.pressurizada ? JSON.stringify([e.deltaP, e.vPortaAberta, e.camaraCortaFogo, e.forcaPorta]) : '') + '|' + (e.desenfumagem || '') + (e.fumoExigido ? 'X' : '') + (e.up || '') + JSON.stringify((e.planta && e.planta.fumo) || '') +
     '|' + (e.QAI_projeto || 0) + '|' + (e.QAI_projeto_rede || 'auto') + '|' + (e.QAI_projeto_motivo || '') + '|' + (e.QAI_projeto_origem || 'norma') + '|' + (e.Q_exterior || 0) +
     '|' + ((e.definicoes || []).map(d => d.tipo + ':' + d.rede + ':' + d.quantidade + ':' + d.Q_total).join(','))
   ).join('#'));
@@ -831,6 +831,9 @@ VC.constantes = {
   //   ampliação cónica (extração, fluxo para a secção maior): ζ = REDUCAO.expansao · (1 − A_menor / A_maior)², referido a v na secção menor.
   ZETA_DERIVACAO: { TE_PASSAGEM: 0.4, REDUCAO: { contracao: 0.05, expansao: 0.3 } },
   TERMINAL: { vAtencao: 2.2, vMax: 2.5, LwAtencao: 35, LwMax: 40, dpAtencao: 60, expoenteLw: 50 },   // m/s no colo · dB(A) · critério de conforto (VDI 2081) · Fase 4: Δp > 60 Pa = atenção (boa prática); sem catálogo, Lw cresce com 50·log(Q/Q0) num tamanho fixo
+  FUMO: { EFETIVO_RISCO_B: 500, ENTERRADO_EFETIVO: 200, ENTERRADO_AREA: 400, CANTAO_AREA: 1600, CANTAO_DIM: 60,
+    ATIVA_POR_100M2: 1, ATIVA_MIN: 1.5, ATIVA_M2_POR_BOCA: 320, ADMISSAO_FRACAO: 0.6, ADMISSAO_V_MAX: 5,
+    ATIVA_POR_UP: 0.5, ATIVA_DIST: 15, PASSIVA_POR_UP: 0.10, PASSIVA_DIST: 10, PASSIVA_ALCANCE_H: 7, PASSIVA_ALCANCE_MAX: 30 },
   /* Fase 5B · alcance (throw) L0,25 dos terminais de insuflação sem catálogo: jato livre v(x) = K·v0·√A0 / x
      (ASHRAE Fundamentals, cap. Space Air Diffusion; EN ISO 5219 / EN 12238 para o ensaio). K típico por tipo; vt = 0,25 m/s.
      Vias: jatos por terminal (difusor de teto 4, linear 1 ou 2, grelha e jato 1). Bom: 0,5 a 1,0 da distância à parede. */
@@ -1126,6 +1129,38 @@ VC.normas = {
   limitesPressao(tipo) {
     const lim = VC.conhecimento.tabelas.pressaoLimites;
     return lim[tipo] || lim.default;
+  },
+  /* Fase 6B · controlo de fumo por desenfumagem (RT-SCIE, Portaria 1532/2008 alterada pela Portaria 135/2020):
+       art. 135.º n.º 1 — exigido em locais de risco B com efetivo > 500 (al. e) e em pisos enterrados com > 200 pessoas ou > 400 m² (al. d);
+       art. 152.º — cantões acima de 1600 m² ou de 60 m de dimensão;
+       art. 153.º (passiva) — admissão entre ½ e 1 × a área de evacuação; qualquer ponto a ≤ 7 × pé-direito (máx. 30 m) de uma abertura;
+       art. 154.º n.º 2 (ativa) — 1 boca de extração por 320 m², 1 m³/s por 100 m² (mínimo 1,5 m³/s); art. 145.º — admissão ≈ 60 % e < 5 m/s;
+       art. 156.º/157.º (vias horizontais) — passiva ≤ 10 m entre aberturas (7 m não retilíneas), ≥ 0,10 m² por UP;
+       ativa ≤ 15 m (10 m), ≥ 0,5 m³/s por UP. */
+  desenfumagem(esp) {
+    const F = VC.constantes.FUMO, A = Number(esp.A) || 0, N = Number(esp.N) || 0, H = Number(esp.H) || 0;
+    const circ = /circula|corredor/i.test(String(esp.tipo || '') + ' ' + String(esp.nome || ''));
+    const piso = (VC.dados.plantas || []).find(p => esp.planta && p.id === esp.planta.pisoId);
+    const enterrado = !!(piso && piso.cota != null && Number(piso.cota) < 0);
+    const motivos = [];
+    if (N > F.EFETIVO_RISCO_B) motivos.push('efetivo ' + N + ' > ' + F.EFETIVO_RISCO_B + ' (local de risco B, art. 135.º, n.º 1, e)');
+    if (enterrado && (N > F.ENTERRADO_EFETIVO || A > F.ENTERRADO_AREA)) motivos.push('piso enterrado com ' + (N > F.ENTERRADO_EFETIVO ? N + ' pessoas' : A + ' m²') + ' (art. 135.º, n.º 1, d)');
+    if (esp.fumoExigido) motivos.push('marcado no projeto (via de evacuação enclausurada, câmara, etc.)');
+    const metodo = esp.desenfumagem || '';
+    const out = { exigido: motivos.length > 0, motivos, metodo, circ, A, H, falhas: [], porFazer: [], norma: 'RT-SCIE (Portaria 1532/2008, alt. 135/2020)' };
+    if (A > F.CANTAO_AREA) out.falhas.push('área ' + VC.utils.fmt(A, 0) + ' m² > ' + F.CANTAO_AREA + ' m²: divida em cantões (art. 152.º)');
+    if (out.exigido && !metodo) out.porFazer.push('escolher desenfumagem passiva ou ativa');
+    if (metodo === 'ativa') {
+      if (circ) { const up = Math.max(1, Number(esp.up) || 1); out.Qext = F.ATIVA_POR_UP * up; out.espMax = F.ATIVA_DIST; out.base = up + ' UP × ' + F.ATIVA_POR_UP + ' m³/s (art. 157.º, n.º 3)'; }
+      else { out.Qext = Math.max(F.ATIVA_MIN, A / 100 * F.ATIVA_POR_100M2); out.bocas = Math.max(1, Math.ceil(A / F.ATIVA_M2_POR_BOCA)); out.base = 'máx(1,5; ' + VC.utils.fmt(A, 0) + '/100) m³/s · 1 boca por 320 m² (art. 154.º, n.º 2)'; }
+      out.Qadm = out.Qext * F.ADMISSAO_FRACAO;
+      out.Aadm = out.Qadm / F.ADMISSAO_V_MAX;   // m² de admissão para v < 5 m/s (art. 145.º)
+    } else if (metodo === 'passiva') {
+      if (H > 12) out.falhas.push('desenfumagem passiva não é permitida com mais de 12 m de altura (RT-SCIE, métodos de controlo de fumo)');
+      if (circ) { const up = Math.max(1, Number(esp.up) || 1); out.Asaida = F.PASSIVA_POR_UP * up; out.espMax = F.PASSIVA_DIST; out.base = up + ' UP × ' + F.PASSIVA_POR_UP + ' m² por abertura (art. 156.º, n.º 4)'; }
+      else { out.alcance = Math.min(F.PASSIVA_ALCANCE_MAX, F.PASSIVA_ALCANCE_H * (H || 3)); out.base = 'qualquer ponto a ≤ ' + VC.utils.fmt(out.alcance, 1) + ' m de uma abertura de evacuação (7 × pé-direito, máx. 30 m; art. 153.º, n.º 3); admissão entre ½ e 1 × a evacuação (n.º 2)'; }
+    }
+    return out;
   },
   verificarEscadaPressurizada(esp) {
     if (esp.tipo !== 'Escadas') return { ok: true, motivo: 'Não aplicável' };

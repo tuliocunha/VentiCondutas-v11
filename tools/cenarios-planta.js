@@ -703,7 +703,7 @@ const CENARIOS = {
     await h.v(() => { const P = VC.planta, r = VC.dados.ramais.find(x => x.nome === 'R1.1'), a = r.planta.pts[1]; P.zoom = 1.1; P.vx = a[0] - 300 / 1.1; P.vy = a[1] - 250 / 1.1; P.aplicarVista(); });
     await pg.waitForTimeout(400);
     const n = await h.v(() => [document.querySelectorAll('.planta-ferrbar .planta-grupo').length, document.querySelectorAll('.planta-ferrbar .pfo-item').length, VC.planta.FERRAMENTAS.length, !!document.getElementById('plantaMenuBt')]);
-    ok(n[0] === 7 && n[1] === n[2] && n[3], 'Barra com 7 grupos; os sub-ícones têm todas as ferramentas; o menu ☰ fica', n);
+    ok(n[0] === 8 && n[1] === n[2] && n[3], 'Barra com 8 grupos; os sub-ícones têm todas as ferramentas; o menu ☰ fica', n);
     await pg.hover('.planta-grupo[data-grupo="condutas"] .planta-ft'); await pg.waitForTimeout(600);
     ok(await pg.isVisible('.planta-grupo[data-grupo="condutas"] .pfo-item:has-text("Prumada")'), 'Passar o rato em Condutas mostra Ramal, Prumada, Equipamento, Tomada / rejeição');
     await pg.click('.planta-grupo[data-grupo="condutas"] .pfo-item:has-text("Prumada")'); await pg.waitForTimeout(300);
@@ -794,6 +794,34 @@ const CENARIOS = {
     ok(await pg.evaluate(id => !VC.dados.utas.find(x => x.id === id).recirculacao, ids[0]), 'Ctrl+Z tira a recirculação');
     // ar sujo não se recircula
     ok(await h.v(() => { const i = VC.dados.utas.find(u => /VCM Refeit.*insufla/.test(u.nome)), e = VC.dados.utas.find(u => /VCM Refeit.*extra/.test(u.nome)); i.uvbPar = e.id; e.uvbPar = i.id; i.recirculacao = 50; const f = VC.calculo.calcularTudo().findings || []; delete i.recirculacao; return f.some(x => x.tipo === 'Recirculação de ar sujo' && x.elemento === i.nome); }), 'VCM do refeitório (extração da copa): «Recirculação de ar sujo» é erro');
+  },
+
+  /* PR 66 · Fase 6B: controlo de fumo */
+  async fumo(pg, ok) {
+    const h = ajudas(pg);
+    await pg.evaluate(async () => { await VC._carregarExemploDeFicheiro(['exemplos/degrade-21nov26-corrigido.json'], 'x'); VC.nav.irPasso('rede'); VC.nav.setVista('planta'); VC.planta.setPiso('piso-p0'); });
+    await pg.waitForTimeout(1200);
+    const info = await h.v(() => { const P = VC.planta, e = VC.dados.espacos.find(x => x.nome === 'Refeitório P0-S1'), c = P.centro(e.planta.pts), v = e.planta.pts[0], a = [c[0] + (v[0] - c[0]) * 0.35, c[1] + (v[1] - c[1]) * 0.35], b2 = [c[0] - (v[0] - c[0]) * 0.35, c[1] - (v[1] - c[1]) * 0.35]; e.N = 520; VC.calculo.calcularTudo(); P.zoom = 1; P.vx = c[0] - 380; P.vy = c[1] - 250; P.aplicarVista(); P.selecionar(e.id); return { id: e.id, c, a, b: b2 }; });
+    await pg.waitForTimeout(400);
+    ok(await h.v(() => (VC.calculo.calcularTudo().findings || []).some(f => f.tipo === 'Controlo de fumo por definir' && f.elemento === 'Refeitório P0-S1')), 'Efetivo 520 (> 500): a Verificação pede o controlo de fumo (art. 135.º)');
+    await pg.evaluate(() => { const d = document.querySelector('.pn[data-pn="sala"] .pn-av'); if (d) d.open = true; });
+    await pg.selectOption('#pn-sala-desenfumagem', 'ativa'); await pg.waitForTimeout(350);
+    const txt = await pg.locator('.pn').first().textContent();
+    ok(/Extração de fumo/.test(txt) && /1\.50 m³\/s/.test(txt) && /Bocas de extração/.test(txt), 'Ativa: 1,5 m³/s (mínimo) e as bocas pedidas no painel', txt.match(/Extração de fumo[^A]{0,60}/));
+    await h.v(() => VC.planta.setFerramenta('fumoExt')); await h.clicar(info.a);
+    await h.v(() => VC.planta.setFerramenta('fumoAdm')); await h.clicar(info.b);
+    ok(await pg.evaluate(id => { const e = VC.dados.espacos.find(x => x.id === id); return e.planta.fumo.length === 2 && document.querySelectorAll('.planta-fumo').length === 2; }, info.id), 'Extração e admissão de fumo desenhadas na sala');
+    await h.v(() => VC.planta.setFerramenta('sel'));
+    await h.clicar(info.a); await pg.waitForTimeout(200); await h.tecla('Delete');
+    ok(await pg.evaluate(id => VC.dados.espacos.find(x => x.id === id).planta.fumo.length === 1, info.id), 'Selecionar a boca e Delete tira-a');
+    await pg.locator('#plantaSVG').hover(); await pg.keyboard.press('Control+z'); await pg.waitForTimeout(300);
+    ok(await pg.evaluate(id => VC.dados.espacos.find(x => x.id === id).planta.fumo.length === 2, info.id), 'Ctrl+Z repõe-na');
+    // passiva: círculo de alcance com a sala selecionada
+    await pg.evaluate(id => { const e = VC.dados.espacos.find(x => x.id === id); e.desenfumagem = 'passiva'; VC.calculo.calcularTudo(); VC.planta.selecionar(id); }, info.id);
+    await pg.waitForTimeout(300);
+    ok(await h.v(() => !!document.querySelector('.planta-fumos circle')), 'Passiva: o alcance da abertura (7 × pé-direito) aparece com a sala selecionada');
+    ok(await h.v(() => !!document.querySelector('.planta-grupo[data-grupo="fumo"]')), 'Grupo «Segurança contra incêndio» na barra');
+    ok(await h.v(() => { const P = VC.planta, e = VC.dados.espacos.find(x => x.tipo === 'Escadas' && x.planta && x.planta.pisoId === 'piso-p0'); P.definirEscada(e.id, 'pressurizada', true); P.definirEscada(e.id, 'deltaP', 50); return !!document.querySelector('.planta-pressao') && /50 Pa/.test(document.querySelector('.planta-pressao').textContent); }), 'Escada pressurizada marcada na planta (P+ 50 Pa)');
   },
 
   /* PR 9: nome legível numa sala em L; zona útil nítida; Entrega recortada */
