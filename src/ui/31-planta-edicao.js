@@ -152,6 +152,7 @@ P.ligar = function () {
   palco.addEventListener('pointerdown', ev => {
     if (ev.button !== 0 || this.ferramenta !== 'sel' || this._espaco || this._pan) return;
     const ed = this._emEdicao(); if (!ed) return;
+    if (ev.target.closest && ev.target.closest('.planta-red')) return;   // símbolo de redução (37-planta-condutas)
     const alca = ev.target.closest && ev.target.closest('.pe-v, .pe-m, .pe-a');
     let modo = null, i = -1;
     if (alca) { modo = alca.classList.contains('pe-v') ? 'v' : alca.classList.contains('pe-m') ? 'm' : 'a'; i = Number(alca.dataset.i); }
@@ -198,6 +199,7 @@ P.ligar = function () {
     const a = arr; arr = null; ev.stopPropagation(); this._snapEdicao = null;
     const ed = a.ed, nome = ed.o.nome, chave = { tipo: ed.tipo, id: ed.o.id };
     if (!a.mexeu) {
+      if (a.modo === 'a' && ed.tipo === 'ramal' && this.selecionarTrocoEm) { this.selecionarTrocoEm(ed.o, a.q0); return; }   // clique num troço do ramal selecionado (37-planta-condutas)
       if (a.modo === 'v') { this.vertSel = Object.assign(chave, { i: a.i }); this.redesenhar(); return; }   // clique: seleciona o vértice (Esc larga)
       if (a.modo === 'm') {   // clique na alça do meio: vértice no meio da aresta
         const pts = copia(a.base), n = pts.length, p0 = pts[a.i], p1 = pts[(a.i + 1) % n];

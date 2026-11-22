@@ -736,6 +736,7 @@ VC.estado._hashEstado = function () {
     '|' + (r.utaRef || '') + '|' + ((r.lock && r.lock.D) ? '1' : '0') + '|' + ((r.geometriaInput && r.geometriaInput.forma) || 'circular')   // v11.1: forma da secção
     + '|' + ((r.geometriaInput && r.geometriaInput.material) || '') + '|' + ((r.geometriaInput && r.geometriaInput.rugosidade) || '') + '|' + ((r.geometriaInput && r.geometriaInput.H_max) || '') + '|' + JSON.stringify((r.geometriaInput && r.geometriaInput.proprio) || {})   // v11.1 (E1) · v11.2: valores próprios
     + '|' + (r.sPai == null ? '' : r.sPai) + '|' + (r.planta ? r.planta.pisoId + ':' + JSON.stringify(r.planta.pts || []) : '')   // Fase 2A: posição no pai e traçado
+    + '|' + JSON.stringify(r.especificacao || {}) + '|' + JSON.stringify(r.trocosFix || {}) + '|' + JSON.stringify(r.reducoes || {}) + '|' + (r.lock && r.lock.D ? r.Dcom : '')   // Fase 2 do desenho: especificação, Ø fixos e reduções
   ).join('#'));
   const terminais = (VC.dados && VC.dados.terminais) || [];
   partes.push('Tm' + terminais.length);

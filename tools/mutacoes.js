@@ -256,6 +256,14 @@ const CASOS = [
     const T = VC.planta.TECLAS, o = T.medir; T.medir = 'M';
     return () => { T.medir = o; };
   }],
+  ['Reajuste: o Ø fixo do troço é ignorado', 'N11.T17', () => {
+    const C = VC.calculo, o = C._aplicarReajuste; C._aplicarReajuste = function (r) { const f = r.trocosFix; delete r.trocosFix; try { return o.apply(this, arguments); } finally { if (f) r.trocosFix = f; } };
+    return () => { C._aplicarReajuste = o; };
+  }],
+  ['Reajuste: o troço mínimo deixa de contar', 'N11.T17', () => {
+    const C = VC.calculo, o = C._aplicarReajuste; C._aplicarReajuste = function (r, regras, a, b, c) { return o.call(this, r, Object.assign({}, regras, { minL: 0 }), a, b, c); };
+    return () => { C._aplicarReajuste = o; };
+  }],
   // Fase 4 da auditoria: qualidade de cálculo
   ['ε_v do espaço ignorado (só o do Setup)', 'N2.T21', () => {
     const o = VC.calculo.evDe; VC.calculo.evDe = function () { return Number(VC.dados.eficaciaRemocao) || 1; };

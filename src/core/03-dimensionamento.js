@@ -34,8 +34,8 @@ VC.calculo = {
   _autoAssoc: false,
   _emExecucao: false,
 
-  diametroComercial(dmm) {
-    const serie = VC.dados.serieDiametros || 'S1';
+  diametroComercial(dmm, serieRamal) {
+    const serie = serieRamal || VC.dados.serieDiametros || 'S1';
     const lista = serie === 'S2' ? VC.constantes.COMM_S2 : VC.constantes.COMM_S1;
     return lista.filter(x => x >= dmm)[0] || dmm;
   },
@@ -66,12 +66,12 @@ VC.calculo = {
     } else {
       ideal = evalD(Math.max(Math.sqrt(4 * Q / (Math.PI * Vmax)), 0.03));
     }
-    let Dc = this.diametroComercial(ideal.D * 1000);
+    let Dc = this.diametroComercial(ideal.D * 1000, opts.serie);
     let final = evalD(Dc / 1000);
     // v11.1: o método 'perda constante' não limitava a velocidade (Q ≥ 10 000 m³/h → 7–9 m/s, que a
     // própria auditoria marcava como ERRO). Sobe na série comercial até v ≤ vMax do nível.
     for (let i = 0; i < 40 && Q && final.v > Vmax; i++) {
-      const prox = this.diametroComercial(Dc + 1);
+      const prox = this.diametroComercial(Dc + 1, opts.serie);
       if (prox <= Dc) break;
       Dc = prox; final = evalD(Dc / 1000);
     }
@@ -476,6 +476,88 @@ VC.calculo = {
     if (!trocos.length) trocos.push({ de: 0, ate: L, L, Q: Qtot });
     return { modo: 'posicionado', trocos };
   },
+  /* Fase 2 do desenho: regras do reajuste sobre os Ø calculados troço a troço (só condutas circulares).
+     · Ø fixo num troço (r.trocosFix[chave] = Ø) manda sempre.
+     · Uma redução só acontece se: não foi removida (r.reducoes[chave].removida), o troço que começa
+       tem ≥ minL m e o Ø desce ≥ minSaltos tamanhos da série.
+     · Máximo de reduções por ramal: removem-se primeiro as de menor salto.
+     · Uma redução pode ser adiada para dentro do troço (r.reducoes[chave].s, em m): o troço divide-se.
+     Os troços guardam Dnom (o cálculo) e motivo (porque ficou diferente). r.reducoesCalc lista as reduções. */
+  _aplicarReajuste(r, regras, rho, nu, semRegras) {
+    const T = r.trocos || [];
+    r.reducoesCalc = [];
+    if (!T.length) return;
+    const fix = r.trocosFix || {}, red = r.reducoes || {};
+    const circular = this.formaDe(r) !== 'retangular';
+    const serie = this.specDe(r, 'serie', VC.dados.serieDiametros || 'S1') === 'S2' ? VC.constantes.COMM_S2 : VC.constantes.COMM_S1;
+    const idx = d => { const i = serie.indexOf(d); return i >= 0 ? i : serie.filter(x => x < d).length; };
+    const fixo = t => { const f = Number(fix[t.key]); return f > 0 ? f : 0; };
+    if (!circular) { T.forEach(t => { t.motivo = ''; }); return; }
+    const extra = new Set();
+    const sequencia = () => {
+      const D = [];
+      T.forEach((t, i) => {
+        t.motivo = '';
+        const f = fixo(t); if (f) { D[i] = f; t.motivo = 'Ø fixo'; return; }
+        if (i === 0 || semRegras) { D[i] = t.Dnom; return; }
+        const prev = D[i - 1], d = t.Dnom;
+        if (!(d < prev)) { D[i] = d; return; }
+        if (red[t.key] && red[t.key].removida) { D[i] = prev; t.motivo = 'redução removida'; return; }
+        if (extra.has(i)) { D[i] = prev; t.motivo = 'máximo de reduções'; return; }
+        if (regras.minL > 0 && t.L < regras.minL - 1e-9) { D[i] = prev; t.motivo = 'troço curto (< ' + regras.minL + ' m)'; return; }
+        if (idx(prev) - idx(d) < regras.minSaltos) { D[i] = prev; t.motivo = 'salto menor que ' + regras.minSaltos + ' tamanhos'; return; }
+        D[i] = d;
+      });
+      return D;
+    };
+    let D = sequencia();
+    if (regras.maxReducoes != null && !semRegras) {
+      // escolher as reduções a manter que gastam menos conduta (Σ Ø × L), com o Ø de cada grupo = o do seu início
+      const B = []; for (let i = 1; i < T.length; i++) if (D[i] < D[i - 1]) B.push(i);
+      if (B.length > regras.maxReducoes) {
+        const forcadas = new Set(B.filter(i => fixo(T[i]) || fixo(T[i - 1])));
+        const k = Math.max(regras.maxReducoes, forcadas.size), n = T.length;
+        const cand = [0].concat(B);   // inícios possíveis de grupo
+        const custo = (a, b) => { let c = 0; for (let j = a; j < b; j++) c += D[a] * T[j].L; return c; };   // grupo [a, b)
+        // best[j][c]: menor custo dos troços 0..cand[j]-1 com c reduções, tendo um grupo a começar em cand[j]
+        const best = cand.map(() => Array(k + 1).fill(Infinity)), de = cand.map(() => Array(k + 1).fill(-1));
+        best[0][0] = 0;
+        for (let j = 1; j < cand.length; j++) for (let c = 1; c <= k; c++) for (let i = 0; i < j; i++) {
+          // não se pode saltar uma redução forçada entre cand[i] e cand[j]
+          if (cand.slice(i + 1, j).some(x => forcadas.has(x))) continue;
+          const v = best[i][c - 1] + custo(cand[i], cand[j]); if (v < best[j][c]) { best[j][c] = v; de[j][c] = i; }
+        }
+        let melhor = Infinity, jf = 0, cf = 0;
+        for (let j = 0; j < cand.length; j++) for (let c = 0; c <= k; c++) {
+          if (!isFinite(best[j][c]) || cand.slice(j + 1).some(x => forcadas.has(x))) continue;
+          const v = best[j][c] + custo(cand[j], n); if (v < melhor) { melhor = v; jf = j; cf = c; }
+        }
+        const manter = new Set(); for (let j = jf, c = cf; j > 0; c--) { manter.add(cand[j]); j = de[j][c]; }
+        B.forEach(i => { if (!manter.has(i)) extra.add(i); });
+        D = sequencia();
+      }
+    }
+    // secções finais e reduções adiadas (dividem o troço)
+    const novo = [];
+    T.forEach((t, i) => {
+      const prevD = i ? novo[novo.length - 1].Dcom : null, d = D[i];
+      const mov = red[t.key] && Number(red[t.key].s);
+      if (i && prevD && d < prevD && mov > t.de + 1e-6 && mov < t.ate - 1e-6) {
+        novo.push(Object.assign({}, t, { ate: mov, L: mov - t.de, Dcom: prevD, motivo: 'redução adiada', parte: 1 }));
+        novo.push(Object.assign({}, t, { de: mov, L: t.ate - mov, Dcom: d, parte: 2 }));
+      } else novo.push(Object.assign({}, t, { Dcom: d }));
+    });
+    r.trocos = novo.map(t => {
+      if (t.Dcom === t.Dnom && !t.parte) return t;
+      const sec = this._seccao(r, t.Q, rho, nu, t.Dcom);
+      return Object.assign(t, { De: sec.De, secao: sec.secaoCalc, v: sec.v, Re: sec.Re, R: sec.R, dpLin: (sec.R || 0) * t.L });
+    });
+    for (let i = 1; i < r.trocos.length; i++) {
+      const a = r.trocos[i - 1], b = r.trocos[i];
+      if (b.Dcom !== a.Dcom) r.reducoesCalc.push({ s: b.de, key: b.key, de: a.Dcom, para: b.Dcom, movida: b.parte === 2, aumenta: b.Dcom > a.Dcom });
+    }
+  },
+
   /* secção e perda linear de um troço com o caudal Q (circular ou retangular, Ø travado ou não) */
   _seccao(r, Q, rho, nu, Dforcado) {
     const eps = this.rugosidadeDe(r) / 1000, vMax = this.vMaxDe(r), hMax = this.hMaxDe(r);
@@ -485,7 +567,7 @@ VC.calculo = {
       o.v = A > 0 ? Q / 3600 / A : 0; o.Re = o.v > 0 ? o.v * D / nu : 0;
       o.f = VC.fisica.fatorAtrito(o.Re, eps / D); o.R = D > 0 ? o.f / D * (0.5 * rho * o.v * o.v) : 0; o.Dcom = Dforcado;
     } else {
-      const z = this.dimensionarConduta(Q, { rho, nu, vMax, eps });
+      const z = this.dimensionarConduta(Q, { rho, nu, vMax, eps, serie: this.specDe(r, 'serie', null) });
       o.v = z.v; o.Re = z.Re; o.f = z.f; o.R = z.R; o.Dcom = z.Dc;
     }
     // v11.1 (3.6): a forma da secção é escolha do utilizador (geometriaInput.forma).
@@ -525,11 +607,13 @@ VC.calculo = {
       // troço inicial (caudal total do ramal): define o Ø, a v e a perda singular do ramal, como antes
       const s0 = this._seccao(r, Number(r.Q) || 0, rho, nu, travado);
       r.v = s0.v; r.Re = s0.Re; r.f = s0.f; r.R = s0.R; r.Dcom = s0.Dcom; r.De = s0.De; r.secaoCalc = s0.secaoCalc; r.avisoSecao = s0.aviso;
+      const regras = this.regrasReajuste(r), unicoR = unico || regras.modo === 'unico';
       r.trocos = T.trocos.map((t, i) => {
-        const sec = (i === 0 && Math.abs(t.Q - (Number(r.Q) || 0)) < 1e-9) ? s0 : this._seccao(r, t.Q, rho, nu, travado || (unico ? s0.Dcom : null));
+        const sec = (i === 0 && Math.abs(t.Q - (Number(r.Q) || 0)) < 1e-9) ? s0 : this._seccao(r, t.Q, rho, nu, travado || (unicoR ? s0.Dcom : null));
         if (sec.aviso && !r.avisoSecao) r.avisoSecao = sec.aviso;
-        return { de: t.de, ate: t.ate, L: t.L, Q: t.Q, Dcom: sec.Dcom, De: sec.De, secao: sec.secaoCalc, v: sec.v, Re: sec.Re, R: sec.R, dpLin: (sec.R || 0) * t.L };
+        return { de: t.de, ate: t.ate, L: t.L, Q: t.Q, Dcom: sec.Dcom, Dnom: sec.Dcom, De: sec.De, secao: sec.secaoCalc, v: sec.v, Re: sec.Re, R: sec.R, dpLin: (sec.R || 0) * t.L, key: this.chaveTroco(t.de) };
       });
+      this._aplicarReajuste(r, regras, rho, nu, !!(travado || unicoR));
       r.modoTrocos = T.modo;
       r.derivacoes = derivs.map(d => ({ tipo: d.tipo, ref: d.ref, Q: d.Q, s: d.s, origem: d.origem, dP: d.dP || 0 }));
       r.vMaxTrocos = r.trocos.reduce((m, t) => Math.max(m, t.Q > 0 ? (t.v || 0) : 0), Number(r.v) || 0);
@@ -619,6 +703,25 @@ VC.calculo = {
     }
     return null;
   },
+  /* Fase 2 do desenho: especificação da conduta e regras do reajuste, herdadas do ramal-pai.
+     r.especificacao = { serie, estanquidade, isolamento, isolEsp, reajuste, minL, maxReducoes, minSaltos } */
+  origemSpec(r, campo) {
+    const R = (VC.dados && VC.dados.ramais) || [];
+    let x = r, guard = 0;
+    while (x && guard++ < 60) {
+      const e = x.especificacao;
+      if (e && e[campo] !== undefined && e[campo] !== null && e[campo] !== '') return x;
+      const pai = x.parente;
+      x = pai ? R.find(y => y.nome === pai && y !== x) : null;
+    }
+    return null;
+  },
+  specDe(r, campo, omissao) { const o = this.origemSpec(r, campo); return o ? o.especificacao[campo] : omissao; },
+  regrasReajuste(r) {
+    const n = (c, d) => { const v = Number(this.specDe(r, c, d)); return isFinite(v) ? v : d; };
+    return { modo: this.specDe(r, 'reajuste', 'derivacao'), minL: Math.max(0, n('minL', 0)), maxReducoes: this.specDe(r, 'maxReducoes', null) == null ? null : Math.max(0, Math.round(n('maxReducoes', 0))), minSaltos: Math.max(1, Math.round(n('minSaltos', 1))) };
+  },
+  chaveTroco(de) { return (Math.round((Number(de) || 0) * 100) / 100).toFixed(2); },
   rugosidadeDe(r) {
     const o = this.origemPropria(r, 'rugosidade');
     if (o) return Number(o.geometriaInput.rugosidade);
