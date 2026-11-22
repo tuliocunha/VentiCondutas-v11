@@ -124,7 +124,7 @@ P._portaDe = function (t, A, B, p) {
 /* balanço de uma sala, com uma transferência hipotética (Q de deId para paraId) */
 P._balancoSala = function (e, extra) {
   const B = VC6.balanco, tr = (VC.dados.transferencias || []).concat(extra ? [extra] : []);
-  const ent = B.QInDireto(e) + B.QTransfIn(e, tr), sai = B.QOutDireto(e) + B.QTransfOut(e, tr);
+  const qx = B.QExterior ? B.QExterior(e) : 0, ent = B.QInDireto(e) + B.QTransfIn(e, tr) + Math.max(0, qx), sai = B.QOutDireto(e) + B.QTransfOut(e, tr) + Math.max(0, -qx);
   return { ent, sai, res: ent - sai };
 };
 P._linhaImpacto = function (nome, papel, a, d) {

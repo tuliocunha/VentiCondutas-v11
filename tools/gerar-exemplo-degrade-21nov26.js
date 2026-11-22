@@ -315,7 +315,7 @@ function tamanhoJPEG(b) {   // largura e altura de um JPEG (marcador SOF)
 /* ── CORREÇÕES (versão «corrigido»): o que muda face ao desenho e porquê ──
    Cada correção altera caudais e acrescenta só os terminais e troços precisos; o traçado do desenho mantém-se. */
 const CORRECOES = [
-  'Garagem P0-N1: extração dedicada VEX Garagem de 600 m³/h (RT-SCIE art. 183.º: 300 e 600 m³/h por veículo, 1 lugar), 2 GE × 300 junto ao pavimento; ar de compensação natural pela porta exterior',
+  'Garagem P0-N1: extração dedicada VEX Garagem de 600 m³/h em dois patamares comandados por deteção de CO (RT-SCIE art. 183.º: 300 e 600 m³/h por veículo, 1 lugar), 2 GE × 300 junto ao pavimento; admissão natural por grelha permanente na fachada ou na porta (≈ 0,083 m² livres a 2 m/s), registada no balanço como entrada pelo exterior; a garagem fica em depressão face ao edifício',
   'Sala P0-N1 (bastidores): ar novo 60 m³/h (VAN P0 N, tronco prolongado) e extração 60 m³/h (VEG P0 N, tronco prolongado); mínimo 59 m³/h',
   'Refeitório P0-S1: ar novo da VCM 2 × 100 = 200 m³/h (mínimo 192) e extração de ar sujo da copa pela VCM de 2 × 70 para 2 × 100 m³/h (balanço nulo)',
   'Sanitários (uso público, Tabela 13): VE de 75 para 90 m³/h por sanita; GE azul da CB P0-N2 suprimido (a VE de 90 cumpre)',
@@ -339,6 +339,7 @@ function corrigir() {
   ramal('UTA-01', 'R1.1.1').t.push(['Circulação P0-N2', [2272, 3760], 200]);
   setQ('UTA-01', 'R1.1.1.1.1', 'Casa de Banho P0-N2', 60);
   E.filter(e => e[3] === 'Sala técnica').forEach(e => { e[5] = Object.assign({}, e[5], { rphAplicado: 0, rphOrigem: 'utilizador' }); });
+  E.filter(e => e[0] === 'Garagem P0-N1').forEach(e => { e[5] = Object.assign({}, e[5], { Q_exterior: 600 }); });   // admissão natural (variante a)
   // extração = ar novo
   [['Arrumo P0-N1', 100], ['Sala P0-N4', 125], ['Sala P0-N3', 125], ['Sala P0-N2', 100]].forEach(([e, q]) => setQ('UTA-02', 'R2.1', e, q));
   [['Laboratório P0-S5', 150], ['Sala P0-S4', 150], ['Sala P0-S3', 150], ['Sala P0-S1', 125], ['Sala P0-S2', 125]].forEach(([e, q]) => setQ('UTA-04', 'R4.1', e, q));

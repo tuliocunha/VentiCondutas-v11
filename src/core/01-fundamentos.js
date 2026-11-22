@@ -627,7 +627,7 @@ VC.perf.cacheBalanco = (function () {
     calcular(produtor) {
       const espacos = VC.dados && VC.dados.espacos || [];
       const transferencias = VC.dados && VC.dados.transferencias || [];
-      const h = espacos.map(e => e.id + ':' + (e.definicoes || []).map(d => d.rede + d.Q_total).join(',')).join('#')
+      const h = espacos.map(e => e.id + ':' + (e.definicoes || []).map(d => d.rede + d.Q_total).join(',') + ':' + (e.Q_exterior || 0)).join('#')
         + '||' + transferencias.map(t => t.deId + '>' + t.paraId + ':' + t.Q).join(',');
       if (h === ultimoHash && ultimoResultado) return ultimoResultado;
       ultimoResultado = produtor();
@@ -726,7 +726,7 @@ VC.estado._hashEstado = function () {
     e.id + '|' + e.nome + '|' + e.tipo + '|' + (e.grupoForcado || 'auto') +
     '|' + (e.A || 0) + '|' + (e.H || 0) + '|' + (e.V || 0) + '|' + (e.N || 0) +
     '|' + (e.rphAplicado || 0) + '|' + (e.rphOrigem || 'norma') + '|' + (e.eficaciaRemocao == null ? '' : e.eficaciaRemocao) + '|' + (e.pressurizada ? JSON.stringify([e.deltaP, e.vPortaAberta, e.camaraCortaFogo, e.forcaPorta]) : '') +
-    '|' + (e.QAI_projeto || 0) + '|' + (e.QAI_projeto_rede || 'auto') + '|' + (e.QAI_projeto_motivo || '') + '|' + (e.QAI_projeto_origem || 'norma') +
+    '|' + (e.QAI_projeto || 0) + '|' + (e.QAI_projeto_rede || 'auto') + '|' + (e.QAI_projeto_motivo || '') + '|' + (e.QAI_projeto_origem || 'norma') + '|' + (e.Q_exterior || 0) +
     '|' + ((e.definicoes || []).map(d => d.tipo + ':' + d.rede + ':' + d.quantidade + ':' + d.Q_total).join(','))
   ).join('#'));
   const ramais = (VC.dados && VC.dados.ramais) || [];
@@ -827,6 +827,7 @@ VC.constantes = {
   CD_TRANSFERENCIA: 0.61,       // Fase 4 · coeficiente de descarga de grelhas / frestas de transferência (orifício de arestas vivas)
   BALANCO_ESPACO: { sub: 0.90, sobre: 1.20 },                          // Q servido / Q necessário · tolerância da app
   MINIMO_LEGAL_ARREDONDAMENTO: 0.5,   // m³/h · folga de arredondamento ao m³/h na comparação servido ≥ mínimo legal (Fase 2)
+  V_ABERTURA_EXTERIOR: 2.0,    // m/s · velocidade de referência numa grelha de admissão natural para o exterior (dimensiona a área livre)
   BALANCO_RESIDUO: 5,          // m³/h · resíduo aceite no balanço de massa de um espaço (2× = desequilíbrio grave)
   EQUILIBRIO_REDE: 0.20,       // desvio máximo de Δp entre ramais após otimização (20 %)
   DL101D: { SGTC: 290000, SGT: 100000, INSPECAO: 70000 },             // W · DL 101-D/2020 (gestão técnica e inspeção)

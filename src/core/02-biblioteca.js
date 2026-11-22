@@ -470,8 +470,15 @@ VC6.balanco = {
     return transferencias.filter(t => t.deId === esp.id).reduce((s, t) => s + (Number(t.Q) || 0), 0);
   },
 
+  /* Entrada (+) ou saída (−) de ar por uma abertura permanente para o exterior (grelha na fachada ou na
+     porta), em m³/h. Fecha o balanço de um espaço em depressão com admissão natural (ex.: garagem com
+     extração mecânica). Não é insuflação mecânica: a regra «G4 em depressão» continua a comparar só as redes. */
+  QExterior(esp) { const q = Number(esp && esp.Q_exterior); return isFinite(q) ? q : 0; },
+  /* área livre da abertura para a velocidade v (m/s): A = Q / (3600 · v), em m² */
+  areaAberturaExterior(Q, v) { return Math.abs(Number(Q) || 0) / 3600 / (Number(v) || VC.constantes.V_ABERTURA_EXTERIOR); },
+
   residuo(esp, transferencias) {
-    return (this.QInDireto(esp) + this.QTransfIn(esp, transferencias))
+    return (this.QInDireto(esp) + this.QTransfIn(esp, transferencias) + this.QExterior(esp))
          - (this.QOutDireto(esp) + this.QTransfOut(esp, transferencias));
   },
 
@@ -525,7 +532,8 @@ VC6.balanco = {
       const outD = this.QOutDireto(esp);
       const inT = this.QTransfIn(esp, transferencias);
       const outT = this.QTransfOut(esp, transferencias);
-      const r = (inD + inT) - (outD + outT);
+      const qExt = this.QExterior(esp);
+      const r = (inD + inT + qExt) - (outD + outT);
       const pressao = this.pressaoRelativa(esp, r);
 
       let estado = 'OK';
@@ -544,7 +552,8 @@ VC6.balanco = {
         QAI_rede: qai.rede,
         Q_transf_in: inT,
         Q_transf_out: outT,
-        exfiltracao: 0,
+        Q_exterior: qExt,
+        exfiltracao: qExt < 0 ? -qExt : 0,
         residuo: r,
         pressao_relativa_Pa: pressao,
         estado: estado
@@ -555,7 +564,7 @@ VC6.balanco = {
         Q_in_direto: inD, Q_out_direto: outD,
         Q_conforto_in: qConfortoIn, Q_conforto_out: qConfortoOut,
         QAI_aplicado: qai.QAI_aplicado, QAI_rede: qai.rede,
-        Q_transf_in: inT, Q_transf_out: outT,
+        Q_transf_in: inT, Q_transf_out: outT, Q_exterior: qExt,
         residuo: r, pressao_relativa_Pa: pressao, estado
       });
     });
@@ -594,7 +603,7 @@ VC6.balanco = {
       Q_in_direto: 0, Q_out_direto: 0,
       Q_conforto_in: 0, Q_conforto_out: 0,
       QAI_aplicado: 0, QAI_rede: 'insuflacao',
-      Q_transf_in: 0, Q_transf_out: 0,
+      Q_transf_in: 0, Q_transf_out: 0, Q_exterior: 0,
       residuo: 0, pressao_relativa_Pa: 0, estado: 'PENDENTE'
     }, e.balanco || {}, { id: e.id, nome: e.nome }));
   },
