@@ -357,13 +357,16 @@ VC.paineis = {
       const op = c.opcoes(o), atual = vazio(val) && pr ? String(pr.v) : String(val == null ? '' : val);
       const tem = op.some(([v]) => String(v) === atual);
       inp = '<select id="' + id + '" onchange="' + ch + 'this.value)">' + (tem ? '' : '<option value="' + esc(atual) + '" selected>' + esc(atual ? atual.replace(/_/g, ' ') : '— escolher —') + '</option>') + op.map(([v, l]) => '<option value="' + esc(v) + '"' + (String(v) === atual ? ' selected' : '') + '>' + esc(l) + '</option>').join('') + '</select>';
+    } else if (c.tipo === 'cor') {
+      const atual = vazio(val) && pr ? String(pr.v) : String(val);
+      inp = '<input id="' + id + '" type="color" value="' + esc(atual) + '" onchange="' + ch + 'this.value)">';
     } else if (c.tipo === 'sim') {
       inp = '<input id="' + id + '" type="checkbox"' + (val ? ' checked' : '') + ' onchange="' + ch + 'this.checked)">';
     } else {
       const ph = pr && !vazio(pr.v) ? String(pr.v).replace('.', ',') : (c.tipo === 'num' ? 'por definir' : '');
       inp = '<input id="' + id + '" type="' + (c.tipo === 'num' ? 'number' : 'text') + '"' + (c.min != null ? ' min="' + c.min + '"' : '') + (c.passo ? ' step="' + c.passo + '"' : '') + ' value="' + esc(vazio(val) ? '' : val) + '" placeholder="' + esc(ph) + '" onchange="' + ch + 'this.value)" onkeydown="if(event.key===\'Enter\'){event.preventDefault();this.blur()}">';
     }
-    const cls = c.tipo === 'sim' ? 'pn-campo pn-sim' : 'pn-campo';
+    const cls = c.tipo === 'sim' ? 'pn-campo pn-sim' : c.tipo === 'cor' ? 'pn-campo pn-cor' : 'pn-campo';
     return '<div class="' + cls + '"><label for="' + id + '">' + esc(c.rot) + un + '</label><div class="pn-entrada">' + inp + repor + '</div>' + bad + (c.ajuda ? '<small class="pn-ajuda">' + esc(c.ajuda) + '</small>' : '') + '</div>';
   },
   /* pior severidade entre os avisos dos elementos do objeto (para o cabeçalho) */

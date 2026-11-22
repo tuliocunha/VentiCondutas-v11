@@ -527,7 +527,7 @@ VC6.testes = {
     self.registar({ id: 'N11.T12', nucleo: 'N11', grupo: 'Construtor & Dados', nome: 'Planta: editar vértices e tipo de sistema', criterio: 'Shift dá ângulo reto; a área acompanha o desenho; uma sala não fica com menos de 3 vértices nem a cruzar-se; VMC cria o par UVB; o tipo lê-se do nome', fn: () => {
       const P = VC.planta; if (!P || !P._aplicarGeometria || !VC.uta.criarDeTipo) return true;
       // tipo de sistema
-      const nomeOk = (VC.uta.tipoSistemaDe({ nome: 'VEG P0 N' }) || {}).codigo === 'VEG' && (VC.uta.tipoSistemaDe({ nome: 'VEISP0' }) || {}).codigo === 'VEI' && !VC.uta.tipoSistemaDe({ nome: 'VEGETAL' }) && (VC.uta.tipoSistemaDe({ nome: 'X', tipoSistema: 'VEI' }) || {}).codigo === 'VEI';
+      const nomeOk = (VC.uta.tipoSistemaDe({ nome: 'VEG P0 N' }) || {}).codigo === 'VEG' && (VC.uta.tipoSistemaDe({ nome: 'VEISP0' }) || {}).codigo === 'VEIS' && (VC.uta.tipoSistemaDe({ nome: 'VCM Refeitório' }) || {}).codigo === 'VCM' && !VC.uta.tipoSistemaDe({ nome: 'VEGETAL' }) && (VC.uta.tipoSistemaDe({ nome: 'X', tipoSistema: 'VEI' }) || {}).codigo === 'VEIS';
       const recusa = VC.uta.definirTipoSistema({ rede: 'insuflacao' }, 'VEG') === false;
       const gU = VC.dados.utas, gN = JSON.stringify(VC.dados.nextId);
       let par = false;
@@ -557,6 +557,28 @@ VC6.testes = {
         VC.dados.plantas = guard.pl; VC.dados.espacos = guard.E; P._pilha = guard.pilha; P._refeitas = guard.ref; P.piso = guard.piso; P.selecionado = guard.sel; P.vertSel = guard.vs; P.ferramenta = guard.f;
       }
       return nomeOk && recusa && par && orto && geo;
+    } });
+    self.registar({ id: 'N11.T13', nucleo: 'N11', grupo: 'Construtor & Dados', nome: 'Planta: cores EN 16798-3, siglas e VCM', criterio: 'cores da norma por omissão e mudáveis; siglas GI/GE/VE; letra com contraste; VCM com extração de ar sujo forma par e avisa do recuperador', fn: () => {
+      const P = VC.planta; if (!P || !P.cores) return true;
+      const N = VC.constantes.PALETA_REDES, gP = VC.dados.params.paletaRedes;
+      let cores = false;
+      try {
+        delete VC.dados.params.paletaRedes;
+        const a = P.corRede('insuflacao') === N.SUP && P.corRede('extracao') === N.ETA && P.corRede('extracao_suja') === N.ETA_SUJO && P._corTrf() === N.TRA;
+        VC.dados.params.paletaRedes = { SUP: '#ff00ff', ETA: 'mau' };
+        cores = a && P.corRede('insuflacao') === '#ff00ff' && P.corRede('extracao') === N.ETA;
+      } finally { if (gP === undefined) delete VC.dados.params.paletaRedes; else VC.dados.params.paletaRedes = gP; }
+      const siglas = P._letra({ tipo: 'Grelha Insuflação', rede: 'insuflacao' }) === 'GI' && P._letra({ tipo: 'Válvula', rede: 'extracao_suja' }) === 'VE' && P._letra({ tipo: '?', rede: 'extracao' }) === 'E';
+      const contraste = P._corTexto(N.ETA) === '#111827' && P._corTexto(N.SUP) === '#fff';
+      const gU = VC.dados.utas, gN = JSON.stringify(VC.dados.nextId);
+      let vcm = false;
+      try {
+        VC.dados.utas = [];
+        const u = VC.uta.criarDeTipo('VCM', 'VCM-T', 'extracao_suja', ''), o = VC.dados.utas.find(x => x !== u);
+        VC.calculo.classificarUVB();
+        vcm = u.rede === 'extracao_suja' && o.rede === 'insuflacao' && VC.calculo.parUVB(u) === o && VC.calculo.parUVB(o) === u && !u.uvbSemPar;
+      } finally { VC.dados.utas = gU; VC.dados.nextId = JSON.parse(gN); }
+      return cores && siglas && contraste && vcm;
     } });
   },
 

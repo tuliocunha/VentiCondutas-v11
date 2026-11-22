@@ -702,9 +702,10 @@ VC.calculo = {
     if (!ehUVB(u)) return null;
     const lado = x => x.rede === 'insuflacao' ? 'ins' : (x.rede === 'extracao' ? 'ext' : 'outro');
     const U = VC.dados.utas || [];
-    if (u.uvbPar) { const p = U.find(x => x.id === u.uvbPar); return (p && p !== u && ehUVB(p) && lado(p) !== lado(u)) ? p : null; }
+    const ladoPar = x => (x.rede === 'insuflacao' ? 'ins' : 'ext');   // par escolhido: a extração de ar sujo também é o lado da extração
+    if (u.uvbPar) { const p = U.find(x => x.id === u.uvbPar); return (p && p !== u && ehUVB(p) && ladoPar(p) !== ladoPar(u)) ? p : null; }
     const pedidoPorOutra = U.find(x => x !== u && x.uvbPar === u.id && ehUVB(x));
-    if (pedidoPorOutra) return lado(pedidoPorOutra) !== lado(u) ? pedidoPorOutra : null;
+    if (pedidoPorOutra) return ladoPar(pedidoPorOutra) !== ladoPar(u) ? pedidoPorOutra : null;
     if (lado(u) === 'outro' || !u.zona) return null;
     const cands = U.filter(x => x !== u && ehUVB(x) && !x.uvbPar && lado(x) !== 'outro' && lado(x) !== lado(u) && x.zona === u.zona);
     return cands.length === 1 ? cands[0] : null;
@@ -927,6 +928,8 @@ VC.calculo = {
       });
       VC.dados.utas.forEach(u => {
         if (u.ativo !== false && u.uvbSemPar && /^BVU/.test(VC.normas.tipoUVPadrao(u)) && (u.rede === 'insuflacao' || u.rede === 'extracao')) findings.push({ severidade: 'ATENÇÃO', tipo: 'UVB sem par', elemento: u.nome, msg: 'Unidade bidirecional com recuperador: o SFPint do Ecodesign é da unidade inteira, mas não se encontrou a UTA do outro lado (mesma zona ou campo «Par UVB»). Só esta metade foi verificada.' });
+        // ar sujo (copa, IS) a passar num recuperador: só sem transferência entre circuitos
+        if (u.ativo !== false && u.rede === 'extracao_suja' && /^BVU/.test(VC.normas.tipoUVPadrao(u)) && u.recuperadorAtivo !== false) findings.push({ severidade: 'ATENÇÃO', tipo: 'Recuperador com ar sujo', elemento: u.nome, msg: 'A extração de ar sujo passa no recuperador desta unidade: use recuperador de placas ou de fluxos cruzados, estanque entre circuitos (sem roda entálpica), para não devolver cheiros e gorduras à insuflação.' });
       });
 
       // instalações sanitárias: regime da Tabela 13 e aparelhos (pública) por definir → «por fazer»
@@ -1298,9 +1301,10 @@ VC.uta = {
   tipoSistemaDe(u) {
     if (!u) return null;
     const T = VC.constantes.TIPOS_SISTEMA, porCod = c => T.find(t => t.codigo === c) || null;
-    if (u.tipoSistema) return porCod(u.tipoSistema);
-    const m = String(u.nome || '').toUpperCase().match(/^(VMC|VAN|VIN|VEG|VEX|VEI)(?![A-Za-z]{3})/);
-    return m ? porCod(m[1]) : null;
+    const alias = c => (c === 'VEI' ? 'VEIS' : c);   // VEI (versão anterior) = VEIS
+    if (u.tipoSistema) return porCod(alias(u.tipoSistema));
+    const m = String(u.nome || '').toUpperCase().match(/^(VMC|VCM|VAN|VIN|VEG|VEX|VEIS|VEI)(?![A-Za-z]{3})/);
+    return m ? porCod(alias(m[1])) : null;
   },
   tipoSistemaProprio(u) { return !!(u && u.tipoSistema); },
   /* escolher o tipo: guarda-o e acerta o tipo Ecodesign (UVU/UVB) ao do sistema. Devolve false se a rede da UTA
@@ -1321,9 +1325,10 @@ VC.uta = {
     rede = t.redes.indexOf(rede) >= 0 ? rede : t.redes[0];
     const fazer = (n, r) => { const u = this.criar(n, r, zona); u.componentes = r === 'insuflacao' ? this.componentesPadrao() : this.componentesExtracao(); u.tipoSistema = t.codigo; u.tipoUV = t.tipoUV; return u; };
     if (!t.par) return fazer(nome, rede);
-    const ins = fazer(nome + ' (insuflação)', 'insuflacao'), ext = fazer(nome + ' (extração)', 'extracao');
+    const ladoExt = VC.redes.ehExtracao(rede) ? rede : 'extracao';   // VCM: a extração pode ser de ar sujo (copa)
+    const ins = fazer(nome + ' (insuflação)', 'insuflacao'), ext = fazer(nome + ' (extração)', ladoExt);
     ins.uvbPar = ext.id; ext.uvbPar = ins.id;
-    return rede === 'extracao' ? ext : ins;
+    return VC.redes.ehExtracao(rede) ? ext : ins;
   },
   componentesPadrao() {
     return [
