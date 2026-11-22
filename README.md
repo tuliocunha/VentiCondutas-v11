@@ -101,3 +101,20 @@ npm run comparar
 ```bash
 npm run lint
 ```
+
+## Manual de desenho
+
+O manual está em `docs/guia/index.html` (com `guia.css` e as imagens em `docs/guia/img/`).
+Abre-se dentro da app pelo menu **Docs → Manual de desenho**, pelo **F1** (na secção do
+objeto selecionado ou da ferramenta) e pelos botões **?** dos painéis e dos grupos de ícones.
+
+Tem quatro partes: Começar, Como fazer (uma receita por tarefa), Referência e Porquê.
+Cada PR que muda a interface atualiza a secção correspondente e regenera as imagens:
+
+```bash
+node tools/guia-imagens.js --libs <pasta das libs>            # todas
+node tools/guia-imagens.js --libs <pasta das libs> --so troco  # só essa cena
+```
+
+As imagens saem do exemplo Degrade, com os sítios assinalados por círculos escuros
+numerados, e o `index.html` fica com as dimensões certas de cada uma.

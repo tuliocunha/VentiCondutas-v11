@@ -759,6 +759,9 @@
   "VC.grafoConceitual.render",
   "VC.grafoCondutas.render",
   "VC.grafoCondutas.renderPainel",
+  "VC.guia.abrir",
+  "VC.guia.ancoraAtual",
+  "VC.guia.fechar",
   "VC.historico._aplicar",
   "VC.historico.desfazer",
   "VC.historico.limpar",
@@ -1593,6 +1596,7 @@
  "botoes": [
   "VC.decompor.executar();VC.calculo.calcularTudo();VC.topologia.construtor.render();",
   "VC.exemplos.abrirMenu()",
+  "VC.guia.abrir('comecar')",
   "VC.modos.set('arvore')",
   "VC.modos.set('condutas')",
   "VC.modos.set('construtor')",

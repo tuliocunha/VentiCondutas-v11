@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VentiCondutas — Manual de desenho</title>
+<link rel="stylesheet" href="guia.css">
+</head>
+<body>
+<header class="topo">
+  <span class="marca">VentiCondutas <small>Manual de desenho · v11.1</small></span>
+  <input type="search" id="procura" placeholder="Procurar no manual (ex.: prumada, F2, fugas)…" aria-label="Procurar no manual">
+  <button type="button" onclick="imprimirFolha()" title="Imprime só a folha rápida (1 página A4)">Imprimir folha rápida</button>
+</header>
+
+<div class="grelha">
+<nav class="indice" id="indice" aria-label="Índice">
+  <div class="parte p-comecar">Começar</div>
+  <a href="#comecar">Como usar este manual</a>
+  <a href="#preparar-piso">Preparar o piso</a>
+  <a href="#conhecer-ecra">Conhecer o ecrã</a>
+  <a href="#primeiro-projeto">Primeiro projeto: a garagem</a>
+
+  <div class="parte p-fazer">Como fazer</div>
+  <a href="#desenhar-sala">Desenhar uma sala</a>
+  <a href="#editar-sala">Corrigir a forma de uma sala</a>
+  <a href="#selecao-multipla">Mudar vários objetos de uma vez</a>
+  <a href="#contar">Contar pessoas, aparelhos e lugares</a>
+  <a href="#tracar-ramal">Traçar um ramal</a>
+  <a href="#por-equipamento">Pôr o equipamento na planta</a>
+  <a href="#ajustar-troco">Ajustar o Ø de um troço</a>
+  <a href="#mudar-nome">Mudar o nome de um ramal</a>
+  <a href="#por-acessorio">Pôr um acessório</a>
+  <a href="#criar-prumada">Ligar pisos com uma prumada</a>
+  <a href="#tomada-rejeicao">Pôr a tomada e a rejeição</a>
+  <a href="#abertura-exterior">Abrir a sala para o exterior</a>
+  <a href="#recirculacao">Recircular parte do ar</a>
+  <a href="#por-terminal">Pôr e orientar um terminal</a>
+  <a href="#transferencia">Passar ar entre salas</a>
+  <a href="#controlo-fumo">Definir o controlo de fumo</a>
+  <a href="#pressurizar">Pressurizar uma escada</a>
+  <a href="#verificar">Verificar o desenho</a>
+
+  <div class="parte p-ref">Referência</div>
+  <a href="#ref-ferramentas">Ferramentas e teclas</a>
+  <a href="#ref-comandos">Comandos e modos</a>
+  <a href="#ref-medidas">Medidas escritas</a>
+  <a href="#ref-encaixe">Encaixe</a>
+  <a href="#ref-edicao">Gestos de edição</a>
+  <a href="#ref-painel">O painel lateral</a>
+  <a href="#ref-campos">Campos por objeto</a>
+  <a href="#ref-sistemas">Tipos de sistema</a>
+  <a href="#ref-terminais">Siglas dos terminais</a>
+  <a href="#ref-cores">Cores das redes</a>
+  <a href="#ref-avisos">Avisos do desenho</a>
+  <a href="#ref-parametros">Parâmetros</a>
+  <a href="#folha">Folha rápida</a>
+
+  <div class="parte p-porque">Porquê</div>
+  <a href="#porque-condutas">Como a app escolhe o Ø</a>
+  <a href="#porque-fugas">Fugas e caudal do ventilador</a>
+  <a href="#porque-termica">Perdas térmicas e condensação</a>
+  <a href="#porque-ar-novo">Ar novo, retorno e recirculação</a>
+  <a href="#porque-exterior">Tomadas e rejeições</a>
+  <a href="#porque-alcance">Alcance dos terminais</a>
+  <a href="#porque-fumo">Controlo de fumo</a>
+  <a href="#porque-propostos">Valores propostos e herança</a>
+</nav>
+
+<main id="conteudo">
+
+<!-- ═════════════════════════ COMEÇAR ═════════════════════════ -->
+<header class="cabeca-parte p-comecar" id="comecar">
+  <p class="olho">Começar</p>
+  <h1>Desenhar a ventilação por cima da planta</h1>
+  <p class="entrada">O VentiCondutas desenha salas, condutas e terminais por cima da planta do arquiteto e calcula enquanto desenha. Este manual tem quatro partes. Leia a primeira de seguida; as outras consultam-se quando for preciso.</p>
+</header>
+
+<div class="cartoes">
+  <a href="#preparar-piso" class="p-comecar"><b>Começar</b><span>Preparar o piso, conhecer o ecrã e fazer um primeiro projeto completo.</span></a>
+  <a href="#desenhar-sala" class="p-fazer"><b>Como fazer</b><span>Receitas curtas, uma por tarefa, com os sítios assinalados nas imagens.</span></a>
+  <a href="#ref-ferramentas" class="p-ref"><b>Referência</b><span>Ferramentas, teclas, campos, cores e limites, em tabelas.</span></a>
+  <a href="#porque-condutas" class="p-porque"><b>Porquê</b><span>As normas e o cálculo por trás do que a app propõe.</span></a>
+</div>
+
+<p class="nota">Os passos têm números em quadrados claros. Os círculos escuros <span class="m">1</span> <span class="m">2</span> apontam o sítio na imagem e aparecem no texto onde esse sítio é usado. Tudo o que se faz na planta entra no <kbd>Ctrl</kbd>+<kbd>Z</kbd>, por isso pode experimentar à vontade.</p>
+
+<section class="tema" id="preparar-piso">
+  <h2>Preparar o piso</h2>
+  <p class="para">Desenha-se um piso de cada vez, por cima da imagem da planta. Sem escala a app desenha, mas não mede áreas nem comprimentos.</p>
+  <ol class="passos">
+    <li>No passo <span class="ui">Levantamento</span> ou <span class="ui">Rede</span>, abra o separador <span class="ui">Planta</span> e carregue a imagem do piso (JPG ou PNG; de um PDF, exporte a página com pelo menos 150 ppp).</li>
+    <li>Para outro piso, use <span class="ui">+ Piso</span>. Cada piso guarda o seu zoom e a sua posição.</li>
+    <li id="calibrar-escala">Escolha <span class="ui">Escala</span> (<kbd>S</kbd>) e clique nas duas pontas de uma cota conhecida <span class="m">1</span> <span class="m">2</span>.</li>
+    <li>Escreva a medida em metros <span class="m">3</span> e carregue em <kbd>Enter</kbd>.</li>
+    <li>Sem nada selecionado, o painel mostra o piso: escreva o <span class="ui">Pé-direito por omissão</span>, que passa a ser proposto às salas desse piso.</li>
+  </ol>
+  <p class="resultado">A barra de estado, no rodapé, mostra a escala (ex.: «1 m = 54,5 px»).</p>
+  <figure><img src="img/escala.png" width="1110" height="600" alt="Calibrar a escala por uma cota" loading="lazy"><figcaption><span class="m">1</span> e <span class="m">2</span> são as pontas da cota; <span class="m">3</span> é a caixa da medida real, no painel.</figcaption></figure>
+  <div class="correr-mal"><b>Se correr mal</b><ul><li>A barra de estado diz «por calibrar»: falta a escala. Volte ao passo 3.</li><li>A planta não tem cotas: desenhe uma sala com área conhecida e use <span class="ui">Calibrar a escala pela área desta sala</span>, no painel da sala.</li></ul></div>
+</section>
+
+<section class="tema" id="conhecer-ecra">
+  <h2>Conhecer o ecrã</h2>
+  <p class="para">A planta ocupa o ecrã; tudo o resto flutua por cima.</p>
+  <figure><img src="img/ecra.png" width="1142" height="756" alt="O ecrã da planta com as seis zonas numeradas" loading="lazy"><figcaption>Piso 0 do exemplo Degrade.</figcaption></figure>
+  <div class="tabela"><table>
+    <thead><tr><th></th><th>Zona</th><th>Para quê</th></tr></thead>
+    <tbody>
+      <tr><td><span class="m">1</span></td><td>Barra de ferramentas</td><td>Uma ferramenta de cada vez, arrumadas por grupos. O ícone ativo fica escuro.</td></tr>
+      <tr><td><span class="m">2</span></td><td>Barra de cima</td><td>Mudar de piso, <span class="ui">Colorir por</span> (grupo, dados em falta, balanço) e ecrã inteiro.</td></tr>
+      <tr><td><span class="m">3</span></td><td>Painel lateral</td><td>O objeto selecionado: dados, resultado, o que falta e ações. Sem seleção, o piso.</td></tr>
+      <tr><td><span class="m">4</span></td><td>Legenda</td><td>Cores das redes e dos grupos das salas.</td></tr>
+      <tr><td><span class="m">5</span></td><td>Zoom e mapa</td><td>− / + / Ajustar / 100 % e o mapa do piso inteiro.</td></tr>
+      <tr><td><span class="m">6</span></td><td>Barra de estado</td><td>O que a ferramenta espera a seguir, medidas ao vivo e a escala.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Não precisa de saber as teclas</h3>
+  <p>Cada grupo da barra abre os seus ícones ao passar o rato (ou ao tocar no canto ◢). Cada ícone mostra o nome, a tecla e o que faz. O botão direito num objeto mostra as ações desse objeto.</p>
+  <div class="lado">
+    <figure><img src="img/grupos.png" width="323" height="529" alt="Grupo Condutas e equipamentos aberto" loading="lazy"><figcaption><span class="m">1</span> o grupo; <span class="m">2</span> os seus ícones, com a tecla de cada um.</figcaption></figure>
+    <figure><img src="img/contexto.png" width="760" height="620" alt="Menu do botão direito num ramal" loading="lazy"><figcaption>Botão direito <span class="m">1</span> no ramal R1.1: as ações do ramal <span class="m">2</span>.</figcaption></figure>
+  </div>
+  <p class="nota">Regra geral: <strong>um clique escolhe, arrastar muda, <kbd>Enter</kbd> confirma, <kbd>Esc</kbd> cancela.</strong></p>
+</section>
+
+<section class="tema" id="primeiro-projeto">
+  <h2>Primeiro projeto: a garagem do Degrade</h2>
+  <p class="para">Refazer a garagem do exemplo num projeto vazio ensina o essencial: sala, equipamentos, ramais, terminais e verificação. Tenha a planta do Piso 0 aberta e a escala calibrada (1 m = 54,5 px).</p>
+
+  <h4>A · A sala</h4>
+  <ol class="passos">
+    <li>Escolha <span class="ui">Retângulo</span> (<kbd>R</kbd>) e clique no canto superior esquerdo da garagem.</li>
+    <li>Escreva <code>5,9;4,9</code> e <kbd>Enter</kbd>.</li>
+    <li>No painel, crie o espaço «Garagem P0-N1», tipo <span class="ui">Garagem</span>.</li>
+    <li>Em <span class="ui">Lugares de estacionamento</span>, escreva 1.</li>
+  </ol>
+  <p class="resultado">O painel mostra a área medida (cerca de 29 m²). Abaixo de 200 m² não é parque (UT II): a app aplica a boa prática de 300 / 600 m³/h por veículo.</p>
+
+  <h4>B · Os ramais e os equipamentos</h4>
+  <ol class="passos">
+    <li>Escolha <span class="ui">Ramal</span> (<kbd>L</kbd>) e clique junto à parede exterior, em baixo.</li>
+    <li>Com <kbd>Shift</kbd> e o rato para a direita, escreva <code>4,65</code>, <kbd>Enter</kbd> e <kbd>Enter</kbd> outra vez.</li>
+    <li>No cartão: tipo <span class="ui">VEX</span>, rede <span class="ui">extração de ar sujo</span>, nome «VEX Garagem P0-N1»; <span class="ui">Criar equipamento</span> e <span class="ui">Criar ramal</span>.</li>
+    <li>Repita em cima com tipo <span class="ui">VIN</span>, rede <span class="ui">insuflação</span>, «VIN Garagem P0-N1».</li>
+    <li>Escolha <span class="ui">Terminal</span> (<kbd>D</kbd>): clique duas vezes no ramal de cima (2 GI de 270 m³/h) e duas no de baixo (2 GE de 300 m³/h).</li>
+  </ol>
+
+  <h4>C · Fechar o balanço e verificar</h4>
+  <ol class="passos">
+    <li>Selecione a sala e, em <span class="ui">Avançado</span>, escreva 60 m³/h em <span class="ui">Abertura para o exterior</span> (grelha na porta).</li>
+    <li>Confira as setas: na insuflação vão do VIN para as GI; na extração, das GE para o VEX.</li>
+    <li>Confira que a sala não tem círculo numerado e que o painel do piso diz <strong>OK</strong>.</li>
+  </ol>
+  <p class="resultado">Insuflação 540 + porta 60 = extração 600 m³/h: balanço equilibrado, garagem em depressão face ao edifício.</p>
+  <p>Para comparar, abra o exemplo <strong>Degrade 21 nov26 · corrigido</strong> (<span class="ui">Projeto → Exemplos</span>) e selecione a Garagem P0-N1.</p>
+</section>
+
+<!-- ═════════════════════════ COMO FAZER ═════════════════════════ -->
+<header class="cabeca-parte p-fazer" id="como-fazer">
+  <p class="olho">Como fazer</p>
+  <h1>Receitas, uma por tarefa</h1>
+  <p class="entrada">Cada receita diz para que serve, os passos (no máximo sete), o resultado esperado e o que fazer se correr mal. Os grupos seguem a barra de ferramentas.</p>
+</header>
+
+<section class="tema" id="desenhar-sala">
+  <p class="olho p-fazer">Salas</p>
+  <h2>Desenhar uma sala</h2>
+  <p class="para">Cada sala desenhada liga-se a um espaço da tabela, ou cria um novo; a área medida pode passar para a tabela.</p>
+  <ol class="passos">
+    <li>Escolha <span class="ui">Retângulo</span> (<kbd>R</kbd>) para salas retangulares, ou <span class="ui">Polígono</span> (<kbd>P</kbd>) para salas em L, em U ou com paredes oblíquas.</li>
+    <li>Retângulo: arraste de um canto <span class="m">1</span> ao oposto <span class="m">2</span>, ou clique um canto e escreva <code>4;3</code> + <kbd>Enter</kbd>.</li>
+    <li>Polígono: clique os cantos pela ordem e feche no primeiro ponto, com duplo clique ou <kbd>Enter</kbd>.</li>
+    <li>No painel <span class="m">3</span>, escolha o espaço da tabela e <span class="ui">Ligar</span>, ou escreva nome, tipo e ocupação e <span class="ui">Criar espaço</span>.</li>
+  </ol>
+  <p class="resultado">A sala fica com a cor do seu grupo (G1–G4) e o painel mostra a área medida.</p>
+  <figure><img src="img/retangulo.png" width="1110" height="744" alt="Retângulo acabado de desenhar e o cartão para o ligar a um espaço" loading="lazy"><figcaption><span class="m">1</span> e <span class="m">2</span> cantos do retângulo; <span class="m">3</span> o cartão para ligar ou criar o espaço.</figcaption></figure>
+
+  <h3>Agarrar paredes e cantos</h3>
+  <p>O ponto prende-se ao que está perto: primeiro às salas já desenhadas, depois aos cantos e faces das paredes da imagem, por fim à grelha. O marcador laranja diz em quê encaixou. Para uma sala colada à vizinha, comece no canto dela.</p>
+  <figure class="media"><img src="img/paredes.png" width="760" height="574" alt="O ponto agarra o canto das paredes da imagem" loading="lazy"><figcaption><span class="m">1</span> o polígono começa no «canto da parede (imagem)»: a app encontrou as faces das paredes na planta importada.</figcaption></figure>
+  <p><strong>Medidas exatas.</strong> Depois do primeiro ponto, aponte a direção com o rato, escreva <code>3,5</code> e <kbd>Enter</kbd>. Com <kbd>Shift</kbd> o ponto fica na horizontal ou na vertical do anterior.</p>
+  <div class="correr-mal"><b>Se correr mal</b><ul><li>O ponto salta para onde não quer: mantenha <kbd>Alt</kbd> para desligar o encaixe nesse clique, ou <kbd>F3</kbd> para o desligar até voltar a carregar.</li><li>A app recusa a sala: o polígono cruza-se a si próprio ou tem menos de 3 cantos.</li></ul></div>
+</section>
+
+<section class="tema" id="editar-sala">
+  <h2>Corrigir a forma de uma sala</h2>
+  <p class="para">Com <span class="ui">Selecionar</span> (<kbd>V</kbd> ou <kbd>Espaço</kbd>), clique na sala: aparecem as alças.</p>
+  <ol class="passos">
+    <li>Arraste um vértice ● <span class="m">1</span> para o mudar de sítio; encaixa nas salas e ramais vizinhos.</li>
+    <li>Clique ou arraste o ○ no meio de uma aresta <span class="m">2</span> para acrescentar um vértice.</li>
+    <li>Arraste o interior <span class="m">3</span> para mover a sala com os seus terminais.</li>
+    <li>Para apagar um vértice, clique nele e carregue em <kbd>Delete</kbd> (a sala fica sempre com 3 ou mais).</li>
+  </ol>
+  <p class="resultado">Se a área da tabela era a medida, passa a ser a nova medida. Se eram diferentes, a tabela fica e aparece o aviso de coerência.</p>
+  <figure class="media"><img src="img/editar.png" width="760" height="574" alt="Sala selecionada com as alças de edição" loading="lazy"><figcaption>Sala P0-S2 selecionada (a magenta): <span class="m">1</span> vértice, <span class="m">2</span> meio de aresta, <span class="m">3</span> interior.</figcaption></figure>
+  <p>Também: <span class="ui">Mover</span> (<kbd>M</kbd>, ponto de base → destino; <kbd>Ctrl</kbd> copia), <span class="ui">Rodar</span> (<kbd>Q</kbd>, passos de 15° ou <code>90</code> + <kbd>Enter</kbd>) e <kbd>Ctrl</kbd>+<kbd>D</kbd> para duplicar a sala 1 m ao lado.</p>
+</section>
+
+<section class="tema" id="selecao-multipla">
+  <h2>Mudar vários objetos de uma vez</h2>
+  <p class="para">Para dar o mesmo tipo a várias salas, ou o mesmo material a vários ramais.</p>
+  <ol class="passos">
+    <li>Clique na primeira sala ou ramal; depois <kbd>Shift</kbd>+clique nos outros <span class="m">1</span> (outra vez tira-os).</li>
+    <li>Ou arraste a partir de uma zona vazia: da esquerda para a direita apanha só o que fica todo dentro; da direita para a esquerda apanha também o que a janela toca.</li>
+    <li>Confira os nomes no painel <span class="m">2</span>.</li>
+    <li>Mude o campo <span class="m">3</span>: muda em todos.</li>
+  </ol>
+  <p class="resultado">Um só <kbd>Ctrl</kbd>+<kbd>Z</kbd> desfaz a mudança em todos. <kbd>Delete</kbd> apaga os desenhos selecionados; <kbd>Esc</kbd> limpa a seleção.</p>
+  <figure><img src="img/multi.png" width="1110" height="744" alt="Duas salas e um ramal selecionados e o painel com os campos comuns" loading="lazy"><figcaption><span class="m">1</span> salas selecionadas (magenta), <span class="m">2</span> os nomes, <span class="m">3</span> um campo comum. Um campo com valores diferentes mostra «— vários —».</figcaption></figure>
+</section>
+
+<section class="tema" id="contar">
+  <h2>Contar pessoas, aparelhos e lugares</h2>
+  <p class="para">Em vez de escrever a ocupação, as louças ou os lugares, conte-os na planta.</p>
+  <ol class="passos">
+    <li>Abra o grupo <span class="ui">Ocupação e aparelhos</span> <span class="m">1</span> e escolha Pessoa, Sanita, Urinol, Duche ou Lugar.</li>
+    <li>Clique dentro da sala, uma vez por pessoa ou aparelho <span class="m">2</span>.</li>
+    <li>Confira o total no campo da sala <span class="m">3</span>.</li>
+  </ol>
+  <p class="resultado">O campo passa a esse total e o caudal recalcula (ex.: 7 pessoas × 24 = 168 m³/h).</p>
+  <figure><img src="img/contar.png" width="1110" height="744" alt="Pessoas contadas na Sala P0-S3" loading="lazy"><figcaption>Sala P0-S3 com sete ícones de pessoa.</figcaption></figure>
+  <div class="correr-mal"><b>Se correr mal</b><ul><li>O ícone é recusado: as louças só entram em sanitários e balneários, os lugares só em garagens.</li><li>Para tirar um ícone, selecione-o e carregue em <kbd>Delete</kbd>; o total acompanha.</li></ul></div>
+</section>
+
+<section class="tema" id="tracar-ramal">
+  <p class="olho p-fazer">Condutas e equipamentos</p>
+  <h2>Traçar um ramal</h2>
+  <p class="para">O ramal principal começa no equipamento; um sub-ramal começa em cima de outro ramal. O sentido conta: o Ø maior fica no início.</p>
+  <ol class="passos">
+    <li>Escolha <span class="ui">Ramal</span> (<kbd>L</kbd>).</li>
+    <li>Clique o início: no equipamento, em cima de outro ramal (fica sub-ramal dele) ou num sítio livre.</li>
+    <li>Clique as mudanças de direção; termine com <kbd>Enter</kbd> ou duplo clique.</li>
+    <li>Num ramal principal novo, escolha no cartão o equipamento, ou crie um: tipo de sistema, rede e nome (a sigla do projeto, ex.: VAN P0 N).</li>
+    <li>Selecione o ramal e confira o painel: equipamento <span class="m">2</span> e nível <span class="m">3</span>.</li>
+  </ol>
+  <p class="resultado">Os terminais por onde passa ficam ligados e as setas mostram o sentido do ar.</p>
+  <figure class="estreita"><img src="img/ramal.png" width="374" height="829" alt="Painel do ramal R1.1" loading="lazy"><figcaption><span class="m">1</span> o ramal e o estado; <span class="m">2</span> o equipamento; <span class="m">3</span> o nível, que dá a velocidade máxima.</figcaption></figure>
+  <div class="correr-mal"><b>Se correr mal</b><ul><li>Uma seta aponta ao contrário: o ramal foi desenhado do lado errado. Use <span class="ui">Inverter o sentido</span> no painel.</li><li>Aviso «Sub-ramal solto»: arraste o primeiro vértice para cima do ramal-pai.</li></ul></div>
+</section>
+
+<section class="tema" id="por-equipamento">
+  <h2>Pôr o equipamento na planta</h2>
+  <p class="para">Cada ventilador, UTA ou VCM pode ter o seu lugar; os ramais principais começam nele. Os dados da máquina continuam no passo <span class="ui">UTAs</span>.</p>
+  <ol class="passos">
+    <li>Escolha <span class="ui">Equipamento</span> (<kbd>U</kbd>).</li>
+    <li>Clique junto ao início de um ramal principal <span class="m">1</span>: fica aí o equipamento desse ramal.</li>
+    <li>Se o painel o propuser, clique em <span class="ui">Ligar os ramais ao equipamento</span>.</li>
+    <li>Leia o resultado <span class="m">2</span>: caudal, fugas, Δp, potência e SFP.</li>
+  </ol>
+  <figure><img src="img/equipamento.png" width="1125" height="1046" alt="VAN P0 N na planta e o seu painel" loading="lazy"><figcaption>VAN P0 N no início de R1.1, com o ar exterior ODA a entrar.</figcaption></figure>
+  <h3 id="vcm">VCM e VMC: as duas metades numa caixa</h3>
+  <p>Um equipamento de duplo fluxo fica numa só caixa com 4 ligações: ar exterior (ODA) a entrar, rejeição (EHA) a sair, e os ramais de insuflação e de extração. Se as metades ainda não estão juntas, o painel propõe <span class="ui">Juntar com «…»</span>.</p>
+  <figure class="media"><img src="img/vcm.png" width="760" height="574" alt="VCM do refeitório com as 4 ligações" loading="lazy"><figcaption><span class="m">1</span> VCM Refeitório: ODA e EHA para fora; R10.1 (insuflação) e R11.1 (extração da copa) saem da caixa.</figcaption></figure>
+</section>
+
+<section class="tema" id="ajustar-troco">
+  <h2>Ajustar o Ø de um troço</h2>
+  <p class="para">A app escolhe o Ø de cada troço e reduz a seguir a cada derivação. Pode mudar onde e como reduz.</p>
+  <ol class="passos">
+    <li>Selecione o ramal e clique num troço <span class="m">1</span>.</li>
+    <li>No painel do troço <span class="m">2</span>, escreva uma secção fixa: <code>250</code> (circular) ou <code>400×200</code> (retangular); ou use <span class="ui">Usar circular</span> / <span class="ui">Usar retangular</span>.</li>
+    <li>Confira o resultado <span class="m">3</span>: velocidade, perda R e Δp.</li>
+    <li>Para adiar uma redução, arraste o seu símbolo ao longo do troço; para a tirar, clique nela e <kbd>Delete</kbd>.</li>
+    <li><span class="ui">Voltar à secção calculada</span> repõe o cálculo; <kbd>Esc</kbd> volta ao ramal.</li>
+  </ol>
+  <figure><img src="img/troco.png" width="1125" height="996" alt="Um troço selecionado e o seu painel" loading="lazy"><figcaption>Troço 1 de R1.1: Ø315 sugerido, com a alternativa retangular 250×250.</figcaption></figure>
+  <div class="correr-mal"><b>Se correr mal</b><ul><li>«Velocidade acima do limite» em Por fazer: a secção fixa é pequena para o caudal; escolha a seguinte.</li><li>«A secção aumenta a jusante»: uma secção fixa é maior do que a anterior; confirme se é isso que quer.</li></ul></div>
+  <p>As regras do ramal (critério, série, saltos mínimos, reduções só onde marcar, máximo de reduções) estão em <a href="#ref-campos">Campos por objeto</a>; o cálculo, em <a href="#porque-condutas">Como a app escolhe o Ø</a>.</p>
+</section>
+
+<section class="tema" id="mudar-nome">
+  <h2>Mudar o nome de um ramal</h2>
+  <ol class="passos">
+    <li>Faça duplo clique no nome do ramal na planta, ou selecione-o e carregue em <kbd>F2</kbd>.</li>
+    <li>Escreva o novo nome e <kbd>Enter</kbd>.</li>
+    <li>Com <span class="ui">Mudar também o prefixo dos sub-ramais</span> ligado, R1.1 → INS1 passa R1.1.1 a INS1.1.</li>
+  </ol>
+  <p class="resultado">Sub-ramais, terminais e espaços acompanham. Um <kbd>Ctrl</kbd>+<kbd>Z</kbd> desfaz tudo; um nome repetido é recusado.</p>
+</section>
+
+<section class="tema" id="por-acessorio">
+  <h2>Pôr um acessório</h2>
+  <p class="para">Registos, corta-fogos, silenciadores e flexíveis ficam onde estão no ramal e somam a sua perda a esse troço e a jusante.</p>
+  <ol class="passos">
+    <li>Escolha <span class="ui">Acessório</span> (<kbd>A</kbd>), ou botão direito no ramal → <span class="ui">Pôr um acessório</span>.</li>
+    <li>No painel <span class="m">4</span>, escolha o tipo.</li>
+    <li>Clique no ramal, no sítio do acessório <span class="m">1</span> <span class="m">2</span> <span class="m">3</span>.</li>
+    <li>Se tiver o catálogo, escreva o Δp do fabricante no painel do acessório.</li>
+  </ol>
+  <figure><img src="img/acessorios.png" width="1110" height="520" alt="Corta-fogo, registo e silenciador em R1.1" loading="lazy"><figcaption><span class="m">1</span> corta-fogo, <span class="m">2</span> registo, <span class="m">3</span> silenciador (selecionado); <span class="m">4</span> a escolha do tipo.</figcaption></figure>
+</section>
+
+<section class="tema" id="criar-prumada">
+  <h2>Ligar pisos com uma prumada</h2>
+  <p class="para">A prumada é a conduta que sobe ou desce de um piso para outro. O L é a diferença das cotas dos pisos.</p>
+  <ol class="passos">
+    <li>No piso de saída, escolha <span class="ui">Prumada</span> (<kbd>K</kbd>) e clique no ramal onde a conduta muda de piso <span class="m">1</span>.</li>
+    <li>No cartão <span class="m">2</span>, escolha o piso de chegada e o ramal (novo, ou um da tabela ainda sem desenho); <span class="ui">Criar prumada</span>.</li>
+    <li>No painel da prumada, <span class="ui">Ver no outro piso</span>: arraste o círculo de chegada para o sítio certo.</li>
+    <li>No piso de chegada, trace os ramais (<kbd>L</kbd>) a partir do círculo.</li>
+  </ol>
+  <figure><img src="img/prumada.png" width="1110" height="600" alt="Cartão da prumada nova" loading="lazy"><figcaption>Mezanino: a prumada sai do fim de R5.1; a app propõe o Piso 1 e L = 3,10 m pelas cotas.</figcaption></figure>
+  <div class="correr-mal"><b>Se correr mal</b><ul><li>L vazio: escreva a <span class="ui">Cota do pavimento</span> dos dois pisos no painel do piso.</li><li>O círculo de chegada fica no sítio errado: as plantas de cada piso têm enquadramentos diferentes; arraste-o.</li></ul></div>
+</section>
+
+<section class="tema" id="tomada-rejeicao">
+  <h2>Pôr a tomada e a rejeição</h2>
+  <p class="para">A insuflação capta ar exterior (tomada ODA); a extração rejeita (EHA). A grelha e a conduta até ela somam ao Δp do equipamento.</p>
+  <ol class="passos">
+    <li>Selecione o equipamento e escolha <span class="ui">Tomada / rejeição</span> (<kbd>G</kbd>).</li>
+    <li>Clique na fachada <span class="m">1</span>; numa VCM, o primeiro clique é a tomada e o segundo a rejeição <span class="m">2</span>.</li>
+    <li>No painel <span class="m">3</span>, escolha o tipo e a dimensão (a app propõe uma) e, se tiver, o Δp do catálogo.</li>
+  </ol>
+  <p class="resultado">Um traço vermelho com a distância aparece se a rejeição estiver a menos de 2 m da tomada (8 m para ar sujo).</p>
+  <figure><img src="img/exterior.png" width="1125" height="1046" alt="Tomada e rejeição na fachada e o painel da rejeição" loading="lazy"><figcaption>Tomada ODA do VAN P0 N <span class="m">1</span> e rejeição EHA do VEG P0 N <span class="m">2</span>, com o resultado <span class="m">3</span>.</figcaption></figure>
+</section>
+
+<section class="tema" id="abertura-exterior">
+  <h2>Abrir a sala para o exterior</h2>
+  <ol class="passos">
+    <li>Escolha <span class="ui">Abertura para o exterior</span> (<kbd>O</kbd>) e clique na parede da sala.</li>
+    <li>Deixe o caudal vazio para a app propor o que fecha o balanço, ou escreva-o.</li>
+  </ol>
+  <p class="resultado">O símbolo mostra o caudal e a área livre a 2 m/s (ex.: 60 m³/h, 0,008 m²).</p>
+</section>
+
+<section class="tema" id="recirculacao">
+  <h2>Recircular parte do ar</h2>
+  <p class="para">Numa UTA de duplo fluxo com caixa de mistura, parte do ar extraído volta à insuflação.</p>
+  <ol class="passos">
+    <li>Selecione o equipamento de insuflação.</li>
+    <li>Escreva o caudal em <span class="ui">Recirculação (retorno → insuflação)</span>.</li>
+  </ol>
+  <p class="resultado">A caixa mostra a seta RCA (violeta); o ar exterior e o ar rejeitado descem esse caudal; as salas contam só o ar novo.</p>
+  <div class="correr-mal"><b>Se correr mal</b><ul><li>Erro na Verificação: ar sujo (copa, IS, garagem) não se recircula, nem mais do que a extração tem.</li></ul></div>
+</section>
+
+<section class="tema" id="por-terminal">
+  <p class="olho p-fazer">Terminais e passagens de ar</p>
+  <h2>Pôr e orientar um terminal</h2>
+  <ol class="passos">
+    <li>Escolha <span class="ui">Terminal</span> (<kbd>D</kbd>) e clique dentro da sala <span class="m">1</span>: entra o próximo terminal dessa sala ainda sem lugar. Em cima de um ramal da mesma rede, fica ligado a ele.</li>
+    <li>Com o terminal selecionado, confira a <span class="ui">Direção do jato</span> <span class="m">2</span> (proposta da parede mais perto) ou use <span class="ui">Rodar 90°</span>.</li>
+    <li>Leia o alcance no resultado <span class="m">3</span> e na planta: setas a tracejado com «alcance / distância à parede».</li>
+  </ol>
+  <figure><img src="img/terminais.png" width="1125" height="1046" alt="Terminal com a direção e o alcance do jato" loading="lazy"><figcaption>Grelha na Sala P0-S3: 5,8 m de alcance para 6,4 m até à parede (bom).</figcaption></figure>
+  <div class="correr-mal"><b>Se correr mal</b><ul><li>Seta vermelha: o jato bate na parede antes de abrandar. Baixe a velocidade, rode o terminal ou mude o tipo.</li><li>Seta laranja: o jato não chega a metade da sala.</li></ul></div>
+  <p>Para ver os alcances de todos os terminais: <span class="ui">Mostrar os alcances dos terminais</span>, no painel do piso ou no botão direito.</p>
+</section>
+
+<section class="tema" id="transferencia">
+  <h2>Passar ar entre salas</h2>
+  <ol class="passos">
+    <li>Escolha <span class="ui">Transferência</span> (<kbd>X</kbd>).</li>
+    <li>Clique a sala de onde o ar sai e depois a sala para onde entra.</li>
+    <li>No painel, confirme o caudal proposto pelo balanço, o tipo de passagem e o ΔP.</li>
+  </ol>
+  <div class="correr-mal"><b>Se correr mal</b><ul><li>Recusada: a Portaria 138-I não deixa levar ar de um espaço sujo (ex.: instalação sanitária) para um mais limpo. <span class="ui">Inverter direção</span> troca as salas.</li></ul></div>
+</section>
+
+<section class="tema" id="controlo-fumo">
+  <p class="olho p-fazer">Segurança contra incêndio</p>
+  <h2>Definir o controlo de fumo</h2>
+  <p class="para">A app avisa quando o RT-SCIE o exige (efetivo acima de 500, ou piso enterrado com mais de 200 pessoas ou 400 m²). Para outros casos, marque <span class="ui">Exigir controlo de fumo</span> na sala.</p>
+  <ol class="passos">
+    <li>Selecione a sala e, em <span class="ui">Avançado</span>, escolha <span class="ui">desenfumagem passiva</span> ou <span class="ui">ativa</span>. Nos corredores, escreva também a largura em UP.</li>
+    <li>Abra o grupo <span class="ui">Segurança contra incêndio</span> <span class="m">1</span>.</li>
+    <li>Ponha a extração de fumo <span class="m">2</span>, junto ao teto, e a admissão de ar <span class="m">3</span>, em baixo.</li>
+    <li>Leia o resultado da sala: caudais, número de bocas, área de admissão e alcance.</li>
+  </ol>
+  <figure class="media"><img src="img/fumo.png" width="760" height="620" alt="Controlo de fumo no refeitório" loading="lazy"><figcaption>Refeitório com desenfumagem passiva: o círculo tracejado é o alcance de cada abertura (7 × pé-direito).</figcaption></figure>
+  <div class="correr-mal"><b>Se correr mal</b><ul><li>«Pontos fora do alcance» ou «aberturas afastadas de mais»: acrescente aberturas.</li><li>Passiva recusada: acima de 12 m de altura tem de ser ativa.</li></ul></div>
+</section>
+
+<section class="tema" id="pressurizar">
+  <h2>Pressurizar uma escada</h2>
+  <ol class="passos">
+    <li>Selecione a sala do tipo Escadas e marque <span class="ui">Escada pressurizada</span> (ou botão direito → <span class="ui">Pressurizar a escada</span>).</li>
+    <li>Escreva o ΔP com as portas fechadas (20 a 80 Pa), a velocidade na porta aberta e a força de abertura.</li>
+  </ol>
+  <p class="resultado">Na planta aparece o selo «P+ 50 Pa» (e «CCF» com câmara corta-fogo).</p>
+</section>
+
+<section class="tema" id="verificar">
+  <p class="olho p-fazer">Fechar</p>
+  <h2>Verificar o desenho</h2>
+  <ol class="passos">
+    <li>Em <span class="ui">Colorir por</span> <span class="m">1</span>, escolha <span class="ui">Dados em falta</span>.</li>
+    <li>Clique em cada sala com círculo numerado <span class="m">2</span> e leia <span class="ui">Por fazer e avisos</span> no painel.</li>
+    <li>Resolva cada aviso com a ação proposta (ver <a href="#ref-avisos">Avisos do desenho</a>).</li>
+  </ol>
+  <p class="resultado">O desenho está pronto quando o painel do piso mostra OK e nenhuma sala tem círculo.</p>
+  <figure class="media"><img src="img/verificar.png" width="760" height="620" alt="Salas coloridas por dados em falta" loading="lazy"><figcaption><span class="m">1</span> o seletor <span class="ui">Colorir por</span>; <span class="m">2</span> um aviso numa sala.</figcaption></figure>
+</section>
+
+<!-- ═════════════════════════ REFERÊNCIA ═════════════════════════ -->
+<header class="cabeca-parte p-ref" id="referencia">
+  <p class="olho">Referência</p>
+  <h1>Tabelas para consultar</h1>
+  <p class="entrada">A mesma organização da barra de ferramentas e do painel lateral.</p>
+</header>
+
+<section class="tema" id="ref-ferramentas">
+  <h2>Ferramentas e teclas</h2>
+  <p>As teclas seguem o SketchUp (uma tecla por ferramenta) e, para os modos permanentes, as teclas de função do AutoCAD. O que não existe nesses programas usa a inicial em português.</p>
+  <div class="tabela"><table>
+    <thead><tr><th>Grupo</th><th>Ferramenta</th><th>Tecla</th><th>O que faz</th></tr></thead>
+    <tbody>
+      <tr><td>Navegar</td><td>Selecionar</td><td><kbd>V</kbd> ou <kbd>Espaço</kbd></td><td>escolhe e edita salas, ramais e terminais</td></tr>
+      <tr><td></td><td>Mão</td><td><kbd>H</kbd>, ou manter <kbd>Espaço</kbd></td><td>move a vista</td></tr>
+      <tr><td>Medir</td><td>Escala</td><td><kbd>S</kbd></td><td>calibra a escala por uma cota</td></tr>
+      <tr><td></td><td>Medir</td><td><kbd>T</kbd></td><td>mede sem criar nada</td></tr>
+      <tr><td>Salas</td><td>Retângulo</td><td><kbd>R</kbd></td><td>sala retangular; aceita <code>4;3</code></td></tr>
+      <tr><td></td><td>Polígono</td><td><kbd>P</kbd></td><td>sala de qualquer forma</td></tr>
+      <tr><td>Condutas</td><td>Ramal</td><td><kbd>L</kbd></td><td>traçado de conduta</td></tr>
+      <tr><td></td><td>Prumada</td><td><kbd>K</kbd></td><td>conduta que muda de piso</td></tr>
+      <tr><td></td><td>Acessório</td><td><kbd>A</kbd></td><td>registo, corta-fogo, silenciador, flexível</td></tr>
+      <tr><td></td><td>Equipamento</td><td><kbd>U</kbd></td><td>ventilador, UTA ou VCM na planta</td></tr>
+      <tr><td></td><td>Tomada / rejeição</td><td><kbd>G</kbd></td><td>grelha ODA/EHA na fachada</td></tr>
+      <tr><td>Ar</td><td>Terminal</td><td><kbd>D</kbd></td><td>terminal da sala</td></tr>
+      <tr><td></td><td>Transferência</td><td><kbd>X</kbd></td><td>passagem de ar entre salas</td></tr>
+      <tr><td></td><td>Abertura para o exterior</td><td><kbd>O</kbd></td><td>admissão natural na parede</td></tr>
+      <tr><td>Contar</td><td>Pessoa</td><td><kbd>C</kbd></td><td>conta a ocupação</td></tr>
+      <tr><td></td><td>Sanita, urinol, duche, lugar</td><td>—</td><td>contam a Tabela 13 e os lugares</td></tr>
+      <tr><td>Incêndio</td><td>Extração de fumo, admissão de ar</td><td>—</td><td>bocas e aberturas do controlo de fumo</td></tr>
+      <tr><td>Modificar</td><td>Mover</td><td><kbd>M</kbd></td><td>ponto de base → destino; <kbd>Ctrl</kbd> copia</td></tr>
+      <tr><td></td><td>Rodar</td><td><kbd>Q</kbd></td><td>centro → ângulo (15°) ou ângulo escrito</td></tr>
+      <tr><td></td><td>Apagar</td><td><kbd>E</kbd></td><td>clique apaga o desenho (os dados ficam)</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section class="tema" id="ref-comandos">
+  <h2>Comandos e modos</h2>
+  <div class="tabela"><table>
+    <thead><tr><th>Comando</th><th>Tecla</th></tr></thead>
+    <tbody>
+      <tr><td>Confirmar / terminar</td><td><kbd>Enter</kbd> ou duplo clique</td></tr>
+      <tr><td>Cancelar / largar a seleção</td><td><kbd>Esc</kbd></td></tr>
+      <tr><td>Apagar o selecionado</td><td><kbd>Delete</kbd></td></tr>
+      <tr><td>Desfazer / refazer</td><td><kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Ctrl</kbd>+<kbd>Y</kbd></td></tr>
+      <tr><td>Mudar o nome</td><td><kbd>F2</kbd> (ou duplo clique no nome do ramal)</td></tr>
+      <tr><td>Duplicar a sala</td><td><kbd>Ctrl</kbd>+<kbd>D</kbd></td></tr>
+      <tr><td>Juntar à seleção / tirar</td><td><kbd>Shift</kbd>+clique; <kbd>Ctrl</kbd>+clique só junta</td></tr>
+      <tr><td>Ângulo reto (enquanto premido)</td><td><kbd>Shift</kbd></td></tr>
+      <tr><td>Modo orto</td><td><kbd>F8</kbd></td></tr>
+      <tr><td>Encaixe sem efeito (enquanto premido)</td><td><kbd>Alt</kbd></td></tr>
+      <tr><td>Encaixe ligado / desligado</td><td><kbd>F3</kbd></td></tr>
+      <tr><td>Grelha de 0,50 m</td><td><kbd>F9</kbd></td></tr>
+      <tr><td>Mostrar tudo / tamanho real</td><td><kbd>Shift</kbd>+<kbd>Z</kbd> (ou <kbd>F</kbd>) / <kbd>0</kbd></td></tr>
+      <tr><td>Aproximar / afastar</td><td><kbd>+</kbd> / <kbd>−</kbd> ou a roda do rato</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section class="tema" id="ref-medidas">
+  <h2>Medidas escritas</h2>
+  <p>Como no SketchUp: com o gesto começado, escreve-se e <kbd>Enter</kbd>, sem clicar numa caixa. A vírgula e o ponto servem de separador decimal; o ponto e vírgula separa as duas medidas do retângulo. <kbd>Backspace</kbd> corrige; <kbd>Esc</kbd> apaga.</p>
+  <div class="tabela"><table>
+    <thead><tr><th>Ferramenta</th><th>Escreva</th><th>Resultado</th></tr></thead>
+    <tbody>
+      <tr><td>Linha, polígono, ramal, medir</td><td><code>3,5</code></td><td>ponto a 3,50 m na direção do rato</td></tr>
+      <tr><td>Retângulo</td><td><code>4;3</code></td><td>4 × 3 m, para o lado do rato</td></tr>
+      <tr><td>Mover</td><td><code>2</code></td><td>move 2 m na direção do rato</td></tr>
+      <tr><td>Rodar</td><td><code>90</code> ou <code>-90</code></td><td>roda 90° para um lado ou para o outro</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section class="tema" id="ref-encaixe">
+  <h2>Encaixe</h2>
+  <p>O ponto prende-se ao que está a menos de 10 px no ecrã, por esta ordem:</p>
+  <div class="tabela"><table>
+    <thead><tr><th>Ordem</th><th>Encaixa em</th><th>Marcador</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>vértice de outra sala ou terminal</td><td>quadrado</td></tr>
+      <tr><td>2</td><td>meio de parede</td><td>triângulo</td></tr>
+      <tr><td>3</td><td>parede (aresta) ou ramal</td><td>cruz</td></tr>
+      <tr><td>4</td><td>canto das paredes da imagem</td><td>quadrado, «canto da parede (imagem)»</td></tr>
+      <tr><td>5</td><td>face de uma parede da imagem</td><td>cruz, «parede (imagem)»</td></tr>
+      <tr><td>6</td><td>grelha de 0,50 m, se ligada</td><td>mais</td></tr>
+    </tbody>
+  </table></div>
+  <p>As paredes da imagem são as linhas escuras longas, horizontais e verticais, da planta importada; paredes inclinadas ou curvas não são detetadas. Desliga-se em <span class="ui">Encaixar nas paredes da imagem</span> (painel do piso, Avançado).</p>
+</section>
+
+<section class="tema" id="ref-edicao">
+  <h2>Gestos de edição</h2>
+  <div class="tabela"><table>
+    <thead><tr><th>Gesto</th><th>Resultado</th></tr></thead>
+    <tbody>
+      <tr><td>Arrastar ● (vértice)</td><td>move o vértice; encaixa; <kbd>Shift</kbd> dá ângulo reto</td></tr>
+      <tr><td>Clicar ou arrastar ○</td><td>acrescenta um vértice no meio da aresta</td></tr>
+      <tr><td>Duplo clique numa aresta</td><td>acrescenta um vértice nesse ponto</td></tr>
+      <tr><td>● + <kbd>Delete</kbd></td><td>apaga o vértice</td></tr>
+      <tr><td>Arrastar uma aresta</td><td>move o segmento inteiro</td></tr>
+      <tr><td>Arrastar o interior</td><td>move a sala e os seus terminais</td></tr>
+      <tr><td>Arrastar uma janela</td><td>esquerda → direita: tudo dentro; direita → esquerda: também o que toca</td></tr>
+      <tr><td><span class="ui">Inverter o sentido</span></td><td>troca o início e o fim do ramal</td></tr>
+    </tbody>
+  </table></div>
+  <p>Edições recusadas: sala que se cruza a si própria, sala com menos de 3 vértices, ramal com menos de 2 pontos. O <kbd>Ctrl</kbd>+<kbd>Z</kbd> guarda 40 passos, incluindo as cores das redes e o tamanho dos textos.</p>
+</section>
+
+<section class="tema" id="ref-painel">
+  <h2>O painel lateral</h2>
+  <div class="lado">
+    <figure class="estreita"><img src="img/painel.png" width="376" height="1088" alt="As seis partes do painel de uma sala" loading="lazy"></figure>
+    <div>
+      <p>O painel mostra o objeto selecionado, sempre pela mesma ordem; sem seleção, mostra o piso.</p>
+      <ol class="passos">
+        <li><strong>Cabeçalho:</strong> tipo, nome e estado (OK, atenção, erro, por fazer).</li>
+        <li><strong>Essencial:</strong> os dados sem os quais não se calcula.</li>
+        <li><strong>Avançado:</strong> fechado por omissão; fica como o deixar.</li>
+        <li><strong>Resultado:</strong> o que a app calculou.</li>
+        <li><strong>Por fazer e avisos:</strong> o que falta e o que a verificação encontrou.</li>
+        <li><strong>Ações:</strong> os botões do objeto.</li>
+      </ol>
+      <p>Um campo vazio mostra o valor proposto e de onde vem (<em>piso, norma, desenho, herdado, Setup, rede, pelo nome</em>). Um valor escrito à mão fica marcado «escrito»; o botão ↺ repõe o proposto.</p>
+    </div>
+  </div>
+</section>
+
+<section class="tema" id="ref-campos">
+  <h2>Campos por objeto</h2>
+  <h4>Piso</h4>
+  <div class="tabela"><table><thead><tr><th>Campo</th><th>O que faz</th></tr></thead><tbody>
+    <tr><td>Pé-direito por omissão</td><td>proposto às salas do piso</td></tr>
+    <tr><td>Cota do pavimento</td><td>dá o comprimento das prumadas</td></tr>
+    <tr><td>Altura livre do teto falso</td><td>altura disponível dos ramais desenhados no piso</td></tr>
+    <tr><td>Norte</td><td>seta do norte (0° = para cima, no sentido dos ponteiros do relógio)</td></tr>
+    <tr><td>Mostrar sempre os nomes das salas</td><td>os nomes nunca se escondem; cedem os textos dos ramais</td></tr>
+    <tr><td>Tamanho dos textos</td><td>0,6 a 1,6 × o tamanho automático</td></tr>
+    <tr><td>Cores das redes</td><td>para todo o projeto; ↺ repõe a cor da norma</td></tr>
+  </tbody></table></div>
+  <h4>Sala</h4>
+  <div class="tabela"><table><thead><tr><th>Campo</th><th>O que faz</th></tr></thead><tbody>
+    <tr><td>Tipo</td><td>dá o grupo G1–G4 e a norma do caudal; proposto pelo nome</td></tr>
+    <tr><td>Ocupação</td><td>Tabela 11; proposta pela densidade da EN 16798-1 (ex.: escritório 10 m²/pessoa)</td></tr>
+    <tr><td>Sanitas, urinóis, duches, regime</td><td>Tabela 13 (sanitários e balneários)</td></tr>
+    <tr><td>Lugares, deteção de CO</td><td>garagens (RT-SCIE, arts. 180.º–183.º)</td></tr>
+    <tr><td>Eficácia de remoção εv</td><td>Manual SCE, Tabela 68; vazio = a do Setup</td></tr>
+    <tr><td>Categoria EN 16798-1</td><td>só para comparação</td></tr>
+    <tr><td>Abertura para o exterior</td><td>caudal por uma grelha permanente (+ entra, − sai)</td></tr>
+    <tr><td>Controlo de fumo, UP</td><td>desenfumagem passiva ou ativa; largura dos corredores</td></tr>
+    <tr><td>Escada pressurizada</td><td>ΔP, velocidade na porta aberta, força de abertura</td></tr>
+  </tbody></table></div>
+  <h4>Ramal (passam aos sub-ramais)</h4>
+  <div class="tabela"><table><thead><tr><th>Campo</th><th>Valores</th></tr></thead><tbody>
+    <tr><td>Material</td><td>rugosidade da conduta</td></tr>
+    <tr><td>Equipamento, tipo de sistema</td><td>de onde sai o ramal</td></tr>
+    <tr><td>Forma da secção</td><td>automática (circular; retangular se não couber), sempre circular, sempre retangular</td></tr>
+    <tr><td>Nível</td><td>N1 a N4: velocidade máxima 6 / 5 / 4 / 3 m/s</td></tr>
+    <tr><td>Altura disponível no teto</td><td>limite da secção retangular</td></tr>
+    <tr><td>Critério</td><td>perda de carga constante ou velocidade máxima do nível</td></tr>
+    <tr><td>Série de diâmetros</td><td>S1 (63 a 2000), S2 (100 a 2000) ou a do fornecedor</td></tr>
+    <tr><td>Relação de lados máxima</td><td>4:1 por omissão</td></tr>
+    <tr><td>Reajuste do Ø</td><td>em cada derivação, só nos pontos marcados, ou Ø único</td></tr>
+    <tr><td>Troço mínimo, saltos mínimos, máximo de reduções</td><td>quando vale a pena reduzir</td></tr>
+    <tr><td>Estanquidade</td><td>classe A a D (fugas)</td></tr>
+    <tr><td>Isolamento</td><td>térmico, acústico ou os dois, com espessura</td></tr>
+    <tr><td>Curvas</td><td>no ζ do ramal, ou pela planta (ζ 0,25 a 90°)</td></tr>
+  </tbody></table></div>
+  <h4>Terminal</h4>
+  <div class="tabela"><table><thead><tr><th>Campo</th><th>O que faz</th></tr></thead><tbody>
+    <tr><td>Tipo, caudal, ramal</td><td>o terminal e a sua ligação</td></tr>
+    <tr><td>Direção do jato, vias, comprimento</td><td>alcance na planta</td></tr>
+    <tr><td>Montagem</td><td>teto, parede, pavimento ou na conduta; sai no Excel</td></tr>
+  </tbody></table></div>
+</section>
+
+<section class="tema" id="ref-sistemas">
+  <h2>Tipos de sistema</h2>
+  <div class="tabela"><table>
+    <thead><tr><th>Sigla</th><th>O que é</th><th>Redes</th><th>Exterior</th></tr></thead>
+    <tbody>
+      <tr><td>VAN</td><td>ventilador de ar novo</td><td>insuflação</td><td>capta (ODA)</td></tr>
+      <tr><td>VIN</td><td>ventilador de insuflação</td><td>insuflação</td><td>capta (ODA)</td></tr>
+      <tr><td>VEG</td><td>extração geral</td><td>extração</td><td>rejeita (EHA)</td></tr>
+      <tr><td>VEX</td><td>extração dedicada (garagem, cozinha)</td><td>ar sujo, extração</td><td>rejeita (EHA)</td></tr>
+      <tr><td>VEIS</td><td>extração das instalações sanitárias</td><td>ar sujo</td><td>rejeita (EHA)</td></tr>
+      <tr><td>VMC</td><td>duplo fluxo com recuperação</td><td>insuflação + extração</td><td>capta e rejeita</td></tr>
+      <tr><td>VCM</td><td>ventilação controlada mecânica</td><td>insuflação + extração ou ar sujo</td><td>capta e rejeita</td></tr>
+    </tbody>
+  </table></div>
+  <p>No passo <span class="ui">UTAs</span>, a legenda de siglas do projeto diz a que tipo corresponde cada sigla (ex.: VEISP → VEIS); ganha a sigla mais comprida.</p>
+</section>
+
+<section class="tema" id="ref-terminais">
+  <h2>Siglas dos terminais</h2>
+  <div class="tabela"><table>
+    <thead><tr><th>Sigla</th><th>Terminal</th><th>Rede</th><th>Vias</th></tr></thead>
+    <tbody>
+      <tr><td>GI</td><td>grelha de insuflação</td><td>insuflação</td><td>1</td></tr>
+      <tr><td>DI</td><td>difusor de teto</td><td>insuflação</td><td>4</td></tr>
+      <tr><td>DLI</td><td>difusor linear</td><td>insuflação</td><td>1 ou 2</td></tr>
+      <tr><td>JA</td><td>jato de ar</td><td>insuflação</td><td>1</td></tr>
+      <tr><td>GE</td><td>grelha de extração</td><td>extração</td><td>—</td></tr>
+      <tr><td>VE</td><td>válvula de extração</td><td>extração de ar sujo</td><td>—</td></tr>
+      <tr><td>BE</td><td>boca de extração</td><td>extração</td><td>—</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section class="tema" id="ref-cores">
+  <h2>Cores das redes</h2>
+  <p>As da EN 16798-3 e da EN 12792. A conduta fica sempre na cor da rede; um ramal com erro ou atenção ganha um contorno tracejado vermelho ou âmbar. O que está selecionado fica em magenta.</p>
+  <div class="tabela"><table>
+    <thead><tr><th>Ar</th><th>Sigla</th><th>Cor</th></tr></thead>
+    <tbody>
+      <tr><td>Insuflação</td><td>SUP</td><td><span class="cor" style="background:#2f6fb5"></span>#2F6FB5</td></tr>
+      <tr><td>Extração</td><td>ETA</td><td><span class="cor" style="background:#c9a000"></span>#C9A000</td></tr>
+      <tr><td>Extração de ar sujo</td><td>ETA</td><td><span class="cor" style="background:#8f7400"></span>#8F7400</td></tr>
+      <tr><td>Ar exterior</td><td>ODA</td><td><span class="cor" style="background:#2e8b3e"></span>#2E8B3E, tracejado</td></tr>
+      <tr><td>Rejeição</td><td>EHA</td><td><span class="cor" style="background:#7a4a24"></span>#7A4A24, tracejado</td></tr>
+      <tr><td>Transferência</td><td>TRA</td><td><span class="cor" style="background:#7b8494"></span>#7B8494</td></tr>
+      <tr><td>Seleção</td><td>—</td><td><span class="cor" style="background:#c026d3"></span>#C026D3</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section class="tema" id="ref-avisos">
+  <h2>Avisos do desenho</h2>
+  <div class="tabela"><table>
+    <thead><tr><th>Aviso</th><th>Quando</th><th>Como resolver</th></tr></thead>
+    <tbody>
+      <tr><td>Área desenhada ≠ tabela</td><td>diferença acima de 15 %</td><td><span class="ui">Usar a área medida</span>, corrigir o desenho ou <span class="ui">Aceitar a diferença</span></td></tr>
+      <tr><td>Terminal fora da sala</td><td>não está dentro do desenho da sua sala</td><td>arrastá-lo, ou <span class="ui">Colocar os terminais na sala</span></td></tr>
+      <tr><td>Terminal longe do ramal</td><td>mais de 0,5 m do traçado</td><td>arrastá-lo para cima do ramal</td></tr>
+      <tr><td>Sub-ramal solto</td><td>o início não está sobre o ramal-pai</td><td>arrastar o primeiro vértice para o ramal-pai</td></tr>
+      <tr><td>L desenhado ≠ tabela</td><td>diferença acima de 10 % e de 0,5 m</td><td><span class="ui">Usar o L medido</span></td></tr>
+      <tr><td>Transferência longe da porta</td><td>a seta não passa numa abertura</td><td>mover a seta para a porta</td></tr>
+      <tr><td>Terminais ≠ definição</td><td>a soma difere do caudal definido</td><td>corrigir o caudal do terminal</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section class="tema" id="ref-parametros">
+  <h2>Parâmetros</h2>
+  <div class="tabela"><table>
+    <thead><tr><th>Parâmetro</th><th>Valor</th></tr></thead>
+    <tbody>
+      <tr><td>Tolerância do encaixe</td><td>10 px no ecrã</td></tr>
+      <tr><td>Passo da grelha</td><td>0,50 m</td></tr>
+      <tr><td>Passo da rotação</td><td>15°</td></tr>
+      <tr><td>Cópia com <kbd>Ctrl</kbd>+<kbd>D</kbd></td><td>1,00 m para a direita e para baixo</td></tr>
+      <tr><td>Fechar o polígono no 1.º ponto</td><td>menos de 10 px</td></tr>
+      <tr><td>A tabela acompanha o desenho</td><td>área igual até 1 %; L igual até 2 %</td></tr>
+      <tr><td>Passos de desfazer</td><td>40</td></tr>
+      <tr><td>Altura real dos textos</td><td>nome da sala 0,40 m; ramal 0,28 m; Ø 0,22 m (com mínimo e máximo no ecrã)</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section class="tema" id="folha">
+  <p class="olho p-ref">Para imprimir</p>
+  <h2>Folha rápida</h2>
+  <p class="para">Uma página A4 para ter ao lado do teclado. O botão <span class="ui">Imprimir folha rápida</span>, no topo, imprime só esta secção.</p>
+  <div class="folha">
+    <div class="grupo"><h4>Desenhar</h4><dl>
+      <dt><kbd>R</kbd></dt><dd>retângulo · <code>4;3</code> Enter</dd>
+      <dt><kbd>P</kbd></dt><dd>polígono · fechar no 1.º ponto</dd>
+      <dt><kbd>L</kbd></dt><dd>ramal · Enter termina</dd>
+      <dt><kbd>K</kbd></dt><dd>prumada</dd>
+      <dt><kbd>U</kbd></dt><dd>equipamento</dd>
+      <dt><kbd>G</kbd></dt><dd>tomada / rejeição</dd>
+      <dt><kbd>A</kbd></dt><dd>acessório</dd>
+      <dt><kbd>D</kbd></dt><dd>terminal</dd>
+      <dt><kbd>X</kbd></dt><dd>transferência</dd>
+      <dt><kbd>O</kbd></dt><dd>abertura para o exterior</dd>
+      <dt><kbd>C</kbd></dt><dd>contar pessoas</dd>
+    </dl></div>
+    <div class="grupo"><h4>Selecionar e mudar</h4><dl>
+      <dt><kbd>V</kbd> <kbd>Espaço</kbd></dt><dd>selecionar</dd>
+      <dt><kbd>Shift</kbd>+clique</dt><dd>juntar / tirar</dd>
+      <dt>janela →</dt><dd>só o que fica dentro</dd>
+      <dt>janela ←</dt><dd>também o que toca</dd>
+      <dt><kbd>M</kbd> <kbd>Q</kbd> <kbd>E</kbd></dt><dd>mover · rodar · apagar</dd>
+      <dt><kbd>Ctrl</kbd>+<kbd>D</kbd></dt><dd>duplicar a sala</dd>
+      <dt><kbd>F2</kbd></dt><dd>mudar o nome</dd>
+      <dt><kbd>Delete</kbd></dt><dd>apagar o selecionado</dd>
+    </dl></div>
+    <div class="grupo"><h4>Precisão</h4><dl>
+      <dt><code>3,5</code> Enter</dt><dd>comprimento na direção do rato</dd>
+      <dt><kbd>Shift</kbd></dt><dd>ângulo reto</dd>
+      <dt><kbd>Alt</kbd></dt><dd>sem encaixe neste clique</dd>
+      <dt><kbd>F3</kbd> <kbd>F8</kbd> <kbd>F9</kbd></dt><dd>encaixe · orto · grelha</dd>
+      <dt><kbd>S</kbd> <kbd>T</kbd></dt><dd>escala · medir</dd>
+    </dl></div>
+    <div class="grupo"><h4>Vista e controlo</h4><dl>
+      <dt><kbd>Enter</kbd></dt><dd>confirmar</dd>
+      <dt><kbd>Esc</kbd></dt><dd>cancelar / largar</dd>
+      <dt><kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Y</kbd></dt><dd>desfazer / refazer</dd>
+      <dt><kbd>H</kbd></dt><dd>mão</dd>
+      <dt><kbd>F</kbd> <kbd>0</kbd></dt><dd>mostrar tudo · tamanho real</dd>
+      <dt>botão direito</dt><dd>ações do objeto</dd>
+    </dl></div>
+  </div>
+</section>
+
+<!-- ═════════════════════════ PORQUÊ ═════════════════════════ -->
+<header class="cabeca-parte p-porque" id="porque">
+  <p class="olho">Porquê</p>
+  <h1>O cálculo e as normas por trás das propostas</h1>
+  <p class="entrada">Para perceber de onde vem cada valor proposto e quando vale a pena mudá-lo.</p>
+</header>
+
+<section class="tema" id="porque-condutas">
+  <h2>Como a app escolhe o Ø</h2>
+  <p>Cada troço tem o caudal dos terminais a jusante. A app procura, na série escolhida, o menor Ø que cumpre duas condições: a perda de carga perto da perda alvo (perda constante) e a velocidade abaixo do limite do nível do ramal (6, 5, 4 ou 3 m/s, do principal aos terminais, por causa do ruído). Depois de cada derivação o caudal desce e o Ø pode descer também.</p>
+  <p>Reduzir em todas as derivações poupa conduta mas multiplica peças. As regras do ramal servem para equilibrar: troço mínimo (um troço curto mantém o Ø), saltos mínimos (só reduz quando desce dois tamanhos) e máximo de reduções (escolhe as que mais poupam, pela soma de Ø × comprimento).</p>
+  <p>A app calcula sempre as duas secções e prefere a circular, por ser mais barata; passa à retangular (EN 1505, deitada, até 4:1) só quando o Ø mais o isolamento não cabe na altura disponível — a do ramal, a do teto falso do piso ou a do Setup, por esta ordem.</p>
+</section>
+
+<section class="tema" id="porque-fugas">
+  <h2>Fugas e caudal do ventilador</h2>
+  <p>Com a classe de estanquidade (EN 12237 para circulares, EN 1507 para retangulares), a fuga por m² de conduta é f = c · p<sup>0,65</sup> · 10⁻³ m³/(s·m²), com p a pressão do percurso crítico. O ventilador move o caudal servido mais as fugas; a potência e o SFP usam esse caudal.</p>
+  <div class="tabela"><table>
+    <thead><tr><th>Classe</th><th>c</th><th>Fuga a 200 Pa (m³/h por 10 m²)</th></tr></thead>
+    <tbody><tr><td>A</td><td>0,027</td><td>30,4</td></tr><tr><td>B</td><td>0,009</td><td>10,1</td></tr><tr><td>C</td><td>0,003</td><td>3,4</td></tr><tr><td>D</td><td>0,001</td><td>1,1</td></tr></tbody>
+  </table></div>
+</section>
+
+<section class="tema" id="porque-termica">
+  <h2>Perdas térmicas e condensação</h2>
+  <p>Nos ramais de insuflação a app calcula o calor que atravessa a parede da conduta, a variação de temperatura do ar e a temperatura da superfície. Se a superfície fica abaixo do ponto de orvalho do ar à volta, há condensação: a app propõe a espessura mínima de isolamento (λ 0,035). Por omissão: ar a 16 °C, envolvente a 26 °C e 60 %.</p>
+</section>
+
+<section class="tema" id="porque-ar-novo">
+  <h2>Ar novo, retorno e recirculação</h2>
+  <p>A Portaria 138-I fixa o ar novo mínimo de cada espaço. Com recirculação, só a parte exterior conta: Q<sub>ODA</sub> = Q<sub>SUP</sub> − Q<sub>RCA</sub> e Q<sub>EHA</sub> = Q<sub>ETA</sub> − Q<sub>RCA</sub>. Por isso cada sala mostra o <span class="ui">Ar novo servido</span> (insuflação × fração de ar novo). O ar sujo (ETA 3 e 4: copas, instalações sanitárias, garagens) nunca se recircula.</p>
+</section>
+
+<section class="tema" id="porque-exterior">
+  <h2>Tomadas e rejeições</h2>
+  <p>A EN 13779 (Anexo A.2), retomada pela EN 16798-3, separa a tomada da rejeição para o ar rejeitado não voltar a entrar.</p>
+  <div class="tabela"><table>
+    <thead><tr><th>Regra</th><th>Valor</th></tr></thead>
+    <tbody>
+      <tr><td>Velocidade na face da tomada</td><td>≤ 2 m/s</td></tr>
+      <tr><td>Rejeição na fachada</td><td>≥ 5 m/s e ≤ 0,5 m³/s por abertura</td></tr>
+      <tr><td>Rejeição ↔ tomada</td><td>≥ 2 m</td></tr>
+      <tr><td>Ar sujo</td><td>≥ 8 m da tomada; sair acima da cobertura</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section class="tema" id="porque-alcance">
+  <h2>Alcance dos terminais</h2>
+  <p>O alcance L<sub>0,25</sub> é a distância até onde o jato abranda para 0,25 m/s. É bom quando fica entre metade e a totalidade da distância à parede: menos, o ar não chega ao fundo da sala; mais, o jato bate na parede ainda rápido. Sem catálogo, a app usa o jato livre L = K · v<sub>0</sub> · √A<sub>0</sub> / 0,25, com K típico 5 (grelha), 6,2 (jato), 3,5 (linear) e 1,2 (difusor de teto).</p>
+</section>
+
+<section class="tema" id="porque-fumo">
+  <h2>Controlo de fumo</h2>
+  <p>O RT-SCIE (Portaria 1532/2008, alterada pela Portaria 135/2020) pede controlo de fumo, entre outros casos, com efetivo acima de 500 e em pisos enterrados com mais de 200 pessoas ou 400 m² (art. 135.º).</p>
+  <div class="tabela"><table>
+    <thead><tr><th>Método</th><th>O que a app calcula</th></tr></thead>
+    <tbody>
+      <tr><td>Ativa, sala</td><td>extração = máx(1,5 m³/s; 1 m³/s por 100 m²); 1 boca por 320 m²; admissão ≈ 60 % da extração a menos de 5 m/s</td></tr>
+      <tr><td>Ativa, corredor</td><td>0,5 m³/s por UP; bocas a no máximo 15 m</td></tr>
+      <tr><td>Passiva, sala</td><td>alcance = 7 × pé-direito (máx. 30 m); não permitida acima de 12 m</td></tr>
+      <tr><td>Passiva, corredor</td><td>aberturas de 0,10 m² por UP, a no máximo 10 m</td></tr>
+      <tr><td>Grandes locais</td><td>cantões acima de 1600 m² ou 60 m de lado</td></tr>
+    </tbody>
+  </table></div>
+  <p>Escadas pressurizadas: 20 a 80 Pa com as portas fechadas (art. 161.º; EN 12101-13).</p>
+</section>
+
+<section class="tema" id="porque-propostos">
+  <h2>Valores propostos e herança</h2>
+  <p>A app nunca deixa um campo sem valor: propõe um e diz de onde vem. O pé-direito vem do piso; as renovações e as cores, da norma; a área, o comprimento e o ζ das curvas, do desenho; o tipo de sistema, do nome; a ocupação, da densidade da EN 16798-1. Um valor escrito à mão manda sobre o proposto até carregar em ↺.</p>
+  <p>Nos ramais, a especificação (material, altura disponível, série, regras, estanquidade, isolamento) passa aos sub-ramais desenhados a partir dele, até um deles ter o seu próprio valor.</p>
+</section>
+
+</main>
+</div>
+
+<script>
+/* índice: realça a secção visível; procura filtra o índice e salta para o primeiro resultado */
+(function () {
+  const links = [...document.querySelectorAll('nav.indice a')];
+  const alvos = links.map(a => document.querySelector(a.getAttribute('href'))).filter(Boolean);
+  const marcar = id => links.forEach(a => { const on = a.getAttribute('href') === '#' + id; a.classList.toggle('ativo', on); if (on) a.scrollIntoView({ block: 'nearest' }); });
+  const obs = new IntersectionObserver(es => { es.forEach(e => { if (e.isIntersecting) marcar(e.target.id); }); }, { rootMargin: '-60px 0px -70% 0px' });
+  alvos.forEach(a => obs.observe(a));
+  const norm = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  const procura = document.getElementById('procura');
+  procura.addEventListener('input', () => {
+    const q = norm(procura.value.trim());
+    links.forEach((a, i) => { const t = alvos[i]; a.classList.toggle('escondido', !!q && !(norm(a.textContent).includes(q) || (t && norm(t.textContent).includes(q)))); });
+  });
+  procura.addEventListener('keydown', e => { if (e.key === 'Enter') { const a = links.find(x => !x.classList.contains('escondido')); if (a) location.hash = a.getAttribute('href'); } });
+})();
+/* dentro da app: sem a marca repetida no topo; Esc fecha o manual */
+if (window.parent !== window) document.documentElement.classList.add('embutido');
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && window.parent !== window) { try { window.parent.VC.guia.fechar(); } catch (err) { /* aberto à parte */ } } });
+function imprimirFolha() { document.body.classList.add('so-folha'); window.print(); setTimeout(() => document.body.classList.remove('so-folha'), 500); }
+</script>
+</body>
+</html>

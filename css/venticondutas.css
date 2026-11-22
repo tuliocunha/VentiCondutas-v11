@@ -614,3 +614,16 @@ details.pn-av>summary{cursor:pointer;list-style:revert}
 
 /* Fase 1C · seleção múltipla */
 .pn-multi-nomes{display:flex;flex-wrap:wrap;gap:4px;margin:4px 0 8px}.pn-multi-nomes span{background:#fae8ff;color:#86198f;border-radius:10px;padding:1px 8px;font-size:12px}
+
+/* Manual de desenho dentro da app (F1, Docs, «?») */
+.guia-janela{position:fixed;inset:0;z-index:10000;display:none;background:rgba(15,23,42,.45);padding:3vh 3vw}
+.guia-janela.aberto{display:block}
+.guia-caixa{display:flex;flex-direction:column;height:100%;max-width:1400px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 24px 64px rgba(15,23,42,.35)}
+.guia-barra{display:flex;align-items:center;gap:16px;padding:10px 16px;border-bottom:1px solid #e2e8f0;font-size:14px}
+.guia-barra a{margin-left:auto;color:#1d4ed8;text-decoration:none;font-weight:600}
+.guia-fechar{width:32px;height:32px;border:0;border-radius:8px;background:#f1f5f9;font-size:20px;line-height:1;cursor:pointer}
+.guia-fechar:hover{background:#e2e8f0}
+.guia-janela iframe{flex:1;width:100%;border:0}
+.guia-ajuda{width:22px;height:22px;flex:none;margin-left:6px;border:1px solid #cbd5e1;border-radius:50%;background:#fff;color:#475569;font:700 12px/20px system-ui,sans-serif;text-align:center;cursor:pointer;padding:0}
+.guia-ajuda:hover{background:#0f172a;color:#fff;border-color:#0f172a}
+.pfo-cab{display:flex;align-items:center;justify-content:space-between}

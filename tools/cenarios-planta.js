@@ -798,6 +798,30 @@ const CENARIOS = {
     ok(await h.v(() => { const i = VC.dados.utas.find(u => /VCM Refeit.*insufla/.test(u.nome)), e = VC.dados.utas.find(u => /VCM Refeit.*extra/.test(u.nome)); i.uvbPar = e.id; e.uvbPar = i.id; i.recirculacao = 50; const f = VC.calculo.calcularTudo().findings || []; delete i.recirculacao; return f.some(x => x.tipo === 'Recirculação de ar sujo' && x.elemento === i.nome); }), 'VCM do refeitório (extração da copa): «Recirculação de ar sujo» é erro');
   },
 
+  /* PR 70 · manual de desenho dentro da app */
+  async guia(pg, ok) {
+    const h = ajudas(pg);
+    await pg.evaluate(async () => { await VC._carregarExemploDeFicheiro(['exemplos/degrade-21nov26-corrigido.json'], 'x'); VC.nav.irPasso('rede'); VC.nav.setVista('planta'); VC.planta.setPiso('piso-p0'); });
+    await pg.waitForTimeout(1200);
+    ok(await h.v(() => !!document.querySelector('.dropdown [data-guia]')), 'Menu Docs → Manual de desenho');
+    ok(await h.v(() => document.querySelectorAll('.planta-flyout .pfo-cab .guia-ajuda').length === document.querySelectorAll('.planta-grupo[data-grupo]').length), '«?» em cada grupo de ícones');
+    await h.v(() => { const r = VC.dados.ramais.find(x => x.nome === 'R1.1'); VC.planta.selecionarRamal(r.id); });
+    await pg.waitForTimeout(300);
+    await pg.click('.pn[data-pn="ramal"] .pn-cab .guia-ajuda'); await pg.waitForTimeout(1200);
+    const a = await h.v(() => { const f = document.getElementById('guiaQuadro'); return [document.getElementById('guiaJanela').classList.contains('aberto'), f.getAttribute('src'), !!(f.contentDocument && f.contentDocument.getElementById('tracar-ramal'))]; });
+    ok(a[0] && /#tracar-ramal$/.test(a[1]) && a[2], '«?» do painel do ramal abre o manual em «Traçar um ramal»', a);
+    await pg.keyboard.press('Escape'); await pg.waitForTimeout(300);
+    const esc = await h.v(() => [document.getElementById('guiaJanela').classList.contains('aberto'), VC.planta.ramalSel, document.activeElement && document.activeElement.tagName, VC.guia.aberto]);
+    ok(!esc[0] && esc[1] != null, 'Esc fecha o manual sem largar a seleção', esc);
+    await h.v(() => { const r = VC.dados.ramais.find(x => x.nome === 'R1.1'), a = r.planta.pts[0], b = r.planta.pts[1]; VC.planta.selecionarTrocoEm(r, [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2]); });
+    await pg.locator('#plantaSVG').hover(); await pg.keyboard.press('F1'); await pg.waitForTimeout(500);
+    ok(await h.v(() => /#ajustar-troco$/.test(document.getElementById('guiaQuadro').getAttribute('src')) || document.getElementById('guiaQuadro').dataset.ancora === 'ajustar-troco'), 'F1 com um troço selecionado abre «Ajustar o Ø de um troço»');
+    const faltam = await h.v(() => { const d = document.getElementById('guiaQuadro').contentDocument, G = VC.guia; return [].concat(Object.values(G.GRUPOS), Object.values(G.PAINEIS), Object.values(G.FERRAMENTAS), ['comecar', 'ref-painel']).filter(id => !d.getElementById(id)); });
+    ok(faltam.length === 0, 'Todas as ligações da app existem no manual', faltam);
+    const img = await h.v(async () => { const d = document.getElementById('guiaQuadro').contentDocument; const L = [...d.images]; await Promise.all(L.map(i => { i.loading = 'eager'; return i.decode().catch(() => null); })); return [L.length, L.filter(i => !i.naturalWidth).map(i => i.getAttribute('src'))]; });
+    ok(img[0] >= 18 && img[1].length === 0, 'O manual tem as imagens todas (' + img[0] + ')', img[1]);
+  },
+
   /* PR 68 · Fases 1C e 0B: nomes sempre, cores/textos no Ctrl+Z, campos novos */
   async campos(pg, ok) {
     const h = ajudas(pg);

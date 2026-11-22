@@ -103,7 +103,7 @@ if (esq('ramal')) {
   const lim = n => fmt((VC.constantes.VMAX_NIVEL || {})[n] || 6, 1);
   depoisDe('ramal', 'forma', [
     { id: 'nivel', rot: 'Nível', tipo: 'opcoes', ess: true,
-      opcoes: () => [1, 2, 3, 4].map(n => [String(n), 'N' + n + ' · ' + VC.utils.nivelRotulo(n) + ' · v ≤ ' + lim(n) + ' m/s']),
+      opcoes: () => [1, 2, 3, 4].map(n => [String(n), 'N' + n + ' · ' + ['', 'principal', 'secundário', 'terciário', 'quaternário'][n] + ' · v ≤ ' + lim(n) + ' m/s']),
       ler: r => String(r.nivelNumero || VC.utils.nivelTextoParaNumero(r.nivel) || ''),
       proposto: r => ({ v: String(r.parente ? 2 : 1), origem: 'rede' }),
       escrever: (r, v) => { const n = Number(v); if (n >= 1 && n <= 4) { r.nivelNumero = n; r.nivel = NIV[n]; } },
