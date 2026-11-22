@@ -703,7 +703,7 @@ const CENARIOS = {
     await h.v(() => { const P = VC.planta, r = VC.dados.ramais.find(x => x.nome === 'R1.1'), a = r.planta.pts[1]; P.zoom = 1.1; P.vx = a[0] - 300 / 1.1; P.vy = a[1] - 250 / 1.1; P.aplicarVista(); });
     await pg.waitForTimeout(400);
     const n = await h.v(() => [document.querySelectorAll('.planta-ferrbar .planta-grupo').length, document.querySelectorAll('.planta-ferrbar .pfo-item').length, VC.planta.FERRAMENTAS.length, !!document.getElementById('plantaMenuBt')]);
-    ok(n[0] === 6 && n[1] === n[2] && n[3], 'Barra com 6 grupos; os sub-ícones têm todas as ferramentas; o menu ☰ fica', n);
+    ok(n[0] === 7 && n[1] === n[2] && n[3], 'Barra com 7 grupos; os sub-ícones têm todas as ferramentas; o menu ☰ fica', n);
     await pg.hover('.planta-grupo[data-grupo="condutas"] .planta-ft'); await pg.waitForTimeout(600);
     ok(await pg.isVisible('.planta-grupo[data-grupo="condutas"] .pfo-item:has-text("Prumada")'), 'Passar o rato em Condutas mostra Ramal, Prumada, Equipamento, Tomada / rejeição');
     await pg.click('.planta-grupo[data-grupo="condutas"] .pfo-item:has-text("Prumada")'); await pg.waitForTimeout(300);
@@ -721,6 +721,35 @@ const CENARIOS = {
     ok(/garagem p0-n1/i.test(ms) && /Colocar um terminal nesta sala/.test(ms) && /Abertura para o exterior/.test(ms) && await h.v(() => VC.paineis.selecao() && VC.paineis.selecao().tipo === 'sala'), 'Botão direito na sala: seleciona-a e mostra terminal, abertura, duplicar, rodar…', ms.slice(0, 120));
     await h.tecla('Escape');
     ok(await h.v(() => !document.getElementById('plantaCtx')), 'Esc fecha o menu');
+  },
+
+  /* PR 62 · Fase 5A: contagens por ícones */
+  async contagens(pg, ok) {
+    const h = ajudas(pg);
+    await pg.evaluate(async () => { await VC._carregarExemploDeFicheiro(['exemplos/degrade-21nov26-corrigido.json'], 'x'); VC.nav.irPasso('rede'); VC.nav.setVista('planta'); VC.planta.setPiso('piso-p0'); });
+    await pg.waitForTimeout(1200);
+    const info = await h.v(() => { const P = VC.planta, p = P.pisoAtual(); const of = P.espacosDoPiso(p).find(e => /Sala|Escrit/.test(e.tipo || '') || /^Sala/.test(e.nome)), san = P.espacosDoPiso(p).find(e => /^(Sanitários|Balneários)$/.test(e.tipo)); const c = P.centro(of.planta.pts); P.zoom = 1.2; P.vx = c[0] - 380 / 1.2; P.vy = c[1] - 250 / 1.2; P.aplicarVista(); return { of: of.id, nome: of.nome, c, san: san && san.id, N0: of.N }; });
+    await pg.waitForTimeout(400);
+    await h.tecla('c');
+    ok(await h.v(() => VC.planta.ferramenta === 'icPessoa'), 'C escolhe Contar pessoas');
+    for (const d of [[-20, 0], [0, 0], [20, 0]]) await h.clicar([info.c[0] + d[0], info.c[1] + 25 + d[1]]);
+    await pg.waitForTimeout(300);
+    const n = await pg.evaluate(id => { const e = VC.dados.espacos.find(x => x.id === id); return [e.N, (e.planta.icones || []).length, document.querySelectorAll('.planta-icone').length]; }, info.of);
+    ok(n[0] === 3 && n[1] === 3 && n[2] >= 3, '3 cliques na sala: 3 pessoas e N = 3', n);
+    await pg.locator('#plantaSVG').hover(); await pg.keyboard.press('Control+z'); await pg.waitForTimeout(300);
+    ok(await pg.evaluate(id => VC.dados.espacos.find(x => x.id === id).N === 2, info.of), 'Ctrl+Z tira a última e N volta a 2');
+    await h.tecla('v'); await h.clicar([info.c[0] - 20, info.c[1] + 25]); await pg.waitForTimeout(200); await h.tecla('Delete');
+    ok(await pg.evaluate(id => { const e = VC.dados.espacos.find(x => x.id === id); return e.N === 1 && e.planta.icones.length === 1; }, info.of), 'Selecionar um ícone e Delete: N = 1');
+    // sanita numa sala que não é sanitário: recusa
+    await h.v(() => VC.planta.setFerramenta('icSanita'));
+    await h.clicar([info.c[0] + 40, info.c[1] + 25]);
+    ok(await pg.evaluate(id => !(VC.dados.espacos.find(x => x.id === id).planta.icones || []).some(i => i.tipo === 'sanita'), info.of), 'Sanita fora de um sanitário é recusada (com aviso)');
+    if (info.san) {
+      const ok2 = await pg.evaluate(id => { const P = VC.planta, e = VC.dados.espacos.find(x => x.id === id), c = P.centro(e.planta.pts); P.porIcone(c, 'sanita'); P.porIcone([c[0] + 5, c[1]], 'sanita'); P.porIcone([c[0], c[1] + 5], 'urinol'); return [e.numSanitas, e.numUrinois]; }, info.san);
+      ok(ok2[0] === 2 && ok2[1] === 1, 'No sanitário: 2 sanitas e 1 urinol contados para a Tabela 13', ok2);
+    }
+    await h.v(() => VC.planta.setFerramenta('sel'));
+    ok(await h.v(() => !!document.querySelector('.planta-grupo[data-grupo="contar"]')), 'Grupo «Ocupação e aparelhos» na barra');
   },
 
   /* PR 9: nome legível numa sala em L; zona útil nítida; Entrega recortada */
