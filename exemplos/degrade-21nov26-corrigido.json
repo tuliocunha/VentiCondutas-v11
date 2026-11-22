@@ -2,14 +2,14 @@
  "_versao": "V9",
  "versao": "VentiCondutas v11.1.0",
  "versaoCurta": "11.1.0",
- "timestamp": "2026-11-21T23:38:57.607Z",
+ "timestamp": "2026-11-22T00:09:20.842Z",
  "metadados": {
   "cliente": "Degrade",
   "local": "Torres Vedras, Portugal",
   "autor": "Tulio Cunha",
   "nome": "Degrade 21 nov26 · corrigido",
   "revisao": "02",
-  "descricao": "Degrade 21 nov26 com as correções de conformidade (Portaria 138-I, RT-SCIE, balanço de ar): Garagem P0-N1: extração dedicada VEX Garagem de 600 m³/h (RT-SCIE art. 183.º: 300 e 600 m³/h por veículo, 1 lugar), 2 GE × 300 junto ao pavimento; ar de compensação natural pela porta exterior · Sala P0-N1 (bastidores): ar novo 60 m³/h (VAN P0 N, tronco prolongado) e extração 60 m³/h (VEG P0 N, tronco prolongado); mínimo 59 m³/h · Refeitório P0-S1: ar novo da VCM 2 × 100 = 200 m³/h (mínimo 192) e extração nova de 2 × 100 m³/h por derivação do VEG P0 S · Sanitários (uso público, Tabela 13): VE de 75 para 90 m³/h por sanita; GE azul da CB P0-N2 suprimido (a VE de 90 cumpre) · CB P0-N2: ar novo de 100 para 60 m³/h; recebe 30 m³/h por transferência e fica em depressão (Anexo II, 1.2.2 h)) · Circulação P0-N2: ar novo 200 m³/h (derivação da Sala Técnica), igual ao ar que transfere para os sanitários (90 + 80 + 30) · Salas técnicas (bastidores e P0-N2): sem caudal de conforto acrescentado; o caudal do desenho já cobre a renovação · Escritórios, laboratórios, circulações do P1 e Arrumo P0-N1: extração igual ao ar novo de cada espaço (balanço nulo) · Sala P1-S2: extração 2 × 200 = 400 m³/h, igual ao ar novo · Apoio/Serviço P1-S4: extração 100 m³/h por derivação nova do VEG P1 S · Setup: ventilação integrável em gestão técnica (ar novo ≥ 3000 m³/h, Portaria 138-I, Anexo II, 1.5 c)"
+  "descricao": "Degrade 21 nov26 com as correções de conformidade (Portaria 138-I, RT-SCIE, balanço de ar): Garagem P0-N1: extração dedicada VEX Garagem de 600 m³/h (RT-SCIE art. 183.º: 300 e 600 m³/h por veículo, 1 lugar), 2 GE × 300 junto ao pavimento; ar de compensação natural pela porta exterior · Sala P0-N1 (bastidores): ar novo 60 m³/h (VAN P0 N, tronco prolongado) e extração 60 m³/h (VEG P0 N, tronco prolongado); mínimo 59 m³/h · Refeitório P0-S1: ar novo da VCM 2 × 100 = 200 m³/h (mínimo 192) e extração de ar sujo da copa pela VCM de 70 para 200 m³/h (balanço nulo) · Sanitários (uso público, Tabela 13): VE de 75 para 90 m³/h por sanita; GE azul da CB P0-N2 suprimido (a VE de 90 cumpre) · CB P0-N2: ar novo de 100 para 60 m³/h; recebe 30 m³/h por transferência e fica em depressão (Anexo II, 1.2.2 h)) · Circulação P0-N2: ar novo 200 m³/h (derivação da Sala Técnica), igual ao ar que transfere para os sanitários (90 + 80 + 30) · Salas técnicas (bastidores e P0-N2): sem caudal de conforto acrescentado; o caudal do desenho já cobre a renovação · Escritórios, laboratórios, circulações do P1 e Arrumo P0-N1: extração igual ao ar novo de cada espaço (balanço nulo) · Sala P1-S2: extração 2 × 200 = 400 m³/h, igual ao ar novo · Apoio/Serviço P1-S4: extração 100 m³/h por derivação nova do VEG P1 S · Setup: ventilação integrável em gestão técnica (ar novo ≥ 3000 m³/h, Portaria 138-I, Anexo II, 1.5 c)"
  },
  "configuracao": {
   "tipologia": "comercio",
@@ -24,7 +24,7 @@
    "tExtInverno": 3,
    "integracaoGT": true
   },
-  "restricaoH": 250,
+  "restricaoH": 350,
   "serieDiametros": "S1"
  },
  "dados": {
@@ -179,7 +179,7 @@
      ]
     },
     "lugares": 1,
-    "ramalRefExtracao": "R11.1",
+    "ramalRefExtracao": "R12.1",
     "rphDefault": 0,
     "rphAplicado": 0,
     "rphOrigem": "norma",
@@ -887,7 +887,7 @@
     "origem": "Desenho TGC 19nov26",
     "definicoes": [
      {
-      "id": "DEF-50",
+      "id": "DEF-49",
       "tipo": "Válvula",
       "rede": "extracao_suja",
       "quantidade": 1,
@@ -1006,7 +1006,7 @@
       "origem": "Desenho"
      },
      {
-      "id": "DEF-51",
+      "id": "DEF-50",
       "tipo": "Válvula",
       "rede": "extracao_suja",
       "quantidade": 2,
@@ -1134,7 +1134,7 @@
       "origem": "Desenho"
      },
      {
-      "id": "DEF-49",
+      "id": "DEF-48",
       "tipo": "Válvula",
       "rede": "extracao_suja",
       "quantidade": 1,
@@ -1246,18 +1246,18 @@
     "origem": "Desenho TGC 19nov26",
     "definicoes": [
      {
-      "id": "DEF-26",
-      "tipo": "Grelha Extração",
-      "rede": "extracao",
+      "id": "DEF-51",
+      "tipo": "Grelha Insuflação",
+      "rede": "insuflacao",
       "quantidade": 2,
       "Q_total": 200,
       "origem": "Desenho"
      },
      {
       "id": "DEF-52",
-      "tipo": "Grelha Insuflação",
-      "rede": "insuflacao",
-      "quantidade": 2,
+      "tipo": "Grelha Extração",
+      "rede": "extracao_suja",
+      "quantidade": 1,
       "Q_total": 200,
       "origem": "Desenho"
      }
@@ -1276,11 +1276,11 @@
       ],
       [
        1426.29,
-       377.14
+       360
       ],
       [
        1686.86,
-       377.14
+       360
       ],
       [
        1686.86,
@@ -1292,8 +1292,8 @@
       ]
      ]
     },
-    "ramalRefExtracao": "R4.1.1",
     "ramalRefInsuflacao": "R10.1",
+    "ramalRefExtracao": "R11.1",
     "rphDefault": 0,
     "rphAplicado": 0,
     "rphOrigem": "norma",
@@ -2270,7 +2270,7 @@
     "origem": "Desenho TGC 19nov26",
     "definicoes": [
      {
-      "id": "DEF-32",
+      "id": "DEF-31",
       "tipo": "Grelha Insuflação",
       "rede": "insuflacao",
       "quantidade": 1,
@@ -2278,7 +2278,7 @@
       "origem": "Desenho"
      },
      {
-      "id": "DEF-39",
+      "id": "DEF-38",
       "tipo": "Grelha Extração",
       "rede": "extracao",
       "quantidade": 1,
@@ -2371,7 +2371,7 @@
     "origem": "Desenho TGC 19nov26",
     "definicoes": [
      {
-      "id": "DEF-31",
+      "id": "DEF-30",
       "tipo": "Grelha Insuflação",
       "rede": "insuflacao",
       "quantidade": 1,
@@ -2379,7 +2379,7 @@
       "origem": "Desenho"
      },
      {
-      "id": "DEF-38",
+      "id": "DEF-37",
       "tipo": "Grelha Extração",
       "rede": "extracao",
       "quantidade": 1,
@@ -2472,7 +2472,7 @@
     "origem": "Desenho TGC 19nov26",
     "definicoes": [
      {
-      "id": "DEF-30",
+      "id": "DEF-29",
       "tipo": "Grelha Insuflação",
       "rede": "insuflacao",
       "quantidade": 1,
@@ -2480,7 +2480,7 @@
       "origem": "Desenho"
      },
      {
-      "id": "DEF-37",
+      "id": "DEF-36",
       "tipo": "Grelha Extração",
       "rede": "extracao",
       "quantidade": 1,
@@ -2573,7 +2573,7 @@
     "origem": "Desenho TGC 19nov26",
     "definicoes": [
      {
-      "id": "DEF-29",
+      "id": "DEF-28",
       "tipo": "Grelha Insuflação",
       "rede": "insuflacao",
       "quantidade": 1,
@@ -2581,7 +2581,7 @@
       "origem": "Desenho"
      },
      {
-      "id": "DEF-36",
+      "id": "DEF-35",
       "tipo": "Grelha Extração",
       "rede": "extracao",
       "quantidade": 1,
@@ -2674,7 +2674,7 @@
     "origem": "Desenho TGC 19nov26",
     "definicoes": [
      {
-      "id": "DEF-28",
+      "id": "DEF-27",
       "tipo": "Grelha Insuflação",
       "rede": "insuflacao",
       "quantidade": 1,
@@ -2682,7 +2682,7 @@
       "origem": "Desenho"
      },
      {
-      "id": "DEF-35",
+      "id": "DEF-34",
       "tipo": "Grelha Extração",
       "rede": "extracao",
       "quantidade": 1,
@@ -2775,7 +2775,7 @@
     "origem": "Desenho TGC 19nov26",
     "definicoes": [
      {
-      "id": "DEF-27",
+      "id": "DEF-26",
       "tipo": "Grelha Insuflação",
       "rede": "insuflacao",
       "quantidade": 1,
@@ -2783,7 +2783,7 @@
       "origem": "Desenho"
      },
      {
-      "id": "DEF-34",
+      "id": "DEF-33",
       "tipo": "Grelha Extração",
       "rede": "extracao",
       "quantidade": 1,
@@ -2876,7 +2876,7 @@
     "origem": "Desenho TGC 19nov26",
     "definicoes": [
      {
-      "id": "DEF-33",
+      "id": "DEF-32",
       "tipo": "Grelha Insuflação",
       "rede": "insuflacao",
       "quantidade": 1,
@@ -2884,7 +2884,7 @@
       "origem": "Desenho"
      },
      {
-      "id": "DEF-40",
+      "id": "DEF-39",
       "tipo": "Grelha Extração",
       "rede": "extracao",
       "quantidade": 1,
@@ -3223,7 +3223,7 @@
     "origem": "Desenho TGC 19nov26",
     "definicoes": [
      {
-      "id": "DEF-41",
+      "id": "DEF-40",
       "tipo": "Grelha Insuflação",
       "rede": "insuflacao",
       "quantidade": 4,
@@ -3231,7 +3231,7 @@
       "origem": "Desenho"
      },
      {
-      "id": "DEF-47",
+      "id": "DEF-46",
       "tipo": "Grelha Extração",
       "rede": "extracao",
       "quantidade": 2,
@@ -3414,7 +3414,7 @@
     "origem": "Desenho TGC 19nov26",
     "definicoes": [
      {
-      "id": "DEF-43",
+      "id": "DEF-42",
       "tipo": "Grelha Insuflação",
       "rede": "insuflacao",
       "quantidade": 1,
@@ -3422,7 +3422,7 @@
       "origem": "Desenho"
      },
      {
-      "id": "DEF-46",
+      "id": "DEF-45",
       "tipo": "Grelha Extração",
       "rede": "extracao",
       "quantidade": 1,
@@ -3515,7 +3515,7 @@
     "origem": "Desenho TGC 19nov26",
     "definicoes": [
      {
-      "id": "DEF-44",
+      "id": "DEF-43",
       "tipo": "Grelha Insuflação",
       "rede": "insuflacao",
       "quantidade": 1,
@@ -3523,7 +3523,7 @@
       "origem": "Desenho"
      },
      {
-      "id": "DEF-48",
+      "id": "DEF-47",
       "tipo": "Grelha Extração",
       "rede": "extracao",
       "quantidade": 1,
@@ -3616,7 +3616,7 @@
     "origem": "Desenho TGC 19nov26",
     "definicoes": [
      {
-      "id": "DEF-42",
+      "id": "DEF-41",
       "tipo": "Grelha Insuflação",
       "rede": "insuflacao",
       "quantidade": 1,
@@ -3624,7 +3624,7 @@
       "origem": "Desenho"
      },
      {
-      "id": "DEF-45",
+      "id": "DEF-44",
       "tipo": "Grelha Extração",
       "rede": "extracao",
       "quantidade": 1,
@@ -3746,7 +3746,7 @@
     "Q": 970,
     "deltaP_terminal": 11.71875,
     "vMax": 6,
-    "avisoSecao": "Ø315 mm não cabe na altura disponível (250 mm) — sugestão retangular 250×250",
+    "avisoSecao": "",
     "secaoAdotada": "circular",
     "v": 3.4574685994040144,
     "Re": 71746.48221832367,
@@ -4816,54 +4816,39 @@
      ]
     },
     "Q_proprio": 700,
-    "Q_filhos": 200,
-    "Q": 900,
+    "Q_filhos": 0,
+    "Q": 700,
     "deltaP_terminal": 15.75,
     "vMax": 6,
-    "avisoSecao": "Ø315 mm não cabe na altura disponível (250 mm) — sugestão retangular 300×200",
+    "avisoSecao": "",
     "secaoAdotada": "circular",
-    "v": 3.2079605561480546,
-    "Re": 66568.90102731061,
-    "f": 0.02145807707121719,
-    "R": 0.4187116687612563,
-    "Dcom": 315,
-    "De": 315,
-    "secaoCalc": "Ø315",
+    "v": 3.9611896947316176,
+    "Re": 65237.52300676439,
+    "f": 0.021949989505520216,
+    "R": 0.8228532085921927,
+    "Dcom": 250,
+    "De": 250,
+    "secaoCalc": "Ø250",
     "trocos": [
      {
       "de": 0,
       "ate": 3.67,
       "L": 3.67,
-      "Q": 900,
-      "Dcom": 315,
-      "De": 315,
-      "secao": "Ø315",
-      "v": 3.2079605561480546,
-      "Re": 66568.90102731061,
-      "R": 0.4187116687612563,
-      "dpLin": 1.5366718243538107,
+      "Q": 700,
+      "Dcom": 250,
+      "De": 250,
+      "secao": "Ø250",
+      "v": 3.9611896947316176,
+      "Re": 65237.52300676439,
+      "R": 0.8228532085921927,
+      "dpLin": 3.019871275533347,
       "dpTe": 0,
       "dpReducao": 0
      },
      {
       "de": 3.67,
-      "ate": 5.53,
-      "L": 1.8600000000000003,
-      "Q": 750,
-      "Dcom": 250,
-      "De": 250,
-      "secao": "Ø250",
-      "v": 4.244131815783876,
-      "Re": 69897.34607867614,
-      "R": 0.9352128665346835,
-      "dpLin": 1.7394959317545116,
-      "dpTe": 0.2565073730836457,
-      "dpReducao": 0.44213729909465666
-     },
-     {
-      "de": 5.53,
       "ate": 12.34,
-      "L": 6.81,
+      "L": 8.67,
       "Q": 550,
       "Dcom": 250,
       "De": 250,
@@ -4871,8 +4856,8 @@
       "v": 3.1123633315748425,
       "Re": 51258.05379102917,
       "R": 0.527182581865282,
-      "dpLin": 3.59011338250257,
-      "dpTe": 0.30602151531976285,
+      "dpLin": 4.570672984771995,
+      "dpTe": 0.17213710236736657,
       "dpReducao": 0
      },
      {
@@ -4932,14 +4917,6 @@
       "dP": 15.75
      },
      {
-      "tipo": "ramal",
-      "ref": "R4.1.1",
-      "Q": 200,
-      "s": 5.53,
-      "origem": "utilizador",
-      "dP": 0
-     },
-     {
       "tipo": "terminal",
       "ref": "GE-SP0-S4-1",
       "Q": 150,
@@ -4972,142 +4949,19 @@
       "dP": 10.9375
      }
     ],
-    "vMaxTrocos": 4.244131815783876,
-    "deltaPlin": 16.242994135599428,
-    "deltaPsing": 3.380628952544478,
-    "deltaPderiv": 1.8835555042014265,
-    "deltaPTroco": 21.50717859234533,
+    "vMaxTrocos": 3.9611896947316176,
+    "deltaPlin": 16.967257257293877,
+    "deltaPsing": 5.154549898667252,
+    "deltaPderiv": 1.0510264190707277,
+    "deltaPTroco": 23.172833575031856,
     "deltaPInicio": 0,
-    "deltaPAcumulado": 21.50717859234533,
-    "deltaPtotal": 32.44467859234533,
+    "deltaPAcumulado": 23.172833575031856,
+    "deltaPtotal": 34.11033357503186,
     "status": "OK",
-    "deltaPCritico": 32.44467859234533
+    "deltaPCritico": 34.11033357503186
    },
    {
     "id": 9,
-    "nome": "R4.1.1",
-    "parente": "R4.1",
-    "tipo": "Sub-ramal",
-    "nivel": "secundario",
-    "nivelNumero": 2,
-    "rede": "extracao",
-    "utaRef": "UTA-04",
-    "L": 7.23,
-    "zeta": 0.55,
-    "localizacao": {
-     "piso": "P0",
-     "ala": "Sul",
-     "cota": null
-    },
-    "geometriaInput": {
-     "material": "Aço galvanizado",
-     "forma": "circular"
-    },
-    "lock": {
-     "D": false
-    },
-    "deltaP_registo": 0,
-    "deltaP_filtro": 0,
-    "deltaP_bateria": 0,
-    "deltaP_recup": 0,
-    "sPai": 5.53,
-    "planta": {
-     "pisoId": "piso-p0",
-     "pts": [
-      [
-       1515.43,
-       881.14
-      ],
-      [
-       1515.43,
-       582.86
-      ],
-      [
-       1611.43,
-       582.86
-      ]
-     ]
-    },
-    "Q_proprio": 200,
-    "Q_filhos": 0,
-    "Q": 200,
-    "deltaP_terminal": 7,
-    "sNoPai": 5.53,
-    "sNoPaiOrigem": "utilizador",
-    "vMax": 5,
-    "avisoSecao": "",
-    "secaoAdotada": "circular",
-    "v": 2.7631066509009603,
-    "Re": 29123.894199448387,
-    "f": 0.02595901552836186,
-    "R": 0.7398442615008486,
-    "Dcom": 160,
-    "De": 160,
-    "secaoCalc": "Ø160",
-    "trocos": [
-     {
-      "de": 0,
-      "ate": 5.47,
-      "L": 5.47,
-      "Q": 200,
-      "Dcom": 160,
-      "De": 160,
-      "secao": "Ø160",
-      "v": 2.7631066509009603,
-      "Re": 29123.894199448387,
-      "R": 0.7398442615008486,
-      "dpLin": 4.046948110409642,
-      "dpTe": 0,
-      "dpReducao": 0
-     },
-     {
-      "de": 5.47,
-      "ate": 7.23,
-      "L": 1.7600000000000007,
-      "Q": 100,
-      "Dcom": 125,
-      "De": 125,
-      "secao": "Ø125",
-      "v": 2.263536968418067,
-      "Re": 18639.292287646967,
-      "R": 0.7027622127288169,
-      "dpLin": 1.2368614944027183,
-      "dpTe": 0.05962507216061471,
-      "dpReducao": 0.13938598039747682
-     }
-    ],
-    "modoTrocos": "posicionado",
-    "derivacoes": [
-     {
-      "tipo": "terminal",
-      "ref": "GE-RefP0-S1-1",
-      "Q": 100,
-      "s": 5.47,
-      "origem": "utilizador",
-      "dP": 7
-     },
-     {
-      "tipo": "terminal",
-      "ref": "GE-RefP0-S1-2",
-      "Q": 100,
-      "s": 7.23,
-      "origem": "utilizador",
-      "dP": 7
-     }
-    ],
-    "vMaxTrocos": 2.7631066509009603,
-    "deltaPlin": 5.28380960481236,
-    "deltaPsing": 2.5080417607109156,
-    "deltaPderiv": 0.19901105255809154,
-    "deltaPTroco": 7.990862418081367,
-    "deltaPInicio": 7.3554413808311025,
-    "deltaPAcumulado": 15.34630379891247,
-    "deltaPtotal": 22.34630379891247,
-    "status": "OK",
-    "deltaPCritico": 22.34630379891247
-   },
-   {
-    "id": 10,
     "nome": "R5.1",
     "parente": "",
     "tipo": "Principal",
@@ -5200,7 +5054,7 @@
     "deltaPCritico": 52.71729557825972
    },
    {
-    "id": 11,
+    "id": 10,
     "nome": "R5.1.1",
     "parente": "R5.1",
     "tipo": "Sub-ramal",
@@ -5283,7 +5137,7 @@
     "deltaPCritico": 52.71729557825972
    },
    {
-    "id": 12,
+    "id": 11,
     "nome": "R5.1.1.1",
     "parente": "R5.1.1",
     "tipo": "Sub-ramal",
@@ -5521,7 +5375,7 @@
     "deltaPCritico": 52.71729557825972
    },
    {
-    "id": 13,
+    "id": 12,
     "nome": "R6.1",
     "parente": "",
     "tipo": "Principal",
@@ -5614,7 +5468,7 @@
     "deltaPCritico": 55.47703301343073
    },
    {
-    "id": 14,
+    "id": 13,
     "nome": "R6.1.1",
     "parente": "R6.1",
     "tipo": "Sub-ramal",
@@ -5697,7 +5551,7 @@
     "deltaPCritico": 55.47703301343073
    },
    {
-    "id": 15,
+    "id": 14,
     "nome": "R6.1.1.1",
     "parente": "R6.1.1",
     "tipo": "Sub-ramal",
@@ -5935,7 +5789,7 @@
     "deltaPCritico": 55.47703301343073
    },
    {
-    "id": 16,
+    "id": 15,
     "nome": "R7.1",
     "parente": "",
     "tipo": "Principal",
@@ -6097,7 +5951,7 @@
     "deltaPCritico": 29.714339585031134
    },
    {
-    "id": 17,
+    "id": 16,
     "nome": "R7.1.1",
     "parente": "R7.1",
     "tipo": "Sub-ramal",
@@ -6270,7 +6124,7 @@
     "deltaPCritico": 28.634616443549223
    },
    {
-    "id": 18,
+    "id": 17,
     "nome": "R8.1",
     "parente": "",
     "tipo": "Principal",
@@ -6455,7 +6309,7 @@
     "deltaPCritico": 50.39539689231349
    },
    {
-    "id": 19,
+    "id": 18,
     "nome": "R8.1.1",
     "parente": "R8.1",
     "tipo": "Sub-ramal",
@@ -6551,7 +6405,7 @@
     "deltaPCritico": 19.688429367789396
    },
    {
-    "id": 20,
+    "id": 19,
     "nome": "R9.1",
     "parente": "",
     "tipo": "Principal",
@@ -6679,7 +6533,7 @@
     "deltaPCritico": 15.192512444397536
    },
    {
-    "id": 21,
+    "id": 20,
     "nome": "R9.1.1",
     "parente": "R9.1",
     "tipo": "Sub-ramal",
@@ -6775,7 +6629,7 @@
     "deltaPCritico": 12.123707241778718
    },
    {
-    "id": 22,
+    "id": 21,
     "nome": "R9.1.2",
     "parente": "R9.1",
     "tipo": "Sub-ramal",
@@ -6875,7 +6729,7 @@
     "deltaPCritico": 15.192512444397536
    },
    {
-    "id": 23,
+    "id": 22,
     "nome": "R9.1.3",
     "parente": "R9.1",
     "tipo": "Sub-ramal",
@@ -6998,7 +6852,7 @@
     "deltaPCritico": 14.871184577332663
    },
    {
-    "id": 24,
+    "id": 23,
     "nome": "R10.1",
     "parente": "",
     "tipo": "Principal",
@@ -7122,7 +6976,7 @@
     "deltaPCritico": 14.953899154967766
    },
    {
-    "id": 25,
+    "id": 24,
     "nome": "R11.1",
     "parente": "",
     "tipo": "Principal",
@@ -7130,6 +6984,99 @@
     "nivelNumero": 1,
     "rede": "extracao_suja",
     "utaRef": "UTA-11",
+    "L": 0.48,
+    "zeta": 0.3,
+    "localizacao": {
+     "piso": "P0",
+     "ala": "Sul",
+     "cota": null
+    },
+    "geometriaInput": {
+     "material": "Aço galvanizado",
+     "forma": "circular"
+    },
+    "lock": {
+     "D": false
+    },
+    "deltaP_registo": 0,
+    "deltaP_filtro": 0,
+    "deltaP_bateria": 0,
+    "deltaP_recup": 0,
+    "planta": {
+     "pisoId": "piso-p0",
+     "pts": [
+      [
+       1501.71,
+       342.86
+      ],
+      [
+       1501.71,
+       368.91
+      ]
+     ]
+    },
+    "Q_proprio": 200,
+    "Q_filhos": 0,
+    "Q": 200,
+    "deltaP_terminal": 28,
+    "vMax": 6,
+    "avisoSecao": "",
+    "secaoAdotada": "circular",
+    "v": 2.7631066509009603,
+    "Re": 29123.894199448387,
+    "f": 0.02595901552836186,
+    "R": 0.7398442615008486,
+    "Dcom": 160,
+    "De": 160,
+    "secaoCalc": "Ø160",
+    "trocos": [
+     {
+      "de": 0,
+      "ate": 0.48,
+      "L": 0.48,
+      "Q": 200,
+      "Dcom": 160,
+      "De": 160,
+      "secao": "Ø160",
+      "v": 2.7631066509009603,
+      "Re": 29123.894199448387,
+      "R": 0.7398442615008486,
+      "dpLin": 0.3551252455204073,
+      "dpTe": 0,
+      "dpReducao": 0
+     }
+    ],
+    "modoTrocos": "simplificado",
+    "derivacoes": [
+     {
+      "tipo": "terminal",
+      "ref": "GEs-RefP0-S1-1",
+      "Q": 200,
+      "s": 0.48,
+      "origem": "utilizador",
+      "dP": 28
+     }
+    ],
+    "vMaxTrocos": 2.7631066509009603,
+    "deltaPlin": 0.3551252455204073,
+    "deltaPsing": 1.3680227785695904,
+    "deltaPderiv": 0,
+    "deltaPTroco": 1.7231480240899977,
+    "deltaPInicio": 0,
+    "deltaPAcumulado": 1.7231480240899977,
+    "deltaPtotal": 29.723148024089998,
+    "status": "OK",
+    "deltaPCritico": 29.723148024089998
+   },
+   {
+    "id": 25,
+    "nome": "R12.1",
+    "parente": "",
+    "tipo": "Principal",
+    "nivel": "primario",
+    "nivelNumero": 1,
+    "rede": "extracao_suja",
+    "utaRef": "UTA-12",
     "L": 4.65,
     "zeta": 0.3,
     "localizacao": {
@@ -8041,70 +7988,6 @@
    },
    {
     "id": 26,
-    "nome": "GE-RefP0-S1-1",
-    "tipo": "Grelha Extração",
-    "rede": "extracao",
-    "espacos": [
-     {
-      "nome": "Refeitório P0-S1",
-      "Q_parcela": 100
-     }
-    ],
-    "ramalRef": "R4.1.1",
-    "sRamal": 5.47,
-    "planta": {
-     "pisoId": "piso-p0",
-     "x": 1515.43,
-     "y": 582.86
-    },
-    "fabricante": "",
-    "familia": "",
-    "tamanho": "",
-    "v_saida": 2,
-    "Q": 100,
-    "definicaoRef": {
-     "espacoId": 3012,
-     "definicaoId": "DEF-26"
-    },
-    "dPCalc": 7,
-    "LwCalc": 12.94850021680094,
-    "throwCalc": 0,
-    "status": "OK"
-   },
-   {
-    "id": 27,
-    "nome": "GE-RefP0-S1-2",
-    "tipo": "Grelha Extração",
-    "rede": "extracao",
-    "espacos": [
-     {
-      "nome": "Refeitório P0-S1",
-      "Q_parcela": 100
-     }
-    ],
-    "ramalRef": "R4.1.1",
-    "sRamal": 7.23,
-    "planta": {
-     "pisoId": "piso-p0",
-     "x": 1611.43,
-     "y": 582.86
-    },
-    "fabricante": "",
-    "familia": "",
-    "tamanho": "",
-    "v_saida": 2,
-    "Q": 100,
-    "definicaoRef": {
-     "espacoId": 3012,
-     "definicaoId": "DEF-26"
-    },
-    "dPCalc": 7,
-    "LwCalc": 12.94850021680094,
-    "throwCalc": 0,
-    "status": "OK"
-   },
-   {
-    "id": 28,
     "nome": "GI-CircP1-N2-1",
     "tipo": "Grelha Insuflação",
     "rede": "insuflacao",
@@ -8128,7 +8011,7 @@
     "Q": 100,
     "definicaoRef": {
      "espacoId": 3028,
-     "definicaoId": "DEF-27"
+     "definicaoId": "DEF-26"
     },
     "dPCalc": 7.5,
     "LwCalc": 10.94850021680094,
@@ -8136,7 +8019,7 @@
     "status": "OK"
    },
    {
-    "id": 29,
+    "id": 27,
     "nome": "GI-SP1-N4-1",
     "tipo": "Grelha Insuflação",
     "rede": "insuflacao",
@@ -8160,7 +8043,7 @@
     "Q": 100,
     "definicaoRef": {
      "espacoId": 3027,
-     "definicaoId": "DEF-28"
+     "definicaoId": "DEF-27"
     },
     "dPCalc": 7.5,
     "LwCalc": 10.94850021680094,
@@ -8168,7 +8051,7 @@
     "status": "OK"
    },
    {
-    "id": 30,
+    "id": 28,
     "nome": "GI-SP1-N3-1",
     "tipo": "Grelha Insuflação",
     "rede": "insuflacao",
@@ -8192,7 +8075,7 @@
     "Q": 100,
     "definicaoRef": {
      "espacoId": 3026,
-     "definicaoId": "DEF-29"
+     "definicaoId": "DEF-28"
     },
     "dPCalc": 7.5,
     "LwCalc": 10.94850021680094,
@@ -8200,7 +8083,7 @@
     "status": "OK"
    },
    {
-    "id": 31,
+    "id": 29,
     "nome": "GI-CircP1-N1-1",
     "tipo": "Grelha Insuflação",
     "rede": "insuflacao",
@@ -8224,7 +8107,7 @@
     "Q": 100,
     "definicaoRef": {
      "espacoId": 3025,
-     "definicaoId": "DEF-30"
+     "definicaoId": "DEF-29"
     },
     "dPCalc": 7.5,
     "LwCalc": 10.94850021680094,
@@ -8232,7 +8115,7 @@
     "status": "OK"
    },
    {
-    "id": 32,
+    "id": 30,
     "nome": "GI-SP1-N2-1",
     "tipo": "Grelha Insuflação",
     "rede": "insuflacao",
@@ -8256,7 +8139,7 @@
     "Q": 100,
     "definicaoRef": {
      "espacoId": 3024,
-     "definicaoId": "DEF-31"
+     "definicaoId": "DEF-30"
     },
     "dPCalc": 7.5,
     "LwCalc": 10.94850021680094,
@@ -8264,7 +8147,7 @@
     "status": "OK"
    },
    {
-    "id": 33,
+    "id": 31,
     "nome": "GI-SP1-N1-1",
     "tipo": "Grelha Insuflação",
     "rede": "insuflacao",
@@ -8288,7 +8171,7 @@
     "Q": 100,
     "definicaoRef": {
      "espacoId": 3023,
-     "definicaoId": "DEF-32"
+     "definicaoId": "DEF-31"
     },
     "dPCalc": 7.5,
     "LwCalc": 10.94850021680094,
@@ -8296,7 +8179,7 @@
     "status": "OK"
    },
    {
-    "id": 34,
+    "id": 32,
     "nome": "GI-SP1-S1-1",
     "tipo": "Grelha Insuflação",
     "rede": "insuflacao",
@@ -8320,7 +8203,7 @@
     "Q": 100,
     "definicaoRef": {
      "espacoId": 3029,
-     "definicaoId": "DEF-33"
+     "definicaoId": "DEF-32"
     },
     "dPCalc": 7.5,
     "LwCalc": 10.94850021680094,
@@ -8328,7 +8211,7 @@
     "status": "OK"
    },
    {
-    "id": 35,
+    "id": 33,
     "nome": "GE-CircP1-N2-1",
     "tipo": "Grelha Extração",
     "rede": "extracao",
@@ -8352,7 +8235,7 @@
     "Q": 100,
     "definicaoRef": {
      "espacoId": 3028,
-     "definicaoId": "DEF-34"
+     "definicaoId": "DEF-33"
     },
     "dPCalc": 7,
     "LwCalc": 12.94850021680094,
@@ -8360,7 +8243,7 @@
     "status": "OK"
    },
    {
-    "id": 36,
+    "id": 34,
     "nome": "GE-SP1-N4-1",
     "tipo": "Grelha Extração",
     "rede": "extracao",
@@ -8384,7 +8267,7 @@
     "Q": 100,
     "definicaoRef": {
      "espacoId": 3027,
-     "definicaoId": "DEF-35"
+     "definicaoId": "DEF-34"
     },
     "dPCalc": 7,
     "LwCalc": 12.94850021680094,
@@ -8392,7 +8275,7 @@
     "status": "OK"
    },
    {
-    "id": 37,
+    "id": 35,
     "nome": "GE-SP1-N3-1",
     "tipo": "Grelha Extração",
     "rede": "extracao",
@@ -8416,7 +8299,7 @@
     "Q": 100,
     "definicaoRef": {
      "espacoId": 3026,
-     "definicaoId": "DEF-36"
+     "definicaoId": "DEF-35"
     },
     "dPCalc": 7,
     "LwCalc": 12.94850021680094,
@@ -8424,7 +8307,7 @@
     "status": "OK"
    },
    {
-    "id": 38,
+    "id": 36,
     "nome": "GE-CircP1-N1-1",
     "tipo": "Grelha Extração",
     "rede": "extracao",
@@ -8448,7 +8331,7 @@
     "Q": 100,
     "definicaoRef": {
      "espacoId": 3025,
-     "definicaoId": "DEF-37"
+     "definicaoId": "DEF-36"
     },
     "dPCalc": 7,
     "LwCalc": 12.94850021680094,
@@ -8456,7 +8339,7 @@
     "status": "OK"
    },
    {
-    "id": 39,
+    "id": 37,
     "nome": "GE-SP1-N2-1",
     "tipo": "Grelha Extração",
     "rede": "extracao",
@@ -8480,7 +8363,7 @@
     "Q": 100,
     "definicaoRef": {
      "espacoId": 3024,
-     "definicaoId": "DEF-38"
+     "definicaoId": "DEF-37"
     },
     "dPCalc": 7,
     "LwCalc": 12.94850021680094,
@@ -8488,7 +8371,7 @@
     "status": "OK"
    },
    {
-    "id": 40,
+    "id": 38,
     "nome": "GE-SP1-N1-1",
     "tipo": "Grelha Extração",
     "rede": "extracao",
@@ -8512,7 +8395,7 @@
     "Q": 100,
     "definicaoRef": {
      "espacoId": 3023,
-     "definicaoId": "DEF-39"
+     "definicaoId": "DEF-38"
     },
     "dPCalc": 7,
     "LwCalc": 12.94850021680094,
@@ -8520,7 +8403,7 @@
     "status": "OK"
    },
    {
-    "id": 41,
+    "id": 39,
     "nome": "GE-SP1-S1-1",
     "tipo": "Grelha Extração",
     "rede": "extracao",
@@ -8544,7 +8427,7 @@
     "Q": 100,
     "definicaoRef": {
      "espacoId": 3029,
-     "definicaoId": "DEF-40"
+     "definicaoId": "DEF-39"
     },
     "dPCalc": 7,
     "LwCalc": 12.94850021680094,
@@ -8552,7 +8435,7 @@
     "status": "OK"
    },
    {
-    "id": 42,
+    "id": 40,
     "nome": "GI-SP1-S2-1",
     "tipo": "Grelha Insuflação",
     "rede": "insuflacao",
@@ -8576,7 +8459,7 @@
     "Q": 100,
     "definicaoRef": {
      "espacoId": 3033,
-     "definicaoId": "DEF-41"
+     "definicaoId": "DEF-40"
     },
     "dPCalc": 7.5,
     "LwCalc": 10.94850021680094,
@@ -8584,7 +8467,7 @@
     "status": "OK"
    },
    {
-    "id": 43,
+    "id": 41,
     "nome": "GI-SP1-S2-2",
     "tipo": "Grelha Insuflação",
     "rede": "insuflacao",
@@ -8608,7 +8491,7 @@
     "Q": 100,
     "definicaoRef": {
      "espacoId": 3033,
-     "definicaoId": "DEF-41"
+     "definicaoId": "DEF-40"
     },
     "dPCalc": 7.5,
     "LwCalc": 10.94850021680094,
@@ -8616,7 +8499,7 @@
     "status": "OK"
    },
    {
-    "id": 44,
+    "id": 42,
     "nome": "GI-SP1-S2-3",
     "tipo": "Grelha Insuflação",
     "rede": "insuflacao",
@@ -8640,7 +8523,7 @@
     "Q": 100,
     "definicaoRef": {
      "espacoId": 3033,
-     "definicaoId": "DEF-41"
+     "definicaoId": "DEF-40"
     },
     "dPCalc": 7.5,
     "LwCalc": 10.94850021680094,
@@ -8648,7 +8531,7 @@
     "status": "OK"
    },
    {
-    "id": 45,
+    "id": 43,
     "nome": "GI-ApP0-S3-1",
     "tipo": "Grelha Insuflação",
     "rede": "insuflacao",
@@ -8672,7 +8555,7 @@
     "Q": 100,
     "definicaoRef": {
      "espacoId": 3037,
-     "definicaoId": "DEF-42"
+     "definicaoId": "DEF-41"
     },
     "dPCalc": 7.5,
     "LwCalc": 10.94850021680094,
@@ -8680,7 +8563,7 @@
     "status": "OK"
    },
    {
-    "id": 46,
+    "id": 44,
     "nome": "GI-LabP1-S3-1",
     "tipo": "Grelha Insuflação",
     "rede": "insuflacao",
@@ -8704,7 +8587,7 @@
     "Q": 100,
     "definicaoRef": {
      "espacoId": 3035,
-     "definicaoId": "DEF-43"
+     "definicaoId": "DEF-42"
     },
     "dPCalc": 7.5,
     "LwCalc": 10.94850021680094,
@@ -8712,7 +8595,7 @@
     "status": "OK"
    },
    {
-    "id": 47,
+    "id": 45,
     "nome": "GI-ApP1-S4-1",
     "tipo": "Grelha Insuflação",
     "rede": "insuflacao",
@@ -8736,7 +8619,7 @@
     "Q": 100,
     "definicaoRef": {
      "espacoId": 3036,
-     "definicaoId": "DEF-44"
+     "definicaoId": "DEF-43"
     },
     "dPCalc": 7.5,
     "LwCalc": 10.94850021680094,
@@ -8744,7 +8627,7 @@
     "status": "OK"
    },
    {
-    "id": 48,
+    "id": 46,
     "nome": "GI-SP1-S2-4",
     "tipo": "Grelha Insuflação",
     "rede": "insuflacao",
@@ -8768,7 +8651,7 @@
     "Q": 100,
     "definicaoRef": {
      "espacoId": 3033,
-     "definicaoId": "DEF-41"
+     "definicaoId": "DEF-40"
     },
     "dPCalc": 7.5,
     "LwCalc": 10.94850021680094,
@@ -8776,7 +8659,7 @@
     "status": "OK"
    },
    {
-    "id": 49,
+    "id": 47,
     "nome": "GE-ApP0-S3-1",
     "tipo": "Grelha Extração",
     "rede": "extracao",
@@ -8800,7 +8683,7 @@
     "Q": 100,
     "definicaoRef": {
      "espacoId": 3037,
-     "definicaoId": "DEF-45"
+     "definicaoId": "DEF-44"
     },
     "dPCalc": 7,
     "LwCalc": 12.94850021680094,
@@ -8808,7 +8691,7 @@
     "status": "OK"
    },
    {
-    "id": 50,
+    "id": 48,
     "nome": "GE-LabP1-S3-1",
     "tipo": "Grelha Extração",
     "rede": "extracao",
@@ -8832,7 +8715,7 @@
     "Q": 100,
     "definicaoRef": {
      "espacoId": 3035,
-     "definicaoId": "DEF-46"
+     "definicaoId": "DEF-45"
     },
     "dPCalc": 7,
     "LwCalc": 12.94850021680094,
@@ -8840,7 +8723,7 @@
     "status": "OK"
    },
    {
-    "id": 51,
+    "id": 49,
     "nome": "GE-SP1-S2-1",
     "tipo": "Grelha Extração",
     "rede": "extracao",
@@ -8864,7 +8747,7 @@
     "Q": 200,
     "definicaoRef": {
      "espacoId": 3033,
-     "definicaoId": "DEF-47"
+     "definicaoId": "DEF-46"
     },
     "dPCalc": 28,
     "LwCalc": 28,
@@ -8872,7 +8755,7 @@
     "status": "OK"
    },
    {
-    "id": 52,
+    "id": 50,
     "nome": "GE-SP1-S2-2",
     "tipo": "Grelha Extração",
     "rede": "extracao",
@@ -8896,7 +8779,7 @@
     "Q": 200,
     "definicaoRef": {
      "espacoId": 3033,
-     "definicaoId": "DEF-47"
+     "definicaoId": "DEF-46"
     },
     "dPCalc": 28,
     "LwCalc": 28,
@@ -8904,7 +8787,7 @@
     "status": "OK"
    },
    {
-    "id": 53,
+    "id": 51,
     "nome": "GE-ApP1-S4-1",
     "tipo": "Grelha Extração",
     "rede": "extracao",
@@ -8928,7 +8811,7 @@
     "Q": 100,
     "definicaoRef": {
      "espacoId": 3036,
-     "definicaoId": "DEF-48"
+     "definicaoId": "DEF-47"
     },
     "dPCalc": 7,
     "LwCalc": 12.94850021680094,
@@ -8936,7 +8819,7 @@
     "status": "OK"
    },
    {
-    "id": 54,
+    "id": 52,
     "nome": "VE-CBP0-N2-1",
     "tipo": "Válvula",
     "rede": "extracao_suja",
@@ -8960,7 +8843,7 @@
     "Q": 90,
     "definicaoRef": {
      "espacoId": 3011,
-     "definicaoId": "DEF-49"
+     "definicaoId": "DEF-48"
     },
     "dPCalc": 6.075,
     "LwCalc": 8.660625688767183,
@@ -8968,7 +8851,7 @@
     "status": "OK"
    },
    {
-    "id": 55,
+    "id": 53,
     "nome": "VE-CBespP0-N3-1",
     "tipo": "Válvula",
     "rede": "extracao_suja",
@@ -8992,7 +8875,7 @@
     "Q": 90,
     "definicaoRef": {
      "espacoId": 3009,
-     "definicaoId": "DEF-50"
+     "definicaoId": "DEF-49"
     },
     "dPCalc": 6.075,
     "LwCalc": 8.660625688767183,
@@ -9000,7 +8883,7 @@
     "status": "OK"
    },
    {
-    "id": 56,
+    "id": 54,
     "nome": "VE-CBP0-N1-1",
     "tipo": "Válvula",
     "rede": "extracao_suja",
@@ -9024,7 +8907,7 @@
     "Q": 90,
     "definicaoRef": {
      "espacoId": 3010,
-     "definicaoId": "DEF-51"
+     "definicaoId": "DEF-50"
     },
     "dPCalc": 6.075,
     "LwCalc": 8.660625688767183,
@@ -9032,7 +8915,7 @@
     "status": "OK"
    },
    {
-    "id": 57,
+    "id": 55,
     "nome": "VE-CBP0-N1-2",
     "tipo": "Válvula",
     "rede": "extracao_suja",
@@ -9056,7 +8939,7 @@
     "Q": 90,
     "definicaoRef": {
      "espacoId": 3010,
-     "definicaoId": "DEF-51"
+     "definicaoId": "DEF-50"
     },
     "dPCalc": 6.075,
     "LwCalc": 8.660625688767183,
@@ -9064,7 +8947,7 @@
     "status": "OK"
    },
    {
-    "id": 58,
+    "id": 56,
     "nome": "GI-RefP0-S1-1",
     "tipo": "Grelha Insuflação",
     "rede": "insuflacao",
@@ -9088,7 +8971,7 @@
     "Q": 100,
     "definicaoRef": {
      "espacoId": 3012,
-     "definicaoId": "DEF-52"
+     "definicaoId": "DEF-51"
     },
     "dPCalc": 7.5,
     "LwCalc": 10.94850021680094,
@@ -9096,7 +8979,7 @@
     "status": "OK"
    },
    {
-    "id": 59,
+    "id": 57,
     "nome": "GI-RefP0-S1-2",
     "tipo": "Grelha Insuflação",
     "rede": "insuflacao",
@@ -9120,7 +9003,7 @@
     "Q": 100,
     "definicaoRef": {
      "espacoId": 3012,
-     "definicaoId": "DEF-52"
+     "definicaoId": "DEF-51"
     },
     "dPCalc": 7.5,
     "LwCalc": 10.94850021680094,
@@ -9128,7 +9011,39 @@
     "status": "OK"
    },
    {
-    "id": 60,
+    "id": 58,
+    "nome": "GEs-RefP0-S1-1",
+    "tipo": "Grelha Extração",
+    "rede": "extracao_suja",
+    "espacos": [
+     {
+      "nome": "Refeitório P0-S1",
+      "Q_parcela": 200
+     }
+    ],
+    "ramalRef": "R11.1",
+    "sRamal": 0.48,
+    "planta": {
+     "pisoId": "piso-p0",
+     "x": 1501.71,
+     "y": 370.29
+    },
+    "fabricante": "",
+    "familia": "",
+    "tamanho": "",
+    "v_saida": 2,
+    "Q": 200,
+    "definicaoRef": {
+     "espacoId": 3012,
+     "definicaoId": "DEF-52"
+    },
+    "dPCalc": 28,
+    "LwCalc": 28,
+    "throwCalc": 0,
+    "status": "OK"
+   },
+   {
+    "id": 59,
     "nome": "GEs-GarP0-N1-1",
     "tipo": "Grelha Extração",
     "rede": "extracao_suja",
@@ -9138,7 +9053,7 @@
       "Q_parcela": 300
      }
     ],
-    "ramalRef": "R11.1",
+    "ramalRef": "R12.1",
     "sRamal": 2.14,
     "planta": {
      "pisoId": "piso-p0",
@@ -9160,7 +9075,7 @@
     "status": "ATENÇÃO"
    },
    {
-    "id": 61,
+    "id": 60,
     "nome": "GEs-GarP0-N1-2",
     "tipo": "Grelha Extração",
     "rede": "extracao_suja",
@@ -9170,7 +9085,7 @@
       "Q_parcela": 300
      }
     ],
-    "ramalRef": "R11.1",
+    "ramalRef": "R12.1",
     "sRamal": 4.65,
     "planta": {
      "pisoId": "piso-p0",
@@ -9500,14 +9415,14 @@
       "obs": "referência"
      }
     ],
-    "Q": 0.25,
+    "Q": 0.19444444444444445,
     "dpInt": 110,
-    "dpExt": 32.44467859234533,
+    "dpExt": 34.11033357503186,
     "sfpInt": 220,
-    "P_motor": 81.90569019059856,
+    "P_motor": 64.44934362661147,
     "dpIntEco": 35,
     "sfpIntEco": 70,
-    "sfpE": 284.88935718469065,
+    "sfpE": 288.2206671500637,
     "sfpCategoria": "SFP 0",
     "sfpClass": {
      "tipo": "UVU_FILTER",
@@ -9515,7 +9430,7 @@
      "sfpInt": 70,
      "limite": 230,
      "limiteBase": 230,
-     "qnom": 0.25,
+     "qnom": 0.19444444444444445,
      "bonusE": 0,
      "F": 150,
      "etaOK": true,
@@ -9875,7 +9790,7 @@
    },
    {
     "id": "UTA-10",
-    "nome": "VCM Refeitório (ar novo)",
+    "nome": "VCM Refeitório (insuflação)",
     "rede": "insuflacao",
     "zona": "P0 Refeitório",
     "curva": [],
@@ -9937,6 +9852,68 @@
    },
    {
     "id": "UTA-11",
+    "nome": "VCM Refeitório (extração copa)",
+    "rede": "extracao_suja",
+    "zona": "P0 Refeitório",
+    "curva": [],
+    "curvaFabricante": null,
+    "etaRec": 0,
+    "fs": 1.15,
+    "transmissao": 1,
+    "classeIE": "IE3",
+    "recuperadorAtivo": false,
+    "ativo": true,
+    "tipoUV": "UVU_SEM_FILTER",
+    "eta": 0.4,
+    "componentes": [
+     {
+      "id": "COMP-UTA-11-1",
+      "nome": "Ventilador (motor EC)",
+      "tipo": "Ventilador",
+      "deltaP": 0,
+      "deltaP_final": 0,
+      "zeta": 0,
+      "obs": "IE3 · referência"
+     },
+     {
+      "id": "COMP-UTA-11-2",
+      "nome": "Descarga do ar sujo 2,5 m + grelha na fachada",
+      "tipo": "Outro",
+      "deltaP": 25,
+      "deltaP_final": 25,
+      "zeta": 0,
+      "obs": "medido na planta"
+     }
+    ],
+    "Q": 0.05555555555555555,
+    "dpInt": 25,
+    "dpExt": 29.723148024089998,
+    "sfpInt": 62.5,
+    "P_motor": 8.74050280940326,
+    "dpIntEco": 0,
+    "sfpIntEco": 0,
+    "sfpE": 136.80787006022496,
+    "sfpCategoria": "SFP 0",
+    "sfpClass": {
+     "tipo": "UVU_SEM_FILTER",
+     "classe": null,
+     "sfpInt": 0,
+     "limite": null,
+     "limiteBase": null,
+     "qnom": 0.05555555555555555,
+     "bonusE": 0,
+     "F": 150,
+     "etaOK": true,
+     "conservador": false,
+     "nota": "Reg. (UE) 1253/2014 (Ecodesign): UVU sem filtro não tem limite de SFPint (só requisitos do ventilador).",
+     "conforme": true
+    },
+    "status": "OK",
+    "uvbParNome": null,
+    "uvbSemPar": false
+   },
+   {
+    "id": "UTA-12",
     "nome": "VEX Garagem P0-N1",
     "rede": "extracao_suja",
     "zona": "P0 Garagem",
@@ -9952,7 +9929,7 @@
     "eta": 0.45,
     "componentes": [
      {
-      "id": "COMP-UTA-11-1",
+      "id": "COMP-UTA-12-1",
       "nome": "Ventilador (motor EC)",
       "tipo": "Ventilador",
       "deltaP": 0,
@@ -9961,7 +9938,7 @@
       "obs": "IE3 · referência"
      },
      {
-      "id": "COMP-UTA-11-2",
+      "id": "COMP-UTA-12-2",
       "nome": "Grelha exterior + rede de proteção",
       "tipo": "Outro",
       "deltaP": 20,
@@ -10010,9 +9987,9 @@
     "ligacoes": [
      "NO-4",
      "NO-10",
-     "NO-13",
-     "NO-19",
-     "NO-27"
+     "NO-12",
+     "NO-18",
+     "NO-26"
     ],
     "rede": "insuflacao",
     "utaRef": "UTA-01"
@@ -10028,8 +10005,8 @@
     "ligacoes": [
      "NO-8",
      "NO-11",
-     "NO-16",
-     "NO-21"
+     "NO-15",
+     "NO-20"
     ],
     "rede": "extracao",
     "utaRef": "UTA-02"
@@ -10043,7 +10020,8 @@
     "y": 260,
     "Q_acumulado": 0,
     "ligacoes": [
-     "NO-23",
+     "NO-22",
+     "NO-27",
      "NO-28"
     ],
     "rede": "extracao_suja",
@@ -10167,8 +10145,7 @@
     "y": 0,
     "Q_acumulado": 0,
     "ligacoes": [
-     "NO-2",
-     "NO-12"
+     "NO-2"
     ],
     "rede": "extracao",
     "nivel": "primario",
@@ -10176,21 +10153,6 @@
    },
    {
     "id": "NO-12",
-    "nome": "Nó R4.1.1",
-    "tipo": "Derivação",
-    "ramalRef": "R4.1.1",
-    "x": 0,
-    "y": 0,
-    "Q_acumulado": 0,
-    "ligacoes": [
-     "NO-11"
-    ],
-    "rede": "extracao",
-    "nivel": "secundario",
-    "nivelNumero": 2
-   },
-   {
-    "id": "NO-13",
     "nome": "Nó R5.1",
     "tipo": "Derivação",
     "ramalRef": "R5.1",
@@ -10199,14 +10161,14 @@
     "Q_acumulado": 0,
     "ligacoes": [
      "NO-1",
-     "NO-14"
+     "NO-13"
     ],
     "rede": "insuflacao",
     "nivel": "primario",
     "nivelNumero": 1
    },
    {
-    "id": "NO-14",
+    "id": "NO-13",
     "nome": "Nó R5.1.1",
     "tipo": "Derivação",
     "ramalRef": "R5.1.1",
@@ -10214,15 +10176,15 @@
     "y": 0,
     "Q_acumulado": 0,
     "ligacoes": [
-     "NO-13",
-     "NO-15"
+     "NO-12",
+     "NO-14"
     ],
     "rede": "insuflacao",
     "nivel": "secundario",
     "nivelNumero": 2
    },
    {
-    "id": "NO-15",
+    "id": "NO-14",
     "nome": "Nó R5.1.1.1",
     "tipo": "Derivação",
     "ramalRef": "R5.1.1.1",
@@ -10230,14 +10192,14 @@
     "y": 0,
     "Q_acumulado": 0,
     "ligacoes": [
-     "NO-14"
+     "NO-13"
     ],
     "rede": "insuflacao",
     "nivel": "terciario",
     "nivelNumero": 3
    },
    {
-    "id": "NO-16",
+    "id": "NO-15",
     "nome": "Nó R6.1",
     "tipo": "Derivação",
     "ramalRef": "R6.1",
@@ -10246,14 +10208,14 @@
     "Q_acumulado": 0,
     "ligacoes": [
      "NO-2",
-     "NO-17"
+     "NO-16"
     ],
     "rede": "extracao",
     "nivel": "primario",
     "nivelNumero": 1
    },
    {
-    "id": "NO-17",
+    "id": "NO-16",
     "nome": "Nó R6.1.1",
     "tipo": "Derivação",
     "ramalRef": "R6.1.1",
@@ -10261,15 +10223,15 @@
     "y": 0,
     "Q_acumulado": 0,
     "ligacoes": [
-     "NO-16",
-     "NO-18"
+     "NO-15",
+     "NO-17"
     ],
     "rede": "extracao",
     "nivel": "secundario",
     "nivelNumero": 2
    },
    {
-    "id": "NO-18",
+    "id": "NO-17",
     "nome": "Nó R6.1.1.1",
     "tipo": "Derivação",
     "ramalRef": "R6.1.1.1",
@@ -10277,14 +10239,14 @@
     "y": 0,
     "Q_acumulado": 0,
     "ligacoes": [
-     "NO-17"
+     "NO-16"
     ],
     "rede": "extracao",
     "nivel": "terciario",
     "nivelNumero": 3
    },
    {
-    "id": "NO-19",
+    "id": "NO-18",
     "nome": "Nó R7.1",
     "tipo": "Derivação",
     "ramalRef": "R7.1",
@@ -10293,14 +10255,14 @@
     "Q_acumulado": 0,
     "ligacoes": [
      "NO-1",
-     "NO-20"
+     "NO-19"
     ],
     "rede": "insuflacao",
     "nivel": "primario",
     "nivelNumero": 1
    },
    {
-    "id": "NO-20",
+    "id": "NO-19",
     "nome": "Nó R7.1.1",
     "tipo": "Derivação",
     "ramalRef": "R7.1.1",
@@ -10308,14 +10270,14 @@
     "y": 0,
     "Q_acumulado": 0,
     "ligacoes": [
-     "NO-19"
+     "NO-18"
     ],
     "rede": "insuflacao",
     "nivel": "secundario",
     "nivelNumero": 2
    },
    {
-    "id": "NO-21",
+    "id": "NO-20",
     "nome": "Nó R8.1",
     "tipo": "Derivação",
     "ramalRef": "R8.1",
@@ -10324,14 +10286,14 @@
     "Q_acumulado": 0,
     "ligacoes": [
      "NO-2",
-     "NO-22"
+     "NO-21"
     ],
     "rede": "extracao",
     "nivel": "primario",
     "nivelNumero": 1
    },
    {
-    "id": "NO-22",
+    "id": "NO-21",
     "nome": "Nó R8.1.1",
     "tipo": "Derivação",
     "ramalRef": "R8.1.1",
@@ -10339,14 +10301,14 @@
     "y": 0,
     "Q_acumulado": 0,
     "ligacoes": [
-     "NO-21"
+     "NO-20"
     ],
     "rede": "extracao",
     "nivel": "secundario",
     "nivelNumero": 2
    },
    {
-    "id": "NO-23",
+    "id": "NO-22",
     "nome": "Nó R9.1",
     "tipo": "Derivação",
     "ramalRef": "R9.1",
@@ -10355,16 +10317,16 @@
     "Q_acumulado": 0,
     "ligacoes": [
      "NO-3",
+     "NO-23",
      "NO-24",
-     "NO-25",
-     "NO-26"
+     "NO-25"
     ],
     "rede": "extracao_suja",
     "nivel": "primario",
     "nivelNumero": 1
    },
    {
-    "id": "NO-24",
+    "id": "NO-23",
     "nome": "Nó R9.1.1",
     "tipo": "Derivação",
     "ramalRef": "R9.1.1",
@@ -10372,14 +10334,14 @@
     "y": 0,
     "Q_acumulado": 0,
     "ligacoes": [
-     "NO-23"
+     "NO-22"
     ],
     "rede": "extracao_suja",
     "nivel": "secundario",
     "nivelNumero": 2
    },
    {
-    "id": "NO-25",
+    "id": "NO-24",
     "nome": "Nó R9.1.2",
     "tipo": "Derivação",
     "ramalRef": "R9.1.2",
@@ -10387,14 +10349,14 @@
     "y": 0,
     "Q_acumulado": 0,
     "ligacoes": [
-     "NO-23"
+     "NO-22"
     ],
     "rede": "extracao_suja",
     "nivel": "secundario",
     "nivelNumero": 2
    },
    {
-    "id": "NO-26",
+    "id": "NO-25",
     "nome": "Nó R9.1.3",
     "tipo": "Derivação",
     "ramalRef": "R9.1.3",
@@ -10402,14 +10364,14 @@
     "y": 0,
     "Q_acumulado": 0,
     "ligacoes": [
-     "NO-23"
+     "NO-22"
     ],
     "rede": "extracao_suja",
     "nivel": "secundario",
     "nivelNumero": 2
    },
    {
-    "id": "NO-27",
+    "id": "NO-26",
     "nome": "Nó R10.1",
     "tipo": "Derivação",
     "ramalRef": "R10.1",
@@ -10424,10 +10386,25 @@
     "nivelNumero": 1
    },
    {
-    "id": "NO-28",
+    "id": "NO-27",
     "nome": "Nó R11.1",
     "tipo": "Derivação",
     "ramalRef": "R11.1",
+    "x": 0,
+    "y": 0,
+    "Q_acumulado": 0,
+    "ligacoes": [
+     "NO-3"
+    ],
+    "rede": "extracao_suja",
+    "nivel": "primario",
+    "nivelNumero": 1
+   },
+   {
+    "id": "NO-28",
+    "nome": "Nó R12.1",
+    "tipo": "Derivação",
+    "ramalRef": "R12.1",
     "x": 0,
     "y": 0,
     "Q_acumulado": 0,
@@ -10597,10 +10574,10 @@
     "L_reto": 30.72,
     "L_elementos": 0,
     "L_total": 30.72,
-    "secao": "Ø315",
+    "secao": "Ø250",
     "material": "Aço galvanizado",
     "rugosidade": 0.15,
-    "Q_adotado": 900,
+    "Q_adotado": 700,
     "elementos": [],
     "origem": "Decomposição automática",
     "dp_linear": 0,
@@ -10610,31 +10587,10 @@
    },
    {
     "id": "TR-9",
-    "nome": "R4.1.1",
-    "ramalRef": "R4.1.1",
-    "noA": "NO-11",
-    "noB": "NO-12",
-    "rede": "extracao",
-    "L_reto": 7.23,
-    "L_elementos": 0,
-    "L_total": 7.23,
-    "secao": "Ø160",
-    "material": "Aço galvanizado",
-    "rugosidade": 0.15,
-    "Q_adotado": 200,
-    "elementos": [],
-    "origem": "Decomposição automática",
-    "dp_linear": 0,
-    "dp_elementos": 0,
-    "dp_total_calculado": 0,
-    "nElementos": 0
-   },
-   {
-    "id": "TR-10",
     "nome": "R5.1",
     "ramalRef": "R5.1",
     "noA": "NO-1",
-    "noB": "NO-13",
+    "noB": "NO-12",
     "rede": "insuflacao",
     "L_reto": 7,
     "L_elementos": 0,
@@ -10651,11 +10607,11 @@
     "nElementos": 0
    },
    {
-    "id": "TR-11",
+    "id": "TR-10",
     "nome": "R5.1.1",
     "ramalRef": "R5.1.1",
-    "noA": "NO-13",
-    "noB": "NO-14",
+    "noA": "NO-12",
+    "noB": "NO-13",
     "rede": "insuflacao",
     "L_reto": 3,
     "L_elementos": 0,
@@ -10672,11 +10628,11 @@
     "nElementos": 0
    },
    {
-    "id": "TR-12",
+    "id": "TR-11",
     "nome": "R5.1.1.1",
     "ramalRef": "R5.1.1.1",
-    "noA": "NO-14",
-    "noB": "NO-15",
+    "noA": "NO-13",
+    "noB": "NO-14",
     "rede": "insuflacao",
     "L_reto": 30.66,
     "L_elementos": 0,
@@ -10693,11 +10649,11 @@
     "nElementos": 0
    },
    {
-    "id": "TR-13",
+    "id": "TR-12",
     "nome": "R6.1",
     "ramalRef": "R6.1",
     "noA": "NO-2",
-    "noB": "NO-16",
+    "noB": "NO-15",
     "rede": "extracao",
     "L_reto": 9.16,
     "L_elementos": 0,
@@ -10714,11 +10670,11 @@
     "nElementos": 0
    },
    {
-    "id": "TR-14",
+    "id": "TR-13",
     "nome": "R6.1.1",
     "ramalRef": "R6.1.1",
-    "noA": "NO-16",
-    "noB": "NO-17",
+    "noA": "NO-15",
+    "noB": "NO-16",
     "rede": "extracao",
     "L_reto": 3,
     "L_elementos": 0,
@@ -10735,11 +10691,11 @@
     "nElementos": 0
    },
    {
-    "id": "TR-15",
+    "id": "TR-14",
     "nome": "R6.1.1.1",
     "ramalRef": "R6.1.1.1",
-    "noA": "NO-17",
-    "noB": "NO-18",
+    "noA": "NO-16",
+    "noB": "NO-17",
     "rede": "extracao",
     "L_reto": 33.92,
     "L_elementos": 0,
@@ -10756,11 +10712,11 @@
     "nElementos": 0
    },
    {
-    "id": "TR-16",
+    "id": "TR-15",
     "nome": "R7.1",
     "ramalRef": "R7.1",
     "noA": "NO-1",
-    "noB": "NO-19",
+    "noB": "NO-18",
     "rede": "insuflacao",
     "L_reto": 26.97,
     "L_elementos": 0,
@@ -10777,11 +10733,11 @@
     "nElementos": 0
    },
    {
-    "id": "TR-17",
+    "id": "TR-16",
     "nome": "R7.1.1",
     "ramalRef": "R7.1.1",
-    "noA": "NO-19",
-    "noB": "NO-20",
+    "noA": "NO-18",
+    "noB": "NO-19",
     "rede": "insuflacao",
     "L_reto": 6.91,
     "L_elementos": 0,
@@ -10798,11 +10754,11 @@
     "nElementos": 0
    },
    {
-    "id": "TR-18",
+    "id": "TR-17",
     "nome": "R8.1",
     "ramalRef": "R8.1",
     "noA": "NO-2",
-    "noB": "NO-21",
+    "noB": "NO-20",
     "rede": "extracao",
     "L_reto": 26.72,
     "L_elementos": 0,
@@ -10819,11 +10775,11 @@
     "nElementos": 0
    },
    {
-    "id": "TR-19",
+    "id": "TR-18",
     "nome": "R8.1.1",
     "ramalRef": "R8.1.1",
-    "noA": "NO-21",
-    "noB": "NO-22",
+    "noA": "NO-20",
+    "noB": "NO-21",
     "rede": "extracao",
     "L_reto": 3.97,
     "L_elementos": 0,
@@ -10840,11 +10796,11 @@
     "nElementos": 0
    },
    {
-    "id": "TR-20",
+    "id": "TR-19",
     "nome": "R9.1",
     "ramalRef": "R9.1",
     "noA": "NO-3",
-    "noB": "NO-23",
+    "noB": "NO-22",
     "rede": "extracao_suja",
     "L_reto": 3.42,
     "L_elementos": 0,
@@ -10861,11 +10817,11 @@
     "nElementos": 0
    },
    {
-    "id": "TR-21",
+    "id": "TR-20",
     "nome": "R9.1.1",
     "ramalRef": "R9.1.1",
-    "noA": "NO-23",
-    "noB": "NO-24",
+    "noA": "NO-22",
+    "noB": "NO-23",
     "rede": "extracao_suja",
     "L_reto": 1.58,
     "L_elementos": 0,
@@ -10882,11 +10838,11 @@
     "nElementos": 0
    },
    {
-    "id": "TR-22",
+    "id": "TR-21",
     "nome": "R9.1.2",
     "ramalRef": "R9.1.2",
-    "noA": "NO-23",
-    "noB": "NO-25",
+    "noA": "NO-22",
+    "noB": "NO-24",
     "rede": "extracao_suja",
     "L_reto": 4.09,
     "L_elementos": 0,
@@ -10903,11 +10859,11 @@
     "nElementos": 0
    },
    {
-    "id": "TR-23",
+    "id": "TR-22",
     "nome": "R9.1.3",
     "ramalRef": "R9.1.3",
-    "noA": "NO-23",
-    "noB": "NO-26",
+    "noA": "NO-22",
+    "noB": "NO-25",
     "rede": "extracao_suja",
     "L_reto": 2.08,
     "L_elementos": 0,
@@ -10924,11 +10880,11 @@
     "nElementos": 0
    },
    {
-    "id": "TR-24",
+    "id": "TR-23",
     "nome": "R10.1",
     "ramalRef": "R10.1",
     "noA": "NO-1",
-    "noB": "NO-27",
+    "noB": "NO-26",
     "rede": "insuflacao",
     "L_reto": 4.98,
     "L_elementos": 0,
@@ -10945,9 +10901,30 @@
     "nElementos": 0
    },
    {
-    "id": "TR-25",
+    "id": "TR-24",
     "nome": "R11.1",
     "ramalRef": "R11.1",
+    "noA": "NO-3",
+    "noB": "NO-27",
+    "rede": "extracao_suja",
+    "L_reto": 0.48,
+    "L_elementos": 0,
+    "L_total": 0.48,
+    "secao": "Ø160",
+    "material": "Aço galvanizado",
+    "rugosidade": 0.15,
+    "Q_adotado": 200,
+    "elementos": [],
+    "origem": "Decomposição automática",
+    "dp_linear": 0,
+    "dp_elementos": 0,
+    "dp_total_calculado": 0,
+    "nElementos": 0
+   },
+   {
+    "id": "TR-25",
+    "nome": "R12.1",
+    "ramalRef": "R12.1",
     "noA": "NO-3",
     "noB": "NO-28",
     "rede": "extracao_suja",
@@ -11060,7 +11037,7 @@
     "trechoId": "TR-9",
     "tipo": "Outro",
     "descricao": "Singularidades agregadas",
-    "zeta": 0.55,
+    "zeta": 0.3,
     "modo": "zeta",
     "deltaP_manual": 0,
     "ativo": true,
@@ -11071,7 +11048,7 @@
     "trechoId": "TR-10",
     "tipo": "Outro",
     "descricao": "Singularidades agregadas",
-    "zeta": 0.3,
+    "zeta": 0.8,
     "modo": "zeta",
     "deltaP_manual": 0,
     "ativo": true,
@@ -11082,7 +11059,7 @@
     "trechoId": "TR-11",
     "tipo": "Outro",
     "descricao": "Singularidades agregadas",
-    "zeta": 0.8,
+    "zeta": 0.55,
     "modo": "zeta",
     "deltaP_manual": 0,
     "ativo": true,
@@ -11093,7 +11070,7 @@
     "trechoId": "TR-12",
     "tipo": "Outro",
     "descricao": "Singularidades agregadas",
-    "zeta": 0.55,
+    "zeta": 0.3,
     "modo": "zeta",
     "deltaP_manual": 0,
     "ativo": true,
@@ -11104,7 +11081,7 @@
     "trechoId": "TR-13",
     "tipo": "Outro",
     "descricao": "Singularidades agregadas",
-    "zeta": 0.3,
+    "zeta": 0.8,
     "modo": "zeta",
     "deltaP_manual": 0,
     "ativo": true,
@@ -11115,7 +11092,7 @@
     "trechoId": "TR-14",
     "tipo": "Outro",
     "descricao": "Singularidades agregadas",
-    "zeta": 0.8,
+    "zeta": 0.55,
     "modo": "zeta",
     "deltaP_manual": 0,
     "ativo": true,
@@ -11126,7 +11103,7 @@
     "trechoId": "TR-15",
     "tipo": "Outro",
     "descricao": "Singularidades agregadas",
-    "zeta": 0.55,
+    "zeta": 0.3,
     "modo": "zeta",
     "deltaP_manual": 0,
     "ativo": true,
@@ -11137,7 +11114,7 @@
     "trechoId": "TR-16",
     "tipo": "Outro",
     "descricao": "Singularidades agregadas",
-    "zeta": 0.3,
+    "zeta": 0.8,
     "modo": "zeta",
     "deltaP_manual": 0,
     "ativo": true,
@@ -11148,7 +11125,7 @@
     "trechoId": "TR-17",
     "tipo": "Outro",
     "descricao": "Singularidades agregadas",
-    "zeta": 0.8,
+    "zeta": 0.3,
     "modo": "zeta",
     "deltaP_manual": 0,
     "ativo": true,
@@ -11170,7 +11147,7 @@
     "trechoId": "TR-19",
     "tipo": "Outro",
     "descricao": "Singularidades agregadas",
-    "zeta": 0.3,
+    "zeta": 0.55,
     "modo": "zeta",
     "deltaP_manual": 0,
     "ativo": true,
@@ -11181,7 +11158,7 @@
     "trechoId": "TR-20",
     "tipo": "Outro",
     "descricao": "Singularidades agregadas",
-    "zeta": 0.55,
+    "zeta": 0.3,
     "modo": "zeta",
     "deltaP_manual": 0,
     "ativo": true,
@@ -11192,7 +11169,7 @@
     "trechoId": "TR-21",
     "tipo": "Outro",
     "descricao": "Singularidades agregadas",
-    "zeta": 0.3,
+    "zeta": 0.55,
     "modo": "zeta",
     "deltaP_manual": 0,
     "ativo": true,
@@ -11214,7 +11191,7 @@
     "trechoId": "TR-23",
     "tipo": "Outro",
     "descricao": "Singularidades agregadas",
-    "zeta": 0.55,
+    "zeta": 0.8,
     "modo": "zeta",
     "deltaP_manual": 0,
     "ativo": true,
@@ -11225,7 +11202,7 @@
     "trechoId": "TR-24",
     "tipo": "Outro",
     "descricao": "Singularidades agregadas",
-    "zeta": 0.8,
+    "zeta": 0.3,
     "modo": "zeta",
     "deltaP_manual": 0,
     "ativo": true,

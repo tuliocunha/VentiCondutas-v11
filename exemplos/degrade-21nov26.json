@@ -2,7 +2,7 @@
  "_versao": "V9",
  "versao": "VentiCondutas v11.1.0",
  "versaoCurta": "11.1.0",
- "timestamp": "2026-11-21T23:38:57.329Z",
+ "timestamp": "2026-11-22T00:09:20.584Z",
  "metadados": {
   "cliente": "Degrade",
   "local": "Torres Vedras, Portugal",
@@ -23,7 +23,7 @@
    "potenciaTermica": 42,
    "tExtInverno": 3
   },
-  "restricaoH": 250,
+  "restricaoH": 350,
   "serieDiametros": "S1"
  },
  "dados": {
@@ -1222,6 +1222,14 @@
       "quantidade": 2,
       "Q_total": 180,
       "origem": "Desenho"
+     },
+     {
+      "id": "DEF-49",
+      "tipo": "Grelha Extração",
+      "rede": "extracao_suja",
+      "quantidade": 1,
+      "Q_total": 70,
+      "origem": "Desenho"
      }
     ],
     "transferencias": [],
@@ -1238,11 +1246,11 @@
       ],
       [
        1426.29,
-       377.14
+       360
       ],
       [
        1686.86,
-       377.14
+       360
       ],
       [
        1686.86,
@@ -1255,6 +1263,7 @@
      ]
     },
     "ramalRefInsuflacao": "R10.1",
+    "ramalRefExtracao": "R11.1",
     "rphDefault": 0,
     "rphAplicado": 0,
     "rphOrigem": "norma",
@@ -1285,7 +1294,7 @@
      "nome": "Refeitório P0-S1",
      "g": 1,
      "Q_in_direto": 180,
-     "Q_out_direto": 0,
+     "Q_out_direto": 70,
      "Q_conforto_in": 0,
      "Q_conforto_out": 0,
      "QAI_aplicado": 0,
@@ -1293,8 +1302,8 @@
      "Q_transf_in": 0,
      "Q_transf_out": 0,
      "exfiltracao": 0,
-     "residuo": 180,
-     "pressao_relativa_Pa": 21.569787564306655,
+     "residuo": 110,
+     "pressao_relativa_Pa": 16.86187858794456,
      "estado": "DESEQUILIBRIO_GRAVE"
     }
    },
@@ -6761,6 +6770,99 @@
     "deltaPtotal": 12.169707979054253,
     "status": "OK",
     "deltaPCritico": 12.169707979054253
+   },
+   {
+    "id": 23,
+    "nome": "R11.1",
+    "parente": "",
+    "tipo": "Principal",
+    "nivel": "primario",
+    "nivelNumero": 1,
+    "rede": "extracao_suja",
+    "utaRef": "UTA-11",
+    "L": 0.48,
+    "zeta": 0.3,
+    "localizacao": {
+     "piso": "P0",
+     "ala": "Sul",
+     "cota": null
+    },
+    "geometriaInput": {
+     "material": "Aço galvanizado",
+     "forma": "circular"
+    },
+    "lock": {
+     "D": false
+    },
+    "deltaP_registo": 0,
+    "deltaP_filtro": 0,
+    "deltaP_bateria": 0,
+    "deltaP_recup": 0,
+    "planta": {
+     "pisoId": "piso-p0",
+     "pts": [
+      [
+       1501.71,
+       342.86
+      ],
+      [
+       1501.71,
+       368.91
+      ]
+     ]
+    },
+    "Q_proprio": 70,
+    "Q_filhos": 0,
+    "Q": 70,
+    "deltaP_terminal": 3.4299999999999997,
+    "vMax": 6,
+    "avisoSecao": "",
+    "secaoAdotada": "circular",
+    "v": 1.5844758778926469,
+    "Re": 13047.504601352877,
+    "f": 0.030828041251719895,
+    "R": 0.36981452080910576,
+    "Dcom": 125,
+    "De": 125,
+    "secaoCalc": "Ø125",
+    "trocos": [
+     {
+      "de": 0,
+      "ate": 0.48,
+      "L": 0.48,
+      "Q": 70,
+      "Dcom": 125,
+      "De": 125,
+      "secao": "Ø125",
+      "v": 1.5844758778926469,
+      "Re": 13047.504601352877,
+      "R": 0.36981452080910576,
+      "dpLin": 0.17751096998837076,
+      "dpTe": 0,
+      "dpReducao": 0
+     }
+    ],
+    "modoTrocos": "simplificado",
+    "derivacoes": [
+     {
+      "tipo": "terminal",
+      "ref": "GEs-RefP0-S1-1",
+      "Q": 70,
+      "s": 0.48,
+      "origem": "utilizador",
+      "dP": 3.4299999999999997
+     }
+    ],
+    "vMaxTrocos": 1.5844758778926469,
+    "deltaPlin": 0.17751096998837076,
+    "deltaPsing": 0.44985162752005103,
+    "deltaPderiv": 0,
+    "deltaPTroco": 0.6273625975084218,
+    "deltaPInicio": 0,
+    "deltaPAcumulado": 0.6273625975084218,
+    "deltaPtotal": 4.057362597508422,
+    "status": "OK",
+    "deltaPCritico": 4.057362597508422
    }
   ],
   "terminais": [
@@ -8491,6 +8593,38 @@
     "LwCalc": 8.660625688767183,
     "throwCalc": 0,
     "status": "OK"
+   },
+   {
+    "id": 55,
+    "nome": "GEs-RefP0-S1-1",
+    "tipo": "Grelha Extração",
+    "rede": "extracao_suja",
+    "espacos": [
+     {
+      "nome": "Refeitório P0-S1",
+      "Q_parcela": 70
+     }
+    ],
+    "ramalRef": "R11.1",
+    "sRamal": 0.48,
+    "planta": {
+     "pisoId": "piso-p0",
+     "x": 1501.71,
+     "y": 370.29
+    },
+    "fabricante": "",
+    "familia": "",
+    "tamanho": "",
+    "v_saida": 2,
+    "Q": 70,
+    "definicaoRef": {
+     "espacoId": 3012,
+     "definicaoId": "DEF-49"
+    },
+    "dPCalc": 3.4299999999999997,
+    "LwCalc": 5.20340221751378,
+    "throwCalc": 0,
+    "status": "OK"
    }
   ],
   "transferencias": [
@@ -9176,7 +9310,7 @@
    },
    {
     "id": "UTA-10",
-    "nome": "VCM Refeitório (ar novo)",
+    "nome": "VCM Refeitório (insuflação)",
     "rede": "insuflacao",
     "zona": "P0 Refeitório",
     "curva": [],
@@ -9235,6 +9369,68 @@
     "status": "OK",
     "uvbParNome": null,
     "uvbSemPar": false
+   },
+   {
+    "id": "UTA-11",
+    "nome": "VCM Refeitório (extração copa)",
+    "rede": "extracao_suja",
+    "zona": "P0 Refeitório",
+    "curva": [],
+    "curvaFabricante": null,
+    "etaRec": 0,
+    "fs": 1.15,
+    "transmissao": 1,
+    "classeIE": "IE3",
+    "recuperadorAtivo": false,
+    "ativo": true,
+    "tipoUV": "UVU_SEM_FILTER",
+    "eta": 0.4,
+    "componentes": [
+     {
+      "id": "COMP-UTA-11-1",
+      "nome": "Ventilador (motor EC)",
+      "tipo": "Ventilador",
+      "deltaP": 0,
+      "deltaP_final": 0,
+      "zeta": 0,
+      "obs": "IE3 · referência"
+     },
+     {
+      "id": "COMP-UTA-11-2",
+      "nome": "Descarga do ar sujo 2,5 m + grelha na fachada",
+      "tipo": "Outro",
+      "deltaP": 25,
+      "deltaP_final": 25,
+      "zeta": 0,
+      "obs": "medido na planta"
+     }
+    ],
+    "Q": 0.019444444444444445,
+    "dpInt": 25,
+    "dpExt": 4.057362597508422,
+    "sfpInt": 62.5,
+    "P_motor": 1.6243872840968248,
+    "dpIntEco": 0,
+    "sfpIntEco": 0,
+    "sfpE": 72.64340649377105,
+    "sfpCategoria": "SFP 0",
+    "sfpClass": {
+     "tipo": "UVU_SEM_FILTER",
+     "classe": null,
+     "sfpInt": 0,
+     "limite": null,
+     "limiteBase": null,
+     "qnom": 0.019444444444444445,
+     "bonusE": 0,
+     "F": 150,
+     "etaOK": true,
+     "conservador": false,
+     "nota": "Reg. (UE) 1253/2014 (Ecodesign): UVU sem filtro não tem limite de SFPint (só requisitos do ventilador).",
+     "conforme": true
+    },
+    "status": "OK",
+    "uvbParNome": null,
+    "uvbSemPar": false
    }
   ],
   "nos": [
@@ -9282,7 +9478,8 @@
     "y": 260,
     "Q_acumulado": 0,
     "ligacoes": [
-     "NO-21"
+     "NO-21",
+     "NO-26"
     ],
     "rede": "extracao_suja",
     "utaRef": "UTA-09"
@@ -9626,6 +9823,21 @@
      "NO-1"
     ],
     "rede": "insuflacao",
+    "nivel": "primario",
+    "nivelNumero": 1
+   },
+   {
+    "id": "NO-26",
+    "nome": "Nó R11.1",
+    "tipo": "Derivação",
+    "ramalRef": "R11.1",
+    "x": 0,
+    "y": 0,
+    "Q_acumulado": 0,
+    "ligacoes": [
+     "NO-3"
+    ],
+    "rede": "extracao_suja",
     "nivel": "primario",
     "nivelNumero": 1
    }
@@ -10092,6 +10304,27 @@
     "dp_elementos": 0,
     "dp_total_calculado": 0,
     "nElementos": 0
+   },
+   {
+    "id": "TR-23",
+    "nome": "R11.1",
+    "ramalRef": "R11.1",
+    "noA": "NO-3",
+    "noB": "NO-26",
+    "rede": "extracao_suja",
+    "L_reto": 0.48,
+    "L_elementos": 0,
+    "L_total": 0.48,
+    "secao": "Ø125",
+    "material": "Aço galvanizado",
+    "rugosidade": 0.15,
+    "Q_adotado": 70,
+    "elementos": [],
+    "origem": "Decomposição automática",
+    "dp_linear": 0,
+    "dp_elementos": 0,
+    "dp_total_calculado": 0,
+    "nElementos": 0
    }
   ],
   "elementosRede": [
@@ -10332,6 +10565,17 @@
     "tipo": "Outro",
     "descricao": "Singularidades agregadas",
     "zeta": 0.8,
+    "modo": "zeta",
+    "deltaP_manual": 0,
+    "ativo": true,
+    "origemZeta": "biblioteca"
+   },
+   {
+    "id": "EL-23",
+    "trechoId": "TR-23",
+    "tipo": "Outro",
+    "descricao": "Singularidades agregadas",
+    "zeta": 0.3,
     "modo": "zeta",
     "deltaP_manual": 0,
     "ativo": true,
