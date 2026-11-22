@@ -33,7 +33,9 @@ VC.normativaUI = {
       const rede = c.tipoCaudal === 'EXTRACAO' ? 'extracao' : 'insuflacao';
       const n = VC.calculo.terminaisQueServem(e.nome).filter(t => VC.calculo._redeBase(t) === rede).length;
       if (!n) { semTerminais++; return; }
-      if (VC.calculo.QservidoAoEspaco(e.nome, rede) + VC.constantes.MINIMO_LEGAL_ARREDONDAMENTO < Number(c.Q_normas)) abaixoMinimo++;
+      // Fase 6A: na insuflação conta só o ar novo (com recirculação, a fração de ar novo do equipamento)
+      const Qconta = rede === 'insuflacao' && VC.calculo.QarNovoAoEspaco ? VC.calculo.QarNovoAoEspaco(e.nome) : VC.calculo.QservidoAoEspaco(e.nome, rede);
+      if (Qconta + VC.constantes.MINIMO_LEGAL_ARREDONDAMENTO < Number(c.Q_normas)) abaixoMinimo++;
     });
     const p138OK = espacosSemQNormas === 0 && espacosComStatusErro === 0 && abaixoMinimo === 0;
     let p138Resultado = (VC.dados.espacos || []).length + ' espaços · ' +

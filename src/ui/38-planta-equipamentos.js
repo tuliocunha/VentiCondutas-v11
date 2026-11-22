@@ -34,8 +34,8 @@ P.equipSel = null;
 P.tipoDe = u => (VC.uta && VC.uta.tipoSistemaDe ? VC.uta.tipoSistemaDe(u) : null);
 /* a outra metade de uma VCM/VMC (duplo fluxo), quando o par está definido */
 P.metadePar = function (u) {
-  const t = this.tipoDe(u); if (!u || !u.uvbPar || !(t && t.par)) return null;
-  const o = porId('utas', u.uvbPar); return o && o !== u ? o : null;
+  if (!u || !u.uvbPar) return null;   // VCM/VMC ou UTA de duplo fluxo emparelhada (Fase 6A: caixa de mistura)
+  const o = porId('utas', u.uvbPar); return o && o !== u && VC.redes.ehExtracao(o.rede) !== VC.redes.ehExtracao(u.rede) ? o : null;
 };
 /* VCM/VMC sem par definido: a outra metade com o mesmo nome-base («VCM Refeitório (insuflação)» ↔ «… (extração copa)») */
 const nomeBase = n => String(n || '').replace(/\s*\([^)]*\)\s*$/, '').trim().toLowerCase();
@@ -219,7 +219,7 @@ P._equipHTML = function (u, p, z) {
   ramais.forEach(r => { const q = this._ligadoAoEquip(r, u) && r.planta.pts[1] ? r.planta.pts[1] : r.planta.pts[0], l = D2(q, o) || 1; vx += (q[0] - o[0]) / l; vy += (q[1] - o[1]) / l; });
   let l = Math.hypot(vx, vy); if (l < 1e-6) { vx = 1; vy = 0; l = 1; }
   const ux = -vx / l, uy = -vy / l;
-  const t = this.tipoDe(u), cod = duplo ? (t ? t.codigo : 'VCM') : (t ? t.codigo : 'UTA');
+  const t = this.tipoDe(u), cod = duplo ? (t && t.par ? t.codigo : 'UTA') : (t ? t.codigo : 'UTA');
   const w = (duplo ? 40 : 30) / z, hh = (duplo ? 24 : 18) / z;
   const sel = String(this.equipSel) === String(u.id) || (duplo && String(this.equipSel) === String(par.id));
   let x = '';

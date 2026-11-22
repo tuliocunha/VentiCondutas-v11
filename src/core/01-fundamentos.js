@@ -755,7 +755,7 @@ VC.estado._hashEstado = function () {
     '|' + (u.transmissao || 1) + '|' + (u.ativo === false ? '0' : '1') + '|' + (u.curvaFabricante ? (u.curvaFabricante.fabricante + '/' + u.curvaFabricante.modelo) : '') +
     '|' + (u.tipoUV || '') + '|' + (u.recuperadorAtivo === false ? '0' : '1')   // v11.1: tipo Ecodesign
     + '|' + (u.uvbPar || '') + '|' + (u.freeCooling ? 'fc' : '') + (u.tudoAr === false ? 'nta' : '') + '|' + (u.controloCaudal || '') + '|' + (u.componentes || []).map(c => (c.tipo || '') + ':' + c.deltaP + ':' + c.deltaP_final).join(',')   // Fase 3: par da UVB e componentes
-    + '|' + JSON.stringify(u.exterior || '') + JSON.stringify(u.planta || '')   // Fase 3B: tomada / rejeição e posição (L da ligação)
+    + '|' + JSON.stringify(u.exterior || '') + JSON.stringify(u.planta || '') + '|' + (u.recirculacao || '')   // Fase 3B: tomada / rejeição e posição (L da ligação)
   ).join('#'));
   partes.push((VC.flags && VC.flags.confortoTermico !== false) ? '1' : '0');
   partes.push((VC.flags && VC.flags.qaiProjeto !== false) ? '1' : '0');

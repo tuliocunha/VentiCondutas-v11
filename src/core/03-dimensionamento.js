@@ -779,6 +779,15 @@ VC.calculo = {
     });
   },
 
+  /* Fase 6A · caudal recirculado (m³/h) de um equipamento: escrito na insuflação (u.recirculacao); a extração em par
+     herda-o. Só entre as duas metades de um par (caixa de mistura). */
+  recirculacaoDe(u) {
+    if (!u) return 0;
+    if (u.rede === 'insuflacao') return Math.max(0, Number(u.recirculacao) || 0);
+    const par = u.uvbPar ? (VC.dados.utas || []).find(x => x.id === u.uvbPar) : null;
+    return par && par.rede === 'insuflacao' ? Math.max(0, Number(par.recirculacao) || 0) : 0;
+  },
+
   /* Fase 2C: fugas nas condutas pela classe de estanquidade (EN 12237 / EN 1507; EN 16798-3 ATC):
        f = c · p^0,65 · 10⁻³  m³/(s·m²),  c = 0,027 (A) · 0,009 (B) · 0,003 (C) · 0,001 (D)
      p = pressão do percurso crítico que passa no ramal (majorante: é a pressão à saída do equipamento).
@@ -975,7 +984,11 @@ VC.calculo = {
       const Qms = raizes.reduce((s, r) => s + (Number(r.Q) || 0), 0) / 3600;
       const dpRede = ramaisServidos.reduce((m, r) => Math.max(m, Number(r.deltaPtotal) || 0), 0);
       // Fase 3B: tomada / rejeição na fachada e a conduta até ela (só se estiver desenhada)
-      uta.ext = this.exteriorDe(uta, Qms + (Number(uta.Q_fugas) || 0) / 3600, rho);
+      // Fase 6A · recirculação (RCA) na insuflação: Q_ODA = Q_SUP − Q_RCA; na extração em par sai Q_ETA − Q_RCA
+      const Qrca = this.recirculacaoDe(uta);
+      uta.Q_rca_mh = Qrca;
+      uta.fracaoArNovo = uta.rede === 'insuflacao' && Qms > 0 ? Math.max(0, 1 - Qrca / (Qms * 3600)) : 1;
+      uta.ext = this.exteriorDe(uta, Math.max(0, Qms + (Number(uta.Q_fugas) || 0) / 3600 - Qrca / 3600), rho);   // a grelha exterior só vê o ar novo / o rejeitado
       const dpExt = dpRede + (uta.ext ? uta.ext.dp : 0);
       uta.dpRede = dpRede;
       const comps = uta.componentes || [];
@@ -1253,6 +1266,14 @@ VC.calculo = {
         if (r.porFazer.length) findings.push({ severidade: 'POR FAZER', tipo: 'Escada pressurizada por definir', elemento: e.nome, msg: 'Falta: ' + r.porFazer.join(' e ') + ' (RT-SCIE, art. 161.º; EN 12101-13).' });
       });
       VC.dados.utas.forEach(u => { if (u.ativo !== false && u.ext) u.ext.avisos.forEach(m => findings.push({ severidade: 'ATENÇÃO', tipo: u.ext.lado === 'ODA' ? 'Tomada de ar exterior' : 'Rejeição para o exterior', elemento: u.nome, msg: m + ' (EN 13779, A.2; EN 16798-3).' })); });
+      VC.dados.utas.forEach(u => {
+        const q = Number(u.recirculacao) || 0; if (u.ativo === false || u.rede !== 'insuflacao' || !(q > 0)) return;
+        const par = u.uvbPar ? VC.dados.utas.find(x => x.id === u.uvbPar) : null;
+        if (!par) findings.push({ severidade: 'ATENÇÃO', tipo: 'Recirculação sem retorno', elemento: u.nome, msg: q + ' m³/h recirculados, mas a unidade não tem a extração em par (o ar de retorno não está desenhado).' });
+        else if (par.rede === 'extracao_suja') findings.push({ severidade: 'ERRO', tipo: 'Recirculação de ar sujo', elemento: u.nome, msg: 'O retorno vem de ' + par.nome + ' (extração de ar sujo, ETA 3/4): não se recircula (EN 16798-3).' });
+        else if (q > (Number(par.Q) || 0) * 3600 + 1) findings.push({ severidade: 'ERRO', tipo: 'Recirculação maior que o retorno', elemento: u.nome, msg: 'Recircula ' + q + ' m³/h, mas a extração ' + par.nome + ' só tem ' + VC.utils.fmt((Number(par.Q) || 0) * 3600, 0) + ' m³/h.' });
+        if (q >= (Number(u.Q) || 0) * 3600 - 1) findings.push({ severidade: 'ERRO', tipo: 'Sem ar novo', elemento: u.nome, msg: 'A recirculação iguala a insuflação: não entra ar novo.' });
+      });
       VC.dados.ramais.forEach(r => { if (r.termica && r.termica.risco) findings.push({ severidade: 'ATENÇÃO', tipo: 'Risco de condensação', elemento: r.nome, msg: 'superfície a ' + VC.utils.fmt(r.termica.ts, 1) + ' °C, abaixo do ponto de orvalho ' + VC.utils.fmt(r.termica.td, 1) + ' °C da envolvente: isolamento térmico ≥ ' + r.termica.eMin + ' mm.' }); });
       VC.dados.utas.forEach(u => {
         if (u.ativo !== false && u.uvbSemPar && /^BVU/.test(VC.normas.tipoUVPadrao(u)) && (u.rede === 'insuflacao' || u.rede === 'extracao')) findings.push({ severidade: 'ATENÇÃO', tipo: 'UVB sem par', elemento: u.nome, msg: 'Unidade bidirecional com recuperador: o SFPint do Ecodesign é da unidade inteira, mas não se encontrou a UTA do outro lado (mesma zona ou campo «Par UVB»). Só esta metade foi verificada.' });
@@ -1359,6 +1380,22 @@ VC.calculo = {
 
   /* Caudal entregue ao espaço pelos terminais. Com `rede`, conta só os terminais dessa
      rede (v11.1: antes somava insuflação + extração e comparava com o caudal de uma só rede). */
+  /* Fase 6A · equipamento de insuflação de um terminal (pela cadeia de ramais) */
+  utaDoTerminal(t) {
+    const R = VC.dados.ramais || [], byName = {}; R.forEach(r => { byName[r.nome] = r; });
+    let r = byName[t && t.ramalRef], g = 0; while (r && r.parente && byName[r.parente] && g++ < 60) r = byName[r.parente];
+    return r && r.utaRef ? (VC.dados.utas || []).find(u => u.id === r.utaRef) || null : null;
+  },
+  /* ar novo (exterior) que chega ao espaço: a insuflação × a fração de ar novo do equipamento (sem recirculação = 1) */
+  QarNovoAoEspaco(nomeEspaco) {
+    let soma = 0;
+    (VC.dados.terminais || []).forEach(t => {
+      if (!Array.isArray(t.espacos) || this._redeBase(t) !== 'insuflacao') return;
+      const u = this.utaDoTerminal(t), f = u && u.fracaoArNovo != null ? u.fracaoArNovo : 1;
+      t.espacos.forEach(e => { if (e.nome === nomeEspaco) soma += (Number(e.Q_parcela) || 0) * f; });
+    });
+    return soma;
+  },
   QservidoAoEspaco(nomeEspaco, rede) {
     if (!nomeEspaco) return 0;
     let soma = 0;
@@ -1386,6 +1423,7 @@ VC.calculo = {
     const Q_servido = this.QservidoAoEspaco(nomeEspaco, rede);
     const nTerminais = this.terminaisQueServem(nomeEspaco).filter(t => this._redeBase(t) === rede).length;
     const delta = Q_servido - Q_nec;
+    const Q_arNovo = rede === 'insuflacao' ? this.QarNovoAoEspaco(nomeEspaco) : null;   // Fase 6A: com recirculação, só parte é ar novo
     let estado = 'OK';
     // Fase 2: só G2 (zona de transferência) fica isento; G3 compara a insuflação e G4 a extração com o caudal exigido
     if (c.g === 2) estado = 'ISENTO';
@@ -1396,7 +1434,7 @@ VC.calculo = {
       else if (ratio > VC.constantes.BALANCO_ESPACO.sobre) estado = 'SOBRE';
       else estado = 'OK';
     }
-    return { Q_nec, Q_servido, delta, estado, nTerminais, rede, g: c.g, isento: c.isento, Q_transf_out };
+    return { Q_nec, Q_servido, delta, estado, nTerminais, rede, g: c.g, isento: c.isento, Q_transf_out, Q_arNovo };
   },
 
   espacosServidosPorRamal(ramalNome) {

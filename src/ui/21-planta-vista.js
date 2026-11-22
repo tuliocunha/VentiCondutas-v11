@@ -163,7 +163,7 @@ P._mostrarMedida = function (ev) {
 P._pilha = []; P._refeitas = [];
 P._estado = function () {
   const c = VC.utils.clonar, D = VC.dados;
-  return { e: c(D.espacos || []), t: c(D.terminais || []), r: c(D.ramais || []), tr: c(D.transferencias || []), u: (D.utas || []).map(x => ({ id: x.id, nome: x.nome, tipoSistema: x.tipoSistema, tipoUV: x.tipoUV, uvbPar: x.uvbPar, planta: x.planta ? c(x.planta) : undefined, exterior: x.exterior ? c(x.exterior) : undefined })), pl: (D.plantas || []).map(x => ({ id: x.id, nome: x.nome, escala: x.escala, H: x.H, cota: x.cota })) };
+  return { e: c(D.espacos || []), t: c(D.terminais || []), r: c(D.ramais || []), tr: c(D.transferencias || []), u: (D.utas || []).map(x => ({ id: x.id, nome: x.nome, tipoSistema: x.tipoSistema, tipoUV: x.tipoUV, uvbPar: x.uvbPar, planta: x.planta ? c(x.planta) : undefined, exterior: x.exterior ? c(x.exterior) : undefined, recirculacao: x.recirculacao })), pl: (D.plantas || []).map(x => ({ id: x.id, nome: x.nome, escala: x.escala, H: x.H, cota: x.cota })) };
 };
 const CHAVE_COL = { e: 'espacos', t: 'terminais', r: 'ramais', tr: 'transferencias', u: 'utas', pl: 'plantas' };
 /* comparação estável (a ordem das chaves não conta) */
