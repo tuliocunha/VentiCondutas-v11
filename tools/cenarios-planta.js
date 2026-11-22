@@ -57,6 +57,7 @@ async function prepararPlanta(pg, escala) {
     const c = document.createElement('canvas'); c.width = 1000; c.height = 700; const g = c.getContext('2d');
     g.fillStyle = '#fff'; g.fillRect(0, 0, 1000, 700); g.strokeStyle = '#333'; g.lineWidth = 3; g.strokeRect(100, 100, 400, 300); g.strokeRect(500, 100, 200, 300);
     VC.dados.plantas = [{ id: 'pS', nome: 'Mezanino', imagem: c.toDataURL('image/png'), w: 1000, h: 700, escala: e }]; VC.planta.piso = 'pS';
+    VC.dados.params.encaixeImagem = false;   // estes cenários medem o encaixe nas salas desenhadas; o das paredes da imagem tem o seu (multi)
     const t = VC.ui.toast; VC.ui.toast = function (m) { (window.__t = window.__t || []).push(m); return t.apply(this, arguments); };
   }, escala === undefined ? 0.01 : escala);
   await pg.evaluate(() => VC.nav.irPasso('levantamento')); await pg.waitForTimeout(400);
@@ -567,7 +568,8 @@ const CENARIOS = {
     // selecionar uma sala larga o equipamento
     await h.v(() => { const u = VC.dados.utas.find(x => x.nome === 'VAN P0 N'); VC.planta.selecionarEquip(u.id); VC.planta.selecionar(VC.dados.espacos.find(e => e.planta).id); });
     ok(await h.v(() => VC.planta.equipSel == null && VC.paineis.selecao().tipo === 'sala'), 'Escolher uma sala larga o equipamento (uma seleção de cada vez)');
-    // VCM: juntar as metades
+    // VCM: juntar as metades (o exemplo já traz o par: desfaz-se para o juntar à mão)
+    await h.v(() => { VC.dados.utas.filter(u => /VCM Refeit/.test(u.nome)).forEach(u => { delete u.uvbPar; delete u.planta; }); });
     await h.v(() => { const P = VC.planta, i = VC.dados.utas.find(u => /VCM Refeit.*insufla/.test(u.nome)), r = VC.dados.ramais.find(x => x.utaRef === i.id && x.planta); const a = r.planta.pts[0]; P.colocarEquipamento([a[0] - 30, a[1]], i.id); });
     await pg.waitForTimeout(300);
     await pg.click('.pn-acoes button:has-text("Juntar com")'); await pg.waitForTimeout(350);
@@ -856,6 +858,9 @@ const CENARIOS = {
     await h.v(() => { VC.planta.multi = [{ k: 'sala', id: VC.dados.espacos[0].id }, { k: 'sala', id: VC.dados.espacos[1].id }]; VC.planta._aplicarMulti(); });
     await h.tecla('Escape');
     ok(await h.v(() => !VC.planta.multi.length && !document.querySelector('.pn-multi')), 'Esc limpa a seleção múltipla');
+    // PR 69 · item 12: encaixe nas paredes da imagem (a planta sintética tem paredes de 3 px em x = 100 e 500)
+    const pi = await h.v(async () => { const P = VC.planta; delete VC.dados.params.encaixeImagem; P._paredes = {}; P.paredesDaImagem(P.pisoAtual()); await new Promise(r => setTimeout(r, 1200)); const sv = P.espacosDoPiso; P.espacosDoPiso = () => []; try { return [P.encaixe([103, 250], { salas: true }), P.encaixe([103, 103], { salas: true })]; } finally { P.espacosDoPiso = sv; VC.dados.params.encaixeImagem = false; } });
+    ok(pi[0].tipo === 'paredeImg' && Math.abs(pi[0].q[0] - 101.5) < 1.6 && pi[1].tipo === 'cantoImg', 'Encaixe nas paredes da imagem: face e canto', pi);
   },
 
   /* PR 66 · Fase 6B: controlo de fumo */

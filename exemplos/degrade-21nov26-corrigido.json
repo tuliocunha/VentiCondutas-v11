@@ -22,7 +22,33 @@
    "poluicaoEdificio": "pouco",
    "potenciaTermica": 42,
    "tExtInverno": 3,
-   "integracaoGT": true
+   "integracaoGT": true,
+   "siglasEquip": [
+    {
+     "prefixo": "VAN",
+     "tipo": "VAN"
+    },
+    {
+     "prefixo": "VEG",
+     "tipo": "VEG"
+    },
+    {
+     "prefixo": "VEISP",
+     "tipo": "VEIS"
+    },
+    {
+     "prefixo": "VCM",
+     "tipo": "VCM"
+    },
+    {
+     "prefixo": "VEX",
+     "tipo": "VEX"
+    },
+    {
+     "prefixo": "VIN",
+     "tipo": "VIN"
+    }
+   ]
   },
   "restricaoH": 350,
   "serieDiametros": "S1"
@@ -9609,7 +9635,8 @@
     },
     "status": "OK",
     "uvbParNome": null,
-    "uvbSemPar": false
+    "uvbSemPar": false,
+    "tipoSistema": "VAN"
    },
    {
     "id": "UTA-02",
@@ -9624,7 +9651,7 @@
     "classeIE": "IE3",
     "recuperadorAtivo": false,
     "ativo": true,
-    "tipoUV": "UVU_FILTER",
+    "tipoUV": "UVU_SEM_FILTER",
     "eta": 0.5,
     "componentes": [
      {
@@ -9680,7 +9707,8 @@
     },
     "status": "OK",
     "uvbParNome": null,
-    "uvbSemPar": false
+    "uvbSemPar": false,
+    "tipoSistema": "VEG"
    },
    {
     "id": "UTA-03",
@@ -9751,7 +9779,8 @@
     },
     "status": "OK",
     "uvbParNome": null,
-    "uvbSemPar": false
+    "uvbSemPar": false,
+    "tipoSistema": "VAN"
    },
    {
     "id": "UTA-04",
@@ -9766,7 +9795,7 @@
     "classeIE": "IE3",
     "recuperadorAtivo": false,
     "ativo": true,
-    "tipoUV": "UVU_FILTER",
+    "tipoUV": "UVU_SEM_FILTER",
     "eta": 0.5,
     "componentes": [
      {
@@ -9822,7 +9851,8 @@
     },
     "status": "OK",
     "uvbParNome": null,
-    "uvbSemPar": false
+    "uvbSemPar": false,
+    "tipoSistema": "VEG"
    },
    {
     "id": "UTA-05",
@@ -9893,7 +9923,8 @@
     },
     "status": "OK",
     "uvbParNome": null,
-    "uvbSemPar": false
+    "uvbSemPar": false,
+    "tipoSistema": "VAN"
    },
    {
     "id": "UTA-06",
@@ -9908,7 +9939,7 @@
     "classeIE": "IE3",
     "recuperadorAtivo": false,
     "ativo": true,
-    "tipoUV": "UVU_FILTER",
+    "tipoUV": "UVU_SEM_FILTER",
     "eta": 0.5,
     "componentes": [
      {
@@ -9964,7 +9995,8 @@
     },
     "status": "OK",
     "uvbParNome": null,
-    "uvbSemPar": false
+    "uvbSemPar": false,
+    "tipoSistema": "VEG"
    },
    {
     "id": "UTA-07",
@@ -10035,7 +10067,8 @@
     },
     "status": "OK",
     "uvbParNome": null,
-    "uvbSemPar": false
+    "uvbSemPar": false,
+    "tipoSistema": "VAN"
    },
    {
     "id": "UTA-08",
@@ -10050,7 +10083,7 @@
     "classeIE": "IE3",
     "recuperadorAtivo": false,
     "ativo": true,
-    "tipoUV": "UVU_FILTER",
+    "tipoUV": "UVU_SEM_FILTER",
     "eta": 0.5,
     "componentes": [
      {
@@ -10106,7 +10139,8 @@
     },
     "status": "OK",
     "uvbParNome": null,
-    "uvbSemPar": false
+    "uvbSemPar": false,
+    "tipoSistema": "VEG"
    },
    {
     "id": "UTA-09",
@@ -10168,7 +10202,8 @@
     },
     "status": "OK",
     "uvbParNome": null,
-    "uvbSemPar": false
+    "uvbSemPar": false,
+    "tipoSistema": "VEIS"
    },
    {
     "id": "UTA-10",
@@ -10183,7 +10218,7 @@
     "classeIE": "IE3",
     "recuperadorAtivo": false,
     "ativo": true,
-    "tipoUV": "UVU_SEM_FILTER",
+    "tipoUV": "BVU_HRS",
     "eta": 0.4,
     "componentes": [
      {
@@ -10230,7 +10265,9 @@
     },
     "status": "OK",
     "uvbParNome": null,
-    "uvbSemPar": false
+    "uvbSemPar": false,
+    "tipoSistema": "VCM",
+    "uvbPar": "UTA-11"
    },
    {
     "id": "UTA-11",
@@ -10245,7 +10282,7 @@
     "classeIE": "IE3",
     "recuperadorAtivo": false,
     "ativo": true,
-    "tipoUV": "UVU_SEM_FILTER",
+    "tipoUV": "BVU_HRS",
     "eta": 0.4,
     "componentes": [
      {
@@ -10292,7 +10329,9 @@
     },
     "status": "OK",
     "uvbParNome": null,
-    "uvbSemPar": false
+    "uvbSemPar": false,
+    "tipoSistema": "VCM",
+    "uvbPar": "UTA-10"
    },
    {
     "id": "UTA-12",
@@ -10354,7 +10393,8 @@
     },
     "status": "OK",
     "uvbParNome": null,
-    "uvbSemPar": false
+    "uvbSemPar": false,
+    "tipoSistema": "VEX"
    },
    {
     "id": "UTA-13",
@@ -10425,7 +10465,8 @@
     },
     "status": "OK",
     "uvbParNome": null,
-    "uvbSemPar": false
+    "uvbSemPar": false,
+    "tipoSistema": "VIN"
    }
   ],
   "nos": [

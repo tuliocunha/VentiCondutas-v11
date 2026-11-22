@@ -348,6 +348,14 @@ const CASOS = [
     const C = VC.calculo, o = C.recirculacaoDe; C.recirculacaoDe = function (u) { return u && u.rede === 'insuflacao' ? o.call(this, u) : 0; };
     return () => { C.recirculacaoDe = o; };
   }],
+  ['Paredes grossas: só uma face', 'UI.T44', () => {
+    const P = VC.planta, o = P._detetarParedes; P._detetarParedes = function () { const d = o.apply(this, arguments); const um = L => L.filter((s, i) => i % 2 === 0); return { H: um(d.H), V: um(d.V) }; };
+    return () => { P._detetarParedes = o; };
+  }],
+  ['Encaixe nas paredes sem os cantos', 'UI.T44', () => {
+    const P = VC.planta, o = P.encaixe; P.encaixe = function () { const r = o.apply(this, arguments); return r && r.tipo === 'cantoImg' ? Object.assign({}, r, { tipo: 'paredeImg' }) : r; };
+    return () => { P.encaixe = o; };
+  }],
   ['Teto falso do piso ignorado', 'N11.T30', () => {
     const C = VC.calculo, o = C.hMaxDe; C.hMaxDe = function (r) { const g = VC.dados.plantas; VC.dados.plantas = []; try { return o.call(this, r); } finally { VC.dados.plantas = g; } };
     return () => { C.hMaxDe = o; };
