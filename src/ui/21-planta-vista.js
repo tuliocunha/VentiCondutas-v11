@@ -276,7 +276,7 @@ if (VC.migrador && VC.migrador.prepararParaImportar) {   // outro projeto: o des
 }
 
 /* ── teclado (só com a planta à vista e fora de campos de texto) ── */
-const emCampo = t => t && (/^(INPUT|SELECT|TEXTAREA)$/.test(t.tagName) || t.isContentEditable);
+const emCampo = t => t && (/^(INPUT|SELECT|TEXTAREA)$/.test(t.tagName) || t.isContentEditable || !!(t.closest && t.closest('.planta-menu')));   // o menu de ferramentas trata as suas teclas
 window.addEventListener('keydown', ev => {
   if (!document.getElementById('plantaSVG') || emCampo(ev.target)) return;
   const mod = ev.ctrlKey || ev.metaKey, k = ev.key;
